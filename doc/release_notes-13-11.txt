@@ -367,7 +367,7 @@ new interface accommodates such clients much better.
 
 
 New terminal services
-=========== =========
+=====================
 
 The new *file terminal* located at _gems/src/server/file_terminal/_ is a service
 that provides Genode's Terminal_session interface for a given file via a
