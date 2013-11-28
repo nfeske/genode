@@ -18,13 +18,13 @@ Base framework
 Dynamic resource balancing
 ==========================
 
-We addressed the general problem of reassigning memory resources between
+We have addressed the general problem of reassigning memory resources between
 subsystems in a dynamic fashion. The Genode architecture devises the explicit
 assignment of resources by a parent to its children. Once assigned, the amount
 of memory used to remain at the disposal of the respective child subsystem
 until the subsystem gets destroyed by the parent.
 
-Because Genode passes resources among processes long the branches of the
+Because Genode passes resources among processes along the branches of the
 process tree, the parent interface is the natural place for providing a
 protocol for dynamically upgrading and withdrawing resources between a parent
 process and its children. The protocol consists of the following functions
@@ -87,13 +87,13 @@ C++11 enabled by default
 As more and more individual Genode components started using C++11 features,
 it is time to enable the most recent C++ standard by default. This step
 clears the way for using C++11 in the base API of the framework. There are
-many ways of we may leverage the new language features to improve our code,
+many ways we may leverage the new language features to improve our code,
 for example variadic templates may help us to overcome current restrictions in
 the RPC framework regarding the number of supported RPC function arguments.
 
 The C++11 standard is enabled by default for software built via the Genode
 build system. If you hit incompatibilities with existing software that
-relies on an order version the C++ standard - as is the case for some
+relies on an older version of the C++ standard - as is the case for some
 parts of Qt4 - you can override the default by manually defining
 'CC_CXX_OPT_STD' in the build-description file of the offending target.
 
@@ -121,14 +121,14 @@ New support for bit sets in MMIO API
 
 Genode's API for accessing MMIO registers helps a lot to simplify the
 access to individual bits or consecutive bit fields of hardware registers.
-However, will still stumble over use cases that the current API does not
+However, we still stumbled over use cases that the current API does not
 cover, particularly the access to bit fields that are not consecutive or even
 distributed over multiple registers. For example, values of the HDMI
 configuration of the Exnos-5 SoC are scattered over multiple hardware
 registers. Hence, we extended the MMIO API to hide those peculiarities behind
 an easy-to-use interface.
 
-The idea is best illustrated by the following example of hypothetical
+The idea is best illustrated by the following example of a hypothetical
 timer device. The bits of the clock count value are scattered across
 two hardware registers, the lower 6 bits of
 the 16-bit-wide register 0x2, and two portions of the 32-bit-wide register
@@ -154,9 +154,9 @@ with bit shift operations applied to the value:
 
 The new 'Bitset_2' and 'Bitset_3' class templates contained in
 _util/register.h_ allow the user to compose a logical bit field from 2 or 3
-physical bit fields. The order of template arguments expresses the order of
+physical bit fields. The order of the template arguments expresses the order of
 physical bits in the logical bit set. Each argument can be a register, a
-bitfield, or another bitset. The declaration of such a composed bit set for
+bit field, or another bit set. The declaration of such a composed bit set for
 the example above looks as follows:
 
 ! struct Clock : Bitset_4<Clock_1::Value_1,
@@ -167,14 +167,14 @@ With this declaration in place, the driver code becomes as simple as:
 
 ! write<Clock>(clk);
 
-Under the hood, the MMIO framework performs all needed consecutive wrote
-operation on the registers 0x2 and 0x4.
+Under the hood, the MMIO framework performs all needed consecutive write
+operations on the registers 0x2 and 0x4.
 
 
 New utility for handling character buffers
 ==========================================
 
-Throughout Genode, we find the manual instantiation char arrays and checks for
+Throughout Genode, we find the manually instantiated char arrays and checks for
 null-termination scattered throughout the code base, mostly in connection with
 RPC functions. To avoid repetitions of such C-fashioned and bug-prone code, we
 added a new 'String' template class to _util/string.h_. It plainly holds a
@@ -201,7 +201,7 @@ which uses the TCP/IP stack of the Linux kernel. The result is called LXIP and
 can be found in the _dde_linux_ repository. LXIP consists of two parts, a port
 of the Linux TCP/IP stack to Genode and glue code to Genode's C runtime. It
 comes in the form of a shared library named _lxip.lib.so_. The IP stack can be
-interfaced using Genode's version of 'libc' by linking your application to
+interfaced using Genode's version of 'libc' by linking your application to the
 'lxip_libc' plugin in your 'target.mk' file.
 
 From the application developer's point of view, the use of LXIP instead of
@@ -216,8 +216,8 @@ _netperf_lxip_usb30.run_ script targets a Gigabit network-over-USB3 network
 adapter.
 
 
-Config and session-label utilities
-==================================
+Configuration and session-label utilities
+=========================================
 
 The often-used convenience utility for accessing a process configuration used
 to come in the form of the header file _os/config.h_. But this causes aliasing
@@ -231,8 +231,8 @@ of their _target.mk_ file.
 Closely related to the process configuration, the utilities for handling
 session labels have slightly changed. By splitting the former 'Session_policy'
 into two classes, we make it more flexible. Originally, the constructor
-accepted solely an args string, which made it unusable for situations where we
-already have extracted the session label (e.g., stored in the session meta
+solely accepted an args string, which made it unusable for situations where we
+already had extracted the session label (e.g., stored in the session meta
 data of a server). Now, the extraction of the label from the args string is
 performed by the new Session_label class instead, which, in turn, can be
 passed to the constructor of Session_policy. This change causes a minor API
@@ -249,14 +249,14 @@ Serialization of signal and RPC dispatching
 In Genode, inter-process communication can be implemented synchronously
 via RPC calls or asynchronously via signals. Most services use a combination
 of both mechanisms. For example, a block driver provides an RPC interface
-to querying the size of the block device. However, the actual transactions
+for querying the size of the block device. However, the actual transactions
 are communicated via shared memory and asynchronous notifications.
 For this reason, most servers need to handle both, incoming RPCs and signals.
 
 RPCs are dispatched by special threads called RPC entrypoints whereas signals
 can be waited-for by any thread, most commonly the main thread. Consequently,
 RPC functions and signal dispatchers are executed in the contexts of different
-threads. So access to state shared by both signal handlers and RPC functions
+threads. So access to the state shared by both signal handlers and RPC functions
 must be synchronized. This synchronization can be performed by using locks.
 However, lock-based synchronization is complicated and hard to test. For this
 reason, we introduce an alternative mechanism to serialize signal handlers
@@ -273,7 +273,7 @@ New server API
 ==============
 
 The new signal RPC dispatcher described above offers a glimpse into the
-direction we want the Genode API to see evolve. Instead of handling
+direction we want to see the Genode API evolve. Instead of handling
 synchronous and asynchronous communication via different mechanisms, we
 would like to streamline both into one solution. Right now, we have RPC
 entrypoints for handling RPC requests and signal receivers for handling
@@ -282,7 +282,7 @@ can be associated with both RPC objects and signal dispatchers.
 
 Because we cannot change the Genode API over night, we take gradual
 steps. One step is the new server library with the interface located
-at 'os/server.h'. This library contains a skeleton for a usual
+at 'os/server.h'. This library contains a skeleton for a common
 single-threaded server that wants to respond to both incoming RPC
 requests as well as signals. The interface provides a single 'Entrypoint'.
 In contrast to an 'Rpc_entrypoint', a 'Server::Entrypoint' can be
@@ -319,8 +319,8 @@ configuration as follows:
 ! </config>
 
 The '<global-keys>' node contains the policy for handling global keys. Each
-'<key>' sub node expresses a rule for named key. The 'operation' attribute
-refers nitpicker's built-in operations. In the example above, the X-ray
+'<key>' sub node expresses a rule for a named key. The 'operation' attribute
+refers to nitpicker's built-in operations. In the example above, the X-ray
 mode can be activated via the scroll-lock key and the kill mode can be
 activated via the print key.
 
@@ -351,7 +351,7 @@ First, it enables a client to create a connection to nitpicker without
 donating much session quota in advance. The old interface required each
 screen-size-dependent client to donate as much memory as needed to
 allocate a screen-sized virtual framebuffer. For clients that are
-interested int the screen size but cover just a small portion of the
+interested in the screen size but cover just a small portion of the
 screen (e.g., a banner, a menu, an applet that sits in the screen
 corner), this overprovisioning is painful. The new interface allows such
 clients to upgrade the session quota for an existing session as needed.
@@ -390,7 +390,7 @@ uses normal file operations to access a block device from userspace , e.g.
 fsck(8) or mkfs(8). For this reason, access to a block device by using
 Genode's Block_session interface through the normal C-runtime file operations
 is needed. The solution comes in the form of the new _libc_block_ plugin. A
-program linked against this plugin obtails access to a block-session by
+program linked against this plugin obtains access to a block-session by
 opening the special device file "/dev/blkdev". Reading and writing from and to
 the block session - even on offsets that are not aligned to the block boundary
 - is handled by this plugin. For the actual program, the use of the plugin is
@@ -400,7 +400,7 @@ completely transparent.
 New file-system server for hybrid Genode/Linux systems
 ======================================================
 
-So far, scenarios depending on file access via the file-system session
+So far, scenarios depending on file accesses via the file-system session
 could not be run on Genode/Linux. But with the growing complexity of
 software that is ported to the framework the demand for a full-fledged
 rapid-prototyping environment on Linux grows too. For example, our
@@ -433,7 +433,7 @@ Block-session extended by sync call
 We extended the Block-session interface with the ability to indicate that
 synchronization with the device is necessary. By now, all block device drivers
 in Genode work fully synchronous. Hence, there was no need for an explicit
-sync request by the client. When reworking block device drivers to work
+sync request by the client. When reworking block-device drivers to work
 asynchronously to potentially increase the performance, or when adding a block
 cache component, the need for a synchronization call came up. Clients, like
 for instance a file system, have to ensure that its data is written back to
@@ -449,7 +449,7 @@ Whenever a network client opens a NIC-session, it has to provide buffers for
 the receive/transmit (RX/TX) packet queues. By now, we've used relatively low
 default values for dimensioning those buffers.
 However, we identified that the demands by different applications vary a lot.
-Application that require high throughput need large buffers whereas
+Applications that require high throughput need large buffers whereas
 applications that issue sporadic network traffic can live with small buffers.
 Therefore, we extended the lwIP library's initialization with the ability to
 manually define the buffer sizes. Moreover, as lwIP is mostly used as network
@@ -461,8 +461,8 @@ configuration section of it:
 ! <libc rx_buf_size="1M" tx_buf_size="1M"/>
 
 
-Support for recursive mutexes in pthread library
-================================================
+Support for recursive mutexes within the pthread library
+========================================================
 
 As argued by one of the authors of the POSIX thread API,
 [http://www.zaval.org/resources/library/butenhof1.html - recursive mutexes are bad].
@@ -482,7 +482,7 @@ Raspberry Pi
 We improved the platform support for the Raspberry Pi to a level where
 Genode's graphical demo scenario works well on the Pi. This required
 us to supplement device drivers for USB (for USB HID), Videocore mboxes
-(power management and HDMI), and frame buffer.
+(power management and HDMI), and for the framebuffer.
 
 The USB host-controller driver is ported from the official Linux kernel
 for the Raspberry Pi. Unfortunately, it is not part of the normal Linux
@@ -514,7 +514,7 @@ Pi using the following steps:
   ! make run/demo
 * When the build process is finished, you can find the resulting ELF
   image at _var/run/demo/image.elf_. There are multiple options to
-  boot the image on the Raspberry Pi, for example by using by the u-boot
+  boot the image on the Raspberry Pi, for example by using the u-boot
   boot loader or using JTAG. The simplest way, however, is to put an image
   directly on an SD-card. For doing so, prepare an SD-card with the
   regular firmware for the Raspberry Pi as found in the official
@@ -548,7 +548,7 @@ Samsung Exynos 5
 We extended the support for the Exynos-5 SoC with a new HDMI driver located at
 _os/src/drivers/framebuffer/exynos5_ as well as support for USB 3.0 mass
 storage. Thereby Genode reaches a pretty thorough driver coverage for the
-Exynos-5 platform including SATA 3.0, USB 2.0, USB 3.0, DVFS, eMMC, SD-card,
+Exynos-5 platform including SATA 3.0, USB 2.0, USB 3.0, DVFS, eMMC,
 networking, and HDMI.
 
 To exercise those features, we have assembled an integrated system scenario
@@ -596,7 +596,7 @@ the basic steps for realizing a QML application:
   _libports/src/app/qt5/qt_quicktest_ as a template.
 
 # _main.cpp_ creates a 'QQuickView' object, which loads the main QML file and
-  starts kicks off the interpreter. Here, you may customize the
+  starts to kick off the interpreter. Here, you may customize the
   name of the main QML file according to your needs.
 
 # The Qt resource file _qt_quicktest.qrc_ contains QML files as well as
@@ -618,7 +618,7 @@ the basic steps for realizing a QML application:
 File systems based on FUSE
 ==========================
 
-Besides a few special-purpose file systems (e.g. a RAM based file system and
+Besides a few special-purpose file systems (e.g., a RAM based file system and
 the TAR archive file system), up to now, Genode supports merely one
 general-purpose file system, namely FAT32, which is severely limited,
 
@@ -626,7 +626,7 @@ As one possible step to provide support for serious general purpose file
 systems in Genode, we took a look at the FUSE API, created an experimental
 implementation thereof, and ported _fuse-exfat_ and _fuse-ext2_ to Genode.
 Since FUSE file systems implement file operations by using the actual path
-as argument, it was easy to write a wrapper of these operations in form of a
+as an argument, it was easy to write a wrapper of these operations in form of a
 libc plugin called _libc_fuse_. By combing our FUSE implementation with the
 original 'FUSE' file-system server code, accessing the file system in question
 from a program has become possible. As Genode does not use the normal mount
@@ -637,8 +637,8 @@ uses the new libc_block plugin described in Section
 [New C-runtime plugin for accessing block devices] to direct requests
 referring to a virtual Unix block device to a Genode block session.
 
-For quickly trying our the new FUSE-based file systems, there are ready-to-use
-run script located at _libports/run/libc_fuse_ext2.run_ and
+For quickly trying out the new FUSE-based file systems, there are ready-to-use
+run scripts located at _libports/run/libc_fuse_ext2.run_ and
 _libc_fuse_exfat.run_ respectively. Prior using those run scripts, make sure
 to prepare the packages "exfat" and "fuse-ext2" as found in the _libports_
 repository.
@@ -659,7 +659,8 @@ DosBox
 
 DosBox is a DOS emulator, which is primarily focused on running DOS games.
 Because it is fun to play with, we used DosBox as a proof of concept to
-demonstrate the ease of porting existing software to Genode. A step-by-step
+demonstrate the ease of porting existing software to Genode and of course, we
+like to play as well.  A step-by-step
 tutorial of how to approach such porting work will be published soon. For
 trying out DosBox on Genode, we added a simple-to-use run script at
 _ports/run/dosbox.run_.
@@ -754,9 +755,9 @@ of the VMM. In particular, the VMM must not interfere with the guest-physical
 memory, which is always mapped at the lower part of the virtual address space.
 Maintaining this condition is complicated. Relaxing this rigid scheme would
 make our life much easier and would furthermore enable the use of shared
-libraries for the VMM. For this reason, we explored the option to run the
-guest OS in a distinct protection domain. This change does not only simplifies
-the VMM, but it also nearly doubles the maximum guest-memory size for on 32bit
+libraries for the VMM. For this reason, we explored the option of running the
+guest OS in a distinct protection domain. This change does not only simplify
+the VMM, but it also nearly doubles the maximum configurable guest-memory size for an 32bit
 Genode/NOVA host systems. The price for those benefits may be a degraded
 performance. However, using basic benchmarks (e.g., compiling the Linux kernel
 in a VM), we could hardly see negative effects. So we changed the Seoul VMM to
@@ -787,11 +788,11 @@ Execution on bare hardware (base-hw)
 The development of Genode's custom kernel platform for the ARM architecture
 goes full-steam ahead. The new version introduces a new way of using the
 kernel's asynchronous notification mechanism to deliver page faults and
-interrupts to the user land, yielding vastly simplified code compared to the
+interrupts to the user land, yielding vastly simplified code - compared to the
 classical (L4) approach of providing a page-fault protocol via synchronous
 IPC. To better support real-time workloads, we enhanced the scheduler with
 static priorities. Finally, we complemented the base-hw platform with the code
-needed for destructing processes. This way, we can execute dynamic workloads
+needed for process destruction. This way, we can execute dynamic workloads
 such as Noux. Base-hw is still in experimental stage and very much in flux.
 But the pace of the current development illustrates well that it is making its
 way to become a fully-fledged base platform for Genode soon.
@@ -806,7 +807,7 @@ capability selectors represents the final piece of the puzzle to use NOVA as a
 fully-supported kernel platform for Genode.
 
 A kernel capability selector on
-NOVA is similar in nature to a file descriptor on Unix as it refers to a kernel
+NOVA is similar in nature to a file descriptor on Unix, as it refers to a kernel
 object. In contrast to a file descriptor, however, the kernel object is not a
 file but the identity of an user-level object. Another difference is the way
 how a capability selector appears in a process. On Unix, most file descriptors
@@ -814,9 +815,9 @@ are directly created by a process via system calls like _open_ or _socket_.
 On NOVA, processes obtain capability selectors via IPC messages from other
 processes. Both
 file descriptors and capability selectors have in common that they should be
-closed when no longer needed. Otherwise, the name space of file descriptors or
+closed when they are no longer needed. Otherwise, the name space of file descriptors or
 capability selectors gets polluted by stale kernel objects and long-running
-processes bear the risk of a resource leak.
+processes bear the risk of resource leakage.
 
 Because Genode is implemented in C++, the framework is able to manage the
 lifetime of capability selectors by modelling the 'Capability' type as a
@@ -853,7 +854,7 @@ OKL4 kernel
 ===========
 
 We removed the support for the paravirtualized OKLinux kernel for OKL4.
-For running Linux on top of Genode, there exists several alternatives
+For running Linux on top of Genode, there exist several alternatives
 such as the Seoul VMM on NOVA, the ARM TrustZone support in base-hw, or
 or the paravirtualized L4Linux kernel running on top of Fiasco.OC.
 
