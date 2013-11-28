@@ -499,10 +499,17 @@ Pi using the following steps:
 
 * Download the USB driver
   ! make -C dde_linux prepare_rpi
+* Download the C library (needed for setjmp/longjmp as used by the USB
+  driver)
+  ! make -C libports prepare PKG=libc
 * Create a build directory
   ! ./tool/create_builddir hw_rpi BUILD_DIR=build.rpi
 * Change to the new build directory
   ! cd build.rpi
+* Enable the _dde_linux_ and _libports_ repositories by uncommenting the
+  corresponding lines in your build directory's _etc/build.conf_ file.
+  Optionally, you may also enable parallelized building by adding the line
+  ! MAKE += -j4
 * Build the demo scenario
   ! make run/demo
 * When the build process is finished, you can find the resulting ELF
@@ -530,7 +537,9 @@ Pi using the following steps:
   ! kernel=genode.img
   ! kernel_address=0x00800000
 
-; XXX Photos of Raspberry Pi with Genode
+[image rpi_demo]
+  Live from this year's Genode Hack'n'Hike: the graphical Genode demo running
+  on the Raspberry Pi
 
 
 Samsung Exynos 5
