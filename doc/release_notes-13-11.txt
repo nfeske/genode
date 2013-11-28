@@ -8,8 +8,58 @@
 
 
 
-; intro
+Unlike most Genode releases, which address two or three major topics, version
+13.11 brings plentiful new experimental features and improvements of details.
+The experimental ground covered by the new release reaches from the use of the
+Linux TCP/IP stack as user-level library, over the native use of Qt5 QML on
+Genode, new FUSE-based file systems, to the exploration of C++11 for the
+framework. In line with the previous releases, the new version extends the
+coverage of device drivers, particularly for Exynos-5 SoCs and the Raspberry
+Pi.
 
+Genode keeps steadily growing. With the code base approaching the number of
+150 components and as many test cases, we are concerned to keep the code
+orthogonal and void of bugs. Of course, automated testing helps a lot. But
+even more importantly, we are constantly exploring possible ways to refine the
+Genode API such that users of the framework are saved from writing
+boiler-plate code, falling into C++ pitfalls, or solving complicated problems
+again and again. One of those problems is lock-based synchronization, which
+seems to be omni-present in low-level systems code, particularly on classical
+L4-based systems. However, taking our existing components as use cases, we
+came to the realization that for most of our system services, in particular
+device drivers, multi-threading is more of a burden than a benefit. The
+current framework API, however, imposes the need to use multiple threads on
+many components that do not benefit from parallelism. This raises the question
+of how we can evolve the API to become a better fit for typical use cases and
+relieve the component developer from dealing with complicated synchronization
+problems. We seek the answer to such questions through experimentation. The
+new server API described in Section [New server API] and the use of this new
+facility by components like the nitpicker GUI server is such an experiment.
+
+For our mission to use Genode as a general-purpose OS, robust protocol stack
+such as file systems or networking stacks as fundamental. So we are exploring
+different ways to bring existing implementations to Genode. For this release,
+we took a closer look at FUSE as a provider for file systems. Section
+[File systems based on FUSE] gives a brief overview of the results. For
+networking, we undertook the challenge of turning the Linux TCP/IP stack into
+a user-level library that can used by Genode programs. Section
+[Gigbit networking using the Linux TCP/IP stack] explains how this TCP/IP
+stack can be used as an alternative to lwIP to improve gigabit-networking
+performance.
+
+The recently added support for Qt5-based applications raised repeated
+questions about using QML, which is the most distinctive feature of Qt5
+compared to Qt4. We are happy to report to have a positive answer to this
+question with the inclusion of initial QML support. Even though the support
+for QML is not mature yet, it is already possible to run the usual QML
+examples on Genode. Section [Qt5 with support for OpenGL and QML] outlines the
+steps for running simple QML applications.
+
+With regard to the support for hardware platforms, version 13.11 comes with
+extended driver support for Exynos-5 covering HDMI and USB 3.0 mass storage,
+as well as all drivers needed to execute interactive Genode scenarios on the
+Raspberry Pi. Furthermore, we enabled the use of ARM TrustZone on i.MX53 via
+our custom base-hw kernel platform.
 
 
 Base framework
