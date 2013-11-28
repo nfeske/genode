@@ -760,9 +760,8 @@ guest OS in a distinct protection domain. This change does not only simplify
 the VMM, but it also nearly doubles the maximum configurable guest-memory size for an 32bit
 Genode/NOVA host systems. The price for those benefits may be a degraded
 performance. However, using basic benchmarks (e.g., compiling the Linux kernel
-in a VM), we could hardly see negative effects. So we changed the Seoul VMM to
-use the separate PD as default behaviour. Co-location is still possible by
-setting Seoul's new 'colocate' configuration attribute to 1.
+in a VM), we could hardly see negative effects. Co-location and non Co-location
+can be set by Seoul's new 'colocate' configuration attribute.
 
 
 ARM TrustZone
