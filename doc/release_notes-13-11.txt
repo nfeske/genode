@@ -20,9 +20,9 @@ Dynamic resource balancing
 
 We have addressed the general problem of reassigning memory resources between
 subsystems in a dynamic fashion. The Genode architecture devises the explicit
-assignment of resources by a parent to its children. Once assigned, the amount
-of memory used to remain at the disposal of the respective child subsystem
-until the subsystem gets destroyed by the parent.
+assignment of resources by a parent process to its children. Once assigned,
+the amount of memory used to remain at the disposal of the respective child
+subsystem until the subsystem gets destroyed by the parent.
 
 Because Genode passes resources among processes along the branches of the
 process tree, the parent interface is the natural place for providing a
@@ -195,26 +195,26 @@ access a NIC session, as provided by a NIC driver. For using multiple
 networking application on the same machine, there is a NIC bridge component,
 which multiplexes one physical NIC to multiple virtual NICs.
 
-While experimenting with Gigabit networking, we discovered that lwIP lacks far
-behind the performance of modern TCP/IP stacks such as the one found in the
+While experimenting with gigabit networking, we discovered that lwIP lags far
+behind the performance of other modern TCP/IP stacks such as the one found in the
 Linux kernel. This observation prompted us to create an alternative to lwIP,
 which uses the TCP/IP stack of the Linux kernel. The result is called LXIP and
 can be found in the _dde_linux_ repository. LXIP consists of two parts, a port
 of the Linux TCP/IP stack to Genode and glue code to Genode's C runtime. It
 comes in the form of a shared library named _lxip.lib.so_. The IP stack can be
-interfaced using Genode's version of 'libc' by linking your application to the
-'lxip_libc' plugin in your 'target.mk' file.
+interfaced using Genode's version of libc by linking your application to the
+_lxip_libc_ plugin in your 'target.mk' file.
 
 From the application developer's point of view, the use of LXIP instead of
 LwIP is as simple as replacing the 'lwip_libc_dhcp' library with the
-'lxip_libc' library. Note however, that LXIP has much larger memory demands
-compared to lwIP. For a quick test drive of LXIP, we have prepared a set
-of run scripts at _libports/run/_ that execute netperf using LXIP in different
-settings. The _netperf_lxip.run_ script connects netperf directly with a NIC
-driver, the _netperf_lxip_bridge.run_ script adds a NIC bridge as an
-indirection between the netperf application and the driver, and the
-_netperf_lxip_usb30.run_ script targets a Gigabit network-over-USB3 network
-adapter.
+'lxip_libc' library. Note however, that LXIP has larger memory demands
+compared to lwIP. So quota adjustments may be needed. For a quick test drive
+of LXIP, we have prepared a set of run scripts at _libports/run/_ that execute
+netperf using LXIP in different settings. The _netperf_lxip.run_ script
+connects netperf directly with a NIC driver, the _netperf_lxip_bridge.run_
+script adds a NIC bridge as an indirection between the netperf application and
+the driver, and the _netperf_lxip_usb30.run_ script targets a Gigabit
+network-over-USB3 network adapter.
 
 
 Configuration and session-label utilities
@@ -235,8 +235,8 @@ into two classes, we make it more flexible. Originally, the constructor
 solely accepted an args string, which made it unusable for situations where we
 already had extracted the session label (e.g., stored in the session meta
 data of a server). Now, the extraction of the label from the args string is
-performed by the new Session_label class instead, which, in turn, can be
-passed to the constructor of Session_policy. This change causes a minor API
+performed by the new 'Session_label' class instead, which, in turn, can be
+passed to the constructor of 'Session_policy'. This change causes a minor API
 change. The following code
 ! Session_policy policy(session_args);
 must be turned into
@@ -251,8 +251,9 @@ In Genode, inter-process communication can be implemented synchronously
 via RPC calls or asynchronously via signals. Most services use a combination
 of both mechanisms. For example, a block driver provides an RPC interface
 for querying the size of the block device. However, the actual transactions
-are communicated via shared memory and asynchronous notifications.
-For this reason, most servers need to handle both, incoming RPCs and signals.
+are communicated via shared memory and asynchronous notifications to maximize
+throughput. For this reason, most servers need to handle both, incoming RPCs
+and signals.
 
 RPCs are dispatched by special threads called RPC entrypoints whereas signals
 can be waited-for by any thread, most commonly the main thread. Consequently,
@@ -292,7 +293,8 @@ associated to signal dispatchers.
 Over the course of the next year, we will evaluate this idea by migrating
 existing servers to the new API and refining the server library as needed.
 If the new approach stands the test of time, we will possibly replace
-the existing Genode API with the much simpler 'Server::Entrypoint' interface.
+parts of the existing Genode API with the much simpler 'Server::Entrypoint'
+interface.
 
 
 Nitpicker GUI server
@@ -353,7 +355,7 @@ donating much session quota in advance. The old interface required each
 screen-size-dependent client to donate as much memory as needed to
 allocate a screen-sized virtual framebuffer. For clients that are
 interested in the screen size but cover just a small portion of the
-screen (e.g., a banner, a menu, an applet that sits in the screen
+screen (e.g., a banner, a menu, or an applet that sits in the screen
 corner), this over-provisioning is painful. The new interface allows such
 clients to upgrade the session quota for an existing session as needed.
 
@@ -389,7 +391,7 @@ New C-runtime plugin for accessing block devices
 Certain third-party code, which mostly originates from POSIX-like systems,
 uses normal file operations to access a block device from userspace , e.g.
 fsck(8) or mkfs(8). For this reason, access to a block device by using
-Genode's Block_session interface through the normal C-runtime file operations
+Genode's block-session interface through the normal C-runtime file operations
 is needed. The solution comes in the form of the new _libc_block_ plugin. A
 program linked against this plugin obtains access to a block-session by
 opening the special device file "/dev/blkdev". Reading and writing from and to
@@ -418,7 +420,7 @@ entry.
 !   <policy label="client_2" root="/client_2_root" />
 ! </config>
 
-The provided service is comparable to 'chroot' a client of the server.
+The provided service is comparable to "chrooting" a client.
 Accesses outside of the tree are denied by the server. Like the common
 practice with chroot, the client directory trees can be assembled by
 linking files into the visible directory tree. As we do not depend on
@@ -431,7 +433,7 @@ file-system interface.
 Block-session extended by sync call
 ===================================
 
-We extended the Block-session interface with the ability to indicate that
+We extended the block-session interface with the ability to indicate that
 synchronization with the device is necessary. By now, all block device drivers
 in Genode work fully synchronous. Hence, there was no need for an explicit
 sync request by the client. When reworking block-device drivers to work
@@ -483,8 +485,8 @@ Genode's graphical demo scenario works well on the Pi. This required
 us to supplement device drivers for USB (for USB HID), Videocore mboxes
 (power management and HDMI), and for the framebuffer.
 
-The USB host-controller driver is ported from the official Linux kernel
-for the Raspberry Pi. Unfortunately, it is not part of the normal Linux
+The USB host-controller driver is ported from the official fork of the Linux
+kernel for the Raspberry Pi. Unfortunately, it is not part of the normal Linux
 kernel. For this reason, we need to download it separately. There exists a
 'prepare_rpi' rule in the 'dde_linux/Makefile' to automate this process.
 
@@ -632,13 +634,13 @@ from a program has become possible. As Genode does not use the normal mount
 mechanism employed by the original FUSE implementation, the start-up code,
 normally implemented in the main routine of a FUSE file-system server, needs
 to be provided by the FUSE file system port itself. The FUSE file system
-uses the new libc_block plugin described in Section
+uses the new _libc_block_ plugin described in Section
 [New C-runtime plugin for accessing block devices] to direct requests
 referring to a virtual Unix block device to a Genode block session.
 
 For quickly trying out the new FUSE-based file systems, there are ready-to-use
 run scripts located at _libports/run/libc_fuse_ext2.run_ and
-_libc_fuse_exfat.run_ respectively. Prior using those run scripts, make sure
+_libc_fuse_exfat.run_ respectively. Before using those run scripts, make sure
 to prepare the packages "exfat" and "fuse-ext2" as found in the _libports_
 repository.
 
@@ -659,10 +661,9 @@ DosBox
 DosBox is a DOS emulator, which is primarily focused on running DOS games.
 Because it is fun to play with, we used DosBox as a proof of concept to
 demonstrate the ease of porting existing software to Genode and of course, we
-like to play as well.  A step-by-step
-tutorial of how to approach such porting work will be published soon. For
-trying out DosBox on Genode, we added a simple-to-use run script at
-_ports/run/dosbox.run_.
+like to play as well. A step-by-step tutorial of how to approach such porting
+work will be published soon. For trying out DosBox on Genode, we added a
+simple-to-use run script at _ports/run/dosbox.run_.
 
 
 Mesa / EGL driver
@@ -692,13 +693,13 @@ GNU Debugger
 
 We improved the GDB support on Genode to cover advanced debugging features,
 namely the 'set var' and 'call' commands. As those commands require the
-debugger to modify the content of CPU registers of threads, we enhanced the
+debugger to modify the content of CPU registers of threads, we enhanced
 Genode's 'Cpu_session::state' function such that it can do both obtain and
 modify the state of a thread while the thread is paused.
 
 To make the use of GDB for debugging Genode subsystems more comfortable, we
 added a new command named "gdb" to Genode's command-line interface
-(cli_monitor). This command works similarly to the 'start' command, but
+(cli_monitor). This command works similarly to the "start" command, but
 instead of starting the subsystem binary directly, an _init_ subsystem gets
 started, which then starts _terminal_crosslink_, Noux, GDB and GDB monitor,
 which, in turn, starts the application binary as its target. The "gdb" command
@@ -707,12 +708,12 @@ supports the following command line options:
 :--ram: the initial RAM quota provided to the whole subsystem
   (including the GDB-related components)
 :--ram-limit: limit for expanding RAM quota
-:--gdb-ram-preserve: the RAM quota that 'gdb_monitor' should preserve
+:--gdb-ram-preserve: the RAM quota that GDB monitor should preserve
   for itself
 
-For the "gdb" command to work, 'terminal_crosslink', 'noux', 'gdb_monitor' and
-the file 'gdb_command_config' are expected to be present as ROM modules. The
-Noux GDB client needs to get mounted at _/bin_ in Noux and the target binaries
+For the "gdb" command to work, _terminal_crosslink_, _noux_, _gdb_monitor_ and
+the file _gdb_command_config_ are expected to be present as ROM modules. The
+GDB client needs to get mounted at _/bin_ in Noux and the target binaries
 need to be available as ROM modules (loaded by GDB monitor) and also mounted
 at _/gdb_ in Noux (loaded by the GDB client). Additionally, the source code of
 the target application can be provided at _/gdb/src/_ to Noux to enable
@@ -742,7 +743,7 @@ Virtualization on NOVA
 
 To ease the creation of custom virtual machine monitors on top of NOVA, we
 added a set of generic utilities to the public include location
-'ports/include/vmm'. As a nice side effect, this change simplifies the
+_ports/include/vmm_. As a nice side effect, this change simplifies the
 Genode-specific code of the Seoul VMM. In the future, the VMM utilities
 will ease the realization of alternative virtual-machine monitors on the NOVA
 hypervisor.
@@ -756,11 +757,11 @@ Maintaining this condition is complicated. Relaxing this rigid scheme would
 make our life much easier and would furthermore enable the use of shared
 libraries for the VMM. For this reason, we explored the option of running the
 guest OS in a distinct protection domain. This change does not only simplify
-the VMM, but it also nearly doubles the maximum configurable guest-memory size for an 32bit
-Genode/NOVA host systems. The price for those benefits may be a degraded
-performance. However, using basic benchmarks (e.g., compiling the Linux kernel
-in a VM), we could hardly see negative effects. Co-location and non Co-location
-can be set by Seoul's new 'colocate' configuration attribute.
+the VMM, but it also nearly doubles the maximum configurable guest-memory size
+for an 32bit Genode/NOVA host systems. The price for those benefits may be a
+degraded performance. However, using basic benchmarks (e.g., compiling the
+Linux kernel in a VM), we could hardly see negative effects. Co-location and
+non-co-location can be set by Seoul's new 'colocate' configuration attribute.
 
 
 ARM TrustZone
@@ -791,7 +792,7 @@ classical (L4) approach of providing a page-fault protocol via synchronous
 IPC. To better support real-time workloads, we enhanced the scheduler with
 static priorities. Finally, we complemented the base-hw platform with the code
 needed for process destruction. This way, we can execute dynamic workloads
-such as Noux. Base-hw is still in experimental stage and very much in flux,
+such as Noux. Base-hw is still at an experimental stage and very much in flux,
 but the pace of the current development illustrates well that it is making its
 way to become a fully-fledged base platform for Genode soon.
 
@@ -804,18 +805,17 @@ in the previous releases, the new implemented life-time management of kernel
 capability selectors represents the final piece of the puzzle to use NOVA as a
 fully-supported kernel platform for Genode.
 
-A kernel capability selector on
-NOVA is similar in nature to a file descriptor on Unix, as it refers to a kernel
-object. In contrast to a file descriptor, however, the kernel object is not a
-file but the identity of an user-level object. Another difference is the way
-how a capability selector appears in a process. On Unix, most file descriptors
-are directly created by a process via system calls like _open_ or _socket_.
-On NOVA, processes obtain capability selectors via IPC messages from other
-processes. Both
-file descriptors and capability selectors have in common that they should be
-closed when they are no longer needed. Otherwise, the name space of file descriptors or
-capability selectors gets polluted by stale kernel objects and long-running
-processes bear the risk of resource leakage.
+A kernel capability selector on NOVA is similar in nature to a file descriptor
+on Unix, as it refers to a kernel object. In contrast to a file descriptor,
+however, the kernel object is not a file but the identity of an user-level
+object. Another difference is the way how a capability selector appears in a
+process. On Unix, most file descriptors are directly created by a process via
+system calls like _open_ or _socket_. On NOVA, processes obtain capability
+selectors via IPC messages from other processes. Both file descriptors and
+capability selectors have in common that they should be closed when they are
+no longer needed. Otherwise, the name space of file descriptors or capability
+selectors gets polluted by stale kernel objects and long-running processes
+bear the risk of resource leakage.
 
 Because Genode is implemented in C++, the framework is able to manage the
 lifetime of capability selectors by modelling the 'Capability' type as a
@@ -832,16 +832,16 @@ To enable the advanced features of the GNU debugger as described in Section
 that the register contents of a paused thread (which is not currently
 executing a syscall) can get modified by the 'Cpu_session::state()' function.
 
-L4Linux is paravirtualized Linux kernel that can be used on top of the
+L4Linux is a paravirtualized Linux kernel that can be used on top of the
 Fiasco.OC kernel. To experiment with use cases where many instances of L4Linux
 are executed on a single machine, and as a way to exercise the new
-resource-balancing mechanisms described in Section [Dynamic resource
-balancing], we extended L4Linux with a custom ballooning mechanism, which is
-similar to solutions like XEN's balloon driver. For this, the new parent
-interface extensions for requesting and yielding resources are used. L4Linux
-registers a yield signal context at its parent. Whenever the parent triggers a
-yield, the balloon driver "inflates its balloon", which means that it requests
-all pages available, and then frees the corresponding memory dataspaces.
+resource-balancing mechanisms described in Section [Dynamic resource balancing],
+we extended L4Linux with a custom ballooning mechanism, which is similar to
+solutions like Xen's balloon driver. For this, the new parent interface
+extensions for requesting and yielding resources are used. L4Linux registers a
+yield signal context at its parent. Whenever the parent triggers a yield, the
+balloon driver "inflates its balloon", which means that it requests all pages
+available, and then frees the corresponding memory dataspaces.
 
 The ballooning driver is enabled by default. From Genode's perspective,
 L4Linux behaves like a regular Genode subsystem that positively responds to
