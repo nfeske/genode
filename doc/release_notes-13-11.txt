@@ -43,7 +43,7 @@ at its parent. The request takes the amount of desired resources as argument.
 A child would invoke this function if it detects scarceness of resources.
 If a custom signal handler is installed via 'resource_avail_sigh', the
 function returns immediately and the child must wait for the reception
-of the corresponding signal. Of no signal handler was explicitly installed,
+of the corresponding signal. If no signal handler was explicitly installed,
 the 'Genode::env()' handles the request via a built-in signal handler that
 blocks until the parent satisfies the request.
 
@@ -93,7 +93,7 @@ the RPC framework regarding the number of supported RPC function arguments.
 
 The C++11 standard is enabled by default for software built via the Genode
 build system. If you hit incompatibilities with existing software that
-relies on an older version of the C++ standard - as is the case for some
+relies on a prior version of the C++ standard - as is the case for some
 parts of Qt4 - you can override the default by manually defining
 'CC_CXX_OPT_STD' in the build-description file of the offending target.
 
@@ -102,17 +102,17 @@ Improved event tracing
 ======================
 
 In the previous release, we introduced Genode's event tracing facility that
-enables us to capture inter-process communication and component behaviour
+enables us to capture inter-process communication and component behavior
 with negligible overhead. To make the mechanism usable in practice, an
 easy-to-use front end is desired. With the current release, we have taken
 the first steps in this direction. The front-end API is located at
 _base/include/base/trace/buffer.h_. It hides the technical details of
-how a trace buffer is realized behind an easy-to-use interface for
+how a trace buffer is realized behind a convenient interface for
 iterating over events. Furthermore, we have added a mechanism for detecting
 buffer wraps and expose this information through the API.
 
 Thanks to this convenience API, the creation of custom trace monitors becomes
-much more straight-forward. A simple trace monitor implementation using the
+much more straight-forward. A simple trace-monitor implementation using the
 new API can be found at _os/src/test/trace/_.
 
 
@@ -159,7 +159,7 @@ physical bits in the logical bit set. Each argument can be a register, a
 bit field, or another bit set. The declaration of such a composed bit set for
 the example above looks as follows:
 
-! struct Clock : Bitset_4<Clock_1::Value_1,
+! struct Clock : Bitset_3<Clock_1::Value_1,
 !                         Clock_1::Value_2,
 !                         Clock_2::Value> { };
 
@@ -174,12 +174,13 @@ operations on the registers 0x2 and 0x4.
 New utility for handling character buffers
 ==========================================
 
-Throughout Genode, we find the manually instantiated char arrays and checks for
+Throughout Genode, we find manually instantiated char arrays and checks for
 null-termination scattered throughout the code base, mostly in connection with
 RPC functions. To avoid repetitions of such C-fashioned and bug-prone code, we
 added a new 'String' template class to _util/string.h_. It plainly holds a
 null-terminated string to be stored as a member variable (e.g., a session
-label) or passed as RPC argument. It is not intended to become a string API.
+label) or passed as RPC argument. The string class is not intended to become
+a full-fledged string-handling API though.
 
 
 Low-level OS infrastructure
@@ -206,7 +207,7 @@ interfaced using Genode's version of 'libc' by linking your application to the
 
 From the application developer's point of view, the use of LXIP instead of
 LwIP is as simple as replacing the 'lwip_libc_dhcp' library with the
-'lxip_libc' library. Note, however, that LXIP has much larger memory demands
+'lxip_libc' library. Note however, that LXIP has much larger memory demands
 compared to lwIP. For a quick test drive of LXIP, we have prepared a set
 of run scripts at _libports/run/_ that execute netperf using LXIP in different
 settings. The _netperf_lxip.run_ script connects netperf directly with a NIC
@@ -345,7 +346,7 @@ by launchpad, testnit will receive the events. If the order was reversed,
 launchpad would always receive the events.
 
 Furthermore, the new version allows clients to dynamically allocate virtual
-frame buffers during the lifetime of the session. This solves two problems:
+framebuffers during the lifetime of the session. This solves two problems:
 
 First, it enables a client to create a connection to nitpicker without
 donating much session quota in advance. The old interface required each
@@ -353,13 +354,13 @@ screen-size-dependent client to donate as much memory as needed to
 allocate a screen-sized virtual framebuffer. For clients that are
 interested in the screen size but cover just a small portion of the
 screen (e.g., a banner, a menu, an applet that sits in the screen
-corner), this overprovisioning is painful. The new interface allows such
+corner), this over-provisioning is painful. The new interface allows such
 clients to upgrade the session quota for an existing session as needed.
 
 Second, because each nitpicker session used to have a virtual frame
 buffer with a fixed size over the lifetime of the session, a client that
 wanted to implement a variable-sized window had to either vastly
-overprovide resources (by opening a session as large as the screen just
+over-provide resources (by opening a session as large as the screen just
 in order to be prepared for the worst case of a maximized window), or it
 had to replace the session by a new one (thereby discarding the stacking
 order of the old views) each time the window changes its dimensions. The
@@ -369,8 +370,8 @@ new interface accommodates such clients much better.
 New terminal services
 =====================
 
-The new *file terminal* located at _gems/src/server/file_terminal/_ is a service
-that provides Genode's Terminal_session interface for a given file via a
+The new file terminal located at _gems/src/server/file_terminal/_ is a service
+that provides Genode's 'Terminal_session' interface for a given file via a
 file-system session.
 ! <config>
 !   <policy label="client1" filename="test.txt" />
@@ -378,7 +379,7 @@ file-system session.
 ! </config>
 To keep things simple, a client can open only one file at the moment.
 
-The new *log terminal* located at _os/src/server/log_terminal/_ forwards
+The new log terminal located at _os/src/server/log_terminal/_ forwards
 terminal output to a LOG session.
 
 
@@ -434,12 +435,12 @@ We extended the Block-session interface with the ability to indicate that
 synchronization with the device is necessary. By now, all block device drivers
 in Genode work fully synchronous. Hence, there was no need for an explicit
 sync request by the client. When reworking block-device drivers to work
-asynchronously to potentially increase the performance, or when adding a block
+asynchronously to potentially increase the performance or when adding a block
 cache component, the need for a synchronization call came up. Clients, like
-for instance a file system, have to ensure that its data is written back to
+for instance a file system, have to ensure that their data is written back to
 the device at certain points of execution. The new 'sync()' call enables block
 server developers to implement their components asynchronously, while at the
-same time account for the integrity needs of Block-session clients.
+same time account for the integrity needs of block-session clients.
 
 
 Configurable NIC buffer sizes for lwIP-based applications
@@ -453,10 +454,9 @@ Applications that require high throughput need large buffers whereas
 applications that issue sporadic network traffic can live with small buffers.
 Therefore, we extended the lwIP library's initialization with the ability to
 manually define the buffer sizes. Moreover, as lwIP is mostly used as network
-backend for Genode's libc, we extended the libc lwip plugin with an
-appropriated configuration option. If you want to increase the default buffer
-sizes for your network application, you can add the following to the
-configuration section of it:
+backend for Genode's libc, we extended the libc lwip plugin with a proper
+configuration option. To increase the default buffer sizes for a network
+application, the following snippet can be added to its configuration section
 
 ! <libc rx_buf_size="1M" tx_buf_size="1M"/>
 
@@ -467,9 +467,8 @@ Support for recursive mutexes within the pthread library
 As argued by one of the authors of the POSIX thread API,
 [http://www.zaval.org/resources/library/butenhof1.html - recursive mutexes are bad].
 Until now, we happily got away with not supporting them in Genode's pthread
-library.
-However, during our work on enabling QML on Genode, we hit the problem that
-the ported 3rd-party code relies on recursive mutex acquisition, which
+library. However, during our work on enabling QML on Genode, we hit the problem
+of ported 3rd-party code relying on recursive-mutex acquisition, which
 prompted us to finally implement the semantics as specified in the standard.
 
 
@@ -548,7 +547,7 @@ Samsung Exynos 5
 We extended the support for the Exynos-5 SoC with a new HDMI driver located at
 _os/src/drivers/framebuffer/exynos5_ as well as support for USB 3.0 mass
 storage. Thereby Genode reaches a pretty thorough driver coverage for the
-Exynos-5 platform including SATA 3.0, USB 2.0, USB 3.0, DVFS, eMMC,
+Exynos-5 platform including SATA 3.0 and 2.0, USB 3.0, DVFS, eMMC,
 networking, and HDMI.
 
 To exercise those features, we have assembled an integrated system scenario
@@ -631,7 +630,7 @@ libc plugin called _libc_fuse_. By combing our FUSE implementation with the
 original 'FUSE' file-system server code, accessing the file system in question
 from a program has become possible. As Genode does not use the normal mount
 mechanism employed by the original FUSE implementation, the start-up code,
-normally implemented in the main routine of a FUSE file system server, needs
+normally implemented in the main routine of a FUSE file-system server, needs
 to be provided by the FUSE file system port itself. The FUSE file system
 uses the new libc_block plugin described in Section
 [New C-runtime plugin for accessing block devices] to direct requests
@@ -650,7 +649,7 @@ Launchpad
 The launchpad demo application has been updated to use a more modern
 configuration syntax and has its built-in default configuration removed.
 Furthermore, launch entries have become able to supply configurations
-to sub systems, either via a '<config>' sub node, or a '<configfile>'
+to sub systems, either via a '<config>' sub node or a '<configfile>'
 declaration.
 
 
@@ -744,7 +743,7 @@ Virtualization on NOVA
 To ease the creation of custom virtual machine monitors on top of NOVA, we
 added a set of generic utilities to the public include location
 'ports/include/vmm'. As a nice side effect, this change simplifies the
-Genode-specific code of the Vancouver VMM. In the future, the VMM utilities
+Genode-specific code of the Seoul VMM. In the future, the VMM utilities
 will ease the realization of alternative virtual-machine monitors on the NOVA
 hypervisor.
 
@@ -775,7 +774,7 @@ current release, we have added the i.MX53 SoC as additional platform to
 experiment with its TrustZone aware devices. If you want to try out a very
 basic example, starting a Linux instance running on the non-secure world
 beside Genode running in the secure one, you can test the 'tz_vmm.run' run
-script on either the Versatile Express, or i.MX53 Quickstart board, or tablet.
+script on Versatile Express, i.MX53 Quickstart board, or i.MX53 SABRE tablet.
 
 
 Platforms
@@ -792,8 +791,8 @@ classical (L4) approach of providing a page-fault protocol via synchronous
 IPC. To better support real-time workloads, we enhanced the scheduler with
 static priorities. Finally, we complemented the base-hw platform with the code
 needed for process destruction. This way, we can execute dynamic workloads
-such as Noux. Base-hw is still in experimental stage and very much in flux.
-But the pace of the current development illustrates well that it is making its
+such as Noux. Base-hw is still in experimental stage and very much in flux,
+but the pace of the current development illustrates well that it is making its
 way to become a fully-fledged base platform for Genode soon.
 
 
@@ -838,11 +837,11 @@ Fiasco.OC kernel. To experiment with use cases where many instances of L4Linux
 are executed on a single machine, and as a way to exercise the new
 resource-balancing mechanisms described in Section [Dynamic resource
 balancing], we extended L4Linux with a custom ballooning mechanism, which is
-similar to solutions like XEN's balloon driver. Therefore the new parent
+similar to solutions like XEN's balloon driver. For this, the new parent
 interface extensions for requesting and yielding resources are used. L4Linux
 registers a yield signal context at its parent. Whenever the parent triggers a
 yield, the balloon driver "inflates its balloon", which means that it requests
-all pages available, and then frees the corresponding back-end memory.
+all pages available, and then frees the corresponding memory dataspaces.
 
 The ballooning driver is enabled by default. From Genode's perspective,
 L4Linux behaves like a regular Genode subsystem that positively responds to
@@ -855,5 +854,5 @@ OKL4 kernel
 We removed the support for the paravirtualized OKLinux kernel for OKL4.
 For running Linux on top of Genode, there exist several alternatives
 such as the Seoul VMM on NOVA, the ARM TrustZone support in base-hw, or
-or the paravirtualized L4Linux kernel running on top of Fiasco.OC.
+the paravirtualized L4Linux kernel running on top of Fiasco.OC.
 
