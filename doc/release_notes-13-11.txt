@@ -36,14 +36,14 @@ problems. We seek the answer to such questions through experimentation. The
 new server API described in Section [New server API] and the use of this new
 facility by components like the nitpicker GUI server is such an experiment.
 
-For our mission to use Genode as a general-purpose OS, robust protocol stack
-such as file systems or networking stacks as fundamental. So we are exploring
+For our mission to use Genode as a general-purpose OS, robust protocol stacks
+such as file systems or networking stacks are fundamental. So we are exploring
 different ways to bring existing implementations to Genode. For this release,
 we took a closer look at FUSE as a provider for file systems. Section
 [File systems based on FUSE] gives a brief overview of the results. For
 networking, we undertook the challenge of turning the Linux TCP/IP stack into
-a user-level library that can used by Genode programs. Section
-[Gigbit networking using the Linux TCP/IP stack] explains how this TCP/IP
+a user-level library that can be used by Genode programs. Section
+[Gigabit networking using the Linux TCP/IP stack] explains how this TCP/IP
 stack can be used as an alternative to lwIP to improve gigabit-networking
 performance.
 
@@ -236,8 +236,8 @@ a full-fledged string-handling API though.
 Low-level OS infrastructure
 ###########################
 
-Gigbit networking using the Linux TCP/IP stack
-==============================================
+Gigabit networking using the Linux TCP/IP stack
+===============================================
 
 On Genode, we used to rely on lwIP as TCP/IP stack. Network-using applications
 would simply link against the lwIP stack and our libc_lwip_dhcp plugin to
