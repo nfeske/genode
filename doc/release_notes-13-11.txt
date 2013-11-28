@@ -72,8 +72,8 @@ those resources from the child's RAM quota.
 
 The protocol described above has been implemented into the base system
 (i.e., 'Genode::Parent', 'Genode::Child', 'Genode::env()') as well as
-the interactive console called cli_monitor. For the latter, we introduced new
-commands for dynamically balancing RAM between subsystems. The 'status'
+the interactive console called _cli_monitor_. For the latter, we introduced
+new commands for dynamically balancing RAM between subsystems. The 'status'
 command prints a table with the RAM status of each subsystem. The 'ram'
 command changes the quota or a quota limit of a given subsystem. The quota
 limit can be defined to allow the on-demand expansion of the quota. Finally,
@@ -124,7 +124,7 @@ access to individual bits or consecutive bit fields of hardware registers.
 However, we still stumbled over use cases that the current API does not
 cover, particularly the access to bit fields that are not consecutive or even
 distributed over multiple registers. For example, values of the HDMI
-configuration of the Exnos-5 SoC are scattered over multiple hardware
+configuration of the Exynos-5 SoC are scattered over multiple hardware
 registers. Hence, we extended the MMIO API to hide those peculiarities behind
 an easy-to-use interface.
 
@@ -186,8 +186,8 @@ a full-fledged string-handling API though.
 Low-level OS infrastructure
 ###########################
 
-Gigbit networking using the Linux TCP/IP stack
-==============================================
+Gigabit networking using the Linux TCP/IP stack
+===============================================
 
 On Genode, we used to rely on lwIP as TCP/IP stack. Network-using applications
 would simply link against the lwIP stack and our libc_lwip_dhcp plugin to
@@ -196,14 +196,14 @@ networking application on the same machine, there is a NIC bridge component,
 which multiplexes one physical NIC to multiple virtual NICs.
 
 While experimenting with gigabit networking, we discovered that lwIP lags far
-behind the performance of other modern TCP/IP stacks such as the one found in the
-Linux kernel. This observation prompted us to create an alternative to lwIP,
-which uses the TCP/IP stack of the Linux kernel. The result is called LXIP and
-can be found in the _dde_linux_ repository. LXIP consists of two parts, a port
-of the Linux TCP/IP stack to Genode and glue code to Genode's C runtime. It
-comes in the form of a shared library named _lxip.lib.so_. The IP stack can be
-interfaced using Genode's version of libc by linking your application to the
-_lxip_libc_ plugin in your 'target.mk' file.
+behind the performance of other modern TCP/IP stacks such as the one found in
+the Linux kernel. This observation prompted us to create an alternative to
+lwIP, which uses the TCP/IP stack of the Linux kernel. The result is called
+LXIP and can be found in the _dde_linux_ repository. LXIP consists of two
+parts, a port of the Linux TCP/IP stack to Genode and glue code to Genode's
+C runtime. It comes in the form of a shared library named _lxip.lib.so_. The
+IP stack can be interfaced using Genode's version of libc by linking your
+application to the _lxip_libc_ plugin in your 'target.mk' file.
 
 From the application developer's point of view, the use of LXIP instead of
 LwIP is as simple as replacing the 'lwip_libc_dhcp' library with the
@@ -405,7 +405,7 @@ New file-system server for hybrid Genode/Linux systems
 
 So far, scenarios depending on file accesses via the file-system session
 could not be run on Genode/Linux. But with the growing complexity of
-software that is ported to the framework the demand for a full-fledged
+software that is ported to the framework, the demand for a full-fledged
 rapid-prototyping environment on Linux grows too. For example, our
 former approach to load required files as ROM modules stretches its
 limits with file sizes of several gigabytes. In the current release,
@@ -425,7 +425,7 @@ Accesses outside of the tree are denied by the server. Like the common
 practice with chroot, the client directory trees can be assembled by
 linking files into the visible directory tree. As we do not depend on
 hard links, the client tree may include links to entire sub-trees of
-the host file system via symbolic links to directories. Note, the
+the host file system via symbolic links to directories. Note that the
 current implementation does not support to create symlinks via the
 file-system interface.
 
@@ -440,9 +440,9 @@ sync request by the client. When reworking block-device drivers to work
 asynchronously to potentially increase the performance or when adding a block
 cache component, the need for a synchronization call came up. Clients, like
 for instance a file system, have to ensure that their data is written back to
-the device at certain points of execution. The new 'sync()' call enables block
-server developers to implement their components asynchronously, while at the
-same time account for the integrity needs of block-session clients.
+the device at certain points of execution. The new 'sync()' call enables
+block-server developers to implement their components asynchronously, while at
+the same time account for the integrity needs of block-session clients.
 
 
 Configurable NIC buffer sizes for lwIP-based applications
@@ -758,7 +758,7 @@ make our life much easier and would furthermore enable the use of shared
 libraries for the VMM. For this reason, we explored the option of running the
 guest OS in a distinct protection domain. This change does not only simplify
 the VMM, but it also nearly doubles the maximum configurable guest-memory size
-for an 32bit Genode/NOVA host systems. The price for those benefits may be a
+for a 32bit Genode/NOVA host system. The price for those benefits may be a
 degraded performance. However, using basic benchmarks (e.g., compiling the
 Linux kernel in a VM), we could hardly see negative effects. Co-location and
 non-co-location can be set by Seoul's new 'colocate' configuration attribute.
