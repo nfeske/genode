@@ -52,6 +52,12 @@ class Cpu_load_display::Timeline : public Genode::List<Timeline>::Element
 
 		unsigned _sum_activity = 0;
 
+		unsigned _saved_activity[HISTORY_LEN];
+
+		unsigned _sum_saved_activity = 0;
+
+		unsigned _saved_now = 0;
+
 		Label _label;
 
 		/**
@@ -73,7 +79,8 @@ class Cpu_load_display::Timeline : public Genode::List<Timeline>::Element
 		:
 			_subject_id(subject_id), _label(label)
 		{
-			Genode::memset(_activity, 0, sizeof(_activity));
+			Genode::memset(_activity,       0, sizeof(_activity));
+			Genode::memset(_saved_activity, 0, sizeof(_saved_activity));
 		}
 
 		void activity(unsigned long recent_activity, unsigned now)
@@ -87,17 +94,31 @@ class Cpu_load_display::Timeline : public Genode::List<Timeline>::Element
 			_sum_activity += recent_activity;
 		}
 
-		unsigned long activity(unsigned i) const
+		void save(unsigned now)
 		{
-			return _activity[i % HISTORY_LEN];
+			for (unsigned i = 0; i < HISTORY_LEN; i++)
+				_saved_activity[i] = _activity[i];
+
+			_sum_saved_activity = _sum_activity;
+			_saved_now = now;
 		}
+
+		unsigned long saved_activity(unsigned i) const
+		{
+			return _saved_activity[i % HISTORY_LEN];
+		}
+
+		unsigned saved_now() const { return _saved_now; }
 
 		bool has_subject_id(unsigned subject_id) const
 		{
 			return _subject_id == subject_id;
 		}
 
-		bool idle() const { return _sum_activity == 0; }
+		bool idle() const
+		{
+			return _sum_activity == 0 && _sum_saved_activity == 0;
+		}
 
 		bool kernel() const
 		{
@@ -181,7 +202,7 @@ class Cpu_load_display::Cpu : public Genode::List<Cpu>::Element
 
 				if (t->idle()) {
 
-					PDBG("discard timeline");
+					PINF("discard timeline");
 					_timelines.remove(t);
 					Genode::destroy(Genode::env()->heap(), t);
 				}
@@ -193,9 +214,15 @@ class Cpu_load_display::Cpu : public Genode::List<Cpu>::Element
 			unsigned long sum = 0;
 
 			for (Timeline const *t = _timelines.first(); t; t = t->next())
-				sum += t->activity(i);
+				sum += t->saved_activity(i);
 
 			return sum;
+		}
+
+		void save_timelines(unsigned now)
+		{
+			for (Timeline *t = _timelines.first(); t; t = t->next())
+				t->save(now);
 		}
 
 		template <typename FN>
@@ -254,6 +281,12 @@ class Cpu_load_display::Cpu_registry
 				_import_trace_subject(subject, now); });
 		}
 
+		void save_timelines(unsigned now)
+		{
+			for (Cpu *cpu = _cpus.first(); cpu; cpu = cpu->next())
+				cpu->save_timelines(now);
+		}
+
 		template <typename FN>
 		void for_each_cpu(FN const &fn) const
 		{
@@ -270,7 +303,8 @@ class Cpu_load_display::Cpu_registry
 
 
 template <typename PT>
-class Cpu_load_display::Scene : public Nano3d::Scene<PT>
+class Cpu_load_display::Scene : public Nano3d::Scene<PT>,
+                                public Nano3d::Input_handler
 {
 	private:
 
@@ -306,25 +340,10 @@ class Cpu_load_display::Scene : public Nano3d::Scene<PT>
 
 		Genode::Signal_dispatcher<Scene> _trace_subjects_dispatcher;
 
-	public:
-
-		Scene(Genode::Signal_receiver &sig_rec, unsigned update_rate_ms,
-		      Nitpicker::Point pos, Nitpicker::Area size)
-		:
-			Nano3d::Scene<PT>(sig_rec, update_rate_ms, pos, size), _size(size),
-			_config_dispatcher(sig_rec, *this, &Scene::_handle_config),
-			_trace_subjects_dispatcher(sig_rec, *this, &Scene::_handle_trace_subjects)
-		{
-			Genode::config()->sigh(_config_dispatcher);
-			_handle_config(0);
-
-			_trace_subjects.sigh(_trace_subjects_dispatcher);
-		}
-
-	private:
-
 		Polygon::Shaded_painter _shaded_painter {
 			*Genode::env()->heap(), _size.h() };
+
+		bool _hovered = false;
 
 		long _activity_sum[Timeline::HISTORY_LEN];
 		long _y_level[Timeline::HISTORY_LEN];
@@ -360,12 +379,14 @@ class Cpu_load_display::Scene : public Nano3d::Scene<PT>
 				Color const top_color    = timeline.color(Timeline::COLOR_TOP);
 				Color const bottom_color = timeline.color(Timeline::COLOR_BOTTOM);
 
+				unsigned timeline_now = timeline.saved_now();
+
 				for (unsigned i = 0; i < HISTORY_LEN; i++) {
 
-					unsigned const t      = (_now - i - 0) % HISTORY_LEN;
-					unsigned const prev_t = (_now - i + 1) % HISTORY_LEN;
+					unsigned const t      = (timeline_now - i - 0) % HISTORY_LEN;
+					unsigned const prev_t = (timeline_now - i + 1) % HISTORY_LEN;
 
-					unsigned long const activity = timeline.activity(t);
+					unsigned long const activity = timeline.saved_activity(t);
 
 					int const dy = _activity_sum[t] ? (activity*h) / _activity_sum[t] : 0;
 
@@ -414,12 +435,35 @@ class Cpu_load_display::Scene : public Nano3d::Scene<PT>
 
 	public:
 
+		Scene(Genode::Signal_receiver &sig_rec, unsigned update_rate_ms,
+		      Nitpicker::Point pos, Nitpicker::Area size)
+		:
+			Nano3d::Scene<PT>(sig_rec, update_rate_ms, pos, size), _size(size),
+			_config_dispatcher(sig_rec, *this, &Scene::_handle_config),
+			_trace_subjects_dispatcher(sig_rec, *this, &Scene::_handle_trace_subjects)
+		{
+			Genode::config()->sigh(_config_dispatcher);
+			_handle_config(0);
+
+			_trace_subjects.sigh(_trace_subjects_dispatcher);
+
+			Nano3d::Scene<PT>::input_handler(this);
+		}
+
+
 		/**
 		 * Scene interface
 		 */
 		void render(Genode::Surface<PT>                   &pixel,
 		            Genode::Surface<Genode::Pixel_alpha8> &alpha) override
 		{
+			/*
+			 * Update visible timelines only when the pointer is outside the
+			 * window.
+			 */
+			if (!_hovered)
+				_cpu_registry.save_timelines(_now);
+
 			/* background */
 			Color const top_color    = Color(10, 10, 10, 20);
 			Color const bottom_color = Color(10, 10, 10, 100);
@@ -452,6 +496,26 @@ class Cpu_load_display::Scene : public Nano3d::Scene<PT>
 				_plot_cpu(pixel, alpha, cpu, Nitpicker::Rect(point, size));
 				point = point + step;
 			});
+		}
+
+		/**
+		 * Input_handler interface
+		 */
+		void handle_input(Input::Event const events[], unsigned num) override
+		{
+
+			for (unsigned i = 0; i < num; i++) {
+
+				Input::Event const &ev = events[i];
+
+				if (ev.type() == Input::Event::MOTION) {
+					_hovered = true;
+				}
+
+				if (ev.type() == Input::Event::LEAVE) {
+					_hovered = false;
+				}
+			}
 		}
 };
 
