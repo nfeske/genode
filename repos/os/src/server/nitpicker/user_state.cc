@@ -85,6 +85,14 @@ void User_state::handle_event(Input::Event ev)
 	if (type == Event::PRESS)                   Mode::inc_key_cnt();
 	if (type == Event::RELEASE && Mode::drag()) Mode::dec_key_cnt();
 
+	/*
+	 * Hack for resettig the key count when releasing a magic key
+	 */
+	if (type == Event::RELEASE && keycode == Input::KEY_F9) {
+		PLOG("key_cnt before reset: %u", Mode::key_cnt());
+		Mode::reset_key_cnt();
+	}
+
 	View const * const pointed_view    = find_view(_pointer_pos);
 	::Session  * const pointed_session = pointed_view ? &pointed_view->session() : 0;
 

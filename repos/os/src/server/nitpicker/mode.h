@@ -49,6 +49,9 @@ class Mode
 		void inc_key_cnt() { _key_cnt++; }
 		void dec_key_cnt() { _key_cnt--; }
 
+		void reset_key_cnt() { _key_cnt = 0; }
+		unsigned key_cnt() const { return _key_cnt; }
+
 		bool has_key_cnt(unsigned cnt) const { return cnt == _key_cnt; }
 
 		bool key_is_pressed() const { return _key_cnt > 0; }
