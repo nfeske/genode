@@ -1,0 +1,843 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 15.08
+              ===============================================
+
+                               Genode Labs
+
+
+
+;intro
+;@nfeske
+
+
+Genode on top of the Muen separation kernel
+###########################################
+
+;@kensan
+
+
+NOVA kernel-resource management
+###############################
+
+;@alex-ab
+
+commit 7b6cd28dcb7fdf394e13c9d46b1f4426d4443c9e
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jun 1 11:01:26 2015 +0200
+
+    nova: update to r9
+    
+    Fixes compiler warnings and re-enables debug commits regarding out of memory
+    situations.
+    
+    Fixes #1551
+
+commit 9506c89f88cc1e983e2c566de1d96befbd7f93e4
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jul 2 13:12:10 2015 +0200
+
+    nova: fix memory leaks / invariant TSCs
+    
+    - free up kernel memory of empty slabs (if already one empty slab is in
+      place)
+    - free up more page table entries
+    - handle CPUs with invariant TSCs gracefully
+    
+      Genode/Nova running on CPUs without the invariant TSC feature may seem
+      to 'hang'. The referenced commit of the nova branch fixes the issue
+      for some older Intel CPUs.
+    
+    Fixes #1615
+
+commit c6943d494b89fec2518bca1bde1bdbe56de3279c
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jun 5 21:55:18 2015 +0200
+
+    nova: extend platform test to provoke kernel panic
+    
+    Showcasing the out of memory kernel issue.
+    
+    One test triggers oom during memory delegation when talking to core pager
+    thread. Two other test trigger oom during capability delegation in a
+    server/client scenario for send and reply phase separately.
+    
+    Issue #1601
+
+commit 9081653c96b6a01028b60adf6fc4b1191594576f
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 21 17:02:22 2015 +0200
+
+    Extend thread test
+    
+    Issue #1601
+
+commit 626b0a68f3dd2ac52b924ecb380e8c8da15b6230
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jul 23 09:27:36 2015 +0200
+
+    base: increase base-control size for 32bit
+    
+    It is insufficient for creating threads up to the maximum supported limit
+    (256 by now).
+    
+    Issue #1601
+
+commit f87c573695b1235555d7f3b63f96b4e3c0b9190a
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 14 16:19:14 2015 +0200
+
+    nova: increase default capability selector count
+    
+    The reference count get increase to use 2 bytes, so we need the double amount
+    of selectors as before.
+    
+    Additionally print a message if we run out of capabilities in a server. Since
+    our rpc framework is now clever enough to detect that for a printf we don't
+    need to setup a receive window, we may use a printf instead of a die call.
+    Eases debugging.
+    
+    Issue #1601
+
+commit df662cc2f36d98e7c8d0e57f68e5d76819acb676
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jun 9 19:33:53 2015 +0200
+
+    nova: use kernel branch with quota handling
+    
+    Fixes #1601
+
+Genode as day-to-day operating system
+#####################################
+
+;@nfeske
+
+Interactive management of subsystem configurations
+==================================================
+
+commit b4ebefd616f15c00c6f3f53a47e46f814c7e2ef6
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jan 27 17:05:45 2015 +0100
+
+    cli_monitor: read subsystem configs from VFS
+    
+    This patch changes the way how CLI monitor obtains its subsystem
+    configurations. Originally, this information was provided via the
+    Genode::config mechanism. But for managing complex scenarios, the config
+    node becomes very complex. Hence, it is preferrable to have a distinct
+    file for each subsystem configuration.
+    
+    The CLI monitor scans the directory '/subsystems' for files ending with
+    ".subsystem". Each file has the same syntax as the formerly used
+    subsystem nodes.
+
+Window management improvements
+==============================
+
+commit 69da1fa1edf2fc398fd920fbeee8ab6d26a2965a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sat May 30 16:18:23 2015 +0200
+
+    wm/layouter: Raise window on click
+
+commit a3d78d37795d401789b356b24008f886b33960b7
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jun 5 23:15:55 2015 +0200
+
+    window layouter: let focus follow the pointer
+
+commit c74a4fbbe2ed5fe4f63e6f7171bf56f9e644a1dc
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jun 3 11:20:58 2015 +0200
+
+    wm: decouple decorator and layouter from wm
+
+commit 785cac716832677f6cbfa4c4b2ef92f56bc905db
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 1 21:03:12 2015 +0200
+
+    decorator: consider partially transparent windows
+    
+    This patch changes the window manager, the decorator, and the
+    floating window layouter to propagate the usage of an alpha channel from
+    the client application to the decorator. This way, the decorator can
+    paint the decoration elements behind the affected windows, which would
+    otherwise be skipped.
+
+CPU load monitoring
+===================
+
+commit caa809e59330c1b23e7c44c494bd892e0e4662ef
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 1 11:20:23 2015 +0200
+
+    CPU load display application
+
+
+Base framework and low-level OS infrastructure
+##############################################
+
+Improved audio support
+======================
+
+;@cnuke
+
+commit 81599f89eaaf883f140fbe24487f3d5c43dcb192
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri May 8 16:42:38 2015 +0200
+
+    os: decrease Audio::PERIOD to lower latency
+    
+    To archive lower latency the length of a period was reduced from
+    2048 (~46ms) to 512 (~11.6ms) samples.
+    
+    It should be noted that this change probably breaks audio in Qemu on
+    most systems.
+    
+    Issue #1644.
+
+commit 61f5ca1e4d4e6107f2270cf5c0260a94909fa855
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri May 15 22:24:00 2015 +0200
+
+    os: add Audio_in session for recording audio
+    
+    In line with the Audio_out session a Audio_in session is used to
+    record audio frames. Like in the Audio_out session shared memory
+    in form of the Audio_in::Stream is used to transport the frames
+    from the server to the client. These frames consist of single
+    channel (mono) samples. An Audio_in::Packet always contains a full
+    period of frames.
+    
+    A Audio_in server captures frames and puts them into the
+    Audio_in::Stream. To do so the server allocates a Audio_in::Packet
+    from the packet queue embedded in the Audio_in::Stream. If the queue
+    is already full, the server will override packets and notify the
+    client by submitting the 'overrun' signal. The client has to cope
+    with this situation, e.g., by saving packets more frequently.
+    
+    A client will also receive a 'progress' signal from the server when
+    a new Audio_in::Packet was submitted to the packet queue.
+    
+    Fixes #1644.
+
+commit 8a34d21577b5b8047e993ee332ce0f2cf8af331d
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri May 15 22:22:46 2015 +0200
+
+    dde_bsd: add recording support to audio driver
+    
+    The driver is now able to record audio samples. In contrast
+    to playback it has to be enabled explicitly by setting the
+    configuration attribute 'recording' to 'yes'. Playback is by
+    default enabled but may be disabled by setting 'playback' to
+    'no'. Furthermore it is now possible to configure the mixer
+    from the configuration. For now, the interface used by vanilla
+    OpenBSD is just exported.
+    
+    The following snippet shows how to enable and configure recording
+    on an Thinkpad X220 where the headset rather than the internal
+    mic is used as recording source:
+    
+    ! <start name="audio_out_drv">
+    !   <resource name="RAM" quantum="8M"/>
+    !   <provides>
+    !     <service name="Audio_out"/>
+    !     <service name="Audio_in"/>
+    !   </provides>
+    !   <config recording="yes">
+    !     <mixer field="outputs.master" value="255"/>
+    !     <mixer field="record.adc-0:1_source" value="sel2"/>
+    !     <mixer field="record.adc-0:1" value="255"/>
+    !   </config>
+    ! </start>
+    
+    In addition to selecting the recording source the playback as
+    well as the recording volume are set to 255 (maximum).
+    Information about the available mixers and settings in general
+    may be obtained by setting the 'verbose' to 'yes' in the config
+    node.
+    
+    Issue #1644.
+
+commit fb761283a217e49cc4765018456be7435ae75218
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri May 15 22:24:31 2015 +0200
+
+    dde_bsd: add Audio_in test application
+    
+    This test is a simple audio monitor that plays all recorded frames
+    back.
+    
+    Issue #1644.
+
+commit 4992903233aac38d8473f2c6f14a01dee0126b82
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Aug 12 14:21:24 2015 +0200
+
+    Rename audio_out_drv to audio_drv
+    
+    With the introducation of the Audio_in session interface it makes
+    sense to rename the current available audio drivers. At the moment
+    only the dde_bsd audio_drv supports Audio_out as well as Audio_in.
+    The Linux audio_drv only supports Audio_out (there is no demand for
+    Audio_in support currently) but is renamed nonetheless to make it
+    easiert to write generic run scripts.
+    
+    Issue #1644.
+
+commit a6c571679616dd584da12ffd113d1daa8a3786d3
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Jun 3 13:59:39 2015 +0200
+
+    os: add invalidate_all packets to Audio_out
+    
+    When a stream was stopped it may still contain valid packets that
+    will be played automatically when the stream is started again. The
+    invalidate_all() method may be called after stopping the stream to
+    prevent this.
+    
+    Issue #1647.
+
+
+File-system infrastructure
+==========================
+
+;@nfeske
+
+commit e3be65833f8db26de47fa86e63fa1d5fcef07e47
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Nov 26 18:07:03 2014 +0100
+
+    vfs: decouple file-system factory from libc
+    
+    This patch moves the VFS file-system factory to a separate vfs library
+    that is independent from libc. This enables libc-less Genode programs to
+    easily use the VFS infrastructure.
+    
+    Fixes #1561
+
+commit af5c03edaf3db9e8444cad9c7ede1dbb70cc1d1b
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Mon Jul 6 12:11:30 2015 +0200
+
+    vfs: depend on ld library
+    
+    So, users of VFS need not to state this dependency explicitly.
+
+
+commit cec2dd3b3fc1ec0d494f48448b64345b92aee65a
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Jun 4 08:59:40 2015 -0400
+
+    unify file system utilities to os/include/file_system
+    
+    Fixes #1564
+
+
+commit 2f1db06debc37587c1669d388afd32d8efc6514a
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sat Jun 27 15:50:49 2015 -0500
+
+    rump_fs/fuse_fs/lx_fs/ram_fs: symlink fixup
+    
+    Allow symlinks to be passed to the read and write file system utilities.
+    
+    Disallow writes to symlinks with offsets in file system servers, this is
+    to ensure that writing the target of a symlink is an atomic operation.
+    
+    Fixes #1604
+
+commit 8f4f1ae89c6b79016a1d6e931d4fd1168c5531ad
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue Jul 7 15:45:37 2015 -0500
+
+    ram_fs: treat symlinks as opaque data
+    
+    Fixes #1604
+
+commit f996697fd53b27f774f9688d37f6edb3ffe5ffd6
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Wed Jul 22 00:32:42 2015 -0500
+
+    VFS: local ram_fs instances
+    
+    Move FS Node implementations from server/ram_fs to include/ram_fs.
+    Support embedded ram_fs instances in VFS configurations using <ram/>.
+    Add 'no space' handling to VFS symlink ops.
+    
+    Fixes #1635
+
+
+Unified networking components
+=============================
+
+;@ssumpf
+
+commit 463c9bec1796b74038fe29ae36fe53c90f8b191b
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Jun 23 13:13:20 2015 +0200
+
+    Replace Nic driver interface by customizable component
+    
+    Removed the Nic::Driver implementation. All nic servers now inherit from
+    Nic::Session_component. Packet stream signals are dispatched to
+    the 'handle_packet_stream' function within a session component. Thus, nic
+    servers now have direct access to the packet stream channels, making handling
+    more flexible.
+    
+    Adjusted nic_loobpack, dde_ipxe, wifi, usb, lan9118, Linux nic, and OpenVPN to
+    the new interface.
+    
+    Fixes #1602
+
+
+Enhanced tracing facilities
+===========================
+
+;@nfeske
+
+commit 959572968de0a932dd051a1a1f279061666a6217
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jun 11 23:05:02 2015 +0200
+
+    core: provide thread exec times via TRACE service
+    
+    This patch enable clients of core's TRACE service to obtain the
+    execution times of trace subjects (i.e., threads). The execution time is
+    delivered as part of the 'Subject_info' structure.
+    
+    Right now, the feature is available solely on NOVA. On all other base
+    platforms, the returned execution times are 0.
+    
+    Issue #813
+
+commit b22f3c67f00b7620eb88968ad3550e2918ddcf25
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 15 20:41:59 2015 +0200
+
+    Trace-subject reporter
+    
+    Issue #813
+
+commit fbe44f08d47597b4e95897c51ebbd60e76419bf0
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Dec 17 13:57:59 2014 +0100
+
+    nova: support to read thread and idle time
+    
+    Issue #813
+
+commit a23ac5f569998dce39a74145b64708df7347834e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jun 16 20:39:09 2015 +0200
+
+    base/nova: add idle threads to trace sources
+    
+    Issue #813
+
+commit 5d678dba9edd6e45c5657b27a09b34592572ae6e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jun 17 13:25:51 2015 +0200
+
+    core: throw Trace::Out_of_metadata in subjects()
+    
+    While importing trace sources as trace subjects into a TRACE session,
+    the session quota might become depleted. The TRACE session already keeps
+    track of the session quota via an allocator guard but the 'subjects' RPC
+    function missed to handle the out-of-memory condition. This patch
+    reflects the error condition as an 'Out_of_metadata' exception to the
+    TRACE client. It also contains an extension of the trace test to
+    exercise the corner case.
+
+commit 7e40f5f587aab6aca1daf6af00e43eb7e6790855
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri Jul 3 16:22:35 2015 +0200
+
+    base: use proper Cpu_session when tracing threads
+    
+    Up to now it was not possible to trace threads that use a different
+    Cpu_session rather than env()->cpu_session() (as done by VirtualBox).
+    This problem is now solved by setting the Cpu_session explicitly when
+    creating the event logger and attaching the trace control area when
+    creating the thread.
+    
+    Fixes #1618.
+
+
+Low-complexity software rendering functions
+===========================================
+
+;@nfeske
+
+commit 259b127f966184ca61f0086c3e89b33661a1ffb9
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jun 30 11:47:59 2015 +0200
+
+    Polygon drawing and rudimentary 3D routines
+    
+    This patch adds two new painters located at gems/include/polygon_gfx.
+    Both painters draw convex polygons with an arbirary number of points.
+    The shaded-polygon painter interpolates the color and alpha values
+    whereas the textured-polygon painter applies a texture to the polygon.
+    The painters are accompanied by simplistic 3D routines located at
+    gems/include/nano3d/ and a corresponding example (gems/run/nano3d.run).
+
+commit e45e01ee8e8fa9b4a6a35d7cf41b2e5a670dc272
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 1 11:19:12 2015 +0200
+
+    gems: HSV-to-RGB color-conversion function
+
+
+Device drivers
+##############
+
+Completing the transition to the new platform driver
+====================================================
+
+;@alex-ab
+
+commit e1896e3b447e5b4abc2937b9b43100f93a732b86
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu May 28 13:43:13 2015 +0200
+
+    run: add platform_drv include for usage by scripts
+    
+    Related to #765 and used for issue #1542
+
+commit 1c38d4903bcb4e92e0f9e8a7e27a18df1d6f6bb1
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue May 26 20:12:17 2015 +0200
+
+    x86: use report_rom for acpi and pci driver
+    
+    Issue #1542
+
+commit 1f40d9de6a8ac8b8877b674f0316e39e76589a99
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jun 8 09:05:32 2015 +0200
+
+    pci: convert to platform_drv
+    
+    Fixes #1542
+
+commit c72ea84bcd9e3d2bb787543b5ec0ec822c717f19
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 10 11:28:00 2015 +0200
+
+    pci: fix irq re-routing discovery
+    
+    The commit handles the case that a host bridge device is not at 0:0.0 located.
+    
+    Issue #1547
+
+
+BCM57cxx network cards
+======================
+
+;@ssumpf
+
+commit ffaf65efa070eb3a6bd7425f76ffa04e87964280
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed Jul 1 10:41:59 2015 +0200
+
+    dde_ipxe: enable BCM57cxx cards
+    
+    Add tg3 driver files and adjust Genode's ipxe code. Tested on Fiasco.OC only.
+    
+    issue #1609
+
+
+VESA driver refinements
+=======================
+
+;@chelmuth
+
+commit 435721ea1937810577d2e90696abb03f751c9d1c
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Sep 29 15:24:17 2014 +0200
+
+    VESA driver: report the framebuffer width
+    
+    With this patch, the VESA driver reports the framebuffer width to the
+    client instead of the visible width  This fixes possible distortion
+    if these widths differ, at the cost that content in the right-most area
+    might be invisible in such cases.
+    
+    Issue #1264.
+
+commit 47609dda4091575b55b6f206e0f3eeafaca65453
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Mon Aug 17 14:28:02 2015 +0200
+
+    vesa: calculation of default-mode table entries
+
+
+Removal of DDE Kit
+==================
+
+;@ssumpf
+
+commit 0a1664b892c168ec238819fb01fd56b8f9f829e0
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue May 12 15:16:19 2015 +0200
+
+    usb_drv: remove dde_kit
+    
+    issue #1565
+
+commit 146b34bf40c1d6c21735835ec4e403ecacedcdac
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue May 19 11:33:29 2015 +0200
+
+    lxip: remove dde_kit
+    
+    issue #1565
+
+commit e1be0b3f677a5ea28e114e449d2dc30426e30d21
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue May 19 17:51:00 2015 +0200
+
+    wifi: remove dde_kit
+    
+    Fixes #1565
+
+commit 52110b9d89cc90488b300672ffde818b7e6a048b
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 10 12:55:45 2015 +0200
+
+    os: remove dde_kit
+    
+    Issue #1565
+
+
+VirtualBox
+##########
+
+;@cproc, @cnuke
+
+commit 7897e52235650358e696600b587ab0e8fbc190ed
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Thu Jun 4 16:59:45 2015 +0200
+
+    vbox_pointer: policy-based shape selection
+    
+    Fixes #1557
+
+commit a801976727bc0d456cf049c5cda73bbf7403ae85
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Jun 4 13:47:42 2015 +0200
+
+    vbox: dynamic adaptation to screen-size changes
+    
+    Fixes #1554
+
+commit 824fb7269492261fb3e9daa8b49dfec1eeebb743
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Jul 24 15:03:12 2015 +0200
+
+    vbox: update the PDPTE registers if needed
+    
+    Fixes #1638
+
+commit 4c19576d4e705a46f3885eebc2bffde4a2eae1c8
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Jul 24 18:38:34 2015 +0200
+
+    vbox: use multiple host CPUs
+    
+    Fixes #1553
+
+commit 5be519164576f884515fdc6244dae456e73bc114
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Jun 3 14:39:01 2015 +0200
+
+    vbox: enable preliminary audio support
+    
+    With this commit preliminary audio support in VirtualBox is enabled.
+    The backend supports playback as well as recording sounds from within
+    a guest VM. Depending on how the guest configures the device model
+    the audio output may sound disorted. If the guest uses buffers that
+    are too small, i.e., 10 ms or less, frequent buffer underruns will
+    occure.
+    
+    To get this low-latency one has also to increase vbox' update hz
+    to 200 (i.e., 5ms).
+    
+    Fixes #1647.
+
+commit 3f3b3a100e550f98660263b7196b3f8645a97df7
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Aug 11 13:34:27 2015 +0200
+
+    vbox: sidestep audio subsystem
+    
+    There are currently some issue with the mixing/filtering code of vbox.
+    So instead of using the audio subsystem to do filtering and mixing we
+    bypass it to get better audio qualitiy. That means that the device
+    model of the VM has to use the same sample rate as the Audio_out/in
+    sessions, however.
+    
+    Issue #1647.
+
+
+Platforms
+#########
+
+Execution on bare hardware (base-hw)
+====================================
+
+
+Bender chain loader on x86_64
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+;@chelmuth
+
+commit 73f7a9562738ed6f65a4a6e77f0b2eaafad65aa9
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jul 9 11:45:05 2015 +0200
+
+    hw: use bios data area to detect com/uart ports
+    
+    Fixes #1625
+
+commit ce43ed4c17fd524f5bd87c928872aab224d38805
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Thu Jul 9 15:57:34 2015 +0200
+
+    hw: load bender before kernel on grub too
+
+commit ce43ed4c17fd524f5bd87c928872aab224d38805
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Thu Jul 9 15:57:34 2015 +0200
+
+    hw: load bender before kernel on grub too
+
+
+Revised page-table handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+;@skalk
+
+commit cc58b119988f44e0dbb59998086e8ba9caccb54e
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jun 16 10:59:26 2015 +0200
+
+    hw: replace page table allocator with static one
+    
+    Instead of organizing page tables within slab blocks and allocating such
+    blocks dynamically on demand, replace the page table allocator with a
+    simple, static alternative. The new page table allocator is dimensioned
+    at compile-time. When a PD runs out of page-tables, we simply flush its
+    current mappings, and re-use the freed tables. The only exception is
+    core/kernel that should not produce any page faults. Thereby it has to
+    be ensured that core has enough page tables to populate it's virtual
+    memory.
+    
+    A positive side-effect of this static approach is that the accounting
+    of memory used for page-tables is now possible again. In the dynamic case
+    there was no protocol existent that solved the problem of donating memory
+    to core during a page fault.
+    
+    Fix #1588
+
+commit 8abd70e6e704421cfce2defa545c1486168e4cac
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Jun 25 15:53:39 2015 +0200
+
+    hw: allocate core's page-tables outside of binary
+    
+    Moreover, be strict when calculating the page-table requirements of
+    core, which is architecture specific, and declare the virtual memory
+    requirements of core architecture-wise.
+    
+    Ref #1588
+
+commit f5d5ed96375d8a602ebf4401669fa80fa38b6331
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Jun 22 14:44:28 2015 +0200
+
+    hw: use kernel signal API for page-fault signals
+    
+    Instead of using the Genode user-level signal API to signal page-faults to
+    a page-fault handler, use the kernel API directly. Thereby the accounting
+    of signal contexts needed for each paging subject can be done easily.
+    
+    Fix #956
+
+commit de4a98c777eb399801e93bb9412639c1f5996831
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Jun 26 15:05:28 2015 +0200
+
+    hw: avoid using RM session in platform thread
+    
+    Fix #888
+
+commit eafe5e81e3ce2a8f8935d9deafc96a20a93d68dc
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jul 29 10:58:17 2015 +0200
+
+    core: unify and simplify paging code (Fix #1641)
+    
+    For most platforms except of NOVA a distinction between pager entrypoint
+    and pager activation is not needed, and only exists due to historical
+    reasons. Moreover, the pager thread's execution path is almost identical
+    between most platforms excluding NOVA, HW, and Fisco.OC. Therefore,
+    this commit unifies the pager loop for the other platforms, and removes
+    the pager activation class.
+
+
+Dynamic interrupt mode setting on x86_64
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On x86-based hardware, user-level device drivers have become able to specify
+the trigger mode and polarity of the interrupts when requesting an IRQ
+session. On ARM, those session parameters are ignored. This change enables the
+x86_64 platform to support devices which use arbitrary trigger modes and
+polarity settings, e.g. AHCI on QEMU and real hardware.
+
+
+Fiasco.OC
+=========
+
+;@nfeske
+
+commit c60d65150ed642bfa1851d5a203ff8be38741bc1
+Author: Reinier Millo Sánchez <rmillo@uclv.cu>
+Date:   Sun Jun 21 10:53:54 2015 -0400
+
+    base-foc: support for Raspberry Pi
+    
+    Fixes #1596
+
+commit b13b0113c8158dea479fa836c1b2b1aaf988440d
+Author: Reinier Millo Sánchez <rmillo@uclv.cu>
+Date:   Sun Jun 21 11:29:05 2015 -0400
+
+    usb: kernel-specific USB IRQ number on Raspberry Pi
+    
+    The USB interrupt number on Raspberry Pi differs betwenn Fiasco.OC and
+    base-hw, the former uses 9 while the latter uses 17.
+
+commit c14fe7e6c71920977e5b402822b588786bb05d33
+Author: Alexy Gallardo Segura <alexy@uclv.cu>
+Date:   Tue Apr 28 08:04:37 2015 -0400
+
+    foc: Odroid-X2 basic support
+    
+    Fix #1597
+
+
+Removal of deprecated features
+##############################
+
+;@nfeske
+
+commit 89255c39795116e0ec3f36a8908ce8999883dbcf
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Jul 2 11:21:20 2015 +0200
+
+    remove Versatile Express board (Fix #1611)
+
