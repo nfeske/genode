@@ -15,7 +15,38 @@
 Genode on top of the Muen separation kernel
 ###########################################
 
-;@kensan
+_This section was written by Adrian-Ken Rueegsegger and Reto Buerki who_
+_conducted the described line of work independent from Genode Labs._
+
+After completing our x86_64 port of the Genode base-hw kernel, which was
+featured in the previous release notes (15.05), we immediately started working
+on our main goal: running a Genode system as guest on the Muen Separation
+Kernel (SK) to benefit from the rich ecosystem of Genode.
+
+For those who have not read the 15.05 Genode release notes, [http://muen.sk - Muen]
+is an Open-Source microkernel, which uses the [http://spark-2014.org/ - SPARK]
+programming language to enable light-weight formal methods for high assurance.
+The 64-bit x86 kernel, currently consisting of a little over 5'000 LOC, makes
+extensive use of the latest Intel virtualization features and has been formally
+proven to contain no runtime errors at the source-code level.
+
+The new 'hw_x86_64_muen' platform, as the name implies, extends the 'hw_x86_64'
+base-hw kernel by replacing the PIC and timer drivers with paravirtualized
+variants.
+
+In contrast to other kernels supported by Genode, the architecture with Muen is
+different in the sense that the entire 'hw_x86_64_muen' Genode system runs as
+guest VM in VMX non-root mode on the SK. From the perspective of Muen, Genode
+is executed on top of the kernel like any other guest OS without special
+privileges.
+
+This loose coupling of Muen and Genode base-hw allows the combination of a
+static, low-complexity SK with a feature-rich and extensive OS framework. The
+result is a flexible platform for the construction of component-based
+high-assurance systems.
+
+People interested in giving the 'hw_x86_64_muen' platform a spin can checkout
+the small tutorial in the 'repos/base-hw/doc/x86_64_muen.txt' file.
 
 
 NOVA kernel-resource management
