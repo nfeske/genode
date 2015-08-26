@@ -40,6 +40,9 @@ guest VM in VMX non-root mode on the SK. From the perspective of Muen, Genode
 is executed on top of the kernel like any other guest OS without special
 privileges.
 
+[image muen_system_overview]
+  Genode running on top of the Muen Separation Kernel alongside other subjects
+
 This loose coupling of Muen and Genode base-hw enables the robust combination
 of a static, low-complexity SK with a feature-rich and extensive OS framework.
 The result is a flexible platform for the construction of component-based
