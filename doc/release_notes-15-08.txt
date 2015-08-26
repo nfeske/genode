@@ -215,124 +215,64 @@ Base framework and low-level OS infrastructure
 Improved audio support
 ======================
 
-;@cnuke
+In the previous release we replaced the old audio driver with a new one
+that also provided the Audio_out service. In line with the Audio_out
+session we are now introducing a new Audio_in session interface that can be
+used to record audio frames. It is modelled after the Audio_out interface in
+the way how it handles the communication between the client and the server.
+It also uses shared memory in form of the Audio_in::Stream to transport the
+frames between them. A server component captures frames and puts them into a
+packet queue, which is embedded in the Audio_in::Stream. The server allocates
+packets from this queue to store the recorded audio frames. If the queue is
+already full, the server will override already allocated packets and will notify
+the client by submitting the 'overrun' signal. The client has to cope with this
+situation, e.g., by saving packets more frequently. A client can install a
+signal handler to react on the 'progress' signal, which is send by the server
+when a new Audio_in::Packet was submitted to the packet queue. For now all
+Audio_in server components only support one channel (left) although the
+Audio_in session interface itself supports multiple channels.
 
-commit 81599f89eaaf883f140fbe24487f3d5c43dcb192
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri May 8 16:42:38 2015 +0200
+The dde_bsd audio_drv is the first and currently only audio driver component
+that was extended to provide the Audio_in session. To express this fact the
+driver was renamed from 'audio_out_drv' to 'audio_drv'. In contrast to its
+playback functionality, which is enabled by default, recording has to be enabled
+explicitly by setting the configuration attribute 'recording' to 'yes'. If the
+need arises playback may be disabled by setting 'playback' to 'no'. In addition,
+it is now possible to configure the driver by adjusting the mixer in the
+drivers configuration node. For the time being, the interface as employed by
+the original OpenBSD mixer utility is used.
 
-    os: decrease Audio::PERIOD to lower latency
-    
-    To archive lower latency the length of a period was reduced from
-    2048 (~46ms) to 512 (~11.6ms) samples.
-    
-    It should be noted that this change probably breaks audio in Qemu on
-    most systems.
-    
-    Issue #1644.
+The following snippet shows how to enable and configure recording on an
+Thinkpad X220 where the headset instead of the internal mic is used as
+source:
 
-commit 61f5ca1e4d4e6107f2270cf5c0260a94909fa855
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri May 15 22:24:00 2015 +0200
+! <start name="audio_out_drv">
+!   <resource name="RAM" quantum="8M"/>
+!   <provides>
+!     <service name="Audio_out"/>
+!     <service name="Audio_in"/>
+!   </provides>
+!   <config recording="yes">
+!     <mixer field="outputs.master" value="255"/>
+!     <mixer field="record.adc-0:1_source" value="sel2"/>
+!     <mixer field="record.adc-0:1" value="255"/>
+!   </config>
+! </start>
 
-    os: add Audio_in session for recording audio
-    
-    In line with the Audio_out session a Audio_in session is used to
-    record audio frames. Like in the Audio_out session shared memory
-    in form of the Audio_in::Stream is used to transport the frames
-    from the server to the client. These frames consist of single
-    channel (mono) samples. An Audio_in::Packet always contains a full
-    period of frames.
-    
-    A Audio_in server captures frames and puts them into the
-    Audio_in::Stream. To do so the server allocates a Audio_in::Packet
-    from the packet queue embedded in the Audio_in::Stream. If the queue
-    is already full, the server will override packets and notify the
-    client by submitting the 'overrun' signal. The client has to cope
-    with this situation, e.g., by saving packets more frequently.
-    
-    A client will also receive a 'progress' signal from the server when
-    a new Audio_in::Packet was submitted to the packet queue.
-    
-    Fixes #1644.
+In addition to selecting the recording source the playback as well as the
+recording volume are raised to the maximum. Information about all available
+mixers and settings in general may be obtained by specifying the 'verbose'
+attribute in the config node.
 
-commit 8a34d21577b5b8047e993ee332ce0f2cf8af331d
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri May 15 22:22:46 2015 +0200
+The enriched driver is accompanied by a simple monitor application, which
+directly plays all recorded audio frames back and shows how to use the
+Audio_in session. It can be tested by executing the
+_repos/dde_bsd/run/audio_in.run_ run script.
 
-    dde_bsd: add recording support to audio driver
-    
-    The driver is now able to record audio samples. In contrast
-    to playback it has to be enabled explicitly by setting the
-    configuration attribute 'recording' to 'yes'. Playback is by
-    default enabled but may be disabled by setting 'playback' to
-    'no'. Furthermore it is now possible to configure the mixer
-    from the configuration. For now, the interface used by vanilla
-    OpenBSD is just exported.
-    
-    The following snippet shows how to enable and configure recording
-    on an Thinkpad X220 where the headset rather than the internal
-    mic is used as recording source:
-    
-    ! <start name="audio_out_drv">
-    !   <resource name="RAM" quantum="8M"/>
-    !   <provides>
-    !     <service name="Audio_out"/>
-    !     <service name="Audio_in"/>
-    !   </provides>
-    !   <config recording="yes">
-    !     <mixer field="outputs.master" value="255"/>
-    !     <mixer field="record.adc-0:1_source" value="sel2"/>
-    !     <mixer field="record.adc-0:1" value="255"/>
-    !   </config>
-    ! </start>
-    
-    In addition to selecting the recording source the playback as
-    well as the recording volume are set to 255 (maximum).
-    Information about the available mixers and settings in general
-    may be obtained by setting the 'verbose' to 'yes' in the config
-    node.
-    
-    Issue #1644.
-
-commit fb761283a217e49cc4765018456be7435ae75218
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri May 15 22:24:31 2015 +0200
-
-    dde_bsd: add Audio_in test application
-    
-    This test is a simple audio monitor that plays all recorded frames
-    back.
-    
-    Issue #1644.
-
-commit 4992903233aac38d8473f2c6f14a01dee0126b82
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Aug 12 14:21:24 2015 +0200
-
-    Rename audio_out_drv to audio_drv
-    
-    With the introducation of the Audio_in session interface it makes
-    sense to rename the current available audio drivers. At the moment
-    only the dde_bsd audio_drv supports Audio_out as well as Audio_in.
-    The Linux audio_drv only supports Audio_out (there is no demand for
-    Audio_in support currently) but is renamed nonetheless to make it
-    easiert to write generic run scripts.
-    
-    Issue #1644.
-
-commit a6c571679616dd584da12ffd113d1daa8a3786d3
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Jun 3 13:59:39 2015 +0200
-
-    os: add invalidate_all packets to Audio_out
-    
-    When a stream was stopped it may still contain valid packets that
-    will be played automatically when the stream is started again. The
-    invalidate_all() method may be called after stopping the stream to
-    prevent this.
-    
-    Issue #1647.
+There are also changes to the Audio_out session itself. The length of a period
+was reduced from 2048 to 512 samples to accommodate for a lower latency when
+mixing Audio_out packets and a method for invalidating all packets in the
+queue queue was added.
 
 
 File-system infrastructure
@@ -690,37 +630,40 @@ Date:   Fri Jul 24 18:38:34 2015 +0200
     
     Fixes #1553
 
-commit 5be519164576f884515fdc6244dae456e73bc114
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Jun 3 14:39:01 2015 +0200
+Preliminary audio support
+=========================
 
-    vbox: enable preliminary audio support
-    
-    With this commit preliminary audio support in VirtualBox is enabled.
-    The backend supports playback as well as recording sounds from within
-    a guest VM. Depending on how the guest configures the device model
-    the audio output may sound disorted. If the guest uses buffers that
-    are too small, i.e., 10 ms or less, frequent buffer underruns will
-    occure.
-    
-    To get this low-latency one has also to increase vbox' update hz
-    to 200 (i.e., 5ms).
-    
-    Fixes #1647.
+At some point using VirtualBox as a stop-gap solution for using Genode as ones
+every day OS also envolves having the ability to handle audio.
+With this release we address this matter by enabling preliminary audio
+support in our VirtualBox port. A backend that uses the Audio_out and
+a Audio_in session to playback and record sound samples was added. It disguises
+itself as the OSS backend, that is already used by vanilla VirtualBox. The
+reason for doing so is the fact that we do not want to maintain more patches
+than are absolutely necessary. Since we are already FreeBSD in the eyes of
+VirtualBox it makes things easier to just provide an implementation of the OSS
+backend because this is also used when using FreeBSD as host system.
+The audio support is complemented by adding the necessary drivers for the HDA
+as well as the AC97 device models to our VirtualBox port.
 
-commit 3f3b3a100e550f98660263b7196b3f8645a97df7
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue Aug 11 13:34:27 2015 +0200
+For now, it is vital to have the guest OS configure the device model in a way
+that favors the current implementation. For example, the way our VirtualBox
+port currently works we cannot guarantee distortion free playback or recording
+if the guest OS uses a period that is two short, typically 10ms or less.
+There are also some issues with the mixing/filtering code in VirtualBox.
+Therefore, we bypass it to get better audio quality. As a consquence of that
+the device model of the VM has to use the same sample rate as is used by the
+Audio_out and Audio_in sessions (44.1kHz), however.
 
-    vbox: sidestep audio subsystem
-    
-    There are currently some issue with the mixing/filtering code of vbox.
-    So instead of using the audio subsystem to do filtering and mixing we
-    bypass it to get better audio qualitiy. That means that the device
-    model of the VM has to use the same sample rate as the Audio_out/in
-    sessions, however.
-    
-    Issue #1647.
+Enabling audio support is done be adding
+
+! <AudioAdapter controller="HDA" driver="OSS" enabled="true"/>
+
+to the .vbox file manually or configuring the VM accordingly by using the GUI.
+
+The reason why we talk about preliminary support is the fact that the current
+state is lacking in robustness and audio quality and we are still working on
+improving it.
 
 
 Platforms
