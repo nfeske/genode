@@ -407,24 +407,26 @@ Date:   Wed Jul 22 00:32:42 2015 -0500
 Unified networking components
 =============================
 
-;@ssumpf
+Having had a good experience with our Block::Driver implementation, which wraps
+the block-session interface and takes care of the packet stream handling, thus
+easing the implementation of driver and other block components, we observed that
+this approach did not provide enough flexibility for NIC-session servers. For
+example, NIC servers are two directional and when a network packet arrives the
+server has to make sure that there are enough resources available to dispatch
+the network packet to the client. This has to be done because the server cannot
+wait for allocations or an empty spot in the packet queue of a client.
+Therefore, the server wants to check these conditions before dispatching the
+packet and if they cannot be met it will usually drop the network packet.
 
-commit 463c9bec1796b74038fe29ae36fe53c90f8b191b
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Jun 23 13:13:20 2015 +0200
+In order the implement this kind a behavior, NIC-session servers must have
+direct access to the actual NIC session. For this reason, we removed the
+Nic::Driver interface from Genode and added a Nic::Session_component that offers
+some basic packet-stream-signal dispatch functionality. Servers may now inherit
+from this component and implement there own policy.
 
-    Replace Nic driver interface by customizable component
-    
-    Removed the Nic::Driver implementation. All nic servers now inherit from
-    Nic::Session_component. Packet stream signals are dispatched to
-    the 'handle_packet_stream' function within a session component. Thus, nic
-    servers now have direct access to the packet stream channels, making handling
-    more flexible.
-    
-    Adjusted nic_loobpack, dde_ipxe, wifi, usb, lan9118, Linux nic, and OpenVPN to
-    the new interface.
-    
-    Fixes #1602
+We adjusted all servers that implement NIC sessions to the new interface
+(dde_ipxe, wifi, usb, nic_bridge, OpenVPN, ...), and thus unified all networking
+components within Genode.
 
 
 Enhanced tracing facilities
@@ -571,17 +573,11 @@ Date:   Wed Jun 10 11:28:00 2015 +0200
 BCM57cxx network cards
 ======================
 
-;@ssumpf
-
-commit ffaf65efa070eb3a6bd7425f76ffa04e87964280
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Wed Jul 1 10:41:59 2015 +0200
-
-    dde_ipxe: enable BCM57cxx cards
-    
-    Add tg3 driver files and adjust Genode's ipxe code. Tested on Fiasco.OC only.
-    
-    issue #1609
+During Hack'n Hike 2015 we had access to a server that featured a Broadcom-
+network card. Therefore Guido Witmond performed the first steps to enable
+Broadcom's BCM 57cxx cards. With this preliminary work in place, we were quickly
+able to perform the additional stops required to add BCM 57cxx support to
+Genode.
 
 
 VESA driver refinements
