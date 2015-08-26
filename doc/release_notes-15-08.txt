@@ -19,9 +19,9 @@ _This section was written by Adrian-Ken Rueegsegger and Reto Buerki who_
 _conducted the described line of work independent from Genode Labs._
 
 After completing our x86_64 port of the Genode base-hw kernel, which was
-featured in the previous release notes (15.05), we immediately started working
-on our main goal: running a Genode system as guest on the Muen Separation
-Kernel (SK) to benefit from the rich ecosystem of Genode.
+featured in the previous release (15.05), we immediately started working on our
+main goal: running a Genode system as guest on the Muen Separation Kernel (SK)
+to benefit from the rich ecosystem of Genode.
 
 For those who have not read the 15.05 Genode release notes, [http://muen.sk - Muen]
 is an Open-Source microkernel, which uses the [http://spark-2014.org/ - SPARK]
@@ -40,13 +40,13 @@ guest VM in VMX non-root mode on the SK. From the perspective of Muen, Genode
 is executed on top of the kernel like any other guest OS without special
 privileges.
 
-This loose coupling of Muen and Genode base-hw allows the combination of a
-static, low-complexity SK with a feature-rich and extensive OS framework. The
-result is a flexible platform for the construction of component-based
+This loose coupling of Muen and Genode base-hw enables the robust combination
+of a static, low-complexity SK with a feature-rich and extensive OS framework.
+The result is a flexible platform for the construction of component-based
 high-assurance systems.
 
-People interested in giving the 'hw_x86_64_muen' platform a spin can checkout
-the small tutorial in the 'repos/base-hw/doc/x86_64_muen.txt' file.
+People interested in giving the 'hw_x86_64_muen' platform a spin can find a
+small tutorial at _repos/base-hw/doc/x86_64_muen.txt_.
 
 
 NOVA kernel-resource management
