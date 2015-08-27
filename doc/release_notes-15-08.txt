@@ -139,62 +139,124 @@ The current state of the integration of the extended NOVA kernel with core
 however already avoids the situation that the whole kernel goes out-of-service
 if a process behaves kernel-memory-wise greedy.
 
+
 Genode as day-to-day operating system
 #####################################
 
-;@nfeske
+At the beginning of June, Genode reached the most symbolic milestone in
+the project's history: Norman - one of Genode's core developers - replaced
+his Linux-based working environment with a Genode-based system. This system
+has the ingredients:
+
+[image turmvilla_scenario]
+
+The used machine is a Lenovo Thinkpad x201. We picked this five year old machine
+for several reasons. First, it is a very solid platform with a nice form
+factor. Second, it features Intel's AMT (Active Management Technology),
+which is handy to obtain low-level system logs in the case something
+goes wrong. Third, refurbished machines of this type can be obtained for
+as little as 200 EUR. Finally, an older machine reinforces the need for good
+performance of the operating system. So it creates a natural incentive
+for Norman to find and address performance bottlenecks.
+
+Our modified version of the NOVA microhypervisor is used the kernel.
+
+The user interface is based on our custom GUI stack including the
+nitpicker GUI server as well as the window manager and its companion
+components (decorator, layouter, pointer).
+The display is driven by the VESA driver.
+User input is handled by the PS/2 driver for handling the laptop keyboard
+and trackpoint, and the USB driver for handling an externally connected
+keyboard and mouse.
+
+Network connectivity is provided by our port of the Intel Wireless stack that
+we introduced with the version
+[http://genode.org/documentation/release-notes/14.11#Intel_wireless_stack - 14.11].
+
+Our custom AHCI driver provides access to the physical hard disk. File-system
+access is provided by our Rump-kernel-based file-system server.
+
+A simple Genode shell called CLI monitor allows the user to start and kill
+subsystems dynamically. The most important two subsystems are VirtualBox and
+Noux.
+
+VirtualBox executes a GNU/Linux-based guest OS that we call "Rich OS". The
+rich OS serves as a migration path from GNU/Linux to Genode. It is used for
+all tasks that cannot be accommodated directly on Genode yet. At the beginning
+of the transition, the daily work flows still very much depend on the Rich OS.
+But by moving more and more functionality over to the Genode world, we will
+eventually be able to make the Rich OS obsolete step by step.
+Thanks to VirtualBox' excellent host-guest-integration features, the
+VirtualBox window can dynamically resized and the guest mouse cursor
+integrates seamlessly with Genode's pointer. VirtualBox is directly connected
+to the wireless network driver.
+
+The noux runtime allows us to use command-line-based GNU software directly on
+Genode. Coreutils and Bash are used for managing files. Vim is used for
+editing files. Unlike the rich OS, the noux environment has access to the
+Genode partition of the hard disk. In particular, it can be used to update the
+Genode sustem. It has access to a number of pseudo files that containing
+status information of the underlying components, e.g., the list of wireless
+access points. Furthermore, it has limited access to the configuration
+interfaces of the base components. For example, it can point the wireless
+driver to the accesspoint to use, or change the configuration of the nitpicker
+GUI server at runtime.
+
+As a bridge between the rich OS and the Genode world, we combine VirtualBox'
+shared folder mechanism with Genode VFS infrastructure. The shared
+folder is represented by a dedicated instance of a RAM file system, which
+is mounted in both the VFS of VirtualBox and the VFS of noux.
+
+As evidenced by Norman's use since June, the described system setup is
+sufficient to be productive. So other members of the Genode team will follow
+his footsteps soon. At the same time, the continued use of the system from day
+to day revealed a number of shortcomings, performance limitations, and rough
+edges, which we eventually eliminated. It goes without saying that this is an
+ongoing effort. Eating our own dog food forces us to address the right issues
+to make the daily life more comfortable.
+
+Feature-wise the switch to Genode motivated three developments, namely the
+enhancement of Genode's CLI monitor, the improvement of the window manager,
+and the creation of a CPU-load monitor tool.
+
 
 Interactive management of subsystem configurations
 ==================================================
 
-commit b4ebefd616f15c00c6f3f53a47e46f814c7e2ef6
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jan 27 17:05:45 2015 +0100
+The original version of CLI monitor obtained the configuration data of
+its subsystems only at start time via the Genode::config mechanism.
+But for managing complex scenarios, the config
+node becomes very complex. Hence, it is preferable to have a distinct
+file for each subsystem configuration.
 
-    cli_monitor: read subsystem configs from VFS
-    
-    This patch changes the way how CLI monitor obtains its subsystem
-    configurations. Originally, this information was provided via the
-    Genode::config mechanism. But for managing complex scenarios, the config
-    node becomes very complex. Hence, it is preferrable to have a distinct
-    file for each subsystem configuration.
-    
-    The CLI monitor scans the directory '/subsystems' for files ending with
-    ".subsystem". Each file has the same syntax as the formerly used
-    subsystem nodes.
+The new version of CLI monitor scans the directory '/subsystems' for files ending with
+".subsystem". Each file has the same syntax as the formerly used
+subsystem nodes. This change has the welcome implication that subsystem
+configurations can be changed during the runtime of the CLI monitor, e.g.,
+by using a concurrently running instance of noux with access to the
+_subsystems/_ directory. This procedure has become an essential part
+of the daily workflow as it enables the interactive evolution of the
+Genode system.
 
-Window management improvements
+
+Window-management improvements
 ==============================
 
-commit 69da1fa1edf2fc398fd920fbeee8ab6d26a2965a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sat May 30 16:18:23 2015 +0200
+To make the window manager more flexible while reducing its complexity
+at the same time, we removed the formerly built-in policy of the
+decorator and layout components. Those components are no longer
+child components of the window manager but siblings. The relationship
+of the components is expressed by the configuration of their common
+parent, i.e., init.
 
-    wm/layouter: Raise window on click
+For improving the usability of the windowed GUI, we enabled the layouter to
+raise windows on click and to let the keyboard focus follow the pointer.
+Furthermore, the window manager, the decorator, and the floating window
+layouter became able to propagate the usage of an alpha channel from the
+client application to the decorator. This way, the decorator can paint the
+decoration elements behind the affected windows, which would otherwise be
+skipped.
 
-commit a3d78d37795d401789b356b24008f886b33960b7
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Jun 5 23:15:55 2015 +0200
-
-    window layouter: let focus follow the pointer
-
-commit c74a4fbbe2ed5fe4f63e6f7171bf56f9e644a1dc
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jun 3 11:20:58 2015 +0200
-
-    wm: decouple decorator and layouter from wm
-
-commit 785cac716832677f6cbfa4c4b2ef92f56bc905db
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jul 1 21:03:12 2015 +0200
-
-    decorator: consider partially transparent windows
-    
-    This patch changes the window manager, the decorator, and the
-    floating window layouter to propagate the usage of an alpha channel from
-    the client application to the decorator. This way, the decorator can
-    paint the decoration elements behind the affected windows, which would
-    otherwise be skipped.
 
 CPU load monitoring
 ===================
