@@ -346,80 +346,28 @@ queue queue was added.
 File-system infrastructure
 ==========================
 
-;@nfeske
+Unlike traditional operating systems that rely on a global namespace for
+files, each Genode component has a distinct view on files. Many low-level
+component do not even have the notion of a file. Whereas traditional
+operating systems rely on a virtual file system (VFS) implemented in the
+OS kernel, Genode's VFS has the form of a library that can optionally be
+linked to a component. The implementation of this library originated
+from the noux runtime introduced in version
+[http://genode.org/documentation/release-notes/11.02#Noux_-_an_execution_environment_for_the_GNU_userland - 11.02],
+and later integrated into our C runtime in version
+[http://genode.org/documentation/release-notes/14.05#Per-process_virtual_file_systems - 14.05].
+With the current release, we take the VFS a step further by making it
+usable by components without the C runtime. Thereby, low-complexity
+security-sensitive components such as CLI monitor become able to benefit from
+the powerful VFS infrastructure.
 
-commit e3be65833f8db26de47fa86e63fa1d5fcef07e47
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Nov 26 18:07:03 2014 +0100
-
-    vfs: decouple file-system factory from libc
-    
-    This patch moves the VFS file-system factory to a separate vfs library
-    that is independent from libc. This enables libc-less Genode programs to
-    easily use the VFS infrastructure.
-    
-    Fixes #1561
-
-commit af5c03edaf3db9e8444cad9c7ede1dbb70cc1d1b
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Mon Jul 6 12:11:30 2015 +0200
-
-    vfs: depend on ld library
-    
-    So, users of VFS need not to state this dependency explicitly.
-
-
-commit cec2dd3b3fc1ec0d494f48448b64345b92aee65a
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Thu Jun 4 08:59:40 2015 -0400
-
-    unify file system utilities to os/include/file_system
-    
-    Fixes #1564
-
-
-commit 2f1db06debc37587c1669d388afd32d8efc6514a
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sat Jun 27 15:50:49 2015 -0500
-
-    rump_fs/fuse_fs/lx_fs/ram_fs: symlink fixup
-    
-    Allow symlinks to be passed to the read and write file system utilities.
-    
-    Disallow writes to symlinks with offsets in file system servers, this is
-    to ensure that writing the target of a symlink is an atomic operation.
-    
-    Fixes #1604
-
-commit 8f4f1ae89c6b79016a1d6e931d4fd1168c5531ad
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Tue Jul 7 15:45:37 2015 -0500
-
-    ram_fs: treat symlinks as opaque data
-    
-    Fixes #1604
-
-commit f996697fd53b27f774f9688d37f6edb3ffe5ffd6
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Jul 22 00:32:42 2015 -0500
-
-    VFS: local ram_fs instances
-    
-    Move FS Node implementations from server/ram_fs to include/ram_fs.
-    Support embedded ram_fs instances in VFS configurations using <ram/>.
-    Add 'no space' handling to VFS symlink ops.
-    
-    Fixes #1635
-
-; proposal by emery:
-;
-;During different file system dependent experiments a need for private,
-;temporary areas arose. This lead to a quick conversion of the ram_fs server
-;core to an embeddable VFS file system. This addition to the set of VFS plugins
-;allows processes to create, modify, and remove files without defining and
-;allocating resources to an additional component. More embeddable versions of
-;the dedicated file system servers can be expected in later releases as the use
-;of the VFS evolves.
+The VFS itself received a welcome improvement in the form of private
+RAM file systems.
+During different file-system-dependent experiments, a need for private,
+temporary areas arose. This motivated a conversion of the existing ram_fs server
+core to an embeddable VFS file system. This addition to the set of VFS plugins
+allows components to create, modify, and remove files without defining and
+allocating resources to an additional component.
 
 
 Unified networking components
