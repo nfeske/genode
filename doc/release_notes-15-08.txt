@@ -261,11 +261,20 @@ skipped.
 CPU load monitoring
 ===================
 
-commit caa809e59330c1b23e7c44c494bd892e0e4662ef
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jul 1 11:20:23 2015 +0200
-
-    CPU load display application
+During the daily use of the system, we wished to know in detail where the
+CPU cycles are spent. For example, the access of a file by the rich OS
+involves several components including the guest OS itself, VirtualBox,
+rump_fs (file-system), part_blk (partition access), ahci_drv (SATA device
+access), core, and NOVA. Investigating performance issues requires a
+holistic view of all those components. For this reason, we enhanced our
+existing tracing infrastructure (Section [Enhanced tracing facilities])
+to allow the creation of CPU-load monitoring tools. The first tool in
+this category is the graphical CPU-load monitor located at
+_gems/app/cpu_load_display/_, which displays a timeline of the CPU load
+where each thread is depicted with a different color. Thanks to this
+tool, we have become to explore performance issues in an interactive
+way. In particular, it helped us to identify and resolve a long-standing
+inaccuracy problem of our low-level timer service.
 
 
 Base framework and low-level OS infrastructure
