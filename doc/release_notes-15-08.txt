@@ -661,29 +661,24 @@ The VESA driver now reports the framebuffer width to the client instead of the
 visible width. This fixes possible distortion if these widths differ, at the
 cost that content in the right-most area might be invisible in such cases.
 
-;@chelmuth
-
-commit 47609dda4091575b55b6f206e0f3eeafaca65453
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Mon Aug 17 14:28:02 2015 +0200
-
-    vesa: calculation of default-mode table entries
-
-
-
 
 VirtualBox
 ##########
 
-;@chelmuth
+Policy-based mouse pointer
+==========================
 
-commit 7897e52235650358e696600b587ab0e8fbc190ed
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Thu Jun 4 16:59:45 2015 +0200
+With the previous release, we implemented support for transparent
+integration of the guest mouse pointer with Nitpicker via the
+VirtualBox guest additions and the vbox_pointer component capable of
+rendering provided mouse-pointer shapes. Now, we extended vbox_pointer
+by policy-based configuration that allows the selection of ROMs
+containing the actual mouse shape based on the Nitpicker session label
+or domain. With this feature in place, it is possible to integrate
+several VirtualBox instances as well as dedicated pointer shapes for
+specific components. To see the improved vbox_pointer in action give
+_run/vbox_pointer_ a shot.
 
-    vbox_pointer: policy-based shape selection
-    
-    Fixes #1557
 
 Dynamic adaptation to screen size changes
 =========================================
@@ -743,30 +738,19 @@ Execution on bare hardware (base-hw)
 ====================================
 
 
-Bender chain loader on x86_64
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Bender chain loader on base-hw x86_64
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-;@chelmuth
-
-commit 73f7a9562738ed6f65a4a6e77f0b2eaafad65aa9
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jul 9 11:45:05 2015 +0200
-
-    hw: use bios data area to detect com/uart ports
-    
-    Fixes #1625
-
-commit ce43ed4c17fd524f5bd87c928872aab224d38805
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Thu Jul 9 15:57:34 2015 +0200
-
-    hw: load bender before kernel on grub too
-
-commit ce43ed4c17fd524f5bd87c928872aab224d38805
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Thu Jul 9 15:57:34 2015 +0200
-
-    hw: load bender before kernel on grub too
+On Intel platforms, we use the Bender chain loader from the
+[https://github.com/alex-ab/morbo - Morbo multiboot suite] to detect
+available COM ports of PCI plug-in cards, the AMT SOL device or as
+fall back the default comport 1. The loader stores the I/O port
+information of detected cards into the BIOS data area (BDA), from
+where it is retrieved by core on boot and used for the log output.
+With this release, we added the BDA parsing to base-hw on x86-64 and
+enabled the feature in the run tool. As a prerequisite we had to fix
+an issue in bender if only one (large) multi-boot kernel has to be
+loaded and, therefore, updated its binary in _tool/boot/bender_.
 
 
 Revised page-table handling
