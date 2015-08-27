@@ -55,92 +55,89 @@ small tutorial at _repos/base-hw/doc/x86_64_muen.txt_.
 NOVA kernel-resource management
 ###############################
 
-;@alex-ab
+The NOVA kernel serves Genode on x86 as a main platform since the last years,
+mainly because of two reasons. On the one hand the kernel provides, among the
+supported x86 kernels, the richest hardware feature set like the support of
+IOMMUs, virtualization and SMP. On the other hand the design of the
+kernel, the stable kernel interface, the available kernel interface
+specification, the readable and modern source base is a pleasure to work with.
+Because of all the reasons Genode Labs is and was able to maintain and extend
+the kernel.
 
-commit 7b6cd28dcb7fdf394e13c9d46b1f4426d4443c9e
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jun 1 11:01:26 2015 +0200
+Nevertheless the vanilla kernel lacks one essential feature since the beginning
+to reliable host Genode as user-land, namely the kernel memory management. In
+the past we extended the kernel already to free up kernel resources when they
+get destructed, e.g. processes and the page-tables, threads, semaphores and
+portals.
 
-    nova: update to r9
-    
-    Fixes compiler warnings and re-enables debug commits regarding out of memory
-    situations.
-    
-    Fixes #1551
+Still, on Genode/NOVA a process may trigger arbitrary kernel memory consumption
+during RPC by delegating memory or capabilities or by creating processes and
+threds via Genode's core. If the kernel memory gets depleted, the kernel panics
+with a "Out of memory" message and the overall Genode scenario stops.
 
-commit 9506c89f88cc1e983e2c566de1d96befbd7f93e4
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jul 2 13:12:10 2015 +0200
+The consumption can be in principal triggered by any deliberately misbehaving
+respectively greedy process. Unfortunately this happens normal day-to-day
+usage of Genode, e.g. compiling and linking source code in Genode's Noux
+environment. Our nightly test compiling Genode in Noux on Genode/NOVA already
+triggers this from time to time.
 
-    nova: fix memory leaks / invariant TSCs
-    
-    - free up kernel memory of empty slabs (if already one empty slab is in
-      place)
-    - free up more page table entries
-    - handle CPUs with invariant TSCs gracefully
-    
-      Genode/Nova running on CPUs without the invariant TSC feature may seem
-      to 'hang'. The referenced commit of the nova branch fixes the issue
-      for some older Intel CPUs.
-    
-    Fixes #1615
+The main issue here is that the kernel memory consumption are not and can not
+be accounted and limited by Genode, because the kernel interface does not
+support such a feature. Kernels like seL4 as Genode's own base-hw kernel shows
+how this can be solved.
 
-commit c6943d494b89fec2518bca1bde1bdbe56de3279c
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jun 5 21:55:18 2015 +0200
+To improve the current situation - where the overall kernel memory amount is
+fixed - we extended the kernel during the last release in the following ways.
 
-    nova: extend platform test to provoke kernel panic
-    
-    Showcasing the out of memory kernel issue.
-    
-    One test triggers oom during memory delegation when talking to core pager
-    thread. Two other test trigger oom during capability delegation in a
-    server/client scenario for send and reply phase separately.
-    
-    Issue #1601
+First - the NOVA kernel accounts any kernel memory consumption per process.
+Second - every process has a limited amount of kernel memory quota it can use.
+Third - the kernel detects when the quota limit of a process is reached.
 
-commit 9081653c96b6a01028b60adf6fc4b1191594576f
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 21 17:02:22 2015 +0200
+The kernel may notify another thread (if configured so) about this situation,
+otherwise the thread causing the situation gets stopped.
+The so called - out-of-memory(OOM) - handler thread gets information about the
+situation and may react on it. Possible reactions can be for example to:
 
-    Extend thread test
-    
-    Issue #1601
+- either stop the thread of the process or
+- transfer kernel memory quota between processes (upgrading the limit if desired) or
+- free up kernel memory if possible, e.g. revoke memory delegations which can be re-created
 
-commit 626b0a68f3dd2ac52b924ecb380e8c8da15b6230
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jul 23 09:27:36 2015 +0200
+The steps above we implemented in the NOVA kernel and extended Genode's core
+to handle such OOM situations. All syscalls beside the IPC call/reply may
+now return a error code which specifies that the quota was insufficient. These
+syscalls are solely done and permitted by core and handled inside the base-nova
+specific platform code.
 
-    base: increase base-control size for 32bit
-    
-    It is insufficient for creating threads up to the maximum supported limit
-    (256 by now).
-    
-    Issue #1601
+In the case of IPC call/reply we wanted to handle OOM cases however
+transparently to the Genode user applications. Therefore every thread in
+Genode/NOVA now gets constructed with a OOM IPC-Portal attached. This portal
+is served by the pager thread in core and gets called, when a OOM situation is
+detected during IPC call/reply. If the pager thread receives such a OOM IPC,
+it decodes the involved IPC sender and IPC receiver and looks up the
+appropriate core internal Genode paging objects.
 
-commit f87c573695b1235555d7f3b63f96b4e3c0b9190a
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 14 16:19:14 2015 +0200
+The current implemented out-of-memory policy of the OOM handling code of the
+pager thread first tries to upgrade the quota. If this is not possible anymore
+the second attempt is to revoke some user-memory of the OOM causing process
+and therefore implicitly to free-up some kernel memory. If none of the
+reactions succeeds the causing thread can be stopped by the pager.
 
-    nova: increase default capability selector count
-    
-    The reference count get increase to use 2 bytes, so we need the double amount
-    of selectors as before.
-    
-    Additionally print a message if we run out of capabilities in a server. Since
-    our rpc framework is now clever enough to detect that for a printf we don't
-    need to setup a receive window, we may use a printf instead of a die call.
-    Eases debugging.
-    
-    Issue #1601
+The current policy implementation at the moment is a rather rough heuristic,
+which does not suffice all needs. At this point one would like to specify per
+process a policy, e.g. depending on the typical known memory usage pattern.
+For example some processes should only have a static usage pattern, and
+therefore a hard fixed upper quota limit. Other processes are highly dynamic
+and there some quota upgrades to some degree are desired. There are a lot of
+more combinations imaginable.
 
-commit df662cc2f36d98e7c8d0e57f68e5d76819acb676
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jun 9 19:33:53 2015 +0200
+Our plan for now is to collect some experience over the next months with the
+new kernel OOM mechanism. Based on the observations we may externalize such
+policy decisions outside core and make it possibly configurable per Genode
+process.
 
-    nova: use kernel branch with quota handling
-    
-    Fixes #1601
+The current state of the integration of the extended NOVA kernel with core
+however already avoids the situation that the whole kernel goes out-of-service
+if a process behaves kernel-memory-wise greedy.
 
 Genode as day-to-day operating system
 #####################################
