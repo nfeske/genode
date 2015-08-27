@@ -452,26 +452,27 @@ Date:   Fri Jul 3 16:22:35 2015 +0200
 Low-complexity software rendering functions
 ===========================================
 
-;@nfeske
+Our ambition to use Genode as our day-to-day OS raises the need for custom
+graphical applications. Granted, it is principally possible to base such
+applications on Qt5, which is readily available to native Genode components.
+But for certain applications like status displays, we prefer to avoid the
+dependency on an overly complex GUI tool kit. To accommodate such
+applications, Genode hosts a small collection of low-complexity graphics
+functions called painters. All of Genode's low-complexity graphical components
+such as nitpicker, launchpad, or the terminal are based on this
+infrastructure.
 
-commit 259b127f966184ca61f0086c3e89b33661a1ffb9
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jun 30 11:47:59 2015 +0200
+With the current release, we extend the collection with two new painters
+located at _gems/include/polygon_gfx_. Both draw convex polygons with an
+arbitrary number of points. The shaded-polygon painter interpolates the color
+and alpha values whereas the textured-polygon painter applies a texture to the
+polygon. The painters are accompanied by simplistic 3D routines located at
+_gems/include/nano3d/_ and a corresponding example (_gems/run/nano3d.run_).
 
-    Polygon drawing and rudimentary 3D routines
-    
-    This patch adds two new painters located at gems/include/polygon_gfx.
-    Both painters draw convex polygons with an arbirary number of points.
-    The shaded-polygon painter interpolates the color and alpha values
-    whereas the textured-polygon painter applies a texture to the polygon.
-    The painters are accompanied by simplistic 3D routines located at
-    gems/include/nano3d/ and a corresponding example (gems/run/nano3d.run).
+[image nano3d]
 
-commit e45e01ee8e8fa9b4a6a35d7cf41b2e5a670dc272
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jul 1 11:19:12 2015 +0200
-
-    gems: HSV-to-RGB color-conversion function
+With the nano3d demo and our new CPU load display, the screenshot above
+shows two applications that make use of the new graphics operations.
 
 
 Device drivers
