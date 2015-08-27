@@ -483,41 +483,105 @@ Device drivers
 Completing the transition to the new platform driver
 ====================================================
 
-;@alex-ab
+Until now the ACPI and PCI driver form on x86 the platform driver, whereby
+the ACPI driver started the PCI driver as slave service. The ACPI
+driver parsed the ACPI tables and provided the relevant information as
+configuration during PCI driver startup. We changed this close interaction
+to the more modern and commonly used report_rom Genode mechanism.
 
-commit e1896e3b447e5b4abc2937b9b43100f93a732b86
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu May 28 13:43:13 2015 +0200
+When the new ACPI driver finishes the ACPI table parsing, it provides the 
+information via a Genode report to any interested and registered component.
+The PCI driver is such a component, which gets connected via the Genode
+configuration as a consumer of the ACPI report. The report contains e.g.
+the IRQ re-routing information.
 
-    run: add platform_drv include for usage by scripts
-    
-    Related to #765 and used for issue #1542
+With the change of the interaction of ACPI and PCI driver the policy for
+devices must be configured solely with the PCI driver and not anymore with the
+ACPI driver. The syntax, however, stayed the same as introduced with release
+15.05.
 
-commit 1c38d4903bcb4e92e0f9e8a7e27a18df1d6f6bb1
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue May 26 20:12:17 2015 +0200
+Finally the PCI driver 'pci_drv' got renamed to 'platform_drv' as used on most
+ARM platforms already. All files and session interfaces containing PCI/pci in
+the names get renamed to PLATFORM/platform. The x86 platform interfaces now
+reside in 'repos/os/include/platform/x86/' and the implementation of the
+platform driver in 'repos/os/src/drivers/platform/x86/'.
 
-    x86: use report_rom for acpi and pci driver
-    
-    Issue #1542
+A example x86 platform configuration snippet looks like this:
 
-commit 1f40d9de6a8ac8b8877b674f0316e39e76589a99
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jun 8 09:05:32 2015 +0200
+!<start name="acpi_drv" >
+! <resource .../>
+! <route>
+!  ...
+!  <service name="Report"> <child name="acpi_report_rom"/> </service>
+! </route>
+!</start>
+!
+!<start name="acpi_report_rom" >
+! <binary name="report_rom"/>
+! <resource .../>
+! <provides> <service name="ROM" /> <service name="Report" /> </provides>
+! <config>
+!  <rom> <policy label="platform_drv -> acpi" report="acpi_drv -> acpi"/> </rom>
+! </config>
+! <route> ... </route>
+!</start>
+!
+!<start name="platform_drv" >
+! <resource name="RAM" quantum="3M" constrain_phys="yes"/>
+! <provides> <service name="Platform"/> </provides>
+! <route>
+!  <service name="ROM">
+!   <if-arg key="label" value="acpi"/> <child name="acpi_report_rom"/>
+!  </service>
+!  ...
+! </route>
+! <config>
+!  <policy label="ps2_drv"> <device name="PS2"/> </policy>
+!  <policy label="nic_drv"> <pci class="ETHERNET"/> </policy>
+!  <policy label="fb_drv"> <pci class="VGA"/> </policy>
+!  <policy label="wifi_drv"> <pci class="WIFI"/> </policy>
+!  <policy label="usb_drv"> <pci class="USB"/> </policy>
+!  <policy label="ahci_drv"> <pci class="AHCI"/> </policy>
+!  <policy label="audio_drv"> <pci class="AUDIO"/> <pci class="HDAUDIO"/> </policy>
+! </config>
+!</start>
 
-    pci: convert to platform_drv
-    
-    Fixes #1542
+In order to unify and simplify the writing of test run scripts we added a
+platform configuration to the file 'repos/base/run/platform_drv.inc'.
+This may be included by any test run script in order to setup the platform
+driver configuration.
 
-commit c72ea84bcd9e3d2bb787543b5ec0ec822c717f19
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 10 11:28:00 2015 +0200
+The file provides the following functions: 'append_platform_drv_build_components',
+'append_platform_drv_config', 'append_platform_drv_boot_modules'. The usage
+of the functions add the necessary information to the 'build_components',
+'config' and 'boot_modules' run variables. The platform_drv.inc takes also care
+to distinguish between all the ARM/x86 platform and includes the necessary
+pieces.
 
-    pci: fix irq re-routing discovery
-    
-    The commit handles the case that a host bridge device is not at 0:0.0 located.
-    
-    Issue #1547
+The body of a example run script looks like this:
+
+! set build_components { ... }
+!
+! source ${genode_dir}/repos/base/run/platform_drv.inc
+! append_platform_drv_build_components
+!
+! build $build_components
+!
+! create_boot_directory
+!
+! set config { ... }
+!
+! append_platform_drv_config
+!
+! append config { ... }
+!
+! install_config $config
+!
+! append_platform_drv_boot_modules
+!
+! build_boot_image $boot_modules
+!
+! run_genode_until ...
 
 
 BCM57cxx network cards
