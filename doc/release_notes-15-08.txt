@@ -594,20 +594,11 @@ Genode.
 VESA driver refinements
 =======================
 
+The VESA driver now reports the framebuffer width to the client instead of the
+visible width. This fixes possible distortion if these widths differ, at the
+cost that content in the right-most area might be invisible in such cases.
+
 ;@chelmuth
-
-commit 435721ea1937810577d2e90696abb03f751c9d1c
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon Sep 29 15:24:17 2014 +0200
-
-    VESA driver: report the framebuffer width
-    
-    With this patch, the VESA driver reports the framebuffer width to the
-    client instead of the visible width  This fixes possible distortion
-    if these widths differ, at the cost that content in the right-most area
-    might be invisible in such cases.
-    
-    Issue #1264.
 
 commit 47609dda4091575b55b6f206e0f3eeafaca65453
 Author: Christian Helmuth <christian.helmuth@genode-labs.com>
@@ -621,7 +612,7 @@ Date:   Mon Aug 17 14:28:02 2015 +0200
 VirtualBox
 ##########
 
-;@cproc, @cnuke
+;@chelmuth
 
 commit 7897e52235650358e696600b587ab0e8fbc190ed
 Author: Christian Helmuth <christian.helmuth@genode-labs.com>
@@ -631,29 +622,20 @@ Date:   Thu Jun 4 16:59:45 2015 +0200
     
     Fixes #1557
 
-commit a801976727bc0d456cf049c5cda73bbf7403ae85
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Thu Jun 4 13:47:42 2015 +0200
+Dynamic adaptation to screen size changes
+=========================================
 
-    vbox: dynamic adaptation to screen-size changes
-    
-    Fixes #1554
+VirtualBox now notifies the guest operating system about screen size changes
+(for example if the user resizes a window which shows the guest framebuffer).
+The VirtualBox Guest Editions can use this information to adapt the guest
+framebuffer to the new size.
 
-commit 824fb7269492261fb3e9daa8b49dfec1eeebb743
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri Jul 24 15:03:12 2015 +0200
+SMP support
+===========
 
-    vbox: update the PDPTE registers if needed
-    
-    Fixes #1638
-
-commit 4c19576d4e705a46f3885eebc2bffde4a2eae1c8
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri Jul 24 18:38:34 2015 +0200
-
-    vbox: use multiple host CPUs
-    
-    Fixes #1553
+Guest operating systems can now use multiple virtual CPUs, which are
+mapped to multiple host CPUs. The number of virtual CPUs can be configured
+in the '.vbox' file.
 
 Preliminary audio support
 =========================
