@@ -403,6 +403,16 @@ Date:   Wed Jul 22 00:32:42 2015 -0500
     
     Fixes #1635
 
+; proposal by emery:
+;
+;During different file system dependent experiments a need for private,
+;temporary areas arose. This lead to a quick conversion of the ram_fs server
+;core to an embeddable VFS file system. This addition to the set of VFS plugins
+;allows processes to create, modify, and remove files without defining and
+;allocating resources to an additional component. More embeddable versions of
+;the dedicated file system servers can be expected in later releases as the use
+;of the VFS evolves.
+
 
 Unified networking components
 =============================
