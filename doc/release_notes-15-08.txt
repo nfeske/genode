@@ -616,42 +616,6 @@ Date:   Mon Aug 17 14:28:02 2015 +0200
     vesa: calculation of default-mode table entries
 
 
-Removal of DDE Kit
-==================
-
-;@ssumpf
-
-commit 0a1664b892c168ec238819fb01fd56b8f9f829e0
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue May 12 15:16:19 2015 +0200
-
-    usb_drv: remove dde_kit
-    
-    issue #1565
-
-commit 146b34bf40c1d6c21735835ec4e403ecacedcdac
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue May 19 11:33:29 2015 +0200
-
-    lxip: remove dde_kit
-    
-    issue #1565
-
-commit e1be0b3f677a5ea28e114e449d2dc30426e30d21
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue May 19 17:51:00 2015 +0200
-
-    wifi: remove dde_kit
-    
-    Fixes #1565
-
-commit 52110b9d89cc90488b300672ffde818b7e6a048b
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 10 12:55:45 2015 +0200
-
-    os: remove dde_kit
-    
-    Issue #1565
 
 
 VirtualBox
@@ -846,42 +810,37 @@ polarity settings, e.g. AHCI on QEMU and real hardware.
 Fiasco.OC
 =========
 
-;@nfeske
+Genode's device-driver support when using the Fiasco.OC kernel as base platform
+received an upgrade.
 
-commit c60d65150ed642bfa1851d5a203ff8be38741bc1
-Author: Reinier Millo Sánchez <rmillo@uclv.cu>
-Date:   Sun Jun 21 10:53:54 2015 -0400
+First, principle support for the Raspberry Pi was added. To make this
+platform useful in practice, a working USB driver is important. I.e., the
+network interface is connected via USB. Hence the USB driver got enabled for
+Fiasco.OC, too. As a result, Genode's software stack can now be used on the
+Raspberry Pi by using either our custom base-hw kernel or Fiasco.OC.
 
-    base-foc: support for Raspberry Pi
-    
-    Fixes #1596
+Second, support for the Odroid-X2 platform using the Exynos4412 SoC was added,
+which includes the drivers for the clock management (CMU), power management
+(PMU) as well as USB.
 
-commit b13b0113c8158dea479fa836c1b2b1aaf988440d
-Author: Reinier Millo Sánchez <rmillo@uclv.cu>
-Date:   Sun Jun 21 11:29:05 2015 -0400
-
-    usb: kernel-specific USB IRQ number on Raspberry Pi
-    
-    The USB interrupt number on Raspberry Pi differs betwenn Fiasco.OC and
-    base-hw, the former uses 9 while the latter uses 17.
-
-commit c14fe7e6c71920977e5b402822b588786bb05d33
-Author: Alexy Gallardo Segura <alexy@uclv.cu>
-Date:   Tue Apr 28 08:04:37 2015 -0400
-
-    foc: Odroid-X2 basic support
-    
-    Fix #1597
+Thanks to Reinier Millo Sánchez and Alexy Gallardo Segura for having
+contributed this line of work.
 
 
 Removal of deprecated features
 ##############################
 
-;@nfeske
+We dropped the support for the *ARM Versatile Express* board from the Genode
+source tree to relieve our automated testing infrastructure from supporting
+a platform that remained unused for more than two years.
 
-commit 89255c39795116e0ec3f36a8908ce8999883dbcf
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Thu Jul 2 11:21:20 2015 +0200
-
-    remove Versatile Express board (Fix #1611)
+The device driver environment kit (DDE Kit) was originally intended as
+a common API among the execution environments of ported user-level device drivers.
+However, over the course of the past years, we found that this approach could
+not fulfill this premise while introducing a number of new problems.
+We reported our experiences in the release notes of versions
+[http://genode.org/documentation/release-notes/12.05#Re-approaching_the_Linux_device-driver_environment - 12.05] and
+http://genode.org/documentation/release-notes/14.11#Roundup - 14.11].
+To be able to remove the DDE-Kit API, we reworked the USB driver, our port of
+the Linux TCP/IP stack, and the wireless driver accordingly.
 
