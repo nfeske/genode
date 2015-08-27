@@ -708,75 +708,29 @@ Date:   Thu Jul 9 15:57:34 2015 +0200
 
 Revised page-table handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+One of the main advantages of the base-hw platform is that the memory trading
+concept of Genode is universally applied even regarding kernel objects. For
+instance, whenever a component wants to create a thread, it pays for the
+thread's stack, UTCB, and even for the corresponding kernel object. The same
+applies to the objects needed to manage the virtual address space of a
+component with the single exception of page-tables.
 
-;@skalk
+Normally, when the quota, which was donated by a component to a specific
+service, runs out, the component receives an exception next time it tries
+to invoke the service. Then it can upgrade its quota.
+Within the context of page-fault resolution this is especially difficult to do.
+The allocation and thereby the shortage of memory gets revealed when the client
+is faulting. Therefore, it is difficult to inform the component to first
+transmit more quota before resolving the fault.
 
-commit cc58b119988f44e0dbb59998086e8ba9caccb54e
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Jun 16 10:59:26 2015 +0200
-
-    hw: replace page table allocator with static one
-    
-    Instead of organizing page tables within slab blocks and allocating such
-    blocks dynamically on demand, replace the page table allocator with a
-    simple, static alternative. The new page table allocator is dimensioned
-    at compile-time. When a PD runs out of page-tables, we simply flush its
-    current mappings, and re-use the freed tables. The only exception is
-    core/kernel that should not produce any page faults. Thereby it has to
-    be ensured that core has enough page tables to populate it's virtual
-    memory.
-    
-    A positive side-effect of this static approach is that the accounting
-    of memory used for page-tables is now possible again. In the dynamic case
-    there was no protocol existent that solved the problem of donating memory
-    to core during a page fault.
-    
-    Fix #1588
-
-commit 8abd70e6e704421cfce2defa545c1486168e4cac
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Thu Jun 25 15:53:39 2015 +0200
-
-    hw: allocate core's page-tables outside of binary
-    
-    Moreover, be strict when calculating the page-table requirements of
-    core, which is architecture specific, and declare the virtual memory
-    requirements of core architecture-wise.
-    
-    Ref #1588
-
-commit f5d5ed96375d8a602ebf4401669fa80fa38b6331
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon Jun 22 14:44:28 2015 +0200
-
-    hw: use kernel signal API for page-fault signals
-    
-    Instead of using the Genode user-level signal API to signal page-faults to
-    a page-fault handler, use the kernel API directly. Thereby the accounting
-    of signal contexts needed for each paging subject can be done easily.
-    
-    Fix #956
-
-commit de4a98c777eb399801e93bb9412639c1f5996831
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri Jun 26 15:05:28 2015 +0200
-
-    hw: avoid using RM session in platform thread
-    
-    Fix #888
-
-commit eafe5e81e3ce2a8f8935d9deafc96a20a93d68dc
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Wed Jul 29 10:58:17 2015 +0200
-
-    core: unify and simplify paging code (Fix #1641)
-    
-    For most platforms except of NOVA a distinction between pager entrypoint
-    and pager activation is not needed, and only exists due to historical
-    reasons. Moreover, the pager thread's execution path is almost identical
-    between most platforms excluding NOVA, HW, and Fisco.OC. Therefore,
-    this commit unifies the pager loop for the other platforms, and removes
-    the pager activation class.
+Instead of designing a sophisticated protocol between core and the other
+components to solve this problem, we decided to simplify the current page-fault
+resolution by using a static set of page-tables per component. Formerly,
+page-tables were dynamically allocated from core's memory allocator. Now,
+an array of page-tables gets allocated during construction of a protection
+domain. When a component runs out of page-tables, all it's mapping get flushed,
+and the page-tables are populated from scratch. This change greatly simplifies
+the page-table handling inside of base-hw.
 
 
 Dynamic interrupt mode setting on x86_64
