@@ -65,7 +65,7 @@ Because of all the reasons Genode Labs is and was able to maintain and extend
 the kernel.
 
 Nevertheless the vanilla kernel lacks one essential feature since the beginning
-to reliable host Genode as user-land, namely the kernel memory management. In
+to reliably host Genode as user-land, namely the kernel memory management. In
 the past we extended the kernel already to free up kernel resources when they
 get destructed, e.g. processes and the page-tables, threads, semaphores and
 portals.
