@@ -127,8 +127,8 @@ an OOM IPC, it decodes the involved IPC sender and IPC receiver and locates the
 appropriate core-internal paging objects.
 The currently implemented out-of-memory policy tries to upgrade the quota. If this is not possible,
 an attempt to revoke memory mappings from the OOM-causing protection
-domain is made. This implicitly frees-up some kernel memory (in particular
-the backing store used for page tables). If none of the
+domain is made. This implicitly frees-up some kernel memory (e.g., mapping
+nodes). If none of the
 responses suffices, the handler stops the OOM-causing thread and writes a
 message to the system log.
 
