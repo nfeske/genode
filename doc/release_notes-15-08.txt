@@ -611,8 +611,8 @@ Genode.
 VESA driver refinements
 =======================
 
-The VESA driver now reports the frame-buffer instead of the visible width to
-the client . This fixes a possible distortion if these widths differ, at the
+The VESA driver now reports the frame buffer's line width instead of the visible width to
+the client. This fixes a possible distortion if these widths differ, at the
 cost that content in the right-most area might be invisible in such cases.
 
 
