@@ -75,7 +75,7 @@ threads, semaphores, and portals.
 Still, on Genode/NOVA, a component may trigger arbitrary kernel-memory
 consumption during RPC by delegating memory, capabilities, or by creating
 other components via Genode's core. If the kernel memory gets
-depleted, the kernel panics with a "Out of memory" message and the entire
+depleted, the kernel panics with an "Out of memory" message and the entire
 Genode scenario stops.
 
 In principal, the consumption of kernel memory can be deliberately provoked by
@@ -86,33 +86,33 @@ environment constantly creates and destroys protection domains, threads, and
 memory mappings. Our nightly test of compiling Genode within noux
 triggers this condition every once in a while.
 
-The main issue here is that the consumption of kernel memory is not (and
-cannot be) accounted by Genode. The kernel
+The main issue here is that the consumption of kernel memory is not
+accounted by Genode. The kernel
 interface does not support such a feature. Kernels like seL4 as well as Genode's
 custom base-hw kernel show how this problem can be solved.
 
 To improve the current situation - where the overall kernel memory is a
-fixed amount - we extended the kernel with the current release in the following ways:
+fixed amount - we extended NOVA in the following ways:
 First, the NOVA kernel accounts any kernel memory consumption per protection
 domain.
 Second, each process has a limited amount of kernel-memory quota it can use.
-Third, the kernel detects when the quota limit of a protection domain is
+Last, the kernel detects when the quota limit of a protection domain is
 reached.
 
 If the third condition occurs, the kernel stops the offending thread and
 (optionally) notifies a handler thread.
 This so called out-of-memory (OOM) handler thread receives information about the
-current situation and may respond in the following ways:
+current situation and may respond to it in the following ways:
 
-* Either stop the thread of the depleted protection domain or,
+* Stop the thread of the depleted protection domain, or
 * Transfer kernel-memory quota between protection domains (upgrading the limit
-  if desired) or,
+  if desired), or
 * Free up kernel memory if possible, e.g., revoke memory delegations, which
   can be re-created.
 
 We implemented the steps above inside the NOVA kernel and extended Genode's core
 to handle such OOM situations. All system calls beside the IPC call/reply may
-now return an error code on quota depletion. These
+now return an error code on the depletion of the quota. These
 system calls can only be performed by core and are handled inside core's
 NOVA-specific platform code.
 
@@ -127,8 +127,8 @@ appropriate core-internal paging objects.
 The currently implemented out-of-memory policy tries to upgrade the quota. If this is not possible,
 an attempt to revoke memory mappings from the OOM-causing protection
 domain is made. This implicitly frees-up some kernel memory (in particular
-the backing store for page tables). If none of the
-responses suffice the handler stops the OOM causing thread and writes a
+the backing store used for page tables). If none of the
+responses suffices, the handler stops the OOM-causing thread and writes a
 message to the system log.
 
 The current policy implementation is a rather rough heuristic,
@@ -142,7 +142,7 @@ There are a lot more combinations imaginable.
 
 Our current plan is to collect more experience over the next months with this
 new kernel mechanism. Based on our observations, we may externalize such
-policy decisions and make them possibly configurable per component.
+policy decisions and possibly make them configurable per component.
 
 The current implementation
 however, already avoids the situation that the kernel goes out of service
@@ -168,7 +168,7 @@ as little as 200 EUR. Finally, an older machine reinforces the need for good
 performance of the operating system. So it creates a natural incentive
 for Norman to find and address performance bottlenecks.
 
-Our modified version of the NOVA microhypervisor is used the kernel.
+Our modified version of the NOVA microhypervisor is the used kernel.
 
 The user interface is based on our custom GUI stack including the
 nitpicker GUI server as well as the window manager and its companion
@@ -326,7 +326,7 @@ The following snippet shows how to enable and configure recording on a
 Thinkpad X220 where the headset instead of the internal microphone is used as
 source:
 
-! <start name="audio_out_drv">
+! <start name="audio_drv">
 !   <resource name="RAM" quantum="8M"/>
 !   <provides>
 !     <service name="Audio_out"/>
@@ -568,7 +568,7 @@ The snippet provides the following functions: 'append_platform_drv_build_compone
 functions add necessary information to the 'build_components',
 'config' and 'boot_modules' run variables. The _platform_drv.inc_ also
 contains the distinction between various ARM/x86 platforms and includes the
-necessary pieces. So run scripts are largely relieved from platform-specific
+necessary pieces. Hence, run scripts are largely relieved from platform-specific
 peculiarities.
 
 The body of an example run script looks like this:
