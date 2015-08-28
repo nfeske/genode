@@ -62,7 +62,7 @@ x86. The main reasons for this choice are: The kernel provides - among the
 supported x86 kernels - the richest feature set like the support of
 IOMMUs, virtualization, and SMP. It also offers a clean design and a stable
 kernel interface. The available kernel-interface
-specification, the readable and modern source base is a pleasure to work with.
+specification and the readable and modern source base are a pleasure to work with.
 Hence, Genode Labs is able to fully commit to the maintenance and
 further evolution of this kernel.
 
@@ -74,7 +74,7 @@ destructing kernel objects, e.g., protection domains and page-tables,
 threads, semaphores, and portals.
 Still, on Genode/NOVA, a component may trigger arbitrary kernel-memory
 consumption during RPC by delegating memory, capabilities, or by creating
-other components via Genode's core. If the kernel memory gets
+other components via Genode's core component. If the kernel memory gets
 depleted, the kernel panics with an "Out of memory" message and the entire
 Genode scenario stops.
 
@@ -110,7 +110,8 @@ current situation and may respond to it in the following ways:
 * Free up kernel memory if possible, e.g., revoke memory delegations, which
   can be re-created.
 
-We implemented the steps above inside the NOVA kernel and extended Genode's core
+We implemented the steps above inside the NOVA kernel and extended Genode's
+core component
 to handle such OOM situations. All system calls beside the IPC call/reply may
 now return an error code on the depletion of the quota. These
 system calls can only be performed by core and are handled inside core's
@@ -131,7 +132,7 @@ the backing store used for page tables). If none of the
 responses suffices, the handler stops the OOM-causing thread and writes a
 message to the system log.
 
-The current policy implementation is a rather rough heuristic,
+The current policy implementation constitutes a rather rough heuristic,
 which may not suffice under all circumstances. In the future, we would like to
 specify a distinct policy per component, e.g. depending on prior known
 memory usage patterns.
@@ -194,8 +195,8 @@ Noux.
 VirtualBox executes a GNU/Linux-based guest OS that we refer to as "rich OS". The
 rich OS serves as a migration path from GNU/Linux to Genode. It is used for
 all tasks that cannot be accomplished directly on Genode yet. At the beginning
-of the transition, the daily work flow still very much depends on the rich OS.
-But by moving more and more functionality over to the Genode world, we will
+of the transition, the daily routine still very much depends on the rich OS.
+By moving more and more functionality over to the Genode world, we will
 eventually be able to make the rich OS obsolete step by step.
 Thanks to VirtualBox' excellent host-guest-integration features, the
 VirtualBox window can be dynamically resized and the guest mouse cursor
@@ -310,7 +311,7 @@ situation, e.g., by consuming packets more frequently. A client can install a
 signal handler to respond to a progress signal, which is sent by the server
 when a new Audio_in::Packet was submitted to the packet queue. For now, all
 audio-in server components only support one channel (left) although the
-audio_in session interface principally supports multiple channels.
+audio-in session interface principally supports multiple channels.
 
 The _dde_bsd_ audio_drv is the first and currently only audio driver component
 that was extended to provide the audio-in session. To express this fact, the
@@ -377,7 +378,7 @@ The VFS itself received a welcome improvement in the form of private
 RAM file systems.
 During different file-system-dependent experiments, a need for private,
 temporary areas arose. This motivated a conversion of the existing ram_fs server
-core to an embeddable VFS file system. This addition to the set of VFS plugins
+component to an embeddable VFS file system. This addition to the set of VFS plugins
 allows components to create, modify, and remove files without defining and
 allocating resources to an additional component.
 
@@ -466,7 +467,7 @@ Low-complexity software rendering functions
 Our ambition to use Genode as our day-to-day OS raises the need for custom
 graphical applications. Granted, it is principally possible to base such
 applications on Qt5, which is readily available to native Genode components.
-But for certain applications like status displays, we prefer to avoid the
+However, for certain applications like status displays, we prefer to avoid the
 dependency on an overly complex GUI tool kit. To accommodate such
 applications, Genode hosts a small collection of low-complexity graphics
 functions called painters. All of Genode's low-complexity graphical components
@@ -492,8 +493,8 @@ Device drivers
 Completing the transition to the new platform driver
 ====================================================
 
-Until now, the ACPI and PCI drivers formed the platform driver on x86-based
-machines.
+Until now, the platform driver on x86-based machines was formed by the ACPI
+and PCI drivers.
 The ACPI driver originally executed the PCI driver as a slave (child) service. The ACPI
 driver parsed the ACPI tables and provided the relevant information as
 configuration during the PCI-driver startup. We changed this close coupling
@@ -502,7 +503,7 @@ to the more modern and commonly used
 
 When the new ACPI driver finishes the ACPI table parsing, it provides the
 information via a report to any interested and registered components.
-The report contains, e.g., the IRQ re-routing information.
+The report contains among other the IRQ re-routing information.
 The PCI driver is such a component, which - according to its session routing
 configuration - plays the role of a consumer of the ACPI report.
 
@@ -511,8 +512,8 @@ devices must be configured solely at the PCI driver and not at the
 ACPI driver. The syntax, however, stayed the same as introduced with release
 15.05.
 
-Finally, the PCI driver 'pci_drv' got renamed to 'platform_drv' as used on most
-ARM platforms already. All files and session interfaces containing PCI/pci in
+Finally, the PCI driver 'pci_drv' got renamed to 'platform_drv' as already used on
+most ARM platforms. All files and session interfaces containing PCI/pci in
 the names were renamed to Platform/platform. The x86 platform interfaces moved
 to _repos/os/include/platform/x86/_ and the implementation of the
 platform driver to _repos/os/src/drivers/platform/x86/_.
@@ -563,7 +564,7 @@ _repos/base/run/platform_drv.inc_.
 This file may be included by any test run script in order to setup a default platform
 driver configuration.
 
-The snippet provides the following functions: 'append_platform_drv_build_components',
+In addition, the snippet provides the following functions: 'append_platform_drv_build_components',
 'append_platform_drv_config', 'append_platform_drv_boot_modules'. The
 functions add necessary information to the 'build_components',
 'config' and 'boot_modules' run variables. The _platform_drv.inc_ also
@@ -621,7 +622,7 @@ VirtualBox
 Policy-based mouse pointer
 ==========================
 
-With the previous release, we implemented support for the transparent
+In the previous release, we implemented support for the transparent
 integration of the guest mouse pointer with nitpicker via the
 VirtualBox guest additions and the vbox_pointer component capable of
 rendering guest-provided mouse-pointer shapes. Now, we extended vbox_pointer
