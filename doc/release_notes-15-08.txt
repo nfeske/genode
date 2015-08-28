@@ -57,11 +57,11 @@ small tutorial at _repos/base-hw/doc/x86_64_muen.txt_.
 NOVA kernel-resource management
 ###############################
 
-The NOVA kernel serves as Genode's primary base platform on x86 since several
-years for two reasons. First, the kernel provides - among the
+For several years, the NOVA kernel has served as Genode's primary base platform on
+x86. The main reasons for this choice are: The kernel provides - among the
 supported x86 kernels - the richest feature set like the support of
-IOMMUs, virtualization and SMP. Second, the clean design of the
-kernel, the stable kernel interface, the available kernel-interface
+IOMMUs, virtualization, and SMP. It also offers a clean design and a stable
+kernel interface. The available kernel-interface
 specification, the readable and modern source base is a pleasure to work with.
 Hence, Genode Labs is able to fully commit to the maintenance and
 further evolution of this kernel.
@@ -70,11 +70,11 @@ Nevertheless, since the beginning, the vanilla kernel lacks one essential featur
 to reliably host Genode as user-land, namely the proper management of the memory used
 by the kernel itself (in short kernel-memory management). In
 the past, we already extended the kernel to free up kernel resources when
-destructing kernel objects, e.g., protection domains and the page-tables,
-threads, semaphores and portals.
+destructing kernel objects, e.g., protection domains and page-tables,
+threads, semaphores, and portals.
 Still, on Genode/NOVA, a component may trigger arbitrary kernel-memory
-consumption during RPC by delegating memory or capabilities or by creating
-other component and threads via Genode's core. If the kernel memory gets
+consumption during RPC by delegating memory, capabilities, or by creating
+other components via Genode's core. If the kernel memory gets
 depleted, the kernel panics with a "Out of memory" message and the entire
 Genode scenario stops.
 
@@ -84,25 +84,25 @@ of Genode, such a situation can occur when the system is used in a highly
 dynamic fashion. For example, compiling and linking source code within the noux
 environment constantly creates and destroys protection domains, threads, and
 memory mappings. Our nightly test of compiling Genode within noux
-triggers this condition from time to time.
+triggers this condition every once in a while.
 
 The main issue here is that the consumption of kernel memory is not (and
-can not) accounted and thereby cannot be limited by Genode. The kernel
-interface does not support such a feature. Kernels like seL4 as Genode's
-custom base-hw kernel shows how this can be solved.
+cannot be) accounted by Genode. The kernel
+interface does not support such a feature. Kernels like seL4 as well as Genode's
+custom base-hw kernel show how this problem can be solved.
 
-To improve the current situation - where the overall kernel memory amount is
-fixed - we extended the kernel the current release in the following ways:
+To improve the current situation - where the overall kernel memory is a
+fixed amount - we extended the kernel with the current release in the following ways:
 First, the NOVA kernel accounts any kernel memory consumption per protection
 domain.
 Second, each process has a limited amount of kernel-memory quota it can use.
 Third, the kernel detects when the quota limit of a protection domain is
 reached.
 
-If the condition occurs, the kernel stops the offending thread and
-(optionally) notifies another handler thread.
-The so called - out-of-memory(OOM) - handler thread receives the information about the
-situation and may respond on it in the following ways:
+If the third condition occurs, the kernel stops the offending thread and
+(optionally) notifies a handler thread.
+This so called out-of-memory (OOM) handler thread receives information about the
+current situation and may respond in the following ways:
 
 * Either stop the thread of the depleted protection domain or,
 * Transfer kernel-memory quota between protection domains (upgrading the limit
@@ -110,41 +110,41 @@ situation and may respond on it in the following ways:
 * Free up kernel memory if possible, e.g., revoke memory delegations, which
   can be re-created.
 
-We implemented the above steps in the NOVA kernel and extended Genode's core
-to handle such OOM situations. All syscalls beside the IPC call/reply may
-now return an error code that is returned on the depletion of the quota. These
-syscalls are solely performed and permitted by core and handled inside core's
+We implemented the steps above inside the NOVA kernel and extended Genode's core
+to handle such OOM situations. All system calls beside the IPC call/reply may
+now return an error code on quota depletion. These
+system calls can only be performed by core and are handled inside core's
 NOVA-specific platform code.
 
 In the case of IPC call/reply operations, we desired to handle OOM cases
-transparently to the Genode user-level components. Therefore, each thread in
-Genode/NOVA now gets constructed with a OOM IPC portal attached. This portal
-is served by the pager thread in core and gets called when an OOM situation is
-detected during an IPC call/reply operation. If the pager thread receives such
-an OOM IPC, it decodes the involved IPC sender and IPC receiver and looks up the
+transparently to Genode user-level components. Therefore, each thread in
+Genode/NOVA now gets constructed with an OOM IPC portal attached. This portal
+is served by the pager thread in core and is traversed on OOM occurrences during
+IPC operations.
+If a pager thread receives such
+an OOM IPC, it decodes the involved IPC sender and IPC receiver and locates the
 appropriate core-internal paging objects.
-The currently implemented out-of-memory policy of the OOM-handling code of the
-pager thread first tries to upgrade the quota. If this is not possible
-anymore, it attempts to revoke memory mappings from the OOM-causing protection
-domain and thereby implicitly frees-up some kernel memory (in particular
+The currently implemented out-of-memory policy tries to upgrade the quota. If this is not possible,
+an attempt to revoke memory mappings from the OOM-causing protection
+domain is made. This implicitly frees-up some kernel memory (in particular
 the backing store for page tables). If none of the
-responses suffice the causing thread is stopped by the OOM handler and a
-message appears in the system log.
+responses suffice the handler stops the OOM causing thread and writes a
+message to the system log.
 
 The current policy implementation is a rather rough heuristic,
-which may not suffice in all circumstances. At some point, one would like to
+which may not suffice under all circumstances. In the future, we would like to
 specify a distinct policy per component, e.g. depending on prior known
 memory usage patterns.
-For example, some components follow well-known patterns and
-therefore a hard fixed upper quota limit can be specified. Other components
+For example, some components follow well-known usage patterns and
+therefore a fixed upper quota limit can be specified. Other components
 are highly dynamic and desire quota upgrades on demand.
-There are a lot of more combinations imaginable.
+There are a lot more combinations imaginable.
 
-Our plan for now is to collect more experience over the next months with the
-new kernel OOM mechanism. Based on the observations, we may externalize such
-policy decisions outside core and make it possibly configurable per component.
+Our current plan is to collect more experience over the next months with this
+new kernel mechanism. Based on our observations, we may externalize such
+policy decisions and make them possibly configurable per component.
 
-The current state of the integration of the extended NOVA kernel with core,
+The current implementation
 however, already avoids the situation that the kernel goes out of service
 if a single component misbehaves kernel-memory-wise.
 
@@ -159,7 +159,7 @@ is composed of the following ingredients:
 
 [image turmvilla_scenario]
 
-The used machine is a Lenovo Thinkpad X201. We settled on this five-year-old machine
+The machine used is a Lenovo Thinkpad X201. We settled on this five-year-old machine
 for several reasons. First, it is a very solid platform with a nice form
 factor. Second, it features Intel's AMT (Active Management Technology),
 which is handy to obtain low-level system logs in the case something
@@ -194,23 +194,23 @@ Noux.
 VirtualBox executes a GNU/Linux-based guest OS that we refer to as "rich OS". The
 rich OS serves as a migration path from GNU/Linux to Genode. It is used for
 all tasks that cannot be accomplished directly on Genode yet. At the beginning
-of the transition, the daily work flows still very much depend on the rich OS.
+of the transition, the daily work flow still very much depends on the rich OS.
 But by moving more and more functionality over to the Genode world, we will
 eventually be able to make the rich OS obsolete step by step.
 Thanks to VirtualBox' excellent host-guest-integration features, the
 VirtualBox window can be dynamically resized and the guest mouse cursor
 integrates seamlessly with Genode's pointer. VirtualBox is directly connected
-to the wireless network driver. So the usual applications like Firefox can be used.
+to the wireless network driver. So common applications like Firefox can be used.
 
 The noux runtime allows us to use command-line-based GNU software directly on
 Genode. Coreutils and Bash are used for managing files. Vim is used for
 editing files. Unlike the rich OS, the noux environment has access to the
 Genode partition of the hard disk. In particular, it can be used to update the
-Genode sustem. It has access to a number of pseudo files that containing
+Genode system. It has access to a number of pseudo files that contain
 status information of the underlying components, e.g., the list of wireless
 access points. Furthermore, it has limited access to the configuration
 interfaces of the base components. For example, it can point the wireless
-driver to the accesspoint to use, or change the configuration of the nitpicker
+driver to the access point to use, or change the configuration of the nitpicker
 GUI server at runtime.
 
 As a bridge between the rich OS and the Genode world, we combine VirtualBox'
@@ -258,10 +258,10 @@ at the same time, we removed the formerly built-in policy hosting the
 decorator and layout components as children of the window manager.
 Those components are no longer child components but siblings. The relationship
 of the components is now solely expressed by the configuration of their common
-parent, i.e., init. This changed clears the way to dynamically replace those
+parent, i.e., init. This change clears the way to dynamically replace those
 components during runtime (e.g., switching between different decorators).
 
-For improving the usability of the windowed GUI, we enabled the layouter to
+To improve the usability of the windowed GUI, we enabled the layouter to
 raise windows on click and to let the keyboard focus follow the pointer.
 Furthermore, the window manager, the decorator, and the floating window
 layouter became able to propagate the usage of an alpha channel from the
@@ -273,9 +273,9 @@ skipped. Consequently, partially transparent windows can be properly displayed.
 CPU-load monitoring
 ===================
 
-During the daily use of the system, we wished to know in detail where the
+During daily system use, we started to wish to know in detail where the
 CPU cycles are spent. For example, the access of a file by the rich OS
-involves several components including the guest OS itself, VirtualBox,
+involves several components, including the guest OS itself, VirtualBox,
 rump_fs (file system), part_blk (partition access), ahci_drv (SATA device
 access), core, and NOVA. Investigating performance issues requires a
 holistic view of all those components. For this reason, we enhanced our
@@ -369,7 +369,7 @@ from the noux runtime introduced in version
 and was later integrated into our C runtime in version
 [http://genode.org/documentation/release-notes/14.05#Per-process_virtual_file_systems - 14.05].
 With the current release, we take the VFS a step further by making it
-available to components without the C runtime. Thereby, low-complexity
+available to components without a C runtime. Thereby, low-complexity
 security-sensitive components such as CLI monitor become able to benefit from
 the powerful VFS infrastructure.
 
@@ -455,7 +455,7 @@ In addition to the CPU-monitoring additions, the tracing facilities received
 minor refinements. Up to now, it was not possible to trace threads that use a
 CPU session other than the component's initial one. A specific example is
 VirtualBox, which employs several CPU sessions, one for each priority. This
-problem is now solved by associating the event logger of each thread with its
+problem has been solved by associating the event logger of each thread with its
 actual CPU session. Consequently, the tracing mechanism has become able to
 trace VirtualBox, which is pivotal for our further optimizations.
 
@@ -492,7 +492,7 @@ Device drivers
 Completing the transition to the new platform driver
 ====================================================
 
-Until now, the ACPI and PCI drivers form the platform driver on x86-based
+Until now, the ACPI and PCI drivers formed the platform driver on x86-based
 machines.
 The ACPI driver originally executed the PCI driver as a slave (child) service. The ACPI
 driver parsed the ACPI tables and provided the relevant information as
@@ -506,7 +506,7 @@ The report contains, e.g., the IRQ re-routing information.
 The PCI driver is such a component, which - according to its session routing
 configuration - plays the role of a consumer of the ACPI report.
 
-With the change of the interaction of ACPI and PCI driver, the policy for
+With this change of interaction of ACPI and PCI driver, the policy for
 devices must be configured solely at the PCI driver and not at the
 ACPI driver. The syntax, however, stayed the same as introduced with release
 15.05.
@@ -560,15 +560,15 @@ A example x86 platform configuration snippet looks like this:
 In order to unify and simplify the writing of run scripts, we added the
 commonly used platform configuration to the file
 _repos/base/run/platform_drv.inc_.
-This may be included by any test run script in order to setup the platform
+This file may be included by any test run script in order to setup a default platform
 driver configuration.
 
 The snippet provides the following functions: 'append_platform_drv_build_components',
 'append_platform_drv_config', 'append_platform_drv_boot_modules'. The
-functions add the necessary information to the 'build_components',
+functions add necessary information to the 'build_components',
 'config' and 'boot_modules' run variables. The _platform_drv.inc_ also
 contains the distinction between various ARM/x86 platforms and includes the
-necessary pieces. So run script, are largely relieved from platform-specific
+necessary pieces. So run scripts are largely relieved from platform-specific
 peculiarities.
 
 The body of an example run script looks like this:
@@ -621,7 +621,7 @@ VirtualBox
 Policy-based mouse pointer
 ==========================
 
-With the previous release, we implemented support for transparent
+With the previous release, we implemented support for the transparent
 integration of the guest mouse pointer with nitpicker via the
 VirtualBox guest additions and the vbox_pointer component capable of
 rendering guest-provided mouse-pointer shapes. Now, we extended vbox_pointer
@@ -657,7 +657,7 @@ At some point, the use of VirtualBox as a stop-gap solution for using Genode as
 everyday OS raises the need to handle audio.
 With this release, we address this matter by enabling preliminary audio
 support in our VirtualBox port. A back end that uses the audio-out and
-audio-in sessions to playback and record sound samples was added. It disguises
+audio-in sessions to playback and record sound samples has been added. It disguises
 itself as the OSS back end that is already used by vanilla VirtualBox.
 Since Genode pretends to be FreeBSD in the eyes of VirtualBox (because
 Genode's libc is based on FreeBSD's libc), the provisioning of an
@@ -671,13 +671,13 @@ that favors the current implementation. For example,
 we cannot guarantee distortion-free playback or recording
 if the guest OS uses a period that is too short, typically 10ms or less.
 There are also remaining issues with the mixing/filtering code in VirtualBox.
-Therefore, we bypass it to achieve better audio quality. As a consquence,
+Therefore, we bypass it to achieve better audio quality. As a consequence,
 the device model of the VM has to use the same sample rate as is used by the
 audio-out and audio-in sessions (44.1kHz).
 
 Enabling audio support is done be adding
 ! <AudioAdapter controller="HDA" driver="OSS" enabled="true"/>
-to the .vbox file, manually or configuring the VM accordingly by using the GUI.
+to the .vbox file manually or configuring the VM accordingly by using the GUI.
 
 
 Platforms
@@ -691,7 +691,7 @@ Bender chain loader on base-hw x86_64
 
 On Intel platforms, we use the Bender chain loader from the
 [https://github.com/alex-ab/morbo - Morbo multiboot suite] to detect
-available COM ports of PCI plug-in cards, the AMT SOL device or as
+available COM ports of PCI plug-in cards, the AMT SOL device, or as
 fall back the default comport 1. The loader stores the I/O port
 information of the detected cards into the BIOS data area (BDA), from
 where it is retrieved by core on boot and used for the log output.
@@ -705,17 +705,17 @@ Revised page-table handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One of the main advantages of the base-hw platform is that the memory trading
-concept of Genode is universally applied even regarding kernel objects. For
+concept of Genode is universally applied even with regard to kernel objects. For
 instance, whenever a component wants to create a thread, it pays for the
-thread's stack, UTCB, and even for the corresponding kernel object. The same
-applies to the objects needed to manage the virtual address space of a
+thread's stack, UTCB, and for the corresponding kernel object. The same
+applies to objects needed to manage the virtual address space of a
 component with the single exception of page tables.
 
 Normally, when the quota, which was donated by a component to a specific
 service, runs out, the component receives an exception the next time it tries
 to invoke the service. The component can respond by upgrading the respective
 session quota.
-Within the context of page-fault resolution, however, this is especially difficult to do.
+Within the context of page-fault resolution, however, this is particularly difficult to do.
 The allocation and thereby the shortage of memory gets revealed only when the client
 produces a page fault. Therefore, there is no way to inform the component to
 upgrade its session quota before resolving the fault.
@@ -723,9 +723,9 @@ upgrade its session quota before resolving the fault.
 Instead of designing a sophisticated protocol between core and the other
 components to solve this problem, we decided to simplify the current page-fault
 resolution by using a static set of page-tables per component. Formerly,
-page-tables were dynamically allocated from core's memory allocator. Now,
-an array of page-tables gets allocated during construction of a protection
-domain. When a component runs out of page-tables, all of its mapping get flushed,
+page tables were dynamically allocated from core's memory allocator. Now,
+an array of page tables gets allocated during construction of a protection
+domain. When a component runs out of page tables, all of its mappings get flushed,
 and the page tables are populated from scratch. This change greatly simplifies
 the page-table handling inside of base-hw.
 
@@ -753,7 +753,7 @@ Fiasco.OC, too. As a result, Genode's software stack can now be used on the
 Raspberry Pi by using either our custom base-hw kernel or Fiasco.OC.
 
 Second, support for the Odroid-X2 platform using the Exynos4412 SoC was added,
-which includes the drivers for the clock management (CMU), power management
+which includes the drivers for clock management (CMU), power management
 (PMU) as well as USB.
 
 Thanks to Reinier Millo Sánchez and Alexy Gallardo Segura for having
