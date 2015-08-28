@@ -258,7 +258,7 @@ decoration elements behind the affected windows, which would otherwise be
 skipped.
 
 
-CPU load monitoring
+CPU-load monitoring
 ===================
 
 During the daily use of the system, we wished to know in detail where the
@@ -398,74 +398,53 @@ components within Genode.
 Enhanced tracing facilities
 ===========================
 
-;@nfeske
+Recent Genode-based system scenarios like the one described in Section
+[Genode as day-to-day operating system] consist of dozens of component that
+interact with each other.
+For reasoning about the behaviour of such scenarios and identifying
+the effective optimization vectors, tools for gathering a holistic view of the
+system are highly desired.
 
-commit 959572968de0a932dd051a1a1f279061666a6217
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Jun 11 23:05:02 2015 +0200
+With the introduction of our light-weight
+[http://genode.org/documentation/release-notes/13.08#Light-weight_event_tracing - event-tracing facility]
+in version 13.08, we laid the foundation for such tools.
+The current release extends core's TRACE service with the ability to
+obtain such statistics.
+More specifically, it enables clients of core's TRACE service to obtain the
+execution times of trace subjects (i.e., threads). The execution time is
+delivered as part of the 'Subject_info' structure. In addition to the
+execution time, the structure delivers the information about the affinity
+of the subject with its physical CPU.
 
-    core: provide thread exec times via TRACE service
-    
-    This patch enable clients of core's TRACE service to obtain the
-    execution times of trace subjects (i.e., threads). The execution time is
-    delivered as part of the 'Subject_info' structure.
-    
-    Right now, the feature is available solely on NOVA. On all other base
-    platforms, the returned execution times are 0.
-    
-    Issue #813
+At the current stage, the feature is available solely on NOVA since this is
+our kernel of choice for using Genode as our day-to-day OS. On all other base
+platforms, the returned execution times are 0.
+To give a complete picture of the system's threads, the kernel's idle
+threads (one per CPU) are featured as trace subjects as well. Of course,
+idle threads cannot be traced but their corresponding trace subjects allow
+TRACE clients to obtain the idle time of each CPU.
 
-commit b22f3c67f00b7620eb88968ad3550e2918ddcf25
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Jun 15 20:41:59 2015 +0200
+By obtaining the trace-subject information in periodic intervals, a TRACE
+client is able to gather statistics about the CPU utilization attributed to
+the individual threads present (or no longer present) in the system. One
+instance of such a tool is the new trace-subject reporter located at
+_os/src/app/trace_subject_reporter_. It acts as a TRACE client, which delivers
+the trace-subject information in the form of XML-formatted data to a report
+session. This information, in turn, can be consumed by a separate component
+that analyses the data. In contrast to the simple trace-subject reporter,
+which requires access to the privileged TRACE services of core, the
+(potentially complex) analysing component does not require access to the TRACE
+service. So it isn't as critical as the trace-subject monitor. The first
+representative of a consumer of trace-subject reports is the CPU-load display
+mentioned in Section [CPU-load monitoring] and depicted in Figure [nano3d].
 
-    Trace-subject reporter
-    
-    Issue #813
-
-commit fbe44f08d47597b4e95897c51ebbd60e76419bf0
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Dec 17 13:57:59 2014 +0100
-
-    nova: support to read thread and idle time
-    
-    Issue #813
-
-commit a23ac5f569998dce39a74145b64708df7347834e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jun 16 20:39:09 2015 +0200
-
-    base/nova: add idle threads to trace sources
-    
-    Issue #813
-
-commit 5d678dba9edd6e45c5657b27a09b34592572ae6e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jun 17 13:25:51 2015 +0200
-
-    core: throw Trace::Out_of_metadata in subjects()
-    
-    While importing trace sources as trace subjects into a TRACE session,
-    the session quota might become depleted. The TRACE session already keeps
-    track of the session quota via an allocator guard but the 'subjects' RPC
-    function missed to handle the out-of-memory condition. This patch
-    reflects the error condition as an 'Out_of_metadata' exception to the
-    TRACE client. It also contains an extension of the trace test to
-    exercise the corner case.
-
-commit 7e40f5f587aab6aca1daf6af00e43eb7e6790855
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri Jul 3 16:22:35 2015 +0200
-
-    base: use proper Cpu_session when tracing threads
-    
-    Up to now it was not possible to trace threads that use a different
-    Cpu_session rather than env()->cpu_session() (as done by VirtualBox).
-    This problem is now solved by setting the Cpu_session explicitly when
-    creating the event logger and attaching the trace control area when
-    creating the thread.
-    
-    Fixes #1618.
+In addition to the CPU-monitoring additions, the tracing facilities received
+minor refinements. Up to now, it was not possible to trace threads that use a
+CPU session other than the component's initial one. A specific example is
+VirtualBox, which employs several CPU sessions, one for each priority. This
+problem is now solved by associating the event logger of each thread with its
+specific CPU session. Consequently, the tracing facilities became capable to
+trace VirtualBox, which is pivotal for our further optimizations.
 
 
 Low-complexity software rendering functions
