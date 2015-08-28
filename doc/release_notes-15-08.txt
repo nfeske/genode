@@ -12,7 +12,7 @@
 ;@nfeske
 
 
-Genode on top of the Muen separation kernel
+Genode on top of the Muen Separation Kernel
 ###########################################
 
 _This section was written by Adrian-Ken Rueegsegger and Reto Buerki who_
@@ -22,8 +22,8 @@ After completing our x86_64 port of the Genode base-hw kernel, which was
 featured in the
 [http://genode.org/documentation/release-notes/15.05#Principal_support_for_the_64-bit_x86_architecture - previous release (15.05)],
 we immediately started working on our main goal: running a Genode system as
-guest on the Muen Separation Kernel (SK) to benefit from the rich ecosystem of
-Genode.
+guest on the Muen Separation Kernel (SK). This would enable the Muen platform
+to benefit from the rich ecosystem of Genode.
 
 For those who have not read the 15.05 Genode release notes, [http://muen.sk - Muen]
 is an Open-Source microkernel, which uses the [http://spark-2014.org/ - SPARK]
@@ -58,7 +58,7 @@ NOVA kernel-resource management
 ###############################
 
 For several years, the NOVA kernel has served as Genode's primary base platform on
-x86. The main reasons for this choice are: The kernel provides - among the
+x86. The main reasons for this choice are: the kernel provides - among the
 supported x86 kernels - the richest feature set like the support of
 IOMMUs, virtualization, and SMP. It also offers a clean design and a stable
 kernel interface. The available kernel-interface
@@ -70,7 +70,7 @@ Nevertheless, since the beginning, the vanilla kernel lacks one essential featur
 to reliably host Genode as user-land, namely the proper management of the memory used
 by the kernel itself (in short kernel-memory management). In
 the past, we already extended the kernel to free up kernel resources when
-destructing kernel objects, e.g., protection domains and page-tables,
+destroying kernel objects, e.g., protection domains and page-tables,
 threads, semaphores, and portals.
 Still, on Genode/NOVA, a component may trigger arbitrary kernel-memory
 consumption during RPC by delegating memory, capabilities, or by creating
@@ -80,7 +80,7 @@ Genode scenario stops.
 
 In principal, the consumption of kernel memory can be deliberately provoked by
 a misbehaving (greedy) component. But also during the regular day-to-day usage
-of Genode, such a situation can occur when the system is used in a highly
+of Genode, can such a situation occur when the system is used in a highly
 dynamic fashion. For example, compiling and linking source code within the noux
 environment constantly creates and destroys protection domains, threads, and
 memory mappings. Our nightly test of compiling Genode within noux
@@ -113,7 +113,7 @@ current situation and may respond to it in the following ways:
 We implemented the steps above inside the NOVA kernel and extended Genode's
 core component
 to handle such OOM situations. All system calls beside the IPC call/reply may
-now return an error code on the depletion of the quota. These
+now return an error code upon depletion of the quota. These
 system calls can only be performed by core and are handled inside core's
 NOVA-specific platform code.
 
@@ -139,7 +139,7 @@ memory usage patterns.
 For example, some components follow well-known usage patterns and
 therefore a fixed upper quota limit can be specified. Other components
 are highly dynamic and desire quota upgrades on demand.
-There are a lot more combinations imaginable.
+There are many more combinations imaginable.
 
 Our current plan is to collect more experience over the next months with this
 new kernel mechanism. Based on our observations, we may externalize such
@@ -221,7 +221,7 @@ is mounted in both the VFS of VirtualBox and the VFS of noux.
 
 As evidenced by Norman's use since June, the described system setup is
 sufficient to be productive. So other members of the Genode team plan to follow
-his footsteps soon. At the same time, the continued use of the system from day
+in his footsteps soon. At the same time, the continued use of the system from day
 to day revealed a number of shortcomings, performance limitations, and rough
 edges, which we eventually eliminated. It goes without saying that this is an
 ongoing effort. Eating our own dog food forces us to address the right issues
@@ -299,7 +299,7 @@ Improved audio support
 In the previous release, we replaced our old audio driver with a new one
 that provided the same audio-out session interface. Complementing the audio-out
 session, we are now introducing a new audio-in session interface that can be
-used to record audio frames. It is modelled after the audio-out interface in
+used to record audio frames. It is modeled after the audio-out interface in
 the way how it handles the communication between the client and the server.
 It uses shared memory in the form of the Audio_in::Stream to transport the
 frames between the components. A server component captures frames and puts them into a
@@ -309,7 +309,7 @@ already full, the server will override already allocated packets and will notify
 the client by submitting an 'overrun' signal. The client has to cope with this
 situation, e.g., by consuming packets more frequently. A client can install a
 signal handler to respond to a progress signal, which is sent by the server
-when a new Audio_in::Packet was submitted to the packet queue. For now, all
+when a new Audio_in::Packet has been submitted to the packet queue. For now, all
 audio-in server components only support one channel (left) although the
 audio-in session interface principally supports multiple channels.
 
@@ -352,8 +352,8 @@ _repos/dde_bsd/run/audio_in.run_ run script.
 
 There are also changes to the audio-out session itself. The length of a period
 was reduced from 2048 to 512 samples to accommodate for a lower latency when
-mixing audio-out packets and a method for invalidating all packets in the
-queue was added.
+mixing audio-out packets. A method for invalidating all packets in the queue
+was also added.
 
 
 File-system infrastructure
@@ -390,7 +390,7 @@ Having had a good experience with our Block::Driver implementation, which wraps
 the block-session interface and takes care of the packet-stream handling, thus
 easing the implementation of driver and other block components, we observed that
 this approach did not provide enough flexibility for NIC-session servers. For
-example, NIC servers are two-directional and when a network packet arrives the
+example, NIC servers are bi-directional and when a network packet arrives the
 server has to make sure that there are enough resources available to dispatch
 the network packet to the client. This has to be done because the server must
 never block, e.g., by waiting for allocations to succeed or for an empty spot
@@ -504,7 +504,7 @@ to the more modern and commonly used
 When the new ACPI driver finishes the ACPI table parsing, it provides the
 information via a report to any interested and registered components.
 The report contains among other the IRQ re-routing information.
-The PCI driver is such a component, which - according to its session routing
+The PCI driver is a component, which - according to its session routing
 configuration - plays the role of a consumer of the ACPI report.
 
 With this change of interaction of ACPI and PCI driver, the policy for
@@ -518,7 +518,7 @@ the names were renamed to Platform/platform. The x86 platform interfaces moved
 to _repos/os/include/platform/x86/_ and the implementation of the
 platform driver to _repos/os/src/drivers/platform/x86/_.
 
-A example x86 platform configuration snippet looks like this:
+An example x86 platform configuration snippet looks like this:
 
 !<start name="acpi_drv" >
 ! <resource .../>
@@ -565,7 +565,7 @@ This file may be included by any test run script in order to setup a default pla
 driver configuration.
 
 In addition, the snippet provides the following functions: 'append_platform_drv_build_components',
-'append_platform_drv_config', 'append_platform_drv_boot_modules'. The
+'append_platform_drv_config' and 'append_platform_drv_boot_modules'. The
 functions add necessary information to the 'build_components',
 'config' and 'boot_modules' run variables. The _platform_drv.inc_ also
 contains the distinction between various ARM/x86 platforms and includes the
@@ -611,8 +611,8 @@ Genode.
 VESA driver refinements
 =======================
 
-The VESA driver now reports the frame-buffer width to the client instead of the
-visible width. This fixes a possible distortion if these widths differ, at the
+The VESA driver now reports the frame-buffer instead of the visible width to
+the client . This fixes a possible distortion if these widths differ, at the
 cost that content in the right-most area might be invisible in such cases.
 
 
@@ -624,7 +624,7 @@ Policy-based mouse pointer
 
 In the previous release, we implemented support for the transparent
 integration of the guest mouse pointer with nitpicker via the
-VirtualBox guest additions and the vbox_pointer component capable of
+VirtualBox guest additions and the vbox_pointer component, which is capable of
 rendering guest-provided mouse-pointer shapes. Now, we extended vbox_pointer
 by a policy-based configuration that allows the selection of ROMs
 containing the actual mouse shape based on the nitpicker session label
@@ -668,7 +668,7 @@ The audio support is complemented by adding the necessary device models for the
 virtual HDA as well as the AC97 devices to our VirtualBox port.
 
 For now, it is vital to have the guest OS configure the virtual device in a way
-that favors the current implementation. For example,
+that considers the current implementation. For example,
 we cannot guarantee distortion-free playback or recording
 if the guest OS uses a period that is too short, typically 10ms or less.
 There are also remaining issues with the mixing/filtering code in VirtualBox.
@@ -695,11 +695,11 @@ On Intel platforms, we use the Bender chain loader from the
 available COM ports of PCI plug-in cards, the AMT SOL device, or as
 fall back the default comport 1. The loader stores the I/O port
 information of the detected cards into the BIOS data area (BDA), from
-where it is retrieved by core on boot and used for the log output.
+where it is retrieved by core on boot and subsequently used for logging.
 With this release, we added the BDA parsing to base-hw on x86-64 and
 enabled the feature in the run tool. As a prerequisite, we had to fix
-an issue in bender if only one (large) multi-boot kernel has to be
-loaded and, therefore, updated its binary in _tool/boot/bender_.
+an issue in bender triggered by the loading of only one (large) multi-boot
+kernel. Consequently, its binary in _tool/boot/bender_ was updated.
 
 
 Revised page-table handling
@@ -716,8 +716,8 @@ Normally, when the quota, which was donated by a component to a specific
 service, runs out, the component receives an exception the next time it tries
 to invoke the service. The component can respond by upgrading the respective
 session quota.
-Within the context of page-fault resolution, however, this is particularly difficult to do.
-The allocation and thereby the shortage of memory gets revealed only when the client
+However, in the context of page-fault resolution, this is particularly difficult to do.
+The allocation and thereby the shortage of memory becomes evident only when the client
 produces a page fault. Therefore, there is no way to inform the component to
 upgrade its session quota before resolving the fault.
 
@@ -771,7 +771,7 @@ a platform that remained unused for more than two years.
 The device driver environment kit (DDE Kit) was originally intended as
 a common API among the execution environments of ported user-level device drivers.
 However, over the course of the past years, we found that this approach could
-not fulfill its premise while introducing a number of new problems.
+not fulfill its promise while introducing a number of new problems.
 We reported our experiences in the release notes of versions
 [http://genode.org/documentation/release-notes/12.05#Re-approaching_the_Linux_device-driver_environment - 12.05] and
 [http://genode.org/documentation/release-notes/14.11#Roundup - 14.11].
