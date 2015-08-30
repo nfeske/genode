@@ -398,7 +398,7 @@ in the packet queue of a client. Therefore, such a non-blocking NIC server
 needs to validate all preconditions for dispatching the packet in advance and,
 if they cannot be met, drop the network packet.
 
-In order to implement this kind a behavior, NIC-session servers must have
+In order to implement this kind of behavior, NIC-session servers must have
 direct access to the actual NIC session. For this reason, we removed the
 Nic::Driver interface from Genode and added a Nic::Session_component that offers
 common basic packet-stream-signal dispatch functionality. Servers may now inherit
@@ -639,7 +639,7 @@ Dynamic adaptation to screen size changes
 
 VirtualBox now notifies the guest operating system about screen-size changes
 (for example if the user resizes a window, which shows the guest frame buffer).
-The VirtualBox guest editions can use this information to adapt the guest
+The VirtualBox guest additions can use this information to adapt the guest
 frame buffer to the new size.
 
 
