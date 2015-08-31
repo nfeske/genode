@@ -8,8 +8,35 @@
 
 
 
-;intro
-;@nfeske
+The version 15.08 marks the begin of Genode as day-to-day OS as one of the
+project's core developers switched to using Genode/NOVA on his machine,
+stressing the OS infrastructure we created over the course of the last seven
+years. Thanks to components like VirtualBox, the Noux runtime of GNU software,
+the Intel wireless stack, and Rump-kernel-based file systems, the transition
+went actually much smoother than expected. So other members of the team plan
+to follow soon. Section [Genode as day-to-day operating system] gives an
+overview of the taken approach. Genode's use as general-purpose OS provided
+the incentive for most of the improvements featured by the current release,
+starting with the addressing of the long-standing kernel-memory management
+deficiencies of the NOVA kernel (Section [NOVA kernel-resource management]),
+over enhancements of Genode's tracing and file-system facilities, to vast
+improvements of the guest-host integration of VirtualBox when running on
+Genode.
+
+The release is accompanied with a second line of work led by our friends
+at Codelabs: Enabling Genode to run on top of their Muen separation
+kernel as described in Section [Genode on top of the Muen Separation Kernel].
+Muen is a low-complexity kernel for the 64-bit x86 architecture that
+statically partitions the machine into multiple domains. In contrast to
+the microkernels like the ones already supported by Genode, the assignment
+of physical resources (such as memory, CPU time, and devices) happens at
+system-integration time. Since an isolation kernel does not have to deal
+with dynamic resource management at runtime, it is less complex than
+a general-purpose microkernel. This makes it relatively easy to reason about
+its strong isolation properties, which, in turn, makes it attractive for
+high-assurance computing. With Genode being able to run within a Muen
+domain, the rich component infrastructure of Genode can be combined with
+the strong isolation guarantees of Muen.
 
 
 Genode on top of the Muen Separation Kernel
