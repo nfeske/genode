@@ -401,13 +401,11 @@ available to components without a C runtime. Thereby, low-complexity
 security-sensitive components such as CLI monitor become able to benefit from
 the powerful VFS infrastructure.
 
-The VFS itself received a welcome improvement in the form of private
-RAM file systems.
-During different file-system-dependent experiments, a need for private,
-temporary areas arose. This motivated a conversion of the existing ram_fs server
-component to an embeddable VFS file system. This addition to the set of VFS plugins
-allows components to create, modify, and remove files without defining and
-allocating resources to an additional component.
+The VFS itself received a welcome improvement in the form of private RAM file
+systems. A need for process-local storage motivated a conversion of the existing
+ram_fs server component to an embeddable VFS file system. This addition to the set
+of VFS plugins enables components to use temporary file systems without relying on
+the resources of an external component.
 
 
 Unified networking components
