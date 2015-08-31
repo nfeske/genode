@@ -8,7 +8,7 @@
 
 
 
-The version 15.08 marks the begin of Genode as day-to-day OS as one of the
+The version 15.08 marks the beginning of Genode as day-to-day OS as one of the
 project's core developers switched to using Genode/NOVA on his machine,
 stressing the OS infrastructure we created over the course of the last seven
 years. Thanks to components like VirtualBox, the Noux runtime for GNU software,
