@@ -9,7 +9,7 @@ Genode OS Framework release 15.08 | 2015-08-31
 
 | Version 15.08 marks the starting point of Genode used as day-to-day
 | operating system, which underlines the maturity and scalability of the
-! framework. A further highlight is the ability to execute Genode on
+| framework. A further highlight is the ability to execute Genode on
 | top of the Muen separation kernel.
 
 Since the first release of Genode seven years ago, we dreamed of being able
