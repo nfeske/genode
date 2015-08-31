@@ -113,8 +113,8 @@ current situation and may respond to it in the following ways:
 We implemented the steps above inside the NOVA kernel and extended Genode's
 core component
 to handle such OOM situations. All system calls beside the IPC call/reply may
-now return an error code upon depletion of the quota. These
-system calls can only be performed by core and are handled inside core's
+now return an error code upon depletion of the quota. Most of these
+system calls can solely be performed by core and are handled inside core's
 NOVA-specific platform code.
 
 In the case of IPC call/reply operations, we desired to handle OOM cases
