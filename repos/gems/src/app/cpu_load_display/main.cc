@@ -205,7 +205,6 @@ class Cpu_load_display::Cpu : public Genode::List<Cpu>::Element
 
 				if (t->idle()) {
 
-					PINF("discard timeline");
 					_timelines.remove(t);
 					Genode::destroy(Genode::env()->heap(), t);
 				}
