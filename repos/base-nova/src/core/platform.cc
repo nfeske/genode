@@ -39,7 +39,7 @@ using namespace Genode;
 using namespace Nova;
 
 
-enum { verbose_boot_info = true };
+enum { verbose_boot_info = false };
 
 Native_utcb *main_thread_utcb();
 
