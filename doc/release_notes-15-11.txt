@@ -632,7 +632,7 @@ policy is selected. Exact matches are considered as most specific,
 prefixes as less specific, and suffixes as least specific. If multiple
 prefixes or suffixes match, the longest is considered as the most specific.
 
-*Note* This change requires slight adaptations of exiting configurations
+*Note* This change requires slight adaptations of existing configurations
 because the semantics of the original 'label' attribute of server-side policy
 nodes has changed. Originally, the attribute value was taken as a prefix for
 matching the session label. Now, the attribute would be taken as a perfect
@@ -646,48 +646,78 @@ versa.
 New VFS server component
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-;@emery
+Genode has traditionally featured a number of file system servers, each designed
+for a specific storage backend. The implementation of new servers and features
+came with the additional effort of maintaining consistent code and behavior
+between server varieties. The VFS server is a solution to this redundancy.
+By building a server around the VFS library, new storage backends need
+only implement the VFS plugin interface. This unification is not without runtime
+benefit, as it leads the way to more discretion in component composition. The server allows
+clients to share the burden of plugins that come with a large consumption of
+resources, but this potentially reduces privacy and can act as covert communication medium.
+From another perspective, clients may host plugins to reduce context switches between the file
+system and raw storage, or the VFS server may host high complexity plugins
+to mantain low complexity in a security sensitive address space. For the time
+being the VFS server should be considered a resource multiplexer without strong
+client isolation.
 
-commit b6c558dce961075248c497307bdb8ce751c156fa
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Fri Sep 4 16:06:03 2015 +0200
+The following two configurations contrast the traditional ram_fs with the vfs server.
 
-    Vfs: File_system server backed by VFS library
-    
-    Test available at libc_vfs_fs.
-    
-    Fixes #1648
+! <start name="ram_fs">
+!   <config>
+!     <content>
+!       <dir name="data">
+!         <tar name="data.tar"/>
+!       </dir>
+!       <dir name="tmp"/>
+!     </content>
+!     ...
+!   </config>
+!   ...
+! </start>
 
+! <start name="vfs">
+!   <config>
+!     <vfs>
+!       <dir name="data">
+!         <tar name="data.tar"/>
+!       </dir>
+!       <dir name="tmp"> <ram/> </dir>
+!       <ram/>
+!     </vfs>
+!     ...
+!   </config>
+!   ...
+! </start>
 
 New VFS-local symlink file system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-;@emery
+A goal of the VFS library is to provide declarative file system
+composition. This release adds a symlink builtin to the library
+which allows configuration to populate file systems with symlinks.
 
-commit 7ce19216f4aa290e17527982f611d97fd17b2181
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Fri Aug 21 21:55:33 2015 +0200
+! <vfs>
+!   ...
+!   <dir name="usr">
+!     <tar name="bash.tar"/>
+!   </dir>
+!   <dir name="bin">
+!     <symlink name="sh" target="/usr/bin/bash"/>
+!   </dir>
+!   ...
+! </vfs>
 
-    VFS: symlink file system
-    
-    add symlinks to a VFS tree with <symlink name="..." target="..."/>
-    
-    Issue #1648
-    Fixes #1653
 
-
-New file-system server for aggregating LOG data
+New server for aggregating LOG data to file system storage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-;@emery
-
-commit ce1e6c16fb785208d99fea735369e5722dfe3633
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sat May 23 23:33:24 2015 +0200
-
-    fs_log: new log file server using native FS sessions
-    
-    Fixes #1538
+The fs_log component has been refactored to better express the
+source of logging streams as well as to operate at lower complexity.
+For each client session, the session label is converted to a directory
+tree with the trailing element the file to which log messages are written.
+Logs may also be merged using session policy with a label prefix.
+See _os/src/server/fs_log/README_ for details.
 
 
 New ROM logger component
@@ -827,59 +857,21 @@ specifying the config node as an argument.
 The common problem of scoring XML nodes against a given label, label prefix,
 and label suffix as explained in Section [Label-dependent session routing] is
 addressed by the new 'Xml_node_label_score' utility. It is used by the init
-component to take routing decisions and by servers to select policies
+component to make routing decisions and by servers to select policies
 dependent on session labels.
 
 
 VFS and file-system API
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-;@emery
+The file system APIs received a few simple ammendents. New error codes
+were added to broaden error handling, and session arguments were added
+to the File_system service.
 
-commit 1779a0511b5221ceaaedeac94b22b3f32000da19
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Thu Oct 1 11:53:00 2015 +0200
-
-    vfs: add new error codes
-    
-    The codes are OPEN_ERR_NAME_TOO_LONG, OPEN_ERR_NO_SPACE, and
-    FTRUNCATE_ERR_NO_SPACE.
-    
-    Issue #1693
-
-
-commit 2da239d0c8efd2e14a76afa6e0baae9edd1664be
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Oct 7 17:02:52 2015 +0200
-
-    void sync(char const *path)
-    
-    Sync now takes a path argument at VFS and File system interfaces.
-    
-    Issue #1648
-
-commit 48fd034cfeb4648b975d4f7dbec50c9e42032c11
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Oct 7 18:31:52 2015 +0200
-
-    New session arguments at File_system connection
-    
-    Session root and writeablity may be specified at the session
-    convenience constructor.
-    
-    Issue #1648
-
-
-*Removal of 'Packet_ref' from 'File_system::Packet_descriptor'*
-
-The intention of Packet_ref was to allow clients to place opaque
-references into the packet descriptor itself, which could be observed on
-packet completion. Currently no component in our sources uses this
-feature and beyond that it is questionable if it should be used at all:
-If the server tampers with the ref the client may easily be confused
-into observing an incorrect or invalid context. It seems better to
-remove the opaque context from the descriptor and leave the actual
-implementation to the client and its needs.
+File_system session requests now carry a 'writeable' and
+'root' argument. Clients may now request a root offset when connecting
+to a service and parent policy may modify this parament or stipulate that
+a child is restricted to a read only session.
 
 
 Object-pool redesign
