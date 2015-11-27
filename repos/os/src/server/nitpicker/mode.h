@@ -49,6 +49,8 @@ class Mode
 		void inc_key_cnt() { _key_cnt++; }
 		void dec_key_cnt() { _key_cnt--; }
 
+		bool frozen() const { return _key_cnt > 2; }
+
 		void reset_key_cnt() { _key_cnt = 0; }
 		unsigned key_cnt() const { return _key_cnt; }
 

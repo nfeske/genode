@@ -31,6 +31,8 @@
 #include <os/session_policy.h>
 #include <os/server.h>
 #include <os/reporter.h>
+#include <vfs/file_system_factory.h>
+#include <vfs/dir_file_system.h>
 
 /* local includes */
 #include "input.h"
@@ -1300,6 +1302,40 @@ void Nitpicker::Main::handle_input(unsigned)
 	user_state.draw(fb_screen->screen).flush([&] (Rect const &rect) {
 		framebuffer.refresh(rect.x1(), rect.y1(),
 		                    rect.w(),  rect.h()); });
+
+	if (user_state.Mode::frozen()) {
+
+		char const * const path = "/screen.rgb565";
+
+		static Vfs::Dir_file_system
+			root_dir(Genode::config()->xml_node().sub_node("vfs"),
+			         Vfs::global_file_system_factory());
+
+		root_dir.unlink(path);
+
+		Vfs::Vfs_handle *handle = nullptr;
+		root_dir.open(path, Vfs::Directory_service::OPEN_MODE_RDWR |
+		                    Vfs::Directory_service::OPEN_MODE_CREATE,
+		                    &handle);
+
+		Vfs::file_size written = 0;
+
+		while (written < fb_screen->fb_ds.size()) {
+			Vfs::file_size out_count = 0;
+
+			handle->fs().write(handle,
+			                   fb_screen->fb_ds.local_addr<char>() + written,
+			                   fb_screen->fb_ds.size() - written, out_count);
+
+			handle->advance_seek(out_count);
+
+			written += out_count;
+		}
+
+		PDBG("wrote screenshot (%zd bytes)", (size_t)written);
+
+		Genode::destroy(env()->heap(), handle);
+	}
 
 	user_state.mark_all_views_as_clean();
 

@@ -87,19 +87,21 @@ append_if [have_spec ps2] config {
 
 append config {
 	<start name="nitpicker">
-		<resource name="RAM" quantum="1M"/>
+		<resource name="RAM" quantum="4M"/>
 		<provides><service name="Nitpicker"/></provides>
 		<config>
 			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
 			<domain name="default" layer="2" content="client" focus="click" />
 			<policy label="pointer" domain="pointer"/>
 			<policy domain="default"/>
+			<vfs> <fs/> </vfs>
 		</config>
 		<route> }
 append_if [have_spec ps2] config {
 			<service name="Input"><child name="ps2_drv"/></service> }
 append config {
 			<service name="Framebuffer"><child name="fb_drv"/> </service>
+			<service name="File_system"><child name="ram_fs"/> </service>
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
@@ -156,6 +158,7 @@ append config {
 		<config>
 			<!-- constrain sessions according to their labels -->
 			<policy label="noux -> root" root="/" />
+			<policy label="nitpicker" root="/" writeable="yes"/>
 		</config>
 	</start>
 	<start name="noux">
