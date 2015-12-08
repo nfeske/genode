@@ -1,0 +1,39 @@
+<subsystem name="arora" help="Arora">
+	<resource name="RAM" quantum="256M" />
+	<binary name="init" />
+	<config>
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="LOG"/>
+			<service name="CAP"/>
+			<service name="RAM"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="PD"/>
+			<service name="SIGNAL"/>
+			<service name="Timer"/>
+			<service name="Nitpicker"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <any-child/> <parent/> </any-service>
+		</default-route>
+		<start name="loader">
+			<resource name="RAM" quantum="2M"/>
+			<provides><service name="Loader"/></provides>
+		</start>
+		<start name="arora">
+			<resource name="RAM" quantum="200M"/>
+			<config>
+				<libc stdout="/dev/log" stderr="/dev/log"
+				      ip_addr="10.0.2.56"
+				      netmask="255.255.255.0"
+				      gateway="10.0.2.1">
+					<vfs>
+						<dir name="dev"> <log/> </dir>
+						<tar name="qt5_fs_arora.tar"/>
+					</vfs>
+				</libc>
+			</config>
+		</start>
+	</config>
+</subsystem>

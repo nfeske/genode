@@ -1,0 +1,5 @@
+<subsystem name="nano3d" help="Nano3D">
+	<resource name="RAM" quantum="24M" />
+	<binary name="nano3d" />
+	<config painter="textured" />
+</subsystem>

@@ -1,0 +1,42 @@
+<subsystem name="mupdf" help="MuPDF">
+	<resource name="RAM" quantum="100M" />
+	<binary name="init" />
+	<config>
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="RAM"/>
+			<service name="CAP"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+			<service name="SIGNAL"/>
+			<service name="Nitpicker" />
+			<service name="Timer" />
+		</parent-provides>
+		<default-route>
+			<any-service> <any-child/> <parent/> </any-service>
+		</default-route>
+
+		<start name="nit_fb">
+			<resource name="RAM" quantum="8M"/>
+			<provides> <service name="Framebuffer"/>
+			           <service name="Input"/> </provides>
+			<config width="800" height="600"/>
+			<route> <any-service> <parent/> </any-service> </route>
+		</start>
+
+		<start name="mupdf">
+			<resource name="RAM" quantum="1G"/>
+			<config pdf="slides.pdf">
+				<libc stdout="/dev/log" stderr="/dev/log">
+					<vfs>
+						<dir name="dev"> <log/> </dir>
+						<rom name="slides.pdf" label="sel4.pdf"/>
+					</vfs>
+				</libc>
+			</config>
+		</start>
+
+	</config>
+</subsystem>
