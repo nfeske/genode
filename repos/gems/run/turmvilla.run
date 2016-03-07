@@ -794,7 +794,7 @@ set config {
 			<policy label="config_rom" root="/"/>
 			<policy label="wifi_drv -> config" root="/" writeable="yes"/>
 			<policy label="cli_monitor -> noux -> noux -> config" root="/" writeable="yes"/>
-			<policy prefix_label="usb_report_filter" root="/" writeable="yes" />
+			<policy label_prefix="usb_report_filter" root="/" writeable="yes" />
 		</config>
 	</start>
 
