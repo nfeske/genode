@@ -462,12 +462,14 @@ set config {
 		<config>
 			<press key="KEY_LEFTMETA">
 				<press key="KEY_TAB" action="next_window">
+					<release key="KEY_LEFTMETA" action="raise_window"/>
 					<release key="KEY_TAB">
 						<release key="KEY_LEFTMETA" action="raise_window"/>
 					</release>
 				</press>
 				<press key="KEY_LEFTSHIFT">
 					<press key="KEY_TAB" action="prev_window">
+						<release key="KEY_LEFTMETA" action="raise_window"/>
 						<release key="KEY_TAB">
 							<release key="KEY_LEFTMETA" action="raise_window"/>
 						</release>
