@@ -1,0 +1,1059 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 16.05
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; -> @nfeske
+
+; XXX where to announce the updated book?
+
+
+Base framework
+##############
+
+; -> @nfeske
+
+
+commit 115b13941051fa8e606d2afcaad185400b19ae52
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri May 20 14:49:45 2016 +0200
+
+    Update of the hello tutorial
+
+
+New component API
+=================
+
+commit 051e84c4b47f89b0d321147ec01cd0cee4e0961c
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Dec 23 15:22:33 2015 +0100
+
+    Move server API concept to base framework
+    
+    This commit introduces the new `Component` interface in the form of the
+    headers base/component.h and base/entrypoint.h. The os/server.h API
+    has become merely a compatibilty wrapper and will eventually be removed.
+    The same holds true for os/signal_rpc_dispatcher.h. The mechanism has
+    moved to base/signal.h and is now called 'Signal_handler'.
+    
+    Since the patch shuffles headers around, please do a 'make clean' in the
+    build directory.
+    
+    Issue #1832
+
+commit 73b463cdbb6d8aeb89eff8fa371f519d493e91bf
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 20 23:22:12 2016 +0200
+
+    Signal_handler: remove num argument from handler
+    
+    We will eventually remove the delivery of the number of occurred signals
+    to the recipient. There haven't been any convincing use cases for this
+    feature. In the contrary, it actually led to wrong design choices in the
+    past where the rate of signals carried information (such as the progress
+    of time) that should better be obtained via an explicit RPC call.
+    
+    The old 'Signal_rpc_member' template retains the old interface for now.
+    But the new 'Signal_handler' omits the 'unsigned' argument from the
+    handler function.
+
+
+Consolidation of core's SIGNAL, CAP, RM, and PD services
+========================================================
+
+commit b1910cdd54d77183bcce7cd7fb7594a0c4c5fa17
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 14 13:22:00 2016 +0100
+
+    Integrate SIGNAL session into PD session
+    
+    This patch removes the SIGNAL service from core and moves its
+    functionality to the PD session. Furthermore, it unifies the PD service
+    implementation and terminology across the various base platforms.
+    
+    Issue #1841
+
+commit 62b1c55399d6dc1b59548e542b35751ff2a3f425
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jan 19 20:24:22 2016 +0100
+
+    Integrate CAP session into PD session
+    
+    This patch integrates the functionality of the former CAP session into
+    the PD session and unifies the approch of supplementing the generic PD
+    session with kernel-specific functionality. The latter is achieved by
+    the new 'Native_pd' interface. The kernel-specific interface can be
+    obtained via the Pd_session::native_pd accessor function. The
+    kernel-specific interfaces are named Nova_native_pd, Foc_native_pd, and
+    Linux_native_pd.
+    
+    The latter change allowed for to deduplication of the
+    pd_session_component code among the various base platforms.
+    
+    To retain API compatibility, we keep the 'Cap_session' and
+    'Cap_connection' around. But those classes have become mere wrappers
+    around the PD session interface.
+    
+    Issue #1841
+
+commit 511acad5074878bbaae46ae0aebab1b52fbb97b1
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Apr 15 15:19:22 2016 +0200
+
+    Consolidate RM service into PD session
+    
+    This patch integrates three region maps into each PD session to
+    reduce the session overhead and to simplify the PD creation procedure.
+    Please refer to the issue cited below for an elaborative discussion.
+    
+    Note the API change:
+    
+    With this patch, the semantics of core's RM service have changed. Now,
+    the service is merely a tool for creating and destroying managed
+    dataspaces, which are rarely needed. Regular components no longer need a
+    RM session. For this reason, the corresponding argument for the
+    'Process' and 'Child' constructors has been removed.
+    
+    The former interface of the 'Rm_session' is not named 'Region_map'. As a
+    minor refinement, the 'Fault_type' enum values are now part of the
+    'Region_map::State' struct.
+    
+    Issue #1938
+
+commit b49e588c1cabd11d0433fd686d79b7c8c3e5bbbf
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 20 21:12:57 2016 +0200
+
+    Assign threads to PD at its creation time
+    
+    This patch replaces the former 'Pd_session::bind_thread' function by a
+    PD-capability argument of the 'Cpu_session::create_thread' function, and
+    removes the ancient thread-start protocol via 'Rm_session::add_client' and
+    'Cpu_session::set_pager'. Threads are now bound to PDs at their creation
+    time and implicitly paged according to the address space of the PD.
+    
+    Note the API change:
+    
+    This patch changes the signature of the 'Child' and 'Process' constructors.
+    There is a new 'address_space' argument, which represents the region map
+    representing the child's address space. It is supplied separately to the
+    PD session capability (which principally can be invoked to obtain the
+    PD's address space) to allow the population of the address space
+    without relying on an 'Pd_session::address_space' RPC call.
+    Furthermore, a new (optional) env_pd argument allows the explicit
+    overriding of the PD capability handed out to the child as part of its
+    environment. It can be used to intercept the interaction of the child
+    with its PD session at core. This is used by Noux.
+    
+    Issue #1938
+
+
+Source-tree reorganization
+==========================
+
+commit 5d559a0699b09bd8e2274730ccd8bbce07c171f3
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Dec 18 11:50:35 2015 +0100
+
+    Move util/volatile_object.h from os to base
+
+commit e6729316ff702b049752789b92bbd674907bf06a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 20 18:27:18 2016 +0100
+
+    base: uniform base-internal header structure
+    
+    This patch establishes a common organization of header files
+    internal to the base framework. The internal headers are located at
+    '<repository>/src/include/base/internal/'. This structure has been
+    choosen to make the nature of those headers immediately clear when
+    included:
+    
+      #include <base/internal/lock_helper.h>
+    
+    Issue #1832
+
+commit 2bc8a0f76a5d5ad7266c1b37e596bcbb130f9241
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Apr 26 19:09:29 2016 +0200
+
+    Move XML util from os to base repository
+    
+    Since the dynamic linker depends on the XML utils and we plan to replace
+    the ancient 'Arg_string' with XML, it is time to move the 'Xml_node' and
+    'Xml_generator' to base/include.
+
+
+API additions
+=============
+
+commit 1f395ae780775942cd29d2268d6d6d7b78dcfb3d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue May 3 16:31:17 2016 +0200
+
+    base: new interface for textual output
+    
+    Issue #1942
+
+commit 8d797105b39eaf3a988d5f3d4e918714d682cc7e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon May 9 15:55:12 2016 +0200
+
+    Move Attach_*dataspace utils from os to base
+    
+    Fixes #1958
+
+commit 8da737acfdedcc7e46f05e0bf87570bd25294f3f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon May 9 17:09:43 2016 +0200
+
+    base: add Attached_rom_dataspace::xml method
+    
+    Issue #1959
+
+
+Removed APIs
+============
+
+commit 6e7f7bdad4834e2e37338dded7f9c2ab78c99c3e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jan 22 14:31:58 2016 +0100
+
+    base: move crt0.h and elf.h to base/internal
+    
+    Those headers remained unused outside the internal framework. So it is
+    better to remove them from the public API.
+    
+    Issue #1832
+
+commit 7274ca997d119e9e999a604346eb19599b3a668d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 27 16:04:58 2016 +0200
+
+    Remove Genode::Process from API
+    
+    This patch makes the former 'Process' class private to the 'Child'
+    class and changes the constructor of the 'Child' in a way that
+    principally enables the implementation of single-threaded runtime
+    environments that virtualize the CPU, PD, and RAM services. The
+    new interfaces has become free from side effects. I.e., instead
+    of implicitly using Genode::env()->rm_session(), it takes the reference
+    to the local region map as argument. Also, the handling of the dynamic
+    linker via global variables is gone. Now, the linker binary must be
+    provided as constructor argument.
+    
+    Fixes #1949
+
+
+Deprecated APIs
+===============
+
+commit 4f69772ecca4cdb03d330cb3709c7e1e35607f8e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 27 22:11:38 2016 +0200
+
+    Replace 'Env' interface with modern one
+    
+    The original 'Env' interface as returned by 'Genode::env()' has been
+    renamed to 'Env_deprecated' and moved to deprecated/env.h. The new version
+    of base/env.h contains the interface passed to modern components that
+    use the component API via base/component.h.
+    
+    Issue #1832
+
+; * base/printf.h, base/console.h, base/snprintf.h
+; * base/signal.h
+; * cap_session/connection.h
+; * os/config.h
+
+
+Changed APIs
+============
+
+commit 7f73e5e879a748b21c795094f96d0aef2d4487ab
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sat Jan 23 14:42:55 2016 +0100
+
+    base: hide internals of the Thread API
+    
+    This patch moves details about the stack allocation and organization
+    the base-internal headers. Thereby, I replaced the notion of "thread
+    contexts" by "stacks" as this term is much more intuitive. The fact that
+    we place thread-specific information at the bottom of the stack is not
+    worth introducing new terminology.
+    
+    Issue #1832
+
+commit 47878bd3e1aae7727eda7a3032f1c22d94003281
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Mar 13 22:55:48 2016 +0100
+
+    Remove 'Ipc_istream' and 'Ipc_ostream' from API
+    
+    Fixes #610
+
+commit cda07b7da0d72d19496c56f1576e42e6d7bb4d1a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Mar 15 20:01:59 2016 +0100
+
+    base: simplification of the IPC code
+    
+    This commit replaces the stateful 'Ipc_client' type with the plain
+    function 'ipc_call' that takes all the needed state as arguments.
+    The stateful 'Ipc_server' class is retained but it moved from the public
+    API to the internal ipc_server.h header. The kernel-specific
+    implementations were cleaned up and simplified. E.g., the 'wait'
+    function does no longer exist. The badge and exception code are no
+    longer carried in the message buffers but are handled in kernel-specific
+    ways.
+    
+    Issue #610
+    Issue #1832
+
+commit 463b39fc73f6833d8987bd59e22225d9794e00d0
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Apr 18 21:13:47 2016 +0200
+
+    xml reporter: support different start node name
+    
+    Currently the report name is used implicitly as first xml node name for the
+    report.  This is inconvenient if one component wants to generate various xml
+    reports under various names (e.g. to steer consumers/clients slightly
+    differently) but with the same xml node tree structure.
+    
+    Fixes #1940
+
+commit 4aafa882d8e7cfe7f8de99a525c9e18583183df5
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Mon Nov 23 13:34:17 2015 +0100
+
+    XML node type and attribute name string accessors
+    
+    Issue #1786
+
+commit ba0545de0773c7483fda0d690ba5cbb53bbe676e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Apr 28 16:39:45 2016 +0200
+
+    Clean up 'Sliced_heap'
+    
+    This patch cleans up the implementation of the sliced heap, adds a
+    constructor that takes references instead of pointers, and adds the
+    function 'meta_data_size' to determine the meta-data overhead per block.
+    The latter can be used to dimension slab allocators such that slab
+    blocks use whole pages.
+
+commit 7b73d1d8230a046b0c15f93394b98154098ca451
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sat May 7 19:31:47 2016 +0200
+
+    heap: add new-fashioned constructor
+
+commit fd401bdf53e1cc6841f0f22f45b7b04444e81dfd
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed May 4 12:27:17 2016 +0200
+
+    Thread API cleanup
+    
+    This patch cleans up the thread API and comes with the following
+    noteworthy changes:
+    
+    - Introduced Cpu_session::Weight type that replaces a formerly used
+      plain integer value to prevent the accidental mix-up of
+      arguments.
+    - The enum definition of Cpu_session::DEFAULT_WEIGHT moved to
+      Cpu_session::Weight::DEFAULT_WEIGHT
+    - New Thread constructor that takes a 'Env &' as first argument.
+      The original constructors are now marked as deprecated. For the
+      common use case where the default 'Weight' and 'Affinity' are
+      used, a shortcut is provided. In the long term, those two
+      constructors should be the only ones to remain.
+    - The former 'Thread<>' class template has been renamed to
+      'Thread_deprecated'.
+    - The former 'Thread_base' class is now called 'Thread'.
+    - The new 'name()' accessor returns the thread's name as 'Name'
+      object as centrally defined via 'Cpu_session::Name'. It is meant to
+      replace the old-fashioned 'name' method that takes a buffer and size
+      as arguments.
+    - Adaptation of the thread test to the new API
+    
+    Issue #1954
+
+commit a7b3072cc2120434a201eca019c743539de23cfa
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue May 10 17:24:51 2016 +0200
+
+    Pass Env & as first argument to connection objects
+    
+    This patch supplements each existing connection type with an new
+    constructor that is meant to replace the original one. The new
+    one takes a reference to the component's environment as argument and
+    thereby does not rely on the presence of the globally accessible
+    'env()' interface.
+    
+    The original constructors are marked as deprecated. Once we have
+    completely abolished the use of the global 'env()', we will remove them.
+    
+    Fixes #1960
+
+commit 0c299c5e08b8ff4d19697283307446ca0f0e2644
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Mar 30 15:34:37 2016 +0200
+
+    base: separate native CPU from CPU session
+    
+    This patch unifies the CPU session interface across all platforms. The
+    former differences are moved to respective "native-CPU" interfaces.
+    
+    NOVA is not covered by the patch and still relies on a custom version of
+    the core-internal 'cpu_session_component.h'. However, this will soon be
+    removed once the ongoing rework of pause/single-step on NOVA is
+    completed.
+    
+    Fixes #1922
+
+commit a99989af40876d01307ab4745bdc3b9fdfed65bd
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue May 10 18:05:38 2016 +0200
+
+    Separation of thread operations from CPU session
+    
+    This patch moves the thread operations from the 'Cpu_session'
+    to the 'Cpu_thread' interface.
+    
+    A noteworthy semantic change is the meaning of the former
+    'exception_handler' function, which used to define both, the default
+    exception handler or a thread-specific signal handler. Now, the
+    'Cpu_session::exception_sigh' function defines the CPU-session-wide
+    default handler whereas the 'Cpu_thread::exception_sigh' function
+    defines the thread-specific one.
+    
+    To retain the ability to create 'Child' objects without invoking a
+    capability, the child's initial thread must be created outside the
+    'Child::Process'. It is now represented by the 'Child::Initial_thread',
+    which is passed as argument to the 'Child' constructor.
+    
+    Fixes #1939
+
+commit ef9a7d22303cd3d81d5ec82bab4ac614a25031b9
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed May 11 17:23:37 2016 +0200
+
+    base: remove length limit of Type_list
+
+commit 807be83b1be09ffbcf4198f00750d99faefcd6f5
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed May 11 18:21:47 2016 +0200
+
+    Remove inconsistent use of 'is_' prefix
+    
+    Fixes #1963
+
+commit c94fbd15f0d17b77678b52c01de05f9073898eed
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri May 20 12:01:50 2016 +0200
+
+    base: add modern Root_component constructor
+
+
+Low-level OS infrastructure
+###########################
+
+Enhanced GDB support on NOVA
+============================
+
+; -> @cproc
+
+commit 2cde1d36c122b459bab5f282da57e9e770c29e2c
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue May 17 16:13:56 2016 +0200
+
+    base: changes for GDB monitor
+    
+    - add a new function 'binary_ready_hook_for_gdb()' in ldso. GDB can set a
+      breakpoint at this function to know when ldso has loaded the binary
+      into memory.
+    - get the thread state from the NOVA kernel immediately on 'pause()'
+    
+    Fixes #1968
+
+commit 5842b2065e06ecc1ee88847ea7b74b1b7024d334
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue May 17 16:13:23 2016 +0200
+
+    GDB monitor: stability improvements
+    
+    Fixes #1969
+
+commit ff76e6954218f2c19b20d8288ace3ae114743d44
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Sun Mar 6 15:25:38 2016 +0100
+
+    GDB monitor: x86_64 support
+    
+    General support for the x86_64 architecture.
+    
+    Fixes #1970
+
+commit 638db70b94c104e67bea6d4ec3cc2088a76a2ce9
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue Apr 19 20:00:31 2016 +0200
+
+    GDB monitor: nova_x86_64 platform support
+    
+    Fixes #1971
+
+
+New support for the rust programming language
+=============================================
+
+; -> @nfeske
+
+commit 28117fee12e84aac5b95e371295b8498037fb7c2
+Author: Waylon Cude <waylon531@firechicken.net>
+Date:   Sun Feb 28 22:44:04 2016 -0800
+
+    Added rust support
+    
+    Rust relies on atomic builtins, which are not implemented in libgcc for
+    ARM. One is implemented in rust, which is sufficient to get the
+    current rust test to run.
+    
+    Issue #1899
+
+commit 1e95af5bab3a85e104e097144424aaf3b716038c
+Author: Waylon Cude <waylon531@firechicken.net>
+Date:   Sun Feb 28 22:44:04 2016 -0800
+
+    Fixed linking and memory allocation for rust
+    
+    Now rlibs are actually linked to programs. Target files have been
+    modified to not generate code that requires compiler-rt. Added a target
+    for libstd-rust, but it's very broken right now. Moved alloc_system to
+    the libports folder because either a memory allocator needs to be
+    written in rust or posix_memalign needs to be implemented. Changed
+    liblibc to use freebsd as the OS instead of netbsd. Added a library with
+    unwind dummy functions.
+    
+    Rust relies on atomic builtins, which are not implemented in libgcc for
+    ARM. One was implemented in rust, which was sufficient to get the
+    current rust test to run. Rust libs were added into the group of libs
+    for the linker so order no longer matters. The raspberry pi now uses an
+    armv6 target.
+
+commit 3ba61a2ddfb034ca657e3d2c20cb31eaeae0641b
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Thu May 12 10:26:36 2016 +0200
+
+    Move rust support to libports
+    
+    Issue #1899
+
+
+Dynamic linker
+==============
+
+; XXX should we keep this section?
+
+The dynamic linker will now check if the binary pointer is valid before
+attempting to lookup a symbol. Shared objects with unresolved symbols and
+missing dependencies, e.g. a library that references 'errno' but is not linked
+against libc, will now produce an error message when they are loaded by the
+dynamic linker instead of triggering a ominous page-fault.
+
+
+New component for writing ROM modules to files
+==============================================
+
+; XXX -> @nfeske
+
+commit 07093407884cae73b2cd04a37ce28939db9662fd
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Fri Mar 18 23:36:32 2016 +0100
+
+    Component writing a ROM into a file-system session
+    
+    Fixes #1917
+
+
+C runtime
+=========
+
+; -> @chelmuth (?), @cproc
+
+commit 93b82c14ac3cd39fda84f6cc61dfab019456cb60
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Fri Apr 15 14:19:51 2016 +0200
+
+    libc: read sysctl info from /.sysctl/...
+    
+    Fixes #1931
+
+
+commit ea726a1f48b91b830d1ec0589650183cbfda90dd
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Sun Mar 6 15:21:23 2016 +0100
+
+    libc: pipe plugin
+    
+    A libc plugin which implements pipes using a ring buffer.
+    
+    Fixes #1947
+
+
+Device drivers
+##############
+
+In this release we did update several device drivers that are ported from
+forgein OS'. In addition, we consoldiated all drivers in the dde_linux
+repository by utilizing the modular lx_kit and made sure that each driver
+is using the same Linux version now.
+
+
+HDA Audio driver update
+=======================
+
+The audio driver was synced with version 5.9 of OpenBSD. In addition to
+updating the contrib sources the driver now uses the new Component API
+and will report the internal mixer state.
+
+Reporting of the mixer state is enabled by adding the 'report_mixer'
+attribute to the drivers configuration and setting its value to 'yes'.
+
+The following snippets illustrates the format of the report:
+
+!<mixer_state>
+!  <mixer field="inputs.beep" value="108"/>
+!  <mixer field="outputs.hp_sense" value="plugged"/>
+!  <mixer field="outputs.master" value="128,128"/>
+!  <mixer field="outputs.mic_sense" value="unplugged"/>
+!  <mixer field="outputs.spkr_muters" value="hp,mic"/>
+!</mixer_state>
+
+The mixer state can expose other mixer fields as well, depending on the
+used hardware. The naming scheme of the attributes intentionally matches
+the naming scheme of OpenBSD's mixerctl(1) program.
+
+In return, 'mixer' nodes may be used to configure the audio driver by
+specifying it in the configuration, e.g.:
+
+!<config report_mixer="yes">
+!  <mixer field="outputs.master" value="255,255"/>
+!</config>
+
+will set the output volume to the highest possible value. Although it is
+now also possible to update the configuration at run-time this should only
+be done with care. Updating the configuration while the driver is playing
+or recording may provoke audible artefacts. For now it is best to use the
+mixer component to regulate the volume rather than adjusting the audio
+driver directly.
+
+
+Linux kit
+=========
+
+Over the years the way we handled our DDEs has changed. By now it became
+clear that it is easier to manage ported drivers without having to rely an
+generic API like dde_kit. Using Genode primitives directly enables us to
+specially tailor each DDE to the driver in question. That being said,
+when having four different drivers (intel_fb, lxip, usb and wifi) and each
+has its own specially tailored DDE, the amount of redundant code is huge.
+We created the lx_kit that enables us to share code across the drivers as
+well as to provide specific pieces in each driver itself to address this
+issue and eventually decrease the amount of redundant code.
+
+This modular lx_kit seperates the required back end functionality of the
+Linux emulation environment from the front end. Thereby each driver can
+reuse generic parts and supply more suitable implementations by itself.
+It is split into several layers whose structure is as follows:
+
+The first layer in _repos/dde_linux/src/include/lx_emul_ contains those
+header files that provide the structural definitions and function
+declarations of the Linux API, e.g. _errno.h_ provides all error code
+values. The second layer in _repos/dde_linux/src/include/lx_emul/impl_
+contains the implementation of selected functions, e.g. _slab.h_
+provides the implementation of 'kmalloc()'. The lx_kit back end API is
+the third layer and provides the _Lx::Malloc_ interface
+(_repos/dde_linux/src/include/lx_kit/malloc.h_) which is used to
+implement 'kmalloc()'. There are several generic implementations of the
+lx_kit interfaces that can be used by a driver.
+
+A driver typically includes a 'lx_emul/impl/xyz.h' header once
+directly in its lx_emul compilation unit. The lx_kit interface files
+are only included in those compilation units that use or implement the
+interface. If a driver wants to use a generic implementation it must
+add the source file to its source file list. The generic
+implementations are located in _repos/dde_linux/src/lx_kit/_.
+
+The modular lx_kit still depends on the private _lx_emul.h_ header file
+that is tailored to each driver. Since the lx_kit already contains much
+of the declarations and definitions that were originally placed in
+these private header files, those files can now ommit a large amount
+of code.
+
+
+Wifi driver update
+==================
+
+The wifi_drv was updated to Linux version 4.4.3 and thereby adds support for
+Intel wireless card 8xxx series. In order to ease debugging the driver now
+enables its debugging messages when the 'verbose' attribute in its 'config'
+node is set to 'yes'.
+
+
+USB driver update
+=================
+
+; -> @ssumpf
+
+The Usb session propagates a EP stall error to the client and clears the
+stall condition by restting the EP now.
+
+commit ea65c36308828c7cc335ae52949eab157c1742c0
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed May 18 18:51:11 2016 +0200
+
+    dde_linux: update usb to 4.4.3
+    
+    Issue #1974.
+
+
+Intel graphics driver update
+============================
+
+; -> @skalk
+
+commit 7904fbc108a38f2239ac5107ebb3b6b30a599a73
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Apr 19 15:37:27 2016 +0200
+
+    intel_fb: add Framebuffer controller example
+    
+    Issue #1974.
+
+commit b45977632e9573c68b115047f6e1201a1ae91c93
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Mar 22 11:04:07 2016 +0100
+
+    dde_linux: update intel_fb to 4.4.3
+    
+    Issue #1974.
+
+
+Enhanced ACPI support
+=====================
+
+; -> @alexab
+; XXX should we move this topic to a top-level section?
+
+commit ce36b560a60ab257a4c09539b49c39879814b860
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri May 13 15:52:34 2016 +0200
+
+    acpi_drv: report ACPI reset configuration
+    
+    Will be/can be used by the platform driver to reset the machine, iif the
+    platform driver owns the resources, e.g. the I/O ports of PCI config access.
+    
+    Issue #1962
+
+commit 2ee123872e5a32d304854ef55c5bf896ede88ddd
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Mar 18 16:31:00 2016 +0100
+
+    libports: add acpica library
+    
+    Fixes #1962
+
+commit 2221df4fff20e3a8fea7dcffa889eea0ffb2f974
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri May 13 16:09:20 2016 +0200
+
+    platform_drv/x86: support ACPI reset
+    
+    Evaluate fadt xml node in report from acpi_drv. If the io ports in the range
+    of 0xcf8+4 are necessary for the reset than the platform driver will
+    react on the 'system' state 'reset' and reboot.
+    
+    Issue #1962
+
+
+Generalized SDHCI driver
+========================
+
+; -> @nfeske
+
+commit 3e1fa54c6178f5a4a42528753ff286410ba6ae69
+Author: Timo Wischer <t.wischer@tu-bs.de>
+Date:   Thu Mar 24 18:14:20 2016 +0100
+
+    sd_card: generalise RPi sd card driver
+    
+    This enables to reuse the driver for zynq (and other platforms) in the
+    future.
+    
+    Fixes #1925
+
+
+Libraries and applications
+##########################
+
+LxIP update
+===========
+
+The lxip library was updated to Linux version 4.4.3 and uses lx_kit now.
+
+
+Qemu USB
+========
+
+; XXX should we keep this section or is the level of detail too much?
+
+The QEMU USB library handles EP stalls now. In particular, this fix
+enables the usage of USB devices in VirtualBox that do not support certain
+SCSI commands, e.g. READ_FORMAT_CAPACITY, and will stall if they receive
+such a command. Windows guests typically use the afor mentioned command to
+check if the USB storage device in question is in fact an USB floppy drive.
+
+
+Updated third-party libraries
+=============================
+
+commit 19b3824bfb0d18877e99c586c96fa9b10ebe32b0
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Thu Mar 17 16:10:45 2016 +0100
+
+    libav: update to version 11.6
+    
+    Enables also the use of the avresample library.
+    
+    Fixes #1910
+
+
+Platforms
+#########
+
+Generalization of platform-specific headers
+===========================================
+
+; -> @nfeske
+
+In anticipation of the planned binary compatibility of Genode components
+across different kernels, we unified most parts of Genode's base API and
+largely removed the dependency on platform-specific types.
+
+commit f186587cabd090bec3adf9f66761fdcf438cac2a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Mar 18 22:53:25 2016 +0100
+
+    Unify ipc_msgbuf.h across base platforms
+    
+    Besides unifying the Msgbuf_base classes across all platforms, this
+    patch merges the Ipc_marshaller functionality into Msgbuf_base, which
+    leads to several further simplifications. For example, this patch
+    eventually moves the Native_connection_state and removes all state
+    from the former Ipc_server to the actual server loop, which not only
+    makes the flow of control and information much more obvious, but is
+    also more flexible. I.e., on NOVA, we don't even have the notion of
+    reply-and-wait. Now, we are no longer forced to pretend otherwise.
+    
+    Issue #1832
+
+
+NOVA microhypervisor
+====================
+
+; -> @alexab
+
+commit dccad4c526b7ea93f6a5b1d79138423518a2924c
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Apr 28 13:38:21 2016 +0200
+
+    nova: kernel support for more than 4096 processes
+    
+    Fixes #1951
+
+commit 1622f53dd815804a9a64b0cd89a2f85c8427c9e0
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu May 12 12:53:17 2016 +0200
+
+    nova: support fixed ACPI event delivery by kernel
+    
+    Issue #1962
+
+
+Execution on bare hardware (base-hw)
+====================================
+
+; -> @nfeske
+
+commit 0c34e3802f2cfeed6334d6a1b0c6908770c2ebe5
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed May 18 12:20:04 2016 +0200
+
+    hw: use kernel timer for timer driver
+    
+    * Adds public timeout syscalls to kernel API
+      * Kernel::timeout installs a timeout and binds a signal context to it that
+        shall trigger once the timeout expired
+      * With Kernel::timeout_max_us, one can get the maximum installable timeout
+      * Kernel::timeout_age_us returns the time that has passed since the
+        calling threads last timeout installation
+    
+    * Removes all device specific back-ends for the base-hw timer driver and
+      implements a generic back-end taht uses the kernel timeout API
+    
+    * Adds assertions about the kernel timer frequency that originate from the
+      requirements of the the kernel timeout API and adjusts all timers
+      accordingly by using the their internal dividers
+    
+    * Introduces the Kernel::Clock class. As member of each Kernel::Cpu object
+      it combines the management of the timer of the CPU with a timeout scheduler.
+      Not only the timeout API uses the timeout scheduler but also the CPUs job
+      scheduler for installing scheduling timeouts.
+    
+    * Introduces the Kernel::time_t type for timer tic values and values inherited
+      from timer tics (like microseconds).
+    
+    Fixes #1972
+
+
+Linux
+=====
+
+; -> @chelmuth
+
+commit 14f1ac497efc9f4f1fa4d92f8a720e9a0be5403e
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Fri Apr 8 18:24:15 2016 +0200
+
+    linux: improve exception-signal handling
+    
+    First, we use an alternate stack for signal handling now. The stack is
+    shared among all threads of the component, which is okay as we only
+    handle exceptions with log output and pass on to the default handler
+    (that terminates the execution). The primary motivation for the
+    alternate stack is the detection of SIGSEGV due to stack overflows.
+    
+    Also, hybrid components now handle exception signals by logging and the
+    support for multi-threaded applications was improved.
+    
+    Fixes #1935
+
+
+Tools and build system
+######################
+
+Usability improvements of the ports tools
+=========================================
+
+; -> @nfeske
+
+commit b039608e95198543ce06f186fe1497e19055757a
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed Feb 3 17:48:54 2016 +0100
+
+    prepare_port: prepare multiple ports at once
+    
+    The tool/prepare_port tool is now able to handle a list of ports that
+    shall be prepared. Additionally, one may state the number of ports that
+    shall be prepared in parallel at a max by using the -j parameter. If -j
+    is not set by the user, the tool acts as with -j1. The previous
+    implementation of the tool that prepares only a single port was moved to
+    tool/ports/mk/prepare_single_port.mk and acts as back end to the new
+    prepare_port tool. The interface of the new prepare_port tool is
+    backwards compatible. When called for one port only, the behavior is the
+    same as when calling tool/ports/mk/prepare_single_port.mk directly.
+    
+    Removes "usage" rule from prepare_single_port.mk. Removes shebang line
+    from prepare_single_port.mk.
+    
+    Ref #1872
+
+commit 992a5ec1ae7fb57e1b2df04a9b372c81debc9748
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Fri Feb 5 11:28:44 2016 +0100
+
+    prepare_port: prefix git clone output
+    
+    To raise readability when preparing multiple ports in parallel we prefix
+    also the git clone output with the port name dark-yellow-coloured. To
+    achieve this we sed the git output. In sed \x1b[ resolves to an escape
+    sequence and \033[, that we use normally, doesn't. The echo command, at
+    the other hand, resolves both to an escape sequence. Thus we use the
+    sed-compatible version in general. This commit inhibits the progress
+    output of git clone as it can't be redirected to sed.
+    
+    Ref #1872
+
+commit ff10687a6c07cd3ba2650ef9cc3b4005bd08561d
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Thu Feb 4 12:20:03 2016 +0100
+
+    toolchain: report missing ports at once
+    
+    Previously, ports that were needed for a scenario and that were not
+    prepared or outdated, triggered one assertion each during the second
+    build stage. The commit slots a mechanism in ahead that gathers all
+    these ports during the first build stage and reports them in form of a
+    list before the second build stage is entered.  This list can be used
+    directly as argument for tool/ports/prepare_port to prepare respectively
+    update the ports. If, however, this mechanism is not available, for
+    example because a target is build without the first build stage, the old
+    assertion still prevents the target from running into troubles with a
+    missing port.
+    
+    Fixes #1872
+
+commit 5085ad36c38eba510c86c456d10b8266e78998ed
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Mar 11 10:54:00 2016 +0100
+
+    tool: remove deprecated 'make prepare' mechanism
+    
+    Fix #1897
+
+
+Updated tool chain
+==================
+
+; -> @cproc, @chelmuth
+
+commit 44648bb5c7e0d22789ae9380ad171dd16c58c035
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Wed May 18 14:47:36 2016 +0200
+
+    tool_chain/cxx: use '__cxa_demangle()' for exception names
+    
+    Fixes #1976
+
+
+Removal of stale features
+#########################
+
+; -> @nfeske
+
+commit 9a3185f8ed29870d98def61b4a2c7a32e1d6b852
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Mar 8 15:58:05 2016 +0100
+
+    base-linux: remove chroot support
+    
+    Fixes #1903
+
+commit 8d781ca17b19bfb42181b9c3a029de6a49d15a93
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue May 24 09:54:03 2016 +0200
+
+    ahci: disable atapi support by default
+    
+    If needed it has to be enabled explicitly as documented in the README.
+    
+    Related to issue #1906
+
