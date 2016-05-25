@@ -921,6 +921,8 @@ We enabled the '__cxa_demangle()' function in our tool chain to be able to
 print user-readable names of uncaught exceptions.
 
 XXX tool chain update required
+XXX added RISC-V
+XXX GDB x86_64
 
 
 Removal of stale features
