@@ -685,18 +685,37 @@ node is set to 'yes'.
 USB driver update
 =================
 
-; -> @ssumpf
+The USB driver was updated to Linux version 4.4.3 and like the other drivers
+incorporates the modular lx_kit. The new driver exposed problems with the
+EHCI controller on older systems, namely the Thinkpad X201. Using the new USB
+driver on this machine would freeze the system when 'USB legacy Support' is
+enabled in the BIOS. The fix is to apply the USB hand-off quirk, that informs
+the BIOS that the OS wants to drive the USB host-controller and waits until
+the BIOS has acknowledged the request. Unfortunatly, applying this quirk
+produces problems on certain xHCI host-controllers when using the IOMMU. In
+this case the driver tried to perform the hand-off request but got stuck while
+writing to the PCI config space. After about 20 seconds we saw a DMA fault and
+the initialization of the USB driver went on. Presumably at this point the BIOS
+tries to access certain memory regions that by now are protected by the IOMMU.
+When using the IOMMU, we already take precautions, i.e., we look at the RMRR
+regions and instruct the kernel to configured the IOMMU for specific devices
+accordingly. We looked at the ACPI RMRR region of the USB on the machine in
+question and could confirm our suspicion: the registered USB RMRR region is
+indeed too small. For all we know that sounds like a bug in BIOS or rather
+ACPI tables. To accomodate systems that nonetheless need the hand-off quirk
+and the user wants to use the IOMMU, we added the handling of a 'bios_handoff'
+attribute to the USB driver configuration. When set to 'no' the driver will not
+perform any hand-off request. The default setting is 'yes'. If you experience
+any issues with the new USB driver, disabling the hand-off is advised.
 
-The Usb session propagates a EP stall error to the client and clears the
-stall condition by restting the EP now.
+While updating the driver a regression on the Raspberry Pi was introduced.
+USB devices that use IRQ endpoints, e.g. USB HID devices, do not work
+reliably. This issue is still unresolved and dealing with it is post-poned
+until after the release.
 
-commit ea65c36308828c7cc335ae52949eab157c1742c0
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Wed May 18 18:51:11 2016 +0200
-
-    dde_linux: update usb to 4.4.3
-    
-    Issue #1974.
+Furthermore, the USB session used for implementing native USB device drivers
+propagates an EP stall error to the client and clears the stall condition by
+resetting the EP now.
 
 
 Intel graphics driver update
