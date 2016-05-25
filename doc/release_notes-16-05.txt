@@ -247,161 +247,94 @@ Base framework
 New component API
 =================
 
+Each component has to provide an implementation of the 'Component' interface
+as exemplified in the previous section.
 
+Each component is a composition of a protection domain (PD session), a
+memory budget (RAM session), and a CPU session, from which the initial thread
+is created. These sessions form the _environment_ of the component, which is
+represented by the 'Env' interface class (_base/env.h_). The environment is
+provided to the component as argument to the 'Component::construct'
+(_base/component.h_) function.
 
-commit 4f69772ecca4cdb03d330cb3709c7e1e35607f8e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 27 22:11:38 2016 +0200
+:deprecated global 'env()' accessor function:
 
-    Replace 'Env' interface with modern one
-    
-    The original 'Env' interface as returned by 'Genode::env()' has been
-    renamed to 'Env_deprecated' and moved to deprecated/env.h. The new version
-    of base/env.h contains the interface passed to modern components that
-    use the component API via base/component.h.
-    
-    Issue #1832
+  During the migration phase to the new API, the 'Genode::env()' is still
+  available. But it ultimately vanish from the API.
 
-commit 051e84c4b47f89b0d321147ec01cd0cee4e0961c
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Dec 23 15:22:33 2015 +0100
+Each component is equipped with an initial 'Entrypoint' (_base/entrypoint.h_)
+that is accessible via 'Env::ep()'. Each entrypoint is able to respond to
+both RPC requests and signals. The 'Component::construct' function is
+executed in the context of the entrypoint. None of the entrypoint's RPC
+objects or signal handlers will be called before returning from the
+'Component::construct' function.
 
-    Move server API concept to base framework
-    
-    This commit introduces the new `Component` interface in the form of the
-    headers base/component.h and base/entrypoint.h. The os/server.h API
-    has become merely a compatibilty wrapper and will eventually be removed.
-    The same holds true for os/signal_rpc_dispatcher.h. The mechanism has
-    moved to _base/signal.h_ in the form of the 'Signal_handler' class
-    template.
-    
-    Issue #1832
+:deprecated _os/signal_rpc_member_:
 
-commit 73b463cdbb6d8aeb89eff8fa371f519d493e91bf
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 20 23:22:12 2016 +0200
+  The former 'Signal_rpc_member' is superseded by the new 'Signal_handler'
+  (_base/signal.h_).
 
-    Signal_handler: remove num argument from handler
-    
-    We will eventually remove the delivery of the number of occurred signals
-    to the recipient. There haven't been any convincing use cases for this
-    feature. In the contrary, it actually led to wrong design choices in the
-    past where the rate of signals carried information (such as the progress
-    of time) that should better be obtained via an explicit RPC call.
-    
-    The old 'Signal_rpc_member' template retains the old interface for now.
-    But the new 'Signal_handler' omits the 'unsigned' argument from the
-    handler function.
+  Signal-handling methods receive no longer a signal counter value as
+  arguments as there haven't been any convincing use cases for this
+  feature. In the contrary, it actually led to wrong design choices in the
+  past where the rate of signals carried information (such as the progress
+  of time) that should better be obtained via an explicit RPC call.
 
-commit a7b3072cc2120434a201eca019c743539de23cfa
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue May 10 17:24:51 2016 +0200
+:deprecated connection constructors without 'Env' argument:
 
-    Pass Env & as first argument to connection objects
-    
-    This patch supplements each existing connection type with an new
-    constructor that is meant to replace the original one. The new
-    one takes a reference to the component's environment as argument and
-    thereby does not rely on the presence of the globally accessible
-    'env()' interface.
-    
-    The original constructors are marked as deprecated. Once we have
-    completely abolished the use of the global 'env()', we will remove them.
-    
-    Fixes #1960
+  To eliminate the reliance on the deprecated global 'env()', all
+  connection objects have to take
+  takes a reference to the component's environment as argument.
+  The original constructors are marked as deprecated. Once we have
+  completely abolished the use of the global 'env()', we will remove them.
 
 
 Consolidation of core's SIGNAL, CAP, RM, and PD services
 ========================================================
 
-commit b1910cdd54d77183bcce7cd7fb7594a0c4c5fa17
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Jan 14 13:22:00 2016 +0100
+With the new API, each component implicitly requires a session to core's CAP
+service (to be able to handle RPC requests by the entrypoint) and a session to
+the SIGNAL service (to dispatch signals by the entrypoint). Therefore, the
+separation of these services serves no purpose any longer. To simplify the
+API, the former SIGNAL, CAP, RM, and PD services are now integrated in the
+PD service. This change has several benefits:
 
-    Integrate SIGNAL session into PD session
-    
-    This patch removes the SIGNAL service from core and moves its
-    functionality to the PD session. Furthermore, it unifies the PD service
-    implementation and terminology across the various base platforms.
-    
-    Issue #1841
+* It reduces the API complexity,
+* It reduces the component-startup costs because only one session must
+  be created instead of four.
+* It reduces policy with respect to the dimensioning of the various
+  session quotas.
 
-commit 62b1c55399d6dc1b59548e542b35751ff2a3f425
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jan 19 20:24:22 2016 +0100
+In order to unify the API across all different base platforms, the PD
+session interface contains no kernel-specific parts any longer. There
+is now a dedicates sub interface called 'Native_pd' that accommodates
+such needs. A capability to this kernel-specific interface can by
+requested via the 'Pd_session::native_pd' accessor method. The kernel-specific
+interfaces are named Nova_native_pd, Foc_native_pd, and Linux_native_pd.
 
-    Integrate CAP session into PD session
-    
-    This patch integrates the functionality of the former CAP session into
-    the PD session and unifies the approch of supplementing the generic PD
-    session with kernel-specific functionality. The latter is achieved by
-    the new 'Native_pd' interface. The kernel-specific interface can be
-    obtained via the Pd_session::native_pd accessor function. The
-    kernel-specific interfaces are named Nova_native_pd, Foc_native_pd, and
-    Linux_native_pd.
-    
-    The latter change allowed for to deduplication of the
-    pd_session_component code among the various base platforms.
-    
-    To retain API compatibility, we keep the 'Cap_session' and
-    'Cap_connection' around. But those classes have become mere wrappers
-    around the PD session interface.
-    
-    Issue #1841
+:deprecated _cap_session/_:
 
-commit 511acad5074878bbaae46ae0aebab1b52fbb97b1
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Apr 15 15:19:22 2016 +0200
+  With the integration of CAP service into the PD service, the CAP session
+  interface ceased to exist. However, there are still old-style components
+  that manually create a 'Cap_connection' to be passed as argument to an
+  'Rpc_entrypoint'. To avoid breaking those components, we keep a pseudo
+  'Cap_connection' around. But the implementation does not actually create
+  a session but merely returns the PD session interface of the component,
+  which matches the argument type of the 'Rpc_entrypoint'.
 
-    Consolidate RM service into PD session
-    
-    This patch integrates three region maps into each PD session to
-    reduce the session overhead and to simplify the PD creation procedure.
-    Please refer to the issue cited below for an elaborative discussion.
-    
-    Note the API change:
-    
-    With this patch, the semantics of core's RM service have changed. Now,
-    the service is merely a tool for creating and destroying managed
-    dataspaces, which are rarely needed. Regular components no longer need a
-    RM session. For this reason, the corresponding argument for the
-    'Process' and 'Child' constructors has been removed.
-    
-    The former interface of the 'Rm_session' is not named 'Region_map'. As a
-    minor refinement, the 'Fault_type' enum values are now part of the
-    'Region_map::State' struct.
-    
-    Issue #1938
+:new _region maps_ replace former RM sessions:
 
-commit b49e588c1cabd11d0433fd686d79b7c8c3e5bbbf
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 20 21:12:57 2016 +0200
+  The functionality of the former RM sessions has moved to the region-map
+  interface, which is an RPC interface but not a session.
+  Each PD session contains 3 region maps, one for the entire virtual
+  address space, one for the stack area (formerly called thread-context
+  area), and one for the linker area. The new RM service is merely
+  responsible for the provisioning of managed dataspaces but is no longer
+  used by regular components.
 
-    Assign threads to PD at its creation time
-    
-    This patch replaces the former 'Pd_session::bind_thread' function by a
-    PD-capability argument of the 'Cpu_session::create_thread' function, and
-    removes the ancient thread-start protocol via 'Rm_session::add_client' and
-    'Cpu_session::set_pager'. Threads are now bound to PDs at their creation
-    time and implicitly paged according to the address space of the PD.
-    
-    Note the API change:
-    
-    This patch changes the signature of the 'Child' and 'Process' constructors.
-    There is a new 'address_space' argument, which represents the region map
-    representing the child's address space. It is supplied separately to the
-    PD session capability (which principally can be invoked to obtain the
-    PD's address space) to allow the population of the address space
-    without relying on an 'Pd_session::address_space' RPC call.
-    Furthermore, a new (optional) env_pd argument allows the explicit
-    overriding of the PD capability handed out to the child as part of its
-    environment. It can be used to intercept the interaction of the child
-    with its PD session at core. This is used by Noux.
-    
-    Issue #1938
+  As a minor refinement, the 'Fault_type' enum values are now part of the
+  'Region_map::State' struct.
 
-; * removed: cap_session/cap_session.h
-; * deprecated: cap_session/connection.h
 
 
 New log-output facilities
@@ -451,20 +384,20 @@ newline character.
 XML processing
 ==============
 
-Since the first version, Genode's init component relied on a configuration
-in an XML-like syntax. For a long time, however, we remained hesitant to make the base system
-(core and the base API) inherently dependent on XML. For the most part,
-this hesitance was founded on our observation that XML tends to be disliked
-in systems-programmers circles. However, over the years, XML organically became the
-predominant syntax for component configurations as well as for the propagation
-of state between components. Whereas the syntactical merits of XML are
-highly subjective and perhaps debatable, the beauty of using XML within
-Genode lies in its consistent application. For example, it allows us
-naturally to embed component configurations in another component's
+Since the first version, Genode's init component relied on a configuration in
+an XML-like syntax. For a long time, however, we remained hesitant to make the
+base system (core and the base API) inherently dependent on XML. For the most
+part, this hesitance was founded on our observation that XML tends to be
+disliked in systems-programmers circles. However, over the years, XML
+organically became the predominant syntax for component configurations as well
+as for the propagation of state between components. Whereas the syntactical
+merits of XML are highly subjective and perhaps debatable, the beauty of using
+XML within Genode lies in its consistent application. For example, it allows
+us naturally to embed component configurations in another component's
 configuration. Much of Genode's flexibility that we enjoy today can be
-attributes this coherency. Granted, this argument would apply just as well
-to alternatives such as JSON or s-expressions. But we have to take one choice
-and stick to it.
+attributes this coherency. Granted, this argument would apply just as well to
+alternatives such as JSON or s-expressions. But we have to take one choice and
+stick to it.
 While we found that XML satisfies our needs and actually never stands
 in the way, the impact on the code complexity is negligibly. Our XML parsing
 and generating utilities are in the order of 700 lines of code.
@@ -533,88 +466,80 @@ Now a configuration attribute can be obtained as follows:
 Thread API and CPU-session interface
 ====================================
 
-commit 7f73e5e879a748b21c795094f96d0aef2d4487ab
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sat Jan 23 14:42:55 2016 +0100
+The thread API and the CPU-session interface underwent a major revision.
 
-    base: hide internals of the Thread API
-    
-    This patch moves details about the stack allocation and organization
-    the base-internal headers. Thereby, I replaced the notion of "thread
-    contexts" by "stacks" as this term is much more intuitive. The fact that
-    we place thread-specific information at the bottom of the stack is not
-    worth introducing new terminology.
-    
-    Issue #1832
 
-commit fd401bdf53e1cc6841f0f22f45b7b04444e81dfd
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed May 4 12:27:17 2016 +0200
+CPU session interface
+---------------------
 
-    Thread API cleanup
-    
-    This patch cleans up the thread API and comes with the following
-    noteworthy changes:
-    
-    - Introduced Cpu_session::Weight type that replaces a formerly used
-      plain integer value to prevent the accidental mix-up of
-      arguments.
-    - The enum definition of Cpu_session::DEFAULT_WEIGHT moved to
-      Cpu_session::Weight::DEFAULT_WEIGHT
-    - New Thread constructor that takes a 'Env &' as first argument.
-      The original constructors are now marked as deprecated. For the
-      common use case where the default 'Weight' and 'Affinity' are
-      used, a shortcut is provided. In the long term, those two
-      constructors should be the only ones to remain.
-    - The former 'Thread<>' class template has been renamed to
-      'Thread_deprecated'.
-    - The former 'Thread_base' class is now called 'Thread'.
-    - The new 'name()' accessor returns the thread's name as 'Name'
-      object as centrally defined via 'Cpu_session::Name'. It is meant to
-      replace the old-fashioned 'name' method that takes a buffer and size
-      as arguments.
-    - Adaptation of the thread test to the new API
-    
-    Issue #1954
+:Assigning threads to a PD at their creation time:
 
-commit 0c299c5e08b8ff4d19697283307446ca0f0e2644
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Mar 30 15:34:37 2016 +0200
+  We replaced the former 'Pd_session::bind_thread' method by a
+  PD-capability argument of the 'Cpu_session::create_thread' function, and
+  removed the ancient thread-start protocol via 'Rm_session::add_client' and
+  'Cpu_session::set_pager'. Threads are now bound to PDs at their creation
+  time and implicitly paged according to the address space of the PD.
 
-    base: separate native CPU from CPU session
-    
-    This patch unifies the CPU session interface across all platforms. The
-    former differences are moved to respective "native-CPU" interfaces.
-    
-    NOVA is not covered by the patch and still relies on a custom version of
-    the core-internal 'cpu_session_component.h'. However, this will soon be
-    removed once the ongoing rework of pause/single-step on NOVA is
-    completed.
-    
-    Fixes #1922
+:New 'Cpu_session::Weight' type:
 
-commit a99989af40876d01307ab4745bdc3b9fdfed65bd
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue May 10 18:05:38 2016 +0200
+  The new type replaces a formerly used plain integer value to prevent the
+  accidental mix-up of arguments.
+  The enum definition of 'Cpu_session::DEFAULT_WEIGHT' moved to
+  'Cpu_session::Weight::DEFAULT_WEIGHT'.
 
-    Separation of thread operations from CPU session
-    
-    This patch moves the thread operations from the 'Cpu_session'
-    to the 'Cpu_thread' interface.
-    
+:Separation of platform-specific operations from generic CPU session:
+
+  The CPU session interface has been unified across all platforms. The
+  former differences are moved to respective "native-CPU" interfaces
+  analogously to how the 'Native_pd' interface is separated from the
+  'Pd_session' interface.
+
+:Separation of thread operations from CPU session:
+
+    The former CPU-session interface contained a number of operations
+    that took a thread capability as first argument. Those thread-manipulation
+    operations are now accessible as RPC interface on the thread capability
+    directly.
+
     A noteworthy semantic change is the meaning of the former
-    'exception_handler' function, which used to define both, the default
+    'exception_handler' RPC function, which used to define both the default
     exception handler or a thread-specific signal handler. Now, the
     'Cpu_session::exception_sigh' function defines the CPU-session-wide
     default handler whereas the 'Cpu_thread::exception_sigh' function
     defines the thread-specific one.
-    
-    To retain the ability to create 'Child' objects without invoking a
-    capability, the child's initial thread must be created outside the
-    'Child::Process'. It is now represented by the 'Child::Initial_thread',
-    which is passed as argument to the 'Child' constructor.
-    
-    Fixes #1939
+
+
+Thread API
+----------
+
+Most regular component no longer need to use the thread API directly.
+Instead, the 'Entrypoint' (which is a thread) should be used whenever possible.
+
+:removed details from _base/thread.h_:
+
+  We moved the details about the stack allocation and organization from the
+  public API to framework-internal headers and replaced the notion of
+  "thread contexts" by "stacks" as this term is more intuitive.
+
+:renamed and removed classes, new constructors:
+
+  The former 'Thread<>' class template has been renamed to
+  'Thread_deprecated'. Threads with the stack supplied as template argument
+  should no longer be used. The stack size should always be passed as
+  constructor argument.
+
+  The former 'Thread_base' class is now called 'Thread'.
+
+  The new Thread constructor that takes an 'Env &' as first argument.
+  The original constructors are now marked as deprecated. For the
+  common use case where the default 'Weight' and 'Affinity' are
+  used, a shortcut is provided. In the long term, those two
+  constructors should be the only ones to remain.
+
+  A new 'name()' accessor returns the thread's name as 'Name'
+  object as centrally defined via 'Cpu_session::Name'. It is meant to
+  replace the old-fashioned 'name' method that takes a buffer and size
+  as arguments.
 
 
 Child management
