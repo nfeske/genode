@@ -17,15 +17,225 @@
 The great API renovation
 ########################
 
-; -> @nfeske
+Genode's base API evolved over the years. When we started in 2006, our mindset
+was very much influenced by L4, which regarded synchronous IPC as the only
+mechanism needed. We used to implement components ("servers") in a procedural
+programming style with a fully synchronous control flow within the component
+and across components (IPC).
 
-commit 115b13941051fa8e606d2afcaad185400b19ae52
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri May 20 14:49:45 2016 +0200
+We eventually realized that the restriction to synchronous IPC was misguided.
+(see  Section 3.6.2. "Asynchronous notifications" in
+[http://genode.org/documentation/genode-foundations-16-05.pdf - the Genode Foundations book]
+for a detailed discussion of the problems)
+When we started to embrace the use of asynchronous
+notifications and to disregard blocking RPC between components, we found
+ourselves designing components as state machines rather than procedural
+programs. To promote this programming style, we introduced the so-called
+server API (os/server.h). See
+[https://github.com/genodelabs/genode/blob/master/repos/os/src/server/nic_loopback/main.cc - NIC loopback server]
+for a canonical example of such a component.
 
-    Update of the hello tutorial
+We found that this new style greatly increased the robustness and flexibility
+of the components. In particular, it completely alleviates race conditions,
+which constantly troubled us in the past. Now, following the new paradigm, we
+may end up on a deadlock, but such a situation is easy to debug compared to
+sporadic race conditions. Over the past two years we have redesigned all
+Genode session interfaces to avoid blocking RPC. The only remains are the
+parent and root interfaces, which we still need to address.
 
-; * cnuke's migration guide
+Still, the Genode API retained compatibility to the old (= wrong) style of
+developing components. We take the current release as an opportunity to
+finally clean the API from our past mistakes.
+
+
+High-level overview of the changes
+==================================
+
+Removal of side effects
+-----------------------
+
+Up to now, most components rely on the globally available 'Genode::env()'
+singleton object for interacting with its environment. When calling a function
+or method, one never knows for sure if the called code interacts with the
+'env'. E.g., we can simply create an instance of 'Timer::Connection' without
+any arguments. Under the hood, the 'Connection' object accesses the 'env' to
+open a timer session at the parent. In the spirit of capability-based
+security, we should shun the reliance on side effects like the global 'env'.
+Instead, we should pass all materials that are needed by the called code
+explicitly to the called code (e.g., by passing a reference to a 'Parent &' as
+argument. This way, someone inspecting the calling code can immediately see
+the possible reach of the called code. Another prominent example is the latent
+use of 'env()->heap()', which allows any code to arbitrary consume memory.
+Instead, we should better pass an 'Allocator &' to the called code. This way,
+we re-enforce that library code stays clean from the policy where memory is
+allocated from. If no 'Allocator &' is passed, we know that no dynamic memory
+allocation is performed. If an 'Allocator &' is required, the called code
+needs to explain (in the form of its documentation) why the allocator is
+actually needed. Moreover, by passing an 'Allocator_guard', the calling code
+can impose a limit of the memory consumption on the called code.
+
+Granted, the explicit passing of such arguments may lead to slightly more
+verbose code. But this minor inconvenience is greatly outweighed by
+the benefits of alleviating side effects.
+
+
+Component API
+-------------
+
+Traditionally, components started their execution at a 'main' function
+because, well, this is how it's supposed to be, right? The program exits as
+soon as main returns. With the introduction of the server API mentioned above,
+we explored a with different approach: The execution of a component starts at a
+'construct' function that takes a form of the Genode environment as argument.
+The function is expected to initialize the component. Upon completion of the
+initialization, the function returns. Now, the component is ready to respond
+to incoming RPC requests or signals. Each time such a request/signal comes in,
+a handler is executed. The handler applies the component-internal state
+changes and returns immediately. No blocking call is performed. We have
+essentially a state machine.
+
+Over the past two years, we have applied this new approach to all new
+components - to a great success. So it is time to promote this API to become
+Genode's base API. The major benefits are:
+
+* Servers become easier to develop as the API is much simpler.
+  Previously, a server had to manually create a CAP connection and an RPC
+  entrypoint. Now, each component has an entrypoint.
+
+* Signals and RPC requests are handled in the context of the same thread,
+  which alleviates the need for locking as long as the component is single
+  threaded, which is actually the case for most components.
+
+* The notion of 'Thread', 'Signal_receiver', 'Rpc_entrypoint' are no longer
+  needed by the developer of a component. There is simply an 'Entrypoint',
+  which is able to handle both RPC requests and signals.
+
+
+Shunning pointers
+-----------------
+
+The Genode API has still a lot of places where pointers are taken as arguments
+or exposed from objects. We didn't know better when we started with Genode.
+Now we do. With the current release, we streamline the base API in this
+respect. Just as one simple example, the 'Heap' used to take an RM-session
+pointer and an RAM-session pointer as arguments. These should be references.
+Pointers should be used only in situations where a nullptr is a reasonable
+argument, or when dealing with string literals as 'char const *'.
+
+
+We are not there yet
+--------------------
+
+Whereas finding an API that successfully strikes the balance between the
+lowest possible API complexity and highest possibly flexibility is extremely
+challenging, it is even more complicated to execute the transition from one
+API to another. The order of steps must planned carefully and interim
+solutions must be designed as migration paths. We hope that the current
+release does not induce too much pain for the users of the framework. Wherever
+we found a way to smoothen the migration path, we took it. But there are a few
+disruptive changes that are explained in detail in Section [Base framework].
+
+There are still a few loose ends that we will address in the subsequent
+release, in particular the redesign of the parent interface to become
+completely asynchronous.
+
+
+API migration guide
+===================
+
+In the current release we promote the former "server API" to the general
+"component API", which should solely be used for new components. The old API
+is now considered as deprecated. This short guide provides the list of the
+steps one has to take to adapt an existing server-API-style component to the
+new API.
+
+The steps are as follows:
+
+# Replace include directives
+
+  The 'Server' namespace is superseded by the 'Component' namespace and the
+  'Entrypoint' class has moved to the Genode namespace. Therefore, instead
+  of including the _os/server.h_ header, the _base/component.h_ header must
+  be included.
+
+# Replace server definition
+
+  Where the old API used the Server hook functions
+
+  !char const *Server::name()                    { return "server_ep";         }
+  !size_t      Server::stack_size()              { return 8*1024*sizeof(long); }
+  !void        Server::construct(Entrypoint &ep) { static Main main(ep);       }
+
+  the new API uses the Component hook functions
+
+  !size_t Component::stack_size()                { return 8*1024*sizeof(long); }
+  !void   Component::construct(Genode::Env &env) { static Main main(env);      }
+
+  Note that the 'name()' function ceased to exist.
+
+# Use 'Env' reference
+
+  Whereas the old API passes a reference to an 'Entrypoint', the new API
+  passes a reference to the 'Genode::Env' to the component's 'construct'
+  function.
+  The initial entrypoint of the component can be accessed through the 'Env'
+  reference by calling the 'ep()' method. As intermediate step while doing the
+  migration work, it is sufficient to call this method in the 'construct()'
+  method, e.g.:
+
+  !void Component::construct(Genode::Env &env) { static Main main(env.ep()); }
+
+# Replace 'Signal_rpc_member'
+
+  The 'Signal_rpc_member' class is considered deprecated and superseded by the
+  'Signal_handler' class (see _base/signal.h_). Note that, the actual
+  signal-handling method as passed to a 'Signal_handler' has no argument, as
+  opposed to the old API where the handler was called with a counter value.
+
+# Replace global 'Genode::env()' accessor
+
+  The most cutting change is the discontinuation of the global 'Genode::env()'
+  accessor function. Typically, this accessor was used throughout a component
+  to access its environment, e.g. use 'Genode::env()->heap()' as allocator or
+  'Genode::env()->rm_session()->attach()' to attach a dataspace.
+
+  Since a component starts its life now at the execution of the 'construct'
+  function, the component has to pass a reference to its 'Env' interface or
+  rather a reference to the needed part of the 'Env' interface on. This
+  explicit way of handling access to the component's environment will require
+  the restructuring of the component. It is good practice to focus on the need
+  at hand rather than to always pass the 'Env' reference on. On that account,
+  it is important to note that the 'Rm_session' is no longer accessible and
+  its place is taken by the 'Region_map'. Where one would have called
+  'env()->rm_session()->attach' to attach a given dataaspace,
+  'env.rm().attach' has now to be used.
+
+  Furthermore, the global heap allocator object was removed. Components that
+  want to use a heap like allocator have to create such an allocator
+  manually:
+
+  !Genode::Heap heap { &env.ram(), &env.rm() };
+
+# Use new log facilities
+
+  Instead of relying on the old print macros (PDBG, PERR, PINF, PLOG, PWRN)
+  and thereby 'Genode::printf()', a component should use the new 'Log' class to
+  produce diagnostic LOG output. There are a few convenient template functions,
+  namely 'Genode::error()', 'Genode::log()' and 'Genode::warning()' that can be
+  used. Note that these functions do not use a format string to print various
+  different data types but just a list arguments, e.g.:
+
+  !int const      i = 42;
+  !char const * str = "world";
+  !Genode::log("Hello ", str, "! ", i);
+
+  produces 'Hello world! 42'.
+
+  Note that certain datatypes, e.g. 'enum' and 'char', might have to be
+  casted, e.g.:
+
+  !enum { FOO, BAR };
+  !Genode::log("enum: ", (int)FOO, " ", (int)BAR);
 
 
 Base framework
@@ -36,6 +246,8 @@ Base framework
 
 New component API
 =================
+
+
 
 commit 4f69772ecca4cdb03d330cb3709c7e1e35607f8e
 Author: Norman Feske <norman.feske@genode-labs.com>
