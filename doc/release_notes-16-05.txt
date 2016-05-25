@@ -710,23 +710,24 @@ resetting the EP now.
 Intel graphics driver update
 ============================
 
-; -> @skalk
-
-commit 7904fbc108a38f2239ac5107ebb3b6b30a599a73
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Apr 19 15:37:27 2016 +0200
-
-    intel_fb: add Framebuffer controller example
-    
-    Issue #1974.
-
-commit b45977632e9573c68b115047f6e1201a1ae91c93
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Mar 22 11:04:07 2016 +0100
-
-    dde_linux: update intel_fb to 4.4.3
-    
-    Issue #1974.
+The Intel graphics driver introduced in Genode release 15.11 was updated to
+Linux version 4.4.3. The most prominent, functional improvement is support for
+Intel Skylake graphics cards.
+Internally, we slimmed the code parts used from the Linux kernel by resigning
+the ancient framebuffer and framebuffer console layer. The new driver only uses
+the more modern DRM layer of the Linux kernel. As a side effect all formerly
+available heuristics that were applied at initialization time, or whenever a
+display got connected are not part of the driver anymore. Now, the driver only
+reports any state changes like additional available displays via its report
+session. On the other hand it always updates the graphics configuration whenever
+its config ROM module changes.
+To automatically control the graphics driver during display connection changes
+an example component named intel_fb_controller is now available in:
+_repos/dde_linux/src/test/framebuffer/intel_. This component reacts on report
+changes of the Intel graphics driver and configures it in a way that all
+available displays are showing one and the same framebuffer with their maximum
+resolution. Thereby displays with a minor resolution show the upper left corner
+of the whole framebuffer.
 
 
 Enhanced ACPI support
