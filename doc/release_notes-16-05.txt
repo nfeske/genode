@@ -734,15 +734,14 @@ Thanks to Johannes Schlatow for this contribution!
 C runtime
 =========
 
-; -> @chelmuth
+Sysctl
+~~~~~~
 
-commit 93b82c14ac3cd39fda84f6cc61dfab019456cb60
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Fri Apr 15 14:19:51 2016 +0200
-
-    libc: read sysctl info from /.sysctl/...
-    
-    Fixes #1931
+The libc sysctl was replaced with an extensible implementation that reads
+values from the _/.sysctl_ directory when present. This interface is
+convergent with the _/proc/sys_ directory on Linux and allows sysctl
+values to be modified by the local component or by an external component
+through a common file-system.
 
 
 libc_pipe plugin
