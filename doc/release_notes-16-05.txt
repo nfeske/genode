@@ -494,11 +494,56 @@ Removed and to-be-removed APIs
 Low-level OS infrastructure
 ###########################
 
-GDB support for the 'nova_x86_64' platform
-==========================================
+Enhanced GDB support on NOVA
+============================
 
-GDB received some stability improvements and now also supports debugging
-on the 'nova_x86_64' platform.
+During the practical work with the GDB monitor (our Genode port of the GNU
+'gdbserver' application) and our nightly automated execution of the
+'gdb_monitor.run' test, it turned out that there are still situations which
+GDB monitor cannot handle correctly. Since the error symptoms often occur only
+sporadically and it is often not obvious if the cause of the error is located
+in the Genode-specific adaptations of the gdbserver code or in the platform-
+specific functionality of the Genode base system, a first step to improve the
+stability of the debugger was to try to remove existing Genode-specific code
+from the gdbserver codebase and to emulate the Linux-specific C interface
+instead, which especially involved a GDB monitor-local implementation of the
+'waitpid()' function. This interface is documented relatively well and in the
+case of error there would be a better chance of comparing the GDB monitor-
+internal execution sequence with a corresponding test case on the Linux version
+of gdbserver.
+
+The emulation of this interface is not trivial, though, because the behavior of
+the Linux kernel often differs from the behavior of the Genode base components.
+For example, when debugging a Linux program, a new thread created by the
+debug target gets stopped automatically by the Linux kernel and the 'waitpid()'
+function reports a SIGSTOP signal for the new thread and a SIGTRAP signal for
+the creating thread to the gdbserver. This behavior does not match at all with
+the design of the Genode base system, so it gets emulated in the GDB monitor
+with the help of a software breakpoint on the first instruction of the new
+thread and the artificial creation of the corresponding SIGSTOP and SIGTRAP
+signal reports.
+
+While implementing this mechanism in the
+'Gdb_monitor::Cpu_thread_component::start()' method, it turned out that on the
+NOVA platform on the creation of a so-called 'local thread' (a NOVA thread
+which only responds to IPC and has no execution time of its own), the initial
+instruction pointer passed to the function was always 0. So, changes in the
+NOVA base system were necessary to get to know the correct start address
+of the thread in order to set a breakpoint there. Another problem was found to
+be that an attempt by GDB monitor to pause a thread of the debug target could
+block for quite some time if the particular thread was currently blocking in a
+NOVA syscall. In that case, the 'Cpu_thread::pause()' call returned only after
+the particular thread got executed in userland again, because only then the
+current register state of the thread could be transferred into userland for
+retrieval by GDB. This problem got solved by an extension of the NOVA kernel,
+which makes it possible to get the current register state of a to-be-paused
+thread immediately most of the time.
+
+Furthermore, the NOVA-specific changes for GDB make it possible for GDB to
+modify register values and to debug 64-bit applications.
+
+As reference, the 'ports/run/gdb_monitor.run' script demonstrates and tests a
+selection of the features supported by GDB on Genode.
 
 
 New support for the Rust programming language
