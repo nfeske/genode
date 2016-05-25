@@ -239,58 +239,83 @@ newline character.
 XML processing
 ==============
 
-commit 2bc8a0f76a5d5ad7266c1b37e596bcbb130f9241
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Apr 26 19:09:29 2016 +0200
+Since the first version, Genode's init component relied on a configuration
+in an XML-like syntax. For a long time, however, we remained hesitant to make the base system
+(core and the base API) inherently dependent on XML. For the most part,
+this hesitance was founded on our observation that XML tends to be disliked
+in systems-programmers circles. However, over the years, XML organically became the
+predominant syntax for component configurations as well as for the propagation
+of state between components. Whereas the syntactical merits of XML are
+highly subjective and perhaps debatable, the beauty of using XML within
+Genode lies in its consistent application. For example, it allows us
+naturally to embed component configurations in another component's
+configuration. Much of Genode's flexibility that we enjoy today can be
+attributes this coherency. Granted, this argument would apply just as well
+to alternatives such as JSON or s-expressions. But we have to take one choice
+and stick to it.
+While we found that XML satisfies our needs and actually never stands
+in the way, the impact on the code complexity is negligibly. Our XML parsing
+and generating utilities are in the order of 700 lines of code.
 
-    Move XML util from os to base repository
-    
-    Since the dynamic linker depends on the XML utils and we plan to replace
-    the ancient 'Arg_string' with XML, it is time to move the 'Xml_node' and
-    'Xml_generator' to base/include.
+With this perspective, we take the deliberate decision to make XML mandatory
+for even the lowest-level parts of the framework. For example, even the
+dynamic linker obtains the policy for diagnostic output from an XML-formatted
+configuration. Consequently, we moved the XML utilities to
+_base/include/util/_.
 
-commit 463b39fc73f6833d8987bd59e22225d9794e00d0
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Apr 18 21:13:47 2016 +0200
+To ease the use it the XML parsing utilities, we also added the accessors
+'Xml_node::type' and 'Xml_attribute::name' that return 'Genode::String'
+objects.
 
-    xml reporter: support different start node name
-    
-    Currently the report name is used implicitly as first xml node name for the
-    report.  This is inconvenient if one component wants to generate various xml
-    reports under various names (e.g. to steer consumers/clients slightly
-    differently) but with the same xml node tree structure.
-    
-    Fixes #1940
+:changed constructor of 'Reporter':
 
-commit 4aafa882d8e7cfe7f8de99a525c9e18583183df5
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Mon Nov 23 13:34:17 2015 +0100
-
-    XML node type and attribute name string accessors
-    
-    Issue #1786
+  One prominent use of XML is the reporting of state information from
+  components to a report service. Most components facilitate the
+  'Genode::Reporter' for this job. Originally, the report name is used
+  implicitly as the top-level XML node type of the report.  This is inconvenient
+  if one component wants to generate various XML reports under various names
+  (e.g., to steer consumers/clients slightly differently) but with the same XML
+  node tree structure. To accommodate those needs, the 'Reporter' now takes XML
+  node type and the report label as two distinct arguments.
 
 
 Dataspace helpers
 =================
 
-commit 8d797105b39eaf3a988d5f3d4e918714d682cc7e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon May 9 15:55:12 2016 +0200
+The use of dataspaces, e.g., for setting up shared memory between components,
+involves typical sequences of operations. The 'Attached_*_dataspace'
+utilities located at _os/include/os/_ take care of these technicalities.
+With the current release, we promote them to be part of the base API and
+thereby can leverage those utilities even for the lowest-level
+components and internally. On that account, the corresponding header
+files were moved to _base/include/base/_.
 
-    Move Attach_*dataspace utils from os to base
-    
-    Fixes #1958
+:changed constructors of 'Attached_*_dataspace' utilities:
 
-commit 8da737acfdedcc7e46f05e0bf87570bd25294f3f
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon May 9 17:09:43 2016 +0200
+  Originally, the dataspace utilities relied on side effects via the
+  'Genode::env()' accessor. To break away from this bad practice, the
+  new versions have constructors that take all needed resources as explicit
+  arguments. The original constructors are scheduled for removal.
 
-    base: add Attached_rom_dataspace::xml method
-    
-    Issue #1959
+The most common use case of 'Attached_rom_dataspace' is the consumption
+of XML-formatted data. To accommodate this common pattern, we equipped
+the 'Attached_rom_dataspace' with an accessor plainly named 'xml'.
+It always returns a valid 'Xml_node' even in the event
+where the dataspace is invalid or contains no XML. In such cases, the returned
+XML node is '<empty/>'. This way, we spare the caller the handling of the
+exceptions that may occur during the XML parsing.
+Now a configuration attribute can be obtained as follows:
 
-; * deprecated: os/config.h
+!Genode::Attached_rom_dataspace config(env, "config");
+!...
+!bool const verbose = config.xml().attribute_value("verbose", false);
+
+:deprecated _os/config.h_:
+
+  Since it has become so easy to consume XML ROM sessions, the role of the
+  former 'Genode::config()' interface has become largely obsolete. In line
+  with our goal to eliminate global side effects, the _os/config.h_ has
+  become deprecated.
 
 
 Thread API and CPU-session interface
