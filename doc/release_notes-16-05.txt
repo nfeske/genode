@@ -60,10 +60,8 @@ Date:   Wed Dec 23 15:22:33 2015 +0100
     headers base/component.h and base/entrypoint.h. The os/server.h API
     has become merely a compatibilty wrapper and will eventually be removed.
     The same holds true for os/signal_rpc_dispatcher.h. The mechanism has
-    moved to base/signal.h and is now called 'Signal_handler'.
-    
-    Since the patch shuffles headers around, please do a 'make clean' in the
-    build directory.
+    moved to _base/signal.h_ in the form of the 'Signal_handler' class
+    template.
     
     Issue #1832
 
@@ -82,8 +80,6 @@ Date:   Wed Apr 20 23:22:12 2016 +0200
     The old 'Signal_rpc_member' template retains the old interface for now.
     But the new 'Signal_handler' omits the 'unsigned' argument from the
     handler function.
-
-; * no longer directly use: base/signal.h
 
 commit a7b3072cc2120434a201eca019c743539de23cfa
 Author: Norman Feske <norman.feske@genode-labs.com>
@@ -199,15 +195,45 @@ Date:   Wed Apr 20 21:12:57 2016 +0200
 New log-output facilities
 =========================
 
-commit 1f395ae780775942cd29d2268d6d6d7b78dcfb3d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue May 3 16:31:17 2016 +0200
+Throughout Genode, we used to rely on C-style format strings for the output of
+diagnostic information and for the assembly of strings. There are many
+drawbacks of this approach such as the limitation of the printable types to
+the built-in format-string specifiers, the lack of type safety, and the
+mismatch between the implementation of the intuitive expectations by the API
+users.
 
-    base: new interface for textual output
-    
-    Issue #1942
+With the current release we introduce the new log-output facility _base/log.h_
+that will ultimately replace the original set of convenience macros PDBG,
+PWRN, PERR, PINF by C++ function templates using variadic template arguments.
+The function templates are plainly called 'log', 'error', and 'warning'
+residing in the 'Genode::' namespace. The replacement for 'PDBG' must be a
+macro in order to encode the calling function name into the string. As of now,
+this functionality is not yet covered by _base/log.h_.
 
-; * deprecated  base/printf.h, base/console.h, base/snprintf.h
+The header _base/output.h_ contains the mechanics for extraction a textual
+representation from values and object instances. It provides the abstract
+'Output' interface to be implemented by a consumer of text.
+Functions for generating output for different types are named 'print' and
+take an 'Output &' as first argument. The second argument is a 'const &'
+to the value to print. Overloads of the 'print' function for commonly
+used basic types are readily provided. Furthermore, there is a function template
+that is used if none of the type-specific overloads match. This function
+template expects the argument to be an object with a 'print' method. In
+contrast to a plain 'print' function overload, such a method is able
+to incorporate private state into the output.
+
+The component's execution environment provides an implementation of the
+'Output' interface that targets a LOG session. This output back end is
+offered to the component in the form of the 'log', 'warning', and 'error'
+functions that accept an arbitrary number of arguments that are printed
+in a concatenated fashion. Each messages is implicitly finalized with a
+newline character.
+
+:deprecated _base/printf.h_, _base/console.h_, and _base/snprintf.h_:
+
+  The goal of the new output facilities is the complete removal of format
+  strings from the Genode API. Hence, the listed headers should be
+  avoided.
 
 
 XML processing
@@ -400,13 +426,13 @@ Stylistic changes
 Removed and to-be-removed APIs
 ==============================
 
-:'base/crt0.h' and 'base/elf.h':
+:removed _base/crt0.h_ and _base/elf.h_:
 
   Those headers are internally needed by the framework but contain no
   actual value at the API level. Therefore we removed them from the
   public API.
 
-:'base/process.h':
+:removed _base/process.h_:
 
   The 'Process' class encapsulated the platform-specific steps to start
   a Genode component with a given ELF file. The original intention of
@@ -421,7 +447,7 @@ Removed and to-be-removed APIs
   of Genode by speaking of "components" instead, is eliminated from the public
   API.
 
-:'util/arg_string.h':
+:discourage use of _util/arg_string.h_:
 
   The 'Arg_string' utilities are used to generate and parse session-argument
   strings. However, to make Genode more coherent and session arguments more
@@ -429,7 +455,7 @@ Removed and to-be-removed APIs
   syntax with XML, eventually removing the argument-string support. Hence,
   we discourage the use of 'util/arg_string.h'.
 
-:'base/signal.h':
+:discourage use of _base/signal.h_:
 
   The introduction of the new 'Entrypoint' eliminates the need to manually
   create and use 'Signal_receiver'. Right now, we still rely on the original
