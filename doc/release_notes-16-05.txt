@@ -989,40 +989,99 @@ of the whole framebuffer.
 Enhanced ACPI support
 =====================
 
-; -> @alexab
-; XXX should we move this topic to a top-level section?
+Modern PCs provide via the Advance Configuration and Power Interface (ACPI)
+Specification an enormous amount of ways to monitor and to
+configure the system. In Genode we have already since release 12.02 a basic
+ACPI driver, which is mainly used to look up low level data via some clever
+pattern matching heuristic. These information, like interrupt remapping, are
+sufficient to bootstrap and setup the Genode user-level part of the system. We
+wanted to go beyond this feature set and wanted to leverage further - dynamic -
+aspects of ACPI like system state changes of batteries in notebooks or lid
+status.
 
-commit ce36b560a60ab257a4c09539b49c39879814b860
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri May 13 15:52:34 2016 +0200
+The ACPI Component Architecture project ACPICA - www.acpica.org - develops and
+maintains a operating system independent reference implementation of ACPI,
+which can be used by operating systems like Genode to utilize the full
+functionality of modern PCs. So, we took the reference implementation of
+ACPICA and ported it to Genode. The port itself was relative straight forward
+and really a pleasure. The interfaces and abstractions to the operating system
+are well choosen by the ACPICA project, clearly documented and a porter is well
+guided by extensive explanatory documentation.
 
-    acpi_drv: report ACPI reset configuration
-    
-    Will be/can be used by the platform driver to reset the machine, iif the
-    platform driver owns the resources, e.g. the I/O ports of PCI config access.
-    
-    Issue #1962
+The port is hosted in the libports repository as a standalone Genode library,
+without any additionally dependencies (beside Genode base library). To utilize
+and experiment with the ported library we started to develop a Genode
+application, called app/acpica, which utilize the library. We experimented and
+managed to enable the ACPI lid, ACPI embedded controller (e.g. Fn keys),
+ACPI AC adapter, ACPI smart battery subsystem and ACPI fixed events,
+e.g. powerbutton, on some modern Intel Skylake notebook and partly also on
+some older Lenovo machines, e.g. X201. Additionally we added support to reset
+and poweroff machines via ACPI.
 
-commit 2ee123872e5a32d304854ef55c5bf896ede88ddd
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Mar 18 16:31:00 2016 +0100
+ACPI state changes will be reported by the acpica application by setting the
+config attribute to "yes".
 
-    libports: add acpica library
-    
-    Fixes #1962
+!<start name="acpica">
+!  <config reset="yes" poweroff="yes" report="yes"/>
+!  ...
 
-commit 2221df4fff20e3a8fea7dcffa889eea0ffb2f974
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri May 13 16:09:20 2016 +0200
+Whenever such a state change is detected, the application will generate the
+appropriate Genode report named 'acpi_lid', 'acpi_ac', 'acpi_battery',
+'acpi_ec' or 'acpi_fixed'. The more detailed content of the reports is
+documented in the README of app/acpica or can be manually experienced by
+trying out the acpica run script in the libports repository.
 
-    platform_drv/x86: support ACPI reset
-    
-    Evaluate fadt xml node in report from acpi_drv. If the io ports in the range
-    of 0xcf8+4 are necessary for the reset than the platform driver will
-    react on the 'system' state 'reset' and reboot.
-    
-    Issue #1962
+In order to reset or to poweroff machines, the config attribute 'reset'
+respectively 'poweroff' must be set to 'yes', as shown before. If one of both
+attributes is configured, app/acpica will open a Genode ROM called 'system'
+and monitor changes to that ROM. The ROM must be XML in the following form:
 
+!<system state="..."/>
+
+If the state attribute is set to 'reset' or to 'poweroff', app/acpica will
+try to reset respectively poweroff the machine immediately. The operation may
+fail, if the hardware resources are owned by some other components in the
+Genode system. E.g. on some machines we tested on, the reset operation fails
+because the required I/O ports are owned and are used by the x86 platform
+driver. For such cases we extended the platform driver by an additionally
+config parameter "system" which must be set to "yes", e.g.:
+
+!<start name="platform_drv" >
+!  ...
+!  <config acpi="yes" system="yes">
+!  ...
+
+The platform driver will than also open and monitor a Genode ROM of name
+"system" and will react upon a state change to 'reset'. If the platform driver
+owns the required I/O ports it will trigger the ACPI reset.
+
+In the current state, we use still our old simple ACPI driver to detect
+basic necessary information for the x86 platform driver. The ACPI driver
+reports all findings in form of a Genode report which is provided as Genode
+ROM to the platform driver. The acpica application than later on,
+after the platform driver announces its service, take over the ACPI
+functionality of our old ACPI driver and takes care of all dynamic ACPI events.
+
+It first looks a bit cumbersome, however the reasons are twofold. First,
+we wanted to start to experiment with the acpica library without putting our
+ACPI driver at danger. Second, we wanted to see whereto the complexity of the
+additionally ACPI features takes us. If one is using sloccount, or cloc, as
+complexity measure and applies the tool to the respectively folders, the
+following line of numbers show up:
+
+repos/os/src/driver/acpi/      ~1000
+
+contrib/acpica-<hash>/         ~120000       ACPICA library
+repos/libports/src/lib/acpica/ ~600          Genode specific ACPICA libary support code
+repos/libports/src/app/acpica/ ~1000         application using the ACPICA Genode port
+
+Of course, the numbers are inaccurate and the comparison is unfair, since
+we do not take into account which files of the acpica library are actually in
+use. Furthermore we can get more functionality with the acpica library, which
+we never could achieve with our own basic ACPI driver implementation. However,
+the point here to made is, that we have to add much complexity to get a full
+ACPI capable system and that solely a small amount of the complexity actually
+is really required to drive a operating system like Genode.
 
 Generalized SDHCI driver
 ========================
