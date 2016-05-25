@@ -443,49 +443,11 @@ Removed and to-be-removed APIs
 Low-level OS infrastructure
 ###########################
 
-Enhanced GDB support on NOVA
-============================
+GDB support for the 'nova_x86_64' platform
+==========================================
 
-; -> @cproc
-
-commit 2cde1d36c122b459bab5f282da57e9e770c29e2c
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue May 17 16:13:56 2016 +0200
-
-    base: changes for GDB monitor
-    
-    - add a new function 'binary_ready_hook_for_gdb()' in ldso. GDB can set a
-      breakpoint at this function to know when ldso has loaded the binary
-      into memory.
-    - get the thread state from the NOVA kernel immediately on 'pause()'
-    
-    Fixes #1968
-
-commit 5842b2065e06ecc1ee88847ea7b74b1b7024d334
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue May 17 16:13:23 2016 +0200
-
-    GDB monitor: stability improvements
-    
-    Fixes #1969
-
-commit ff76e6954218f2c19b20d8288ace3ae114743d44
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Sun Mar 6 15:25:38 2016 +0100
-
-    GDB monitor: x86_64 support
-    
-    General support for the x86_64 architecture.
-    
-    Fixes #1970
-
-commit 638db70b94c104e67bea6d4ec3cc2088a76a2ce9
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue Apr 19 20:00:31 2016 +0200
-
-    GDB monitor: nova_x86_64 platform support
-    
-    Fixes #1971
+GDB received some stability improvements and now also supports debugging
+on the 'nova_x86_64' platform.
 
 
 New support for the rust programming language
@@ -565,7 +527,7 @@ Thanks to Johannes Schlatow for this contribution!
 C runtime
 =========
 
-; -> @chelmuth (?), @cproc
+; -> @chelmuth
 
 commit 93b82c14ac3cd39fda84f6cc61dfab019456cb60
 Author: Emery Hemingway <emery@vfemail.net>
@@ -576,15 +538,11 @@ Date:   Fri Apr 15 14:19:51 2016 +0200
     Fixes #1931
 
 
-commit ea726a1f48b91b830d1ec0589650183cbfda90dd
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Sun Mar 6 15:21:23 2016 +0100
+libc_pipe plugin
+~~~~~~~~~~~~~~~~
 
-    libc: pipe plugin
-    
-    A libc plugin which implements pipes using a ring buffer.
-    
-    Fixes #1947
+The new 'libc_pipe' plugin provides a more accurate implementation of pipes
+(using a ring buffer) and replaces the existing 'libc_lock_pipe' plugin.
 
 
 Device drivers
@@ -956,15 +914,12 @@ repositories.
 Updated tool chain
 ==================
 
-; -> @cproc, @chelmuth
+; -> @chelmuth
 
-commit 44648bb5c7e0d22789ae9380ad171dd16c58c035
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Wed May 18 14:47:36 2016 +0200
+We enabled the '__cxa_demangle()' function in our tool chain to be able to
+print user-readable names of uncaught exceptions.
 
-    tool_chain/cxx: use '__cxa_demangle()' for exception names
-    
-    Fixes #1976
+XXX tool chain update required
 
 
 Removal of stale features
