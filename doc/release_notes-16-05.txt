@@ -476,50 +476,24 @@ GDB received some stability improvements and now also supports debugging
 on the 'nova_x86_64' platform.
 
 
-New support for the rust programming language
+New support for the Rust programming language
 =============================================
 
-; -> @nfeske
+[https://www.rust-lang.org/ - Rust] is a systems programming language that
+currently gains a lot of popularity. It eliminates entire classes of bugs by
+enforcing memory safety. Unlike languages that rely on a garbage-collecting
+runtime, compiled Rust programs are able to run on bare-metal hardware. This
+makes Rust an attractive language for low-level system components.
 
-commit 28117fee12e84aac5b95e371295b8498037fb7c2
-Author: Waylon Cude <waylon531@firechicken.net>
-Date:   Sun Feb 28 22:44:04 2016 -0800
+The current Genode release introduces basic support for executing
+Rust programs as Genode components. This support includes the
+build-system integration, the configuration of the llvm-based Rust
+compiler, and the port of the low-level language runtime. A simple example is
+provided via the _libports/run/rust.run_ script and the accompanied code at
+_libports/src/test/rust/_. The example runs on the x86 (32 and 64 bit) and
+ARM architectures.
 
-    Added rust support
-    
-    Rust relies on atomic builtins, which are not implemented in libgcc for
-    ARM. One is implemented in rust, which is sufficient to get the
-    current rust test to run.
-    
-    Issue #1899
-
-commit 1e95af5bab3a85e104e097144424aaf3b716038c
-Author: Waylon Cude <waylon531@firechicken.net>
-Date:   Sun Feb 28 22:44:04 2016 -0800
-
-    Fixed linking and memory allocation for rust
-    
-    Now rlibs are actually linked to programs. Target files have been
-    modified to not generate code that requires compiler-rt. Added a target
-    for libstd-rust, but it's very broken right now. Moved alloc_system to
-    the libports folder because either a memory allocator needs to be
-    written in rust or posix_memalign needs to be implemented. Changed
-    liblibc to use freebsd as the OS instead of netbsd. Added a library with
-    unwind dummy functions.
-    
-    Rust relies on atomic builtins, which are not implemented in libgcc for
-    ARM. One was implemented in rust, which was sufficient to get the
-    current rust test to run. Rust libs were added into the group of libs
-    for the linker so order no longer matters. The raspberry pi now uses an
-    armv6 target.
-
-commit 3ba61a2ddfb034ca657e3d2c20cb31eaeae0641b
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Thu May 12 10:26:36 2016 +0200
-
-    Move rust support to libports
-    
-    Issue #1899
+Thanks to Waylon Cude for bringing Rust to Genode!
 
 
 Dynamic linker
