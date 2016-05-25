@@ -245,8 +245,8 @@ Date:   Mon Nov 23 13:34:17 2015 +0100
     Issue #1786
 
 
-Helpers for using dataspaces
-============================
+Dataspace helpers
+=================
 
 commit 8d797105b39eaf3a988d5f3d4e918714d682cc7e
 Author: Norman Feske <norman.feske@genode-labs.com>
@@ -354,85 +354,90 @@ Date:   Tue May 10 18:05:38 2016 +0200
     Fixes #1939
 
 
+Child management
+================
+
+The 'Child' class has been adapted to the changed core services and partially
+redesigned to enable the implementation of single-threaded runtime
+environments that virtualize the CPU, PD, and RAM services. It thereby has
+become free from side effects. I.e., instead of implicitly using
+'Genode::env()->rm_session()', it takes the reference to the local region map
+as argument. Also, the handling of the dynamic linker via global variables is
+gone. Now, the linker binary must be provided as constructor argument.
+
+
 Stylistic changes
 =================
 
-commit ba0545de0773c7483fda0d690ba5cbb53bbe676e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Apr 28 16:39:45 2016 +0200
+:'Heap', 'Sliced_heap', 'Root_component':
 
-    Clean up 'Sliced_heap'
-    
-    This patch cleans up the implementation of the sliced heap, adds a
-    constructor that takes references instead of pointers, and adds the
-    function 'meta_data_size' to determine the meta-data overhead per block.
-    The latter can be used to dimension slab allocators such that slab
-    blocks use whole pages.
+  We added new constructors to these classes that take references, not
+  pointers, as arguments. The old constructors will be removed with the
+  next release.
 
-commit 7b73d1d8230a046b0c15f93394b98154098ca451
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sat May 7 19:31:47 2016 +0200
+:Naming of boolean getter methods:
 
-    heap: add new-fashioned constructor
+  We already follow a convention about the naming of accessor methods (not
+  using any get_ or set_ prefixes). However, we sometimes used an "is_" prefix
+  for getter functions of boolean values, but not always. Examples are
+  'Capability::valid()' and 'Weak_ptr::is_valid()'.
+
+  In the name of the principle of least surprise, we introduced the convention
+  to not use an "is_" prefix for such methods. We adjusted all occurrences
+  within the Genode code base accordingly. To maintain API compatibility
+  during the transitional phase, keep the original methods until the next
+  release.
+
+:Alleviating the need for manually constructed type lists:
+
+  The 'GENODE_RPC_INTERFACE' macro of the RPC framework had a limitation
+  with respect to the number of RPC functions per RPC interface. As a
+  workaround for this limitation, large session interfaces had to manually
+  define the type list of RPC functions out of nested type tuples. With the
+  current release, we removed the limitation.
 
 
-commit ef9a7d22303cd3d81d5ec82bab4ac614a25031b9
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed May 11 17:23:37 2016 +0200
+Removed and to-be-removed APIs
+==============================
 
-    base: remove length limit of Type_list
+:'base/crt0.h' and 'base/elf.h':
 
-commit 807be83b1be09ffbcf4198f00750d99faefcd6f5
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed May 11 18:21:47 2016 +0200
+  Those headers are internally needed by the framework but contain no
+  actual value at the API level. Therefore we removed them from the
+  public API.
 
-    Remove inconsistent use of 'is_' prefix
-    
-    Fixes #1963
+:'base/process.h':
 
-commit c94fbd15f0d17b77678b52c01de05f9073898eed
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri May 20 12:01:50 2016 +0200
+  The 'Process' class encapsulated the platform-specific steps to start
+  a Genode component with a given ELF file. The original intention of
+  placing this low-level mechanism into a dedicated class was to allow
+  for different flavours it child-management policies. In practice, however,
+  the 'Process' remained solely being used by the 'Genode::Child'. Since
+  the core-interface changes of Section
+  [Consolidation of core's SIGNAL, CAP, RM, and PD services]
+  required us to rewrite the component-creation code anyway and we aspire to
+  narrow the API, we took the chance make 'Process' private to the 'Child'.
+  The rather ambiguous term "process", which we avoid in the context
+  of Genode by speaking of "components" instead, is eliminated from the public
+  API.
 
-    base: add modern Root_component constructor
+:'util/arg_string.h':
 
-Removed APIs
-============
+  The 'Arg_string' utilities are used to generate and parse session-argument
+  strings. However, to make Genode more coherent and session arguments more
+  flexible and robust, we plan to replace the current argument-string
+  syntax with XML, eventually removing the argument-string support. Hence,
+  we discourage the use of 'util/arg_string.h'.
 
-commit 6e7f7bdad4834e2e37338dded7f9c2ab78c99c3e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Jan 22 14:31:58 2016 +0100
+:'base/signal.h':
 
-    base: move crt0.h and elf.h to base/internal
-    
-    Those headers remained unused outside the internal framework. So it is
-    better to remove them from the public API.
-    
-    Issue #1832
-
-commit 7274ca997d119e9e999a604346eb19599b3a668d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 27 16:04:58 2016 +0200
-
-    Remove Genode::Process from API
-    
-    This patch makes the former 'Process' class private to the 'Child'
-    class and changes the constructor of the 'Child' in a way that
-    principally enables the implementation of single-threaded runtime
-    environments that virtualize the CPU, PD, and RAM services. The
-    new interfaces has become free from side effects. I.e., instead
-    of implicitly using Genode::env()->rm_session(), it takes the reference
-    to the local region map as argument. Also, the handling of the dynamic
-    linker via global variables is gone. Now, the linker binary must be
-    provided as constructor argument.
-    
-    Fixes #1949
-
-To-be-removed APIs
-==================
-
-; * base/signal.h
-; * util/arg_string.h
+  The introduction of the new 'Entrypoint' eliminates the need to manually
+  create and use 'Signal_receiver'. Right now, we still rely on the original
+  signal API as backend of the 'Entrypoint' but we will eventually remove
+  the current notion of signal receivers. The narrower semantics of the
+  'Entrypoint' will then allow for performance optimizations that are not
+  possible with the traditional signal receivers. Therefore, we discourage
+  the direct use it 'Signal_receiver'.
 
 
 Low-level OS infrastructure
