@@ -819,37 +819,29 @@ Date:   Thu May 12 12:53:17 2016 +0200
 Execution on bare hardware (base-hw)
 ====================================
 
-; -> @nfeske
+For running Genode scenarios on our custom kernel (base-hw), two hardware
+timers are needed. One timer is used by the kernel as the basis for the
+preemptive scheduling. The other timer is used by the user-level timer
+driver as the timing source for user-level components.
 
-commit 0c34e3802f2cfeed6334d6a1b0c6908770c2ebe5
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Wed May 18 12:20:04 2016 +0200
+On NOVA, we gathered good experiences with using the kernel's scheduling
+timer as the basis for the user-level timer. Eliminating the need for
+a real timer device driver (like the PIT) reduces the overall complexity.
+The interrupt load becomes lower without the userland triggering timer
+interrupts. And since the kernel uses CPU-core-local timers (i.e. the
+local APIC timer on x86) as opposed to a global timer in the userland,
+expensive cross-CPU-communication is avoided.
 
-    hw: use kernel timer for timer driver
-    
-    * Adds public timeout syscalls to kernel API
-      * Kernel::timeout installs a timeout and binds a signal context to it that
-        shall trigger once the timeout expired
-      * With Kernel::timeout_max_us, one can get the maximum installable timeout
-      * Kernel::timeout_age_us returns the time that has passed since the
-        calling threads last timeout installation
-    
-    * Removes all device specific back-ends for the base-hw timer driver and
-      implements a generic back-end taht uses the kernel timeout API
-    
-    * Adds assertions about the kernel timer frequency that originate from the
-      requirements of the the kernel timeout API and adjusts all timers
-      accordingly by using the their internal dividers
-    
-    * Introduces the Kernel::Clock class. As member of each Kernel::Cpu object
-      it combines the management of the timer of the CPU with a timeout scheduler.
-      Not only the timeout API uses the timeout scheduler but also the CPUs job
-      scheduler for installing scheduling timeouts.
-    
-    * Introduces the Kernel::time_t type for timer tic values and values inherited
-      from timer tics (like microseconds).
-    
-    Fixes #1972
+With the current release, we applied the lessons learned to our base-hw
+kernel. As a further motivation, the removal of the dependency on a
+timer device clears the way to run multiple Genode instances on top of
+the Muen separation kernel.
+
+The timeout feature has the form of a new 'timeout' system call that binds
+a signal context to a timeout. Hence, timeouts are delivered asynchronously,
+like interrupts, to the user-level timer service. The actual time can be
+requested via the 'timeout_age_us' system call, which returns the time
+since the last timeout was installed.
 
 
 Linux
