@@ -1063,23 +1063,49 @@ pretend otherwise.
 NOVA microhypervisor
 ====================
 
-; -> @alexab
+The kernel got minor adjustments because of the ACPI work. One curious
+performance issue we detected and hunted actually before our ACPICA
+library work. It happens that a modern Intel Skylake notebook
+(Core i 6th generation) running Genode/Nova scenarios, like noux toolchain or
+Virtualbox, performed really worse - partly it was only as fast as a 1th
+generation Intel Core CPU as used in X201 notebooks. After some mysterious
+hunting of possible reasons it finally turned out, that the UEFI vendor did not
+disable properly all enabled ACPI GPE (General Purpose Events) events when it
+give control to the bootloader and kernel. As soon as the NOVA kernel enabled
+the ACPI interrupt (normally IRQ 9), because it utilize the ACPI PM timer
+feature, the kernel got a storm of interrupts, a GPE storm, which got not
+handled properly.
+Still the system was alive and made progress, but the performance was really
+bad. Because of that the kernel now disables all event sources enabled in the
+ACPI GPE0/1 registers. Beside that, using the acpica application also solves
+the performance issue, since the library also reset the GPE registers during
+initialization. However, currently the acpica application is optional, and not
+loaded in all scenarios.
 
-commit dccad4c526b7ea93f6a5b1d79138423518a2924c
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Apr 28 13:38:21 2016 +0200
+64bit NOVA supports the so called PCID feature, aka tagged TLB. The hardware
+actually supports up to 4096 processes at a time which can be used with tagged
+TLBs. Unfortunately the original PCID allocator wrapped after 4096 PCIDs,
+which caused beginning with the 4097 process to accidentally re-use the
+same PCIDs, and therefore the same TLB entries, of long living processes,
+like kernel, core and init and drivers. This lead to interesting phenomena of
+bugs. We changed the allocator from a monotonic increasing number to a bit
+allocator, maintaining the used and free PCIDs more accurately.
 
-    nova: kernel support for more than 4096 processes
-    
-    Fixes #1951
-
-commit 1622f53dd815804a9a64b0cd89a2f85c8427c9e0
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu May 12 12:53:17 2016 +0200
-
-    nova: support fixed ACPI event delivery by kernel
-    
-    Issue #1962
+Additionally, we extended the kernel to support scenarios on Genode,
+where capabilities are forwarded from a capability sender to a capability
+receiver through one or more intermediary processes (like servers). In such
+scenarios, the intermediary processes don't need the forwarded capability for
+some reasons and want to free and re-use the used capability index.
+Unfortunately, or better - intentionally, the syscall 'revoke' will not just
+revoke the local capability but all subsequent derived capabilities. Because of
+this kernel behaviour we had several quirks in Genode/base-nova, especially in
+the user level capability map implementation and in the Genode entrypoint reply
+handling code to deal with such situations. With all the Genode base API
+changes and unification efforts of all Genode base platforms the quirks
+became obvious obstacle. With this release we added support to the kernel, to
+just locally 'drop' the accessibility to the unneeded capability, but not the
+accessibility of the so far subsequent derived capabilities. With the kernel
+extension we were able to remove the mentioned base-nova quirks.
 
 
 Execution on bare hardware (base-hw)
