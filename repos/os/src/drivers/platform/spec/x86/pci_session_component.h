@@ -1131,8 +1131,8 @@ class Platform::Root : public Genode::Root_component<Session_component>
 			const bool feature_reset = Fadt::Features::Reset::get(fadt.features);
 
 			if (!feature_reset) {
-				PWRN("system reset failed - feature not supported");
-				return;
+//				PWRN("system reset failed - feature not supported");
+//				return;
 			}
 
 			Device::Access_size access_size = Device::ACCESS_8BIT;
