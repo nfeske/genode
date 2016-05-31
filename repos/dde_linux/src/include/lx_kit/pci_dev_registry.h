@@ -16,6 +16,7 @@
 
 /* Linux emulation environment includes */
 #include <lx_kit/internal/pci_dev.h>
+#include <io_port_session/connection.h>
 
 namespace Lx {
 	
@@ -88,7 +89,25 @@ class Lx::Pci_dev_registry
 					return value;
 			}
 
-			PWRN("I/O port(%u) read failed", port);
+			try {
+				Genode::Io_port_connection iox(port, sizeof(T));
+				switch (sizeof(T)) {
+				case 1:
+					return iox.inb(port);
+				case 2:
+					return iox.inw(port);
+				case 4:
+					return iox.inl(port);
+				}
+			} catch (Genode::Parent::Service_denied) {
+			} catch (Genode::Parent::Unavailable) {
+			} catch (Genode::Parent::Quota_exceeded) {
+				PWRN("quota exceeded - io_read - unimplemented");
+			} catch (...) {
+				PERR("unknown exception io_read"); }
+
+			PWRN("I/O port(%u) read failed width=%lu", port, sizeof(T));
+
 			return (T)~0;
 		}
 
@@ -96,11 +115,33 @@ class Lx::Pci_dev_registry
 		void io_write(unsigned port, T value)
 		{
 			/* try I/O access on all PCI devices, return on first success */
-			for (Pci_dev *d = _devs.first(); d; d = d->next())
+			for (Pci_dev *d = _devs.first(); d; d = d->next()) {
 				if (d->io_port().out<T>(port, value))
 					return;
+			}
 
-			PWRN("I/O port(%u) write failed", port);
+			try {
+				Genode::Io_port_connection iox(port, sizeof(T));
+				switch (sizeof(T)) {
+				case 1:
+					iox.outb(port, value);
+					return;
+				case 2:
+					iox.outw(port, value);
+					return;
+				case 4:
+					iox.outl(port, value);
+					return;
+				}
+			} catch (Genode::Parent::Service_denied) {
+			} catch (Genode::Parent::Unavailable) {
+			} catch (Genode::Parent::Quota_exceeded) {
+				PWRN("quota exceeded - io_write - unimplemented");
+			} catch (...) {
+				PERR("unknown exception io_write"); }
+
+			PWRN("I/O port(%u) write failed %lu value=%u",
+			     port, sizeof(T), value);
 		}
 };
 
