@@ -10,6 +10,7 @@
  * under the terms of the GNU General Public License version 2.
  */
 
+#include <base/allocator_avl.h>
 #include <base/component.h>
 #include <base/printf.h>
 #include <base/signal.h>
@@ -19,6 +20,8 @@
 #include <os/attached_rom_dataspace.h>
 #include <os/config.h>
 #include <os/reporter.h>
+#include <file_system_session/connection.h>
+#include <file_system/util.h>
 
 #include <util/volatile_object.h>
 #include <util/xml_node.h>
@@ -236,6 +239,22 @@ struct Acpica::Main {
 
 			_sci_conn->sigh(_sci_irq);
 			_sci_conn->ack_irq();
+
+			/* we are ready - signal it via changing system state */
+			const char * system_file = "system";
+
+			Genode::Allocator_avl fs_packet_alloc (Genode::env()->heap());
+			File_system::Connection fs(fs_packet_alloc, 4096, system_file);
+
+			File_system::Dir_handle root_dir = fs.dir("/", false);
+			File_system::File_handle file;
+			file = fs.file(root_dir, system_file, File_system::READ_WRITE, false);
+
+			const char state_done [] = "<system state=\"acpi_ready\"/>";
+			Genode::size_t w = File_system::write(fs, file, state_done, sizeof(state_done));
+			if (w != sizeof(state_done))
+				PWRN("writing system failed %zu != %zu", w, sizeof(state_done));
+			fs.close(file);
 		} else
 			PWRN("no IRQ handling available");
 

@@ -44,6 +44,8 @@ struct Platform::Main
 	Genode::Signal_handler<Platform::Main> _acpi_report;
 	Genode::Signal_handler<Platform::Main> _system_report;
 
+	Genode::Capability<Genode::Typed_root<Platform::Session_component> > root_cap;
+
 	void acpi_update()
 	{
 		acpi_rom->update();
@@ -54,7 +56,11 @@ struct Platform::Main
 		const char * report_addr = acpi_rom->local_addr<const char>();
 
 		root.construct(_env, &sliced_heap, report_addr);
-		_env.parent().announce(_env.ep().manage(*root));
+
+		root_cap = _env.ep().manage(*root);
+
+		Genode::Parent::Service_name announce_for_acpi("Acpi");
+		_env.parent().announce(announce_for_acpi, root_cap);
 	}
 
 	void system_update()
@@ -72,6 +78,10 @@ struct Platform::Main
 
 		if (state == "reset")
 			root->system_reset();
+		else if (state == "acpi_ready" && root_cap.valid()) {
+			_env.parent().announce(root_cap);
+			root_cap = Genode::Capability<Genode::Typed_root<Platform::Session_component> > ();
+		}
 	}
 
 	Main(Genode::Env &env)
@@ -99,6 +109,7 @@ struct Platform::Main
 			acpi_rom->sigh(_acpi_report);
 			/* check if already valid */
 			acpi_update();
+			system_update();
 			return;
 		}
 
