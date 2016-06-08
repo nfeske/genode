@@ -559,9 +559,10 @@ namespace Platform {
 						if (!find_dev_in_policy(bus, device, function, DOUBLET))
 							return;
 
-						PERR("'%s' - device '%2x:%2x.%x' is part of more than "
+						PWRN("'%s' - device '%2x:%2x.%x' is part of more than "
 						     "one policy", _label.string(), bus, device,
 						     function);
+						return;
 					} catch (Xml_attribute::Nonexistent_attribute) {
 						PERR("'%s' - invalid pci node attributes for bdf",
 						     _label.string());
