@@ -770,7 +770,7 @@ set config {
 				</inline>
 
 				<inline name="fb_drv.config">
-<config buffered="yes">
+<config buffered="yes" poll="1000">
 	<report connectors="yes"/>
 	<!-- <connector name="LVDS-11" width="1280" height="800" enabled="true"/> -->
 	<!-- <connector name="DP-29" width="1920" height="1200" enabled="true"/> -->
