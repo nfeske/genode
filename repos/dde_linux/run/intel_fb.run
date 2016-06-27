@@ -95,7 +95,7 @@ append config {
 	</start>
 
 	<start name="intel_fb_controller" priority="-1">
-		<resource name="RAM" quantum="2M"/>
+		<resource name="RAM" quantum="1M"/>
 		<route>
 			<service name="File_system">            <child name="config_fs"/> </service>
 			<service name="ROM" label="connectors"> <child name="report_rom"/> </service>

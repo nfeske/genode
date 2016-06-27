@@ -59,8 +59,6 @@ class Lx::Io_port
 				case 1: _port->outb(port, val); break;
 				case 2: _port->outw(port, val); break;
 				case 4: _port->outl(port, val); break;
-				default:
-					return false;
 			}
 
 			return true;
@@ -76,8 +74,6 @@ class Lx::Io_port
 				case 1: *val = _port->inb(port); break;
 				case 2: *val = _port->inw(port); break;
 				case 4: *val = _port->inl(port); break;
-				default:
-					return false;
 			}
 
 			return true;
