@@ -1,0 +1,168 @@
+
+                        ======================
+                        Contributors and Users
+                        ======================
+
+
+This document gives an overview of the community of Genode contributors and
+users.
+
+The document is hosted as part of the Genode source-tree at GitHub.
+If you find your project missing, please consider creating a pull request or
+send an email to _norman.feske@genode-labs.com_. Also, corrections and further
+annotations are greatly appreciated.
+
+:This document at our GitHub repository:
+
+  [https://github.com/genodelabs/genode/blob/master/doc/participants.txt]
+
+
+Contributors
+############
+
+For a complete list of individual contributors according to the commit
+history, please refer to the statistics on GitHub:
+[https://github.com/genodelabs/genode/graphs/contributors - Genode repository], and
+[https://github.com/genodelabs/genode-world/graphs/contributors - Genode-World repository].
+
+
+Organizations
+=============
+
+_(sorted by activity)_
+
+
+Genode Labs GmbH (Germany)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+: <div class="visualClear"><!-- --></div>
+: <p>
+:  <div style="clear: both; float: left; margin-right:20px;">
+:   <a class="external-link" href="https://www.genode-labs.com">
+:    <img class="image-inline" src="genode-labs-logo.png">
+:   </a>
+:  </div>
+: </p>
+
+Genode Labs is the driving force behind the Genode OS Framework. Since founded
+in 2008 by the original Genode architects Norman Feske and Christian Helmuth,
+Genode Labs operates as an independent company solely owned by its founders.
+
+*Company Website:* [https://www.genode-labs.com]
+
+*Developers* _(alphabetical order)_
+
+:Alexander Boettcher: [https://github.com/alex-ab/ - GitHub]
+:Christian Helmuth:   [https://github.com/chelmuth/ - GitHub]
+:Christian Prochaska: [https://github.com/cproc/ - GitHub]
+:Josef Soentgen:      [https://github.com/cnuke/ - GitHub]
+:Martin Stein:        [https://github.com/m-stein/ - GitHub]
+:Norman Feske:        [https://github.com/nfeske/ - GitHub]
+:Sebastian Sumpf:     [https://github.com/ssumpf/ - GitHub]
+:Stefan Kalkowski:    [https://github.com/skalk/ - GitHub]
+
+
+Codelabs (Switzerland)
+~~~~~~~~~~~~~~~~~~~~~~
+
+The Swiss group Codelabs employs the Genode OS Framework on top of their
+[http://muen.sk - Muen Separation Kernel]. It plays an active role in the
+development of Genode's base-hw kernel (e.g., added x86 support) and
+VirtualBox on top of base-hw/Muen.
+
+*Developers*
+
+:Adrian-Ken Rueegsegger: [https://github.com/Kensan - GitHub]
+:Reto Buerki:            [https://github.com/reet-  - GitHub]
+
+
+TU Braunschweig - IDA
+~~~~~~~~~~~~~~~~~~~~~
+
+At the Institute of Computer and Network Engineering (IDA) at TU Braunschweig,
+the Genode OS Framework is applied in the automotive domain. Among many other
+contributions, the group maintains the platform support for Xilix Zynq
+hardware.
+
+*Website* [https://www.ida.ing.tu-bs.de]
+
+*Developers* _(alphabetical order)_
+
+:Johannes Schlatow: [https://github.com/ValiValpas/ - GitHub]
+
+
+Centro de Estudios de Informatica (Cuba)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The research group uses Genode on top of the Fiasco.OC microkernel and
+contributes board support for ARM platforms such as ODROID and the
+Raspberry Pi.
+
+*Developers* _(alphabetical order)_
+
+:Reinier Millo Sánchez: [https://github.com/rmillo - GitHub]
+:Alexy Gallardo Segura: [https://github.com/alexygallar2 - GitHub]
+
+
+Individuals
+===========
+
+_(sorted by activity)_
+
+:Emery Hemmingway: [https://github.com/ehmry - GitHub]
+
+
+Users
+#####
+
+_(reverse chronological order)_
+
+Current
+=======
+
+:Secure Software Components Leveraging the seL4 Microkernel: (USA)
+
+  The project funded by DARPA will leverage the combination of
+  the seL4 microkernel with the Genode OS Framework.
+
+  *Website:* [https://www.sbir.gov/node/983535]
+
+
+2014
+====
+
+:Samsung SISA: (USA)
+
+  [http://www.sra.samsung.com/assets/Uploads/TR-SRA-SV-CSL-2014-1.pdf - A Scalable High-Performance In-Memory Key-Value Cache using a Microkernel-Based Design]
+
+  The research project applied the combination of Genode with the Fiasco.OC
+  microkernel in the domain of highly scalable networking.
+
+:Intel Labs: (Germany)
+
+  Intel Labs at Braunschweig had a team working on NOVA with Genode as
+  the user land. Unfortunately, the entire site at Braunschweig was closed
+  in 2014, stopping this line of work.
+  The GitHub repository is still online ([https://github.com/IntelLabs/genode]).
+
+:IIT Madras: (India)
+
+  The Secure-OS project of IIT Madras used Genode on Freescale i.MX6
+  platforms.
+
+  https://bitbucket.org/rswami/secureos_14.05
+
+
+2013
+====
+
+:Microsoft Research: (USA)
+
+  [https://www.microsoft.com/en-us/research/publication/embassies-radically-refactoring-the-web/ - Embassies: Radically Refactoring the Web]
+
+  In this research project, Genode was used as a runtime environment on top
+  of the L4ka::Pistachio microkernel to prototype a new web-browser
+  architecture.
+
+  The source code is available on Codeplex [https://embassies.codeplex.com/].
+
