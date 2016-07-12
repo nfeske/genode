@@ -76,15 +76,16 @@ VirtualBox on top of base-hw/Muen.
 :Reto Buerki:            [https://github.com/reet-  - GitHub]
 
 
-TU Braunschweig - IDA
+TU Braunschweig - CCC
 ~~~~~~~~~~~~~~~~~~~~~
 
-At the Institute of Computer and Network Engineering (IDA) at TU Braunschweig,
-the Genode OS Framework is applied in the automotive domain. Among many other
-contributions, the group maintains the platform support for Xilix Zynq
-hardware.
+In the scope of the research unit Controlling Concurrent Change (CCC) at TU
+Braunschweig, the Genode OS Framework is applied to implement contract-based
+in-field integration of critical embedded systems. Among many other
+contributions, the group maintains the platform support for Xilinx Zynq
+hardware, which is used for automotive and aerospace applications.
 
-*Website* [https://www.ida.ing.tu-bs.de]
+*Website* [http://ccc-project.org]
 
 *Developers* _(alphabetical order)_
 
