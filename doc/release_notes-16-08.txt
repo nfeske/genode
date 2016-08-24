@@ -380,247 +380,246 @@ VirtualBox on top of the Muen and NOVA kernels
 VirtualBox 4 on top of the Muen separation kernel
 =================================================
 
-; @reet-, @kensan
+Overview
+~~~~~~~~
 
-commit c1bb82fb6b6f4d7f4aad91c31a5fe9e94caba8b8
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Thu Jul 2 16:25:51 2015 +0200
+As briefly mentioned in the Genode
+[https://genode.org/documentation/release-notes/16.05 - 16.05 release
+notes], we have been working on VirtualBox support for 'hw_x68_64_muen'. The
+implementation has finally reached a stage where all necessary features have
+been realized and it has been integrated into Genode's mainline.  This means
+that you can now run strongly isolated Windows VMs on the Muen separation
+kernel providing an user experience that is on par with VirtualBox on NOVA.
 
-    base-hw: make Muen sinfo API publicly available
-    
-    The sinfo function declared in sinfo_instance.h creates a static sinfo
-    object instance and returns a pointer to the caller.
-    
-    - kernel timer and platform support to use sinfo() function to
-      instantiate sinfo object
-    - address and size of the base-hw RAM region via the sinfo API
-    - log_status() function in sinfo API
+Our initial plan when we started our work on Genode was to leverage its
+VirtualBox support as a means to run Windows on Muen. As a first step we ported
+the base-hw kernel, then ARM-only, to the 64-bit Intel architecture. The
+resulting hw_x86_64 platform was included in the
+[https://genode.org/documentation/release-notes/15.05#Principal_support_for_the_64-bit_x86_architecture
+- 15.05 release].
 
-commit e5e1f1261ff045fc16cff78b6e8c061ed037d3da
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Wed Jun 3 11:07:39 2015 +0200
+Building on top of 'hw_x86_64' we then implemented support for running the
+base-hw kernel as guest on the Muen SK. As the porting work progressed quite
+quickly, this line of work was part of Genode
+[https://genode.org/documentation/release-notes/15.08#Genode_on_top_of_the_Muen_Separation_Kernel
+- 15.08].
 
-    hw_x86_64_muen: implement VM service skeleton
-    
-    Issue #2016
+Having laid the groundwork we could then tackle the task we initially set out
+to do.
 
-commit 082b141e663934a0b57a52da04efec21840beba0
-Author: Reto Buerki <reet@codelabs.ch>
-Date:   Tue Jun 16 10:26:53 2015 +0200
 
-    hw_x86_64: Add _vt_vm_entry to x86_64 mode transition
-    
-    The entry enables interrupts and initiates a handover to the guest VM by
-    invoking event number one. The sti instruction is placed at the start to
-    allow exits to Muen before handing off to the VM if window exiting is
-    requested.
-    
-    Issue #2016
+Architecture
+~~~~~~~~~~~~
 
-commit cd6b3b1222c5d2976461913ac3a70c7105e8ebf2
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Wed Jun 3 17:45:35 2015 +0200
+[image muen_virtualbox_architecture.pdf]
 
-    hw_x86_64_muen: Implement Muen Vm_session
-    
-    * The Vm thread is always paused and on exception to make sure that guest VM
-      execution is suspended whenever we handle an interrupt. Also signal the Vm
-      session to poke waiting threads (e.g. Virtualbox EMT).
-    
-    * Implement Vm::proceed
-      Switch to the mode transition assembly code declared at the _vt_vm_entry
-      label.
-    
-    Issue #2016
+On Muen, Genode runs as a guest in VMX non-root mode without special
+privileges. VirtualBox is executed as a user-level component, which makes the
+architecture special in the sense that the VMM itself is running inside a
+strongly isolated VM.
 
-commit 89a6d16d814dd905d8e2c356100afa8129d1f081
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Tue Jun 23 10:54:00 2015 +0200
+The guest VM managed by VirtualBox is a separate Muen subject with statically
+assigned resources. Access to the guest VM memory is enabled by mapping it into
+the VMMs address space at a certain offset specified in the Muen system policy.
+Similarly, the guest subject state is mapped at a predefined address so
+VirtualBox can manipulate e.g.  register values etc. After the initial setup,
+hardware-accelerated execution of the guest VM is started by triggering a
+handover event defined in the Muen system policy. The guest VM is then executed
+in place of the Genode subject.
 
-    vbox: Extract Vmm_memory::Region to separate header
-    
-    This enables platform-specific implementations of the struct Mem_region
-    type.
-    
-    Issue #2016
+Control is handed back to VirtualBox when a trap occurs during the execution of
+the guest VM, e.g. the guest accesses resources of a device that is emulated by
+a VirtualBox device model. Furthermore a handover back to the VMM can be forced
+by using the Muen timed event mechanism.  This prevents CPU monopolization by
+the guest VM and ensures that VirtualBox gets its required share of execution
+time.
 
-commit 738b01d37a24b45ea7d46c9aa9ff74ef818c997f
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Tue Jun 23 14:06:09 2015 +0200
+Even though the VirtualBox support on Muen draws largely from the existing NOVA
+implementation there are some key differences. One aspect, as mentioned above,
+is that VirtualBox and its managed VM are never executed simultaneously. From
+the perspective of the base-hw kernel, switching to and from the guest VM is
+similar to the normal/secure world switch of
+[https://genode.org/documentation/articles/trustzone - ARM TrustZone]. This
+enabled us to reuse the existing base-hw VM session interface.
 
-    vbox: Move pgm to virtualbox-hwaccl library
-    
-    Issue #2016
+While on NOVA guest VM memory is donated by the VirtualBox component, the guest
+has its own distinct physical memory specified in the Muen system policy. Thus
+the guest VM resources including memory are all static and VirtualBox does not
+need to map and unmap resources at runtime.
 
-commit e3fbeeb25e337b7b229592c7b5d7f9c3a2006c55
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Tue Jun 2 19:46:50 2015 +0200
+Since guests on Muen run in hardware-accelerated mode as much as possible,
+VirtualBox does not need to emulate entire classes of instructions. One
+important example is that the guest VM directly uses the hardware FPU and the
+VMM does not emulate floating point instructions. Thus it does not need access
+to the FPU state. This greatly reduces the implementation complexity and avoids
+potential issues due to the loading of invalid FPU state.
 
-    vbox: Implement hwaccl support for Muen
-    
-     * Implement VMMR0_DO_VMMR0_INIT operation for Muen
-    
-       - Indicate VT-x support
-       - Enable unrestricted guest mode
-       - Set CR[0|4] mask to enable masking of guest CR0.[NE,NW,CD] and
-         CR4.VMXE bits.
-    
-     * Implement VMMR0_DO_GVMM_CREATE_VM on Muen
-    
-       Return error if trying to create SMP VM as VMs with multiple CPUs are
-       currently not supported on hw_x86_64_muen.
-    
-     * Add Muen-specific Mem_region type
-    
-       On hw_x86_64_muen the guest memory layout is static, thus regions are
-       handed out from an array of memory regions.
-    
-       Use sinfo API to calculate the base address of the VM RAM physical
-       0x0 region. This allows to dynamically modify the VM RAM size by
-       adjusting the Muen policy and Genode vbox files accordingly.
-    
-       Zeroize all memory regions apart from VM Ram since Virtualbox expects
-       these regions to be cleared.
-    
-     * Add Muen subject state struct
-    
-       The subject state encompasses the guest VM machine state that is
-       transfered between Virtualbox and hardware accelerated execution on
-       Muen.
-    
-     * Add Muen-specific Vm_handler class
-     * Use Vm_handler to run VM
-     * Instruct recompiler to flush its code cache
-     * Copy the Muen subject state to/from the Vbox PCPUMCTX.
-     * Use the VM interruptibility state to inform the recompiler whether
-       interrupts are currently inhibited.
-     * Explicitly handle control register access
-    
-       If a VM-exit occurs due to a control register access, handle it and
-       directly continue hardware accelerated execution of guest VM.
-    
-       Note: On NOVA control register accesses are handled by the kernel [1].
-    
-       [1] - https://github.com/alex-ab/NOVA/blob/master/src/ec_vmx.cpp#L106
-    
-     * Reset guest interruptibility state
-    
-       Assert that interrupts are not inhibited in the Virtualbox machine
-       state and clear Blocking-by-[STI|MOV to SS] guest interruptibility
-       flags prior to running a guest VM in hwaccel mode.
-    
-     * Set return code depending on exit reason
-    
-       Do not unconditionally emulate the next instruction on VM exit. This
-       makes sharing the VM FPU state with Virtualbox unnecessary, as FPU
-       instructions are not emulated by the recompiler any longer.
-       Also, assert that the FPU has not been used by the recompiler
-    
-     * Inject pending guest VM interrupts on Muen
-    
-       Use mapped subject pending interrupts page of guest VM to perform
-       interrupt injection. IRQs are transferred from the Virtualbox trap
-       manager state to the pending interrupts region for injection. If an
-       IRQ remains pending upon returning to the recompiler, it is copied
-       back to the trap manager state and cleared in the subject interrupts
-       region.
-    
-     * Inform recompiler about changed SYSENTER_[CS|EIP|ESP] values,
-       otherwise values set while running the guest VM hardware accelerated
-       may get lost.
-    
-     * Implement genode_cpu_hz() on Muen
-    
-       Determine the CPU frequency dynamically using the sinfo API.
-    
-    Issue #2016
+As mentioned above, the most intriguing peculiarity is that on
+'hw_x86_64_muen', VirtualBox itself is running in VMX non-root mode and thus as
+a guest VM. This means that the VMM is executed like any other Muen subject
+without special privileges, retaining the strong isolation properties offered
+by the Muen SK. Despite this architectural difference, there is no noticeable
+performance hit due to the extensive use of hardware accelerated
+virtualization.
 
-commit 6d28ea1c5c9a0a8be67636c5a6c547f1c82df6c8
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Wed May 4 18:40:30 2016 +0200
 
-    vbox: Add platform-specific setup machine hook
-    
-    Add call to genode_setup_machine prior to machine registration in
-    frontend machine setup code. This enables platform-specific adjustments
-    to the machine instance.
-    
-    The new function is used on hw_x86_64_muen to clamp the processor count
-    to 1 as multiple virtual CPUs are not supported on this platform.
-    
-    Issue #2016
+Implementation
+~~~~~~~~~~~~~~
 
-commit 7d0076386198d8ed49edb574256e71cb46c715d6
-Author: Reto Buerki <reet@codelabs.ch>
-Date:   Thu Apr 21 14:56:25 2016 +0200
+The necessary extension to the 'hw_x86_64_muen' kernel primarily consist of the
+implementation of the VM session interface. A VM session is a special base-hw
+kernel thread that represents the execution state of the guest VM. It is
+scheduled when the guest VM is ready to continue execution.
 
-    hw_x86_64_muen: Use timed events to implement timer
-    
-    Switch kernel timer driver to timed event interface. The base-hw kernel
-    expects a configured self-event with ID 31 and target vector 32 to be
-    present in the system policy.
-    
-    ssue #2016
+The Vm::proceed function implements the switch to the mode transition assembly
+code declared at the '_vt_vm_entry' label. The entry enables interrupts and
+initiates a handover to the guest VM by invoking the event specified in the
+Muen system policy.
+On return from the guest VM, the VM thread is paused and the VM session client
+(VirtualBox) is signaled. Once VirtualBox has performed all necessary actions,
+the guest VM is resumed via invocation of the VM session 'run' function.
 
-commit 68bab6a411fa3638db3758d956d914a9273eb923
-Author: Reto Buerki <reet@codelabs.ch>
-Date:   Mon Apr 25 13:16:59 2016 +0200
+Another adjustment to the kernel is the use of Muen timed events for guest VM
+preemption. The timer driver writes the tick count of the next kernel timer to
+the guest timed events page. This causes the guest VM to be preempted at the
+requested tick count and ensures that the guest VM can not monopolize the CPU
+if no traps occur.
 
-    hw_x86_64_muen: Use timed events for guest preemption
-    
-    Write tick count of next kernel timer to the guest timed events page if
-    present. This causes the guest VM to be preempted at the requested tick
-    count and ensures that the guest VM can not monopolize the CPU if no
-    traps occur.
-    
-    The base-hw kernel expects a configured switch-event from the guest VM
-    to base-hw with ID 30 and target vector 32 to be present in the system
-    policy.
-    
-    Issue #2016
+On the VirtualBox side we implemented the hwaccl layer for Muen. The main task
+of this layer is keeping the guest VM machine state between VirtualBox and the
+hardware accelerated execution on Muen in sync.
 
-commit 63591160df764bf1087a9c0d90b02f83ad1b5ba1
-Author: Reto Buerki <reet@codelabs.ch>
-Date:   Tue May 10 22:56:40 2016 +0200
+Depending on the guest VM exit reason, the hwaccl code decides whether to use
+instruction emulation or to resume the guest VM in hardware accelerated mode.
+If a trap occurred that cannot be handled by the virtualization hardware,
+execution is handed to the VirtualBox recompiler that emulates the next
+instruction.
 
-    vbox: Factor out memory config check
-    
-    Move Genode/vbox memory configuration check to separate
-    genode_check_memory_config() function and call it in platform-specific
-    setup machine hook of accloff/nova.
-    
-    The rationale for this change is to omit the check on Muen since the
-    guest memory is separate and not allocated from base-hw memory.
-    
-    Issue #2016
+Furthermore, this code also takes care of guest VM interrupts. Pending
+interrupts are injected via the Muen subject pending interrupts mechanism. IRQs
+are transferred from the VirtualBox trap manager state to the pending
+interrupts region. If an IRQ remains pending upon returning from the guest VM,
+it is copied back to the trap manager state and cleared in the subject
+interrupts region.
 
-commit 4c5694184ceca6d3d8b5ed1507db04fbc4b6f336
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Tue Jun 9 00:45:34 2015 +0200
 
-    Enable 32-bit Virtualbox scenarios for hw_x86_64_muen
-    
-     * Announce VM service
-     * Disable USB uhci and ehci as only xhci is supported on hw_x86_64_muen
-    
-    Issue #2016
+Taking VirtualBox on Muen for a spin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-commit f241b6e496418756deb2d0d5b34a2ee69f9a4399
-Author: Reto Buerki <reet@codelabs.ch>
-Date:   Mon Jun 6 15:53:02 2016 +0200
+Follow the [https://genode.org/documentation/platforms/muen - tutorial section]
+to prepare your system for Muen.
 
-    Update Muen port to revision c73734d
-    
-    Issue #2016
+As a next step, create a VirtualBox VM with a 32-bit guest OS of your
+choice and install the guest additions
+[http://download.virtualbox.org/virtualbox/4.3.36/VBoxGuestAdditions_4.3.36.iso].
+In this tutorial we chose Windows 7.
 
-commit dd22c961c9d6505d8e9f050f5e0a31430d8fe7ba
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Tue Jul 19 18:26:52 2016 +0200
+Note: use guest additions close to the VirtualBox version of Genode. We have
+successfully tested versions 4.3.16 and 4.3.36.
 
-    Update Muen port
-    
-    - Adjust list of Muen components
-    - vbox: Sync hw_x86_64_muen subject state with Muen SK
+Name the virtual disk image 'win7.vdi' and create an (empty) overlay VDI as
+follows:
+
+! vboxmanage createhd --filename overlay_win7.vdi --size $size --format vdi
+
+The VDI size (in megabytes) must match the capacity of the 'win7.vdi':
+
+! vboxmanage showhdinfo win7.vdi
+
+* Setup a harddisk with 4 partitions
+* Format the fourth partition with an ext2 filesystem
+* Copy `win7.vdi` to the root directory of the ext2 partition
+* Copy `overlay_win7.vdi` to the `ram` directory of the ext2 partition
+
+The directory structure of partition 4 should look as follows:
+
+! /win7.vdi
+! /ram/overlay_win7.vdi
+
+Adjust the VDI UUIDs to match the ones of the Genode
+[[ https://github.com/genodelabs/genode/blob/master/repos/ports/run/vm_win7.vbox#L12
+| `repo/ports/run/vm_win7.vbox`]] file:
+
+! vboxmanage internalcommands sethduuid win7.vdi 8e55fcfc-4c09-4173-9066-341968be4864
+! vboxmanage internalcommands sethduuid ram/overlay_win7.vdi 4c5ed34f-f6cf-48e8-808d-2c06f0d11464
+
+Prepare the necessary ports as follows:
+
+! tool/ports/prepare_port dde_bsd dde_ipxe dde_rump dde_linux VirtualBox libc stdcxx libiconv x86emu qemu-usb
+
+Create and enter the Muen build directory:
+
+! tool/create_builddir hw_x86_64_muen
+! cd build/hw_x86_64_muen
+! sed -i 's/#REPOSITORIES +=/REPOSITORIES +=/g' etc/build.conf
+! echo 'MAKE += -j5' >> etc/build.conf
+
+Build the 'vbox_auto_win7' scenario:
+
+! make run/vbox_auto_win7
+
+This produces a Multiboot system image which can be found at
+'var/run/vbox_auto_win7/image.bin'.
+
+
+Limitations
+~~~~~~~~~~~
+
+The current implementation of the 'hw_x86_64_muen' VirtualBox support has the
+following limitations:
+
+* No 64-bit Windows guest support
+* No Multicore guest support
+
+Apart from these restrictions, the implementation of VirtualBox on Muen offers
+the same functionality and comparable performance as VirtualBox on NOVA.
+
+
+Conclusion
+~~~~~~~~~~
+
+While implementing VirtualBox support for 'hw_x86_64_muen' we encountered
+several issues which required some effort to resolve. The visible effects
+ranged from VirtualBox guru meditation, guest kernel panics, stalled guests and
+erratic guest behavior (e.g. guest execution slow-down after some time). To
+make things worse, the errors were not deterministically reproducible and
+instrumenting the code could change the observable error.
+
+One particular source of problems was the correct injection of guest
+interrupts. The first approach was to define a Muen event for each guest
+interrupt in the policy. When VirtualBox had a pending guest interrupt, the
+corresponding event was triggered to mark it for injection upon guest VM
+resumption. This approach revealed several problems.
+
+On such issue was that interrupts could get lost due to a mismatch between
+effective guest VM and VirtualBox machine state, e.g. the guest VM had
+interrupts disabled and execution was handed back to the recompiler before the
+pending interrupt could be injected.
+
+Scalability was another issue, since all possible guest interrupts needed to be
+specified in advance in the Muen system policy. The problem was further
+compounded as guest interrupts vary depending on the operating system.
+
+We resolved the issue by enabling monitor subjects (VirtualBox) to access the
+Muen pending interrupts data structure of the associated guest VM. This simple
+enhancement of Muen allows VirtualBox to directly mark guest interrupts pending
+without having to trigger a Muen event or having to extend the Muen kernel.
+Furthermore, keeping the pending interrupt state of the guest VM and the
+VirtualBox machine state in sync is trivial and thus no interrupts are lost.
+
+[image hw_x86_64_muen-VirtualBox-win7-bsod.jpg]
+
+Another cause for grieve was that, by default, the VirtualBox scenarios on
+Genode are configured to use multiple CPUs. This could lead to guest state
+corruption since multiple emulation threads (EMT) were operating on the same
+subject state. Once we had discovered the underlying cause for this problem, we
+remedied the issue by clamping the guest processor count to one.
+
+Looking back at the adventurous journey beginning with the base-hw x86_64 port
+and culminating in the VirtualBox support for Muen, we are quite happy how we
+were able to achieve the goal we initially set out to accomplish. We would like
+to thank the always helpful guys at Genode for their support and the rewarding
+collaboration!
 
 
 Experimental version of VirtualBox 5 for NOVA
