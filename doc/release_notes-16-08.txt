@@ -1,0 +1,1151 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 16.08
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+
+
+Interactive and dynamic workloads on top of the seL4 kernel
+###########################################################
+
+; @alexab
+
+commit af93f8d01ba2089f05c801d8b745dc4c3990682a
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jun 17 15:15:48 2016 +0200
+
+    sel4: update to 3.1.0
+    
+    - adjust syscall bindings to support -fPIC
+    - read serial i/o ports from BIOS data area
+    - use autoconf.h provided by sel4
+    -- to avoid ambiguity between sel4 kernel and user libraries
+    -- remove manual set defines
+    - remove debug messages
+    - increase user virtual area to 3GB
+    
+    Issue #1720
+    Issue #2044
+
+commit 0ccb07f008578ed64b08ea44bbbae4b9b3d47893
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 22 11:35:41 2016 +0200
+
+    sel4: add "norelocate" option to bender
+    
+    Issue #2044
+
+commit 46cb20e2c08b4a6dbad879c14690766c29449e94
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jun 28 14:45:49 2016 +0200
+
+    sel4: add io_port service to core
+    
+    Fixes #1718
+    Issue #2044
+
+commit 93e2eecc524587bc46bf6a02313fcc660d4cb069
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 29 23:06:22 2016 +0200
+
+    sel4: add irq support
+    
+    Fixes #1718
+    Issue #2044
+
+commit e89b28ca1b275d7c281cafe49e3bb52daf0d72da
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 29 15:22:08 2016 +0200
+
+    sel4: add signal support
+    
+    Fixes #1716
+    Issue #2044
+
+commit c68bca1f8939294b95f0ad38593fbfad79209c79
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jun 28 13:58:20 2016 +0200
+
+    sel4: enable PIT timer and PS/2 input
+    
+    Issue #2044
+
+commit 43f2784564af9a32b71f42fbff49ffdac0aeba83
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 29 17:04:05 2016 +0200
+
+    sel4: initialize rcv_sel for ep threads
+    
+    Issue #2044
+
+commit 7501910c998ab7ae400c8a684af79ad742a433b4
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 29 16:23:52 2016 +0200
+
+    sel4: implement ipc_reply
+    
+    Issue #2044
+
+commit b5ff55246087239bcecbde958dca38679436814e
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 15 11:05:09 2016 +0200
+
+    base: extend core_mem_alloc free by phys_addr
+    
+    required by base-sel4 to turn used page frames back to untyped memory
+    
+    Issue #2044
+
+commit 2aaeb8db1b4d26be6e18cd7702f83e498b7719b0
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jul 13 13:33:10 2016 +0200
+
+    sel4: convert frame pages back to untyped memory
+    
+    to implement _revoke_ram_ds and to fix _unmap_local
+    
+    Issue #2044
+
+commit 73e35cdf6aed6e665317436d57bb81f9b310038c
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jun 30 17:33:22 2016 +0200
+
+    sel4: handle threads in destruction
+    
+    - revoke utcb
+    - suspend thread before destruction, less noise during destruction
+    
+    Issue #2044
+
+commit a396fa95638627e30fcd7a63b378695a3347d68e
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jul 4 09:19:52 2016 +0200
+
+    sel4: support up to 16K capabilities per pd
+    
+    before we had 256 capabilities
+    
+    Issue #2044
+
+commit 5b9a61fcb99815c0e82d97fb9a6a237679311a6b
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jul 4 14:49:32 2016 +0200
+
+    sel4: properly detach core local regions
+    
+    Issue #2044
+
+commit 821afd0199b756ffb5b79bad4fc3584963f220a9
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jun 30 17:34:24 2016 +0200
+
+    sel4: support device memory for drivers
+    
+    Additionally, exclude boot-module from page_table_registry. Core does not use
+    the boot-modules inside core.
+    
+    Adding it otherwise to the registry will use up the meta data allocator of
+    the page_table_registry in core in scenarios with lot of boot modules,
+    e.g. noux and friends.
+    
+    Issue #2044
+
+commit 99b8fc4408c98b11528eb5159c53c60c76452dcb
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 5 15:58:46 2016 +0200
+
+    sel4: enable vesa driver
+    
+    kernel : add required and reserved boot regions to device memory
+    
+    Issue #2044
+
+commit 3a9c6eab17511aac84a90c8bbc97b538728f081f
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jul 7 13:49:35 2016 +0200
+
+    sel4: use first free cap index reported by kernel
+    
+    required to bootstrap scenarios with more rom binaries, e.g. noux
+    
+    Issue #2044
+
+commit 90390fe053b91cdd5f765c6720892eb7f49c30b3
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 8 12:54:17 2016 +0200
+
+    sel4: increase root cnode size in kernel
+    
+    required to boot setups like noux*
+    
+    Issue #2044
+
+commit 998dfa6c5ee237b7cfdc4d716abbf96bb21b4c83
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 8 13:44:52 2016 +0200
+
+    sel4: flush page table allocator if full
+    
+    Issue #2044
+
+commit 253f2aef0f928e24d80cffb1d67bf7b0f2979170
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 8 14:03:43 2016 +0200
+
+    sel4: show pd name if flushing page table
+    
+    Issue #2044
+
+commit 738ca741665adc2367fd88c2d37cecd6f11dc8ff
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jul 13 11:50:26 2016 +0200
+
+    sel4: clear dataspace page wise
+    
+    Creating mappings inside core may exhaust the internal allocators
+    if very large dataspaces must be cleared.
+    
+    Issue #2044
+
+commit 657dd5faadff179a6bed837374613d68a33ae443
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 8 16:38:48 2016 +0200
+
+    sel4: support region fault manager outside core
+    
+    rm_fault.run works
+    
+    Issue #2044
+
+commit 4d10a284116be8da32b0eacc2a706ed601eb27dc
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 12 18:14:24 2016 +0200
+
+    sel4: disable large mappings for device memory
+    
+    Issue #2044
+
+commit ad7748592a9df98fdd5eb83d10a3f2ee98fc90bc
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 12 17:41:41 2016 +0200
+
+    sel4: keep boot info in core's virt address space
+    
+    Issue #2044
+
+commit b0c3427ed459e5168190e81dee3ce55c798018f2
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jul 13 16:03:21 2016 +0200
+
+    sel4: handle platform_pd destruction
+    
+    Issue #2044
+
+commit c4ed38cfbc758551e5f4c6d33aff673a361a438d
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 15 13:44:40 2016 +0200
+
+    sel4: fix vm_space has_page_table_at
+    
+    Issue #2044
+
+commit 9c8676b2aebca077e2019d983dfbf6149e55cc8c
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 15 15:54:07 2016 +0200
+
+    sel4: add revoke option to destruct cnode
+    
+    Issue #2044
+
+commit c4c797916388a76531ca1a2ae6993832c8808b44
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 15 18:43:37 2016 +0200
+
+    sel4: quirk for vanishing page table
+    
+    Issue #2044
+
+commit 198475b6b365a89546cd23fa8cf3a008b09252a5
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jul 18 11:04:42 2016 +0200
+
+    sel4: startup lib reinit support
+    
+    required for noux
+    
+    Issue #2044
+
+commit 155621767a3721a5ace82bc5a011cbda657865cc
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 19 13:55:59 2016 +0200
+
+    sel4: limit mp_server.run to 1 cpu for sel4
+    
+    Issue #2044
+
+commit 997f5e8e27a066714ab0b0d5760fa6fb3ef2f179
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 19 19:39:58 2016 +0200
+
+    sel4: implement thread suspend/pause/resume
+    
+    Issue #2044
+
+commit 1472c0629bdc62d082804d50650cd51ffb427c5e
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 19 21:05:30 2016 +0200
+
+    sel4: allocate thread selectors during bind_thread
+    
+    That seems nowadays the right place in order to tell the caller that the
+    thread couldn't be completely constructed. The return value false of
+    bind_thread causes in Cpu_thread_component the throwing of
+    Thread_creation_failed.
+    
+    thread.run now passes
+    pthread.run now passes
+    
+    Issue #2044
+
+commit bee0e110492f00d0521d70c9fcaa1308dba97df6
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jul 20 12:02:23 2016 +0200
+
+    sel4: use notification objects for Genode::Lock
+    
+    Fixes #1717
+    Issue #2044
+
+commit b2a8cfde85257c140cf345f5fe5f414a818c4eff
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jul 21 11:58:46 2016 +0200
+
+    sel4: avoid corruption during ipc marshalling
+    
+    Issue #2044
+
+commit 356e6498b6d5d3c065a17caf8e2f3addd662719b
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jul 21 14:40:16 2016 +0200
+
+    sel4: update to 3.2.0
+    
+    - disable iommu
+    - increase root_cnode further for native boot
+    - support vesa driver on native hardware
+    - don't mask edge triggered ioapic irqs
+    - increase various allocators to get noux_tool_chain_* booting natively
+    
+    Issue #2044
+
+commit b57c33159f1e64ee7f655d535bd788fb514b6105
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 22 15:50:03 2016 +0200
+
+    sel4: improve allocation in initial_untyped_pool
+    
+    Required to boot on hardware. The fragmentation is such unfortunate with the
+    old allocator that alloc() will throw an exception during very early core boot
+    phase.
+    
+    Issue #2044
+
+commit 99880898620f9e7630d26bf9e61287c1516f122d
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jul 25 14:44:36 2016 +0200
+
+    sel4: workaround deadlock in core
+    
+    Issue #2044
+
+
+Virtual networking and transparent support for TOR
+##################################################
+
+; @skalk @mstein
+
+
+
+VirtualBox on top of the Muen and NOVA kernels
+##############################################
+
+
+VirtualBox 4 on top of the Muen separation kernel
+=================================================
+
+; @reet-, @kensan
+
+commit c1bb82fb6b6f4d7f4aad91c31a5fe9e94caba8b8
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Thu Jul 2 16:25:51 2015 +0200
+
+    base-hw: make Muen sinfo API publicly available
+    
+    The sinfo function declared in sinfo_instance.h creates a static sinfo
+    object instance and returns a pointer to the caller.
+    
+    - kernel timer and platform support to use sinfo() function to
+      instantiate sinfo object
+    - address and size of the base-hw RAM region via the sinfo API
+    - log_status() function in sinfo API
+
+commit e5e1f1261ff045fc16cff78b6e8c061ed037d3da
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jun 3 11:07:39 2015 +0200
+
+    hw_x86_64_muen: implement VM service skeleton
+    
+    Issue #2016
+
+commit 082b141e663934a0b57a52da04efec21840beba0
+Author: Reto Buerki <reet@codelabs.ch>
+Date:   Tue Jun 16 10:26:53 2015 +0200
+
+    hw_x86_64: Add _vt_vm_entry to x86_64 mode transition
+    
+    The entry enables interrupts and initiates a handover to the guest VM by
+    invoking event number one. The sti instruction is placed at the start to
+    allow exits to Muen before handing off to the VM if window exiting is
+    requested.
+    
+    Issue #2016
+
+commit cd6b3b1222c5d2976461913ac3a70c7105e8ebf2
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Wed Jun 3 17:45:35 2015 +0200
+
+    hw_x86_64_muen: Implement Muen Vm_session
+    
+    * The Vm thread is always paused and on exception to make sure that guest VM
+      execution is suspended whenever we handle an interrupt. Also signal the Vm
+      session to poke waiting threads (e.g. Virtualbox EMT).
+    
+    * Implement Vm::proceed
+      Switch to the mode transition assembly code declared at the _vt_vm_entry
+      label.
+    
+    Issue #2016
+
+commit 89a6d16d814dd905d8e2c356100afa8129d1f081
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Tue Jun 23 10:54:00 2015 +0200
+
+    vbox: Extract Vmm_memory::Region to separate header
+    
+    This enables platform-specific implementations of the struct Mem_region
+    type.
+    
+    Issue #2016
+
+commit 738b01d37a24b45ea7d46c9aa9ff74ef818c997f
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Tue Jun 23 14:06:09 2015 +0200
+
+    vbox: Move pgm to virtualbox-hwaccl library
+    
+    Issue #2016
+
+commit e3fbeeb25e337b7b229592c7b5d7f9c3a2006c55
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Tue Jun 2 19:46:50 2015 +0200
+
+    vbox: Implement hwaccl support for Muen
+    
+     * Implement VMMR0_DO_VMMR0_INIT operation for Muen
+    
+       - Indicate VT-x support
+       - Enable unrestricted guest mode
+       - Set CR[0|4] mask to enable masking of guest CR0.[NE,NW,CD] and
+         CR4.VMXE bits.
+    
+     * Implement VMMR0_DO_GVMM_CREATE_VM on Muen
+    
+       Return error if trying to create SMP VM as VMs with multiple CPUs are
+       currently not supported on hw_x86_64_muen.
+    
+     * Add Muen-specific Mem_region type
+    
+       On hw_x86_64_muen the guest memory layout is static, thus regions are
+       handed out from an array of memory regions.
+    
+       Use sinfo API to calculate the base address of the VM RAM physical
+       0x0 region. This allows to dynamically modify the VM RAM size by
+       adjusting the Muen policy and Genode vbox files accordingly.
+    
+       Zeroize all memory regions apart from VM Ram since Virtualbox expects
+       these regions to be cleared.
+    
+     * Add Muen subject state struct
+    
+       The subject state encompasses the guest VM machine state that is
+       transfered between Virtualbox and hardware accelerated execution on
+       Muen.
+    
+     * Add Muen-specific Vm_handler class
+     * Use Vm_handler to run VM
+     * Instruct recompiler to flush its code cache
+     * Copy the Muen subject state to/from the Vbox PCPUMCTX.
+     * Use the VM interruptibility state to inform the recompiler whether
+       interrupts are currently inhibited.
+     * Explicitly handle control register access
+    
+       If a VM-exit occurs due to a control register access, handle it and
+       directly continue hardware accelerated execution of guest VM.
+    
+       Note: On NOVA control register accesses are handled by the kernel [1].
+    
+       [1] - https://github.com/alex-ab/NOVA/blob/master/src/ec_vmx.cpp#L106
+    
+     * Reset guest interruptibility state
+    
+       Assert that interrupts are not inhibited in the Virtualbox machine
+       state and clear Blocking-by-[STI|MOV to SS] guest interruptibility
+       flags prior to running a guest VM in hwaccel mode.
+    
+     * Set return code depending on exit reason
+    
+       Do not unconditionally emulate the next instruction on VM exit. This
+       makes sharing the VM FPU state with Virtualbox unnecessary, as FPU
+       instructions are not emulated by the recompiler any longer.
+       Also, assert that the FPU has not been used by the recompiler
+    
+     * Inject pending guest VM interrupts on Muen
+    
+       Use mapped subject pending interrupts page of guest VM to perform
+       interrupt injection. IRQs are transferred from the Virtualbox trap
+       manager state to the pending interrupts region for injection. If an
+       IRQ remains pending upon returning to the recompiler, it is copied
+       back to the trap manager state and cleared in the subject interrupts
+       region.
+    
+     * Inform recompiler about changed SYSENTER_[CS|EIP|ESP] values,
+       otherwise values set while running the guest VM hardware accelerated
+       may get lost.
+    
+     * Implement genode_cpu_hz() on Muen
+    
+       Determine the CPU frequency dynamically using the sinfo API.
+    
+    Issue #2016
+
+commit 6d28ea1c5c9a0a8be67636c5a6c547f1c82df6c8
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Wed May 4 18:40:30 2016 +0200
+
+    vbox: Add platform-specific setup machine hook
+    
+    Add call to genode_setup_machine prior to machine registration in
+    frontend machine setup code. This enables platform-specific adjustments
+    to the machine instance.
+    
+    The new function is used on hw_x86_64_muen to clamp the processor count
+    to 1 as multiple virtual CPUs are not supported on this platform.
+    
+    Issue #2016
+
+commit 7d0076386198d8ed49edb574256e71cb46c715d6
+Author: Reto Buerki <reet@codelabs.ch>
+Date:   Thu Apr 21 14:56:25 2016 +0200
+
+    hw_x86_64_muen: Use timed events to implement timer
+    
+    Switch kernel timer driver to timed event interface. The base-hw kernel
+    expects a configured self-event with ID 31 and target vector 32 to be
+    present in the system policy.
+    
+    ssue #2016
+
+commit 68bab6a411fa3638db3758d956d914a9273eb923
+Author: Reto Buerki <reet@codelabs.ch>
+Date:   Mon Apr 25 13:16:59 2016 +0200
+
+    hw_x86_64_muen: Use timed events for guest preemption
+    
+    Write tick count of next kernel timer to the guest timed events page if
+    present. This causes the guest VM to be preempted at the requested tick
+    count and ensures that the guest VM can not monopolize the CPU if no
+    traps occur.
+    
+    The base-hw kernel expects a configured switch-event from the guest VM
+    to base-hw with ID 30 and target vector 32 to be present in the system
+    policy.
+    
+    Issue #2016
+
+commit 63591160df764bf1087a9c0d90b02f83ad1b5ba1
+Author: Reto Buerki <reet@codelabs.ch>
+Date:   Tue May 10 22:56:40 2016 +0200
+
+    vbox: Factor out memory config check
+    
+    Move Genode/vbox memory configuration check to separate
+    genode_check_memory_config() function and call it in platform-specific
+    setup machine hook of accloff/nova.
+    
+    The rationale for this change is to omit the check on Muen since the
+    guest memory is separate and not allocated from base-hw memory.
+    
+    Issue #2016
+
+commit 4c5694184ceca6d3d8b5ed1507db04fbc4b6f336
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Tue Jun 9 00:45:34 2015 +0200
+
+    Enable 32-bit Virtualbox scenarios for hw_x86_64_muen
+    
+     * Announce VM service
+     * Disable USB uhci and ehci as only xhci is supported on hw_x86_64_muen
+    
+    Issue #2016
+
+commit f241b6e496418756deb2d0d5b34a2ee69f9a4399
+Author: Reto Buerki <reet@codelabs.ch>
+Date:   Mon Jun 6 15:53:02 2016 +0200
+
+    Update Muen port to revision c73734d
+    
+    Issue #2016
+
+commit dd22c961c9d6505d8e9f050f5e0a31430d8fe7ba
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Tue Jul 19 18:26:52 2016 +0200
+
+    Update Muen port
+    
+    - Adjust list of Muen components
+    - vbox: Sync hw_x86_64_muen subject state with Muen SK
+
+
+Experimental version of VirtualBox 5 for NOVA
+=============================================
+
+; @alexab
+
+commit 1bcabdc6c99710d64faa51ce8b1aab21c5fe2fe3
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Aug 15 12:27:54 2016 +0200
+
+    vmm: experimental virtualbox 5 support
+    
+    The main feature for this version upgrade is the use of the instruction
+    emulator (IEM) to speed up execution and less often the slow recompiler.
+    
+    issue #2059
+
+
+Functional enhancements
+=======================
+
+commit 4f23e78f108a3521476ad4834c0028bf049d6e5a
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 8 20:15:27 2016 +0200
+
+    vbox: add AHCI model
+    
+    Fixes #2006
+
+commit 761db4bc73cf3a5d103f437bde0b39aed7095f9a
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Jun 27 17:04:34 2016 +0200
+
+    vbox: config option for the virtual XHCI controller
+    
+    This commit adds the VirtualBox configuration option
+    
+    <config xhci="yes">
+    
+    to enable the virtual XHCI controller.
+    
+    Fixes #2028
+
+commit 22e908e8014cda9a02af72ae11278d2bd7ae94a6
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Jun 27 14:38:43 2016 +0200
+
+    vbox: add config option to enforce use of IOAPIC
+    
+    The virtual PCI model delivers IRQs to the PIC by default and to the
+    IOAPIC only if the guest operating system selected the IOAPIC with the
+    '_PIC' ACPI method and if it called the '_PRT' ACPI method afterwards.
+    When running a guest operating system which uses the IOAPIC, but does
+    not call these ACPI methods (for example Genode/NOVA), the new
+    configuration option
+    
+    <config force_ioapic="yes">
+    
+    enforces the delivery of PCI IRQs to the IOAPIC.
+    
+    Fixes #2029
+
+
+Base framework
+##############
+
+Cultivation of the new text-output API
+======================================
+
+; @nfeske
+
+; * Added print methods for commonly used
+;   types like 'Capability', 'Framebuffer::Mode', 'Mac_address'),
+;   removal of old debug macros from the code base
+
+commit 2030ae678ef9166c7d12ff7222005caca4e35092
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jun 16 15:55:36 2016 +0200
+
+    Supplement base/log.h with raw output function
+    
+    This patch introduces the Genode::raw function that prints output
+    directly via a low-level kernel mechanism, if available.
+    
+    On base-linux, it replaces the former 'raw_write_str' function.
+    On base-hw, it replaces the former kernel/log.h interface.
+    
+    Fixes #2012
+
+commit c8fe0df0ed5dd59f4780e84e801f811ca56166b8
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Fri Jun 24 11:46:29 2016 +0200
+
+    Overloads for printing signed/unsigned/bool base types
+    
+    Issue #1942
+
+commit 38a1e959790af636d51434ae3486da40c055cde3
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 13 15:15:03 2016 +0200
+
+    base: add 'String::print' method
+    
+    This way, we can conveniently output strings without calling the
+    string() method.
+
+commit 7e73645d9e84f16d1fdf46b9c01a087de8844470
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Aug 15 12:20:52 2016 +0200
+
+    base: helper for printing individual characters
+
+commit 0bf2e4a794f781803b9164c352619a0988818cd3
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Tue Aug 9 16:54:13 2016 +0200
+
+    base: print() functions for floating point types
+    
+    Fixes #2055
+
+
+commit 3c73ba62c4950e3116029132a2fd0265b498446e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 13 19:07:09 2016 +0200
+
+    base: avoid use of deprecated base/printf.h
+    
+    Besides adapting the components to the use of base/log.h, the patch
+    cleans up a few base headers, i.e., it removes unused includes from
+    root/component.h, specifically base/heap.h and
+    ram_session/ram_session.h. Hence, components that relied on the implicit
+    inclusion of those headers have to manually include those headers now.
+    
+    While adjusting the log messages, I repeatedly stumbled over the problem
+    that printing char * arguments is ambiguous. It is unclear whether to
+    print the argument as pointer or null-terminated string. To overcome
+    this problem, the patch introduces a new type 'Cstring' that allows the
+    caller to express that the argument should be handled as null-terminated
+    string. As a nice side effect, with this type in place, the optional len
+    argument of the 'String' class could be removed. Instead of supplying a
+    pair of (char const *, size_t), the constructor accepts a 'Cstring'.
+    This, in turn, clears the way let the 'String' constructor use the new
+    output mechanism to assemble a string from multiple arguments (and
+    thereby getting rid of snprintf within Genode in the near future).
+    
+    To enforce the explicit resolution of the char * ambiguity, the 'char *'
+    overload of the 'print' function is marked as deleted.
+    
+    Issue #1987
+
+
+Revised utilities for the handling of session labels
+====================================================
+
+; @nfeske  !!! note the API incomptibility !!!
+
+commit f8337b511b83da81cd1e4fa7b6377f4c06856dbd
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue Jan 12 14:11:58 2016 +0100
+
+    Move Session_label from os to base
+    
+    Session_label constructor now takes a bare string rather than a
+    serialized argument buffer.
+    Replace all instances of previous constructor with 'label_from_args'
+    function.
+    
+    Issue #1787
+
+
+Low-level OS infrastructure
+###########################
+
+Network-transparent ROM sessions to a remote Genode system
+==========================================================
+
+; @valivalpas
+
+commit 2687de237690e53ea4c756afea45a4779fc550c7
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Tue Jul 5 11:51:45 2016 +0200
+
+    Add remote_rom proxy component
+    
+    Fixes #20
+
+
+Statistical profiling
+=====================
+
+; @cproc
+
+
+Init configuration changes
+==========================
+
+; @nfeske
+
+commit 877676c29f6071eb97103c1112df681e937d679d
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Wed Mar 9 15:06:42 2016 +0100
+
+    Make label-based policy selection more strict
+    
+    A configuration policy must match against a policy node label,
+    label_prefix, or label_suffix atttribute. A fallback to
+    <default-policy/> is provided as a label wildcard.
+    
+    Fixes #1901
+
+
+Configurable mapping of ACPI events to input events
+===================================================
+
+; @alexab
+
+commit 7556663e7ef9d39368de0a4a57ac9eb41219a7f9
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jun 16 11:34:57 2016 +0200
+
+    acpi_input: transform ACPI events to Genode input
+    
+    Issue #1962
+
+
+Improved RAM-based pseudo block device
+======================================
+
+; @cnuke
+
+commit c25c4e34118cee24b3d1f5ffe4416fe161143ce0
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Jul 5 11:40:26 2016 +0200
+
+    ram_blk: transition to the new base API
+    
+    In addition to modernizing the component now also supports using
+    empty RAM dataspace as backing store.
+    
+    For example to use an ISO file the component has to be configured
+    as follows:
+    
+    ! <config file="image.iso" block_size="2048"/>
+    
+    To use a empty RAM dataspace that is 256MiB large and has a block
+    size of 4KiB the configuration looks like this:
+    
+    ! <config size="256M" block_size="4096"/>
+    
+    Either 'size' or 'file' has to specified. If both are declared the
+    'file' attribute is soley evaluated.
+    
+    Issue #1987.
+    
+    Fixes #2031.
+
+
+Framebuffer scaler
+==================
+
+; @emery
+
+commit bf93d7a9f07ed46bc62ab0c0595df50427d81bca
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue Aug 16 08:01:06 2016 +0200
+
+    server/fb_upscale: sever to scale up small framebuffers
+    
+    Fixes #29
+
+
+Duplication of LOG streams
+==========================
+
+; @emery
+
+commit 3c25710f431fd9b5d44f2c4c30aa9a821d7ce501
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Jul 28 20:56:36 2016 +0200
+
+    server/log_tee: shim to duplicate log streams
+    
+    Fixes #28
+
+
+ROM fallback service
+====================
+
+; @emery
+
+commit 3af80e2d888a1da0d34b54b7bc8d1a65045a2018
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Jul 21 13:44:17 2016 +0200
+
+    new server 'rom_fallback'
+    
+    Forwards a ROM ssesion request to a list of label prefixes.
+    
+    Fixes #26
+
+
+Input remapper
+==============
+
+; @emery
+
+commit 1e0fa7571c7fb7f4e6673b8e2458e204cd4f2889
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sat Jul 16 11:26:20 2016 +0200
+
+    server/input_remap
+    
+    General purpose component for remapping input codes.
+    
+    Fixes #25
+
+
+Libraries and applications
+##########################
+
+Ported 3rd-party software
+=========================
+
+; @nfeske
+
+commit 868bf6c9d0bd367e1fce8df2117f3bf717c3e2e8
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 8 14:35:11 2016 +0200
+
+    noux-pkg: port of diffutils 3.3
+    
+    Fixes #2005
+
+commit b80939cc0a0ed80ba236c8fa831601908525cfc6
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Oct 4 11:33:57 2012 +0200
+
+    Noux: add noux-pkg/less
+    
+    Issue #2014
+
+
+commit 45570065fda39d15a00675371d3be10e9a3ef2c3
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sat Aug 20 21:17:17 2016 +0200
+
+    Port of libxml2
+
+commit 10a42e8c145d3d63df27bcee421f15c25ef912af
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Mon Apr 25 12:58:03 2016 +0200
+
+    Port of mbed TLS
+    
+    Thanks to Menno Valkema for the initial patch.
+    
+    Fixes #17
+
+
+File-downloading component based on libcurl
+===========================================
+
+; @emery
+
+commit 04c42f34bc67a628189de6d72167ce536cd4a4e7
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue Jul 5 17:45:46 2016 +0200
+
+    app/fetchurl: libcURL frontend
+    
+    Fixes #19
+
+
+RISC-V front-end server
+=======================
+
+; @nfeske
+
+commit 7f61d9a84a289ca469be7063c278673ea542b583
+Author: Menno Valkema <menno.valkema@nlcsl.com>
+Date:   Mon Jun 27 09:43:40 2016 +0200
+
+    Added fesrv port
+    
+    Fixes #18
+
+
+Platforms
+#########
+
+Binary compatibility across all supported kernels
+=================================================
+
+; @nfeske
+
+commit f7bdd383e22797caa21233c42782c807794fb831
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 13 13:53:58 2016 +0200
+
+    Remove base/native_types.h headers
+    
+    Issue #1993
+
+commit d71f0a960621e6aa302486721ddbfdf1fa9deb9b
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 13 15:14:32 2016 +0200
+
+    Cleanup of parent-cap handling
+    
+    This patch alleviates the need for a Native_capability::Dst at the API
+    level. The former use case of this type as argument to
+    Deprecated_env::reinit uses the opaque Native_capability::Raw type
+    instead. The 'Raw' type contains the portion of the capability that is
+    transferred as-is when delegating the capability (i.e., when installing
+    the parent capability into a new component, or when installing a new
+    parent capability into a new forked Noux process). This information can
+    be retrieved via the new Native_capability::raw method.
+    
+    Furthermore, this patch moves the functions for retriving the parent
+    capability to base/internal/parent_cap.h, which is meant to be
+    implemented in platform-specific ways. It replaces the former set of
+    startup/internal/_main_parent_cap.h headers.
+    
+    Issue #1993
+
+commit 88b358c5efde4754f7e2db898b0b459b3201c97e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jun 15 15:04:54 2016 +0200
+
+    Unification of native_capability.h
+    
+    This patch establishes the sole use of generic headers across all
+    kernels. The common 'native_capability.h' is based on the version of
+    base-sel4. All traditional L4 kernels and Linux use the same
+    implementation of the capability-lifetime management. On base-hw, NOVA,
+    Fiasco.OC, and seL4, custom implementations (based on their original
+    mechanisms) are used, with the potential to unify them further in the
+    future.
+    
+    This change achieves binary compatibility of dynamically linked programs
+    across all kernels.
+    
+    Furthermore, the patch introduces a Native_capability::print method,
+    which allows the easy output of the kernel-specific capability
+    representation using the base/log.h API.
+    
+    Issue #1993
+
+commit 62d65d00e0da1343c67f61bb4d0f46f971b53bbd
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jul 12 16:33:18 2016 +0200
+
+    Remove signal-source headers from public API
+    
+    Those headers implement a platform-specific mechanism. They are never
+    used by components directly.
+    
+    This patch also cleans up a few other remaining platform-specific
+    artifact such as the Fiasco.OC-specific assert.h.
+    
+    Issue #1993
+
+
+Execution on bare hardware (base-hw)
+====================================
+
+; @valivalpas
+
+commit ecfb4e490408b2735b34191cd0a15a959326ebc6
+Author: Timo Wischer <t.wischer@tu-bs.de>
+Date:   Thu Mar 24 17:27:12 2016 +0100
+
+    zynq: add sd_card driver
+
+commit 6418f3408283ee17bf8aefcd7346e78b8cc18940
+Author: Mark <albers@ida.ing.tu-bs.de>
+Date:   Thu Mar 24 17:03:20 2016 +0100
+
+    zynq: add gpio, i2c and vdma drivers
+
+commit 2e7bb650dce72842cd46b90638467baddaee2d3f
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Thu Mar 24 14:52:10 2016 +0100
+
+    zynq: add specs for zynq-based boards
+    
+    - zynq_parallella
+    - zynq_zedboard
+    - zynq_zc706
+    - zynq_zc702
+
+
+Tools and build system
+######################
+
+Build system
+============
+
+; @nfeske
+
+commit a15a86b02485bbde78163559552784dc42fb38ac
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue May 17 20:28:44 2016 +0200
+
+    Build-system support for building a single library
+    
+    This patch equips the build system with the feature of building an
+    individual library with its dependencies by specifying the library
+    as 'LIB' argument. E.g., 'make LIB=libc' builds the libc.
+
+
+Removal of stale features
+#########################
+
+; @nfeske
+
+commit 5dec689b6d25a93300c3a0dbafe5e2dbc6f9ee42
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sun Jun 26 19:46:48 2016 +0200
+
+    remove server/tar_fs
+    
+    Tar_fs is superseded by the vfs server.
+    
+    Fixes #2024
+
+
