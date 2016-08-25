@@ -15,356 +15,54 @@
 Interactive and dynamic workloads on top of the seL4 kernel
 ###########################################################
 
-; @alexab
-
-commit af93f8d01ba2089f05c801d8b745dc4c3990682a
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jun 17 15:15:48 2016 +0200
-
-    sel4: update to 3.1.0
-    
-    - adjust syscall bindings to support -fPIC
-    - read serial i/o ports from BIOS data area
-    - use autoconf.h provided by sel4
-    -- to avoid ambiguity between sel4 kernel and user libraries
-    -- remove manual set defines
-    - remove debug messages
-    - increase user virtual area to 3GB
-    
-    Issue #1720
-    Issue #2044
-
-commit 0ccb07f008578ed64b08ea44bbbae4b9b3d47893
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 22 11:35:41 2016 +0200
-
-    sel4: add "norelocate" option to bender
-    
-    Issue #2044
-
-commit 46cb20e2c08b4a6dbad879c14690766c29449e94
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jun 28 14:45:49 2016 +0200
-
-    sel4: add io_port service to core
-    
-    Fixes #1718
-    Issue #2044
-
-commit 93e2eecc524587bc46bf6a02313fcc660d4cb069
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 29 23:06:22 2016 +0200
-
-    sel4: add irq support
-    
-    Fixes #1718
-    Issue #2044
-
-commit e89b28ca1b275d7c281cafe49e3bb52daf0d72da
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 29 15:22:08 2016 +0200
-
-    sel4: add signal support
-    
-    Fixes #1716
-    Issue #2044
-
-commit c68bca1f8939294b95f0ad38593fbfad79209c79
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jun 28 13:58:20 2016 +0200
-
-    sel4: enable PIT timer and PS/2 input
-    
-    Issue #2044
-
-commit 43f2784564af9a32b71f42fbff49ffdac0aeba83
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 29 17:04:05 2016 +0200
-
-    sel4: initialize rcv_sel for ep threads
-    
-    Issue #2044
-
-commit 7501910c998ab7ae400c8a684af79ad742a433b4
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 29 16:23:52 2016 +0200
-
-    sel4: implement ipc_reply
-    
-    Issue #2044
-
-commit b5ff55246087239bcecbde958dca38679436814e
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 15 11:05:09 2016 +0200
-
-    base: extend core_mem_alloc free by phys_addr
-    
-    required by base-sel4 to turn used page frames back to untyped memory
-    
-    Issue #2044
-
-commit 2aaeb8db1b4d26be6e18cd7702f83e498b7719b0
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jul 13 13:33:10 2016 +0200
-
-    sel4: convert frame pages back to untyped memory
-    
-    to implement _revoke_ram_ds and to fix _unmap_local
-    
-    Issue #2044
-
-commit 73e35cdf6aed6e665317436d57bb81f9b310038c
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jun 30 17:33:22 2016 +0200
-
-    sel4: handle threads in destruction
-    
-    - revoke utcb
-    - suspend thread before destruction, less noise during destruction
-    
-    Issue #2044
-
-commit a396fa95638627e30fcd7a63b378695a3347d68e
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jul 4 09:19:52 2016 +0200
-
-    sel4: support up to 16K capabilities per pd
-    
-    before we had 256 capabilities
-    
-    Issue #2044
-
-commit 5b9a61fcb99815c0e82d97fb9a6a237679311a6b
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jul 4 14:49:32 2016 +0200
-
-    sel4: properly detach core local regions
-    
-    Issue #2044
-
-commit 821afd0199b756ffb5b79bad4fc3584963f220a9
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jun 30 17:34:24 2016 +0200
-
-    sel4: support device memory for drivers
-    
-    Additionally, exclude boot-module from page_table_registry. Core does not use
-    the boot-modules inside core.
-    
-    Adding it otherwise to the registry will use up the meta data allocator of
-    the page_table_registry in core in scenarios with lot of boot modules,
-    e.g. noux and friends.
-    
-    Issue #2044
-
-commit 99b8fc4408c98b11528eb5159c53c60c76452dcb
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 5 15:58:46 2016 +0200
-
-    sel4: enable vesa driver
-    
-    kernel : add required and reserved boot regions to device memory
-    
-    Issue #2044
-
-commit 3a9c6eab17511aac84a90c8bbc97b538728f081f
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jul 7 13:49:35 2016 +0200
-
-    sel4: use first free cap index reported by kernel
-    
-    required to bootstrap scenarios with more rom binaries, e.g. noux
-    
-    Issue #2044
-
-commit 90390fe053b91cdd5f765c6720892eb7f49c30b3
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 8 12:54:17 2016 +0200
-
-    sel4: increase root cnode size in kernel
-    
-    required to boot setups like noux*
-    
-    Issue #2044
-
-commit 998dfa6c5ee237b7cfdc4d716abbf96bb21b4c83
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 8 13:44:52 2016 +0200
-
-    sel4: flush page table allocator if full
-    
-    Issue #2044
-
-commit 253f2aef0f928e24d80cffb1d67bf7b0f2979170
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 8 14:03:43 2016 +0200
-
-    sel4: show pd name if flushing page table
-    
-    Issue #2044
-
-commit 738ca741665adc2367fd88c2d37cecd6f11dc8ff
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jul 13 11:50:26 2016 +0200
-
-    sel4: clear dataspace page wise
-    
-    Creating mappings inside core may exhaust the internal allocators
-    if very large dataspaces must be cleared.
-    
-    Issue #2044
-
-commit 657dd5faadff179a6bed837374613d68a33ae443
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 8 16:38:48 2016 +0200
-
-    sel4: support region fault manager outside core
-    
-    rm_fault.run works
-    
-    Issue #2044
-
-commit 4d10a284116be8da32b0eacc2a706ed601eb27dc
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 12 18:14:24 2016 +0200
-
-    sel4: disable large mappings for device memory
-    
-    Issue #2044
-
-commit ad7748592a9df98fdd5eb83d10a3f2ee98fc90bc
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 12 17:41:41 2016 +0200
-
-    sel4: keep boot info in core's virt address space
-    
-    Issue #2044
-
-commit b0c3427ed459e5168190e81dee3ce55c798018f2
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jul 13 16:03:21 2016 +0200
-
-    sel4: handle platform_pd destruction
-    
-    Issue #2044
-
-commit c4ed38cfbc758551e5f4c6d33aff673a361a438d
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 15 13:44:40 2016 +0200
-
-    sel4: fix vm_space has_page_table_at
-    
-    Issue #2044
-
-commit 9c8676b2aebca077e2019d983dfbf6149e55cc8c
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 15 15:54:07 2016 +0200
-
-    sel4: add revoke option to destruct cnode
-    
-    Issue #2044
-
-commit c4c797916388a76531ca1a2ae6993832c8808b44
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 15 18:43:37 2016 +0200
-
-    sel4: quirk for vanishing page table
-    
-    Issue #2044
-
-commit 198475b6b365a89546cd23fa8cf3a008b09252a5
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jul 18 11:04:42 2016 +0200
-
-    sel4: startup lib reinit support
-    
-    required for noux
-    
-    Issue #2044
-
-commit 155621767a3721a5ace82bc5a011cbda657865cc
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 19 13:55:59 2016 +0200
-
-    sel4: limit mp_server.run to 1 cpu for sel4
-    
-    Issue #2044
-
-commit 997f5e8e27a066714ab0b0d5760fa6fb3ef2f179
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 19 19:39:58 2016 +0200
-
-    sel4: implement thread suspend/pause/resume
-    
-    Issue #2044
-
-commit 1472c0629bdc62d082804d50650cd51ffb427c5e
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 19 21:05:30 2016 +0200
-
-    sel4: allocate thread selectors during bind_thread
-    
-    That seems nowadays the right place in order to tell the caller that the
-    thread couldn't be completely constructed. The return value false of
-    bind_thread causes in Cpu_thread_component the throwing of
-    Thread_creation_failed.
-    
-    thread.run now passes
-    pthread.run now passes
-    
-    Issue #2044
-
-commit bee0e110492f00d0521d70c9fcaa1308dba97df6
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jul 20 12:02:23 2016 +0200
-
-    sel4: use notification objects for Genode::Lock
-    
-    Fixes #1717
-    Issue #2044
-
-commit b2a8cfde85257c140cf345f5fe5f414a818c4eff
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jul 21 11:58:46 2016 +0200
-
-    sel4: avoid corruption during ipc marshalling
-    
-    Issue #2044
-
-commit 356e6498b6d5d3c065a17caf8e2f3addd662719b
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jul 21 14:40:16 2016 +0200
-
-    sel4: update to 3.2.0
-    
-    - disable iommu
-    - increase root_cnode further for native boot
-    - support vesa driver on native hardware
-    - don't mask edge triggered ioapic irqs
-    - increase various allocators to get noux_tool_chain_* booting natively
-    
-    Issue #2044
-
-commit b57c33159f1e64ee7f655d535bd788fb514b6105
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 22 15:50:03 2016 +0200
-
-    sel4: improve allocation in initial_untyped_pool
-    
-    Required to boot on hardware. The fragmentation is such unfortunate with the
-    old allocator that alloc() will throw an exception during very early core boot
-    phase.
-    
-    Issue #2044
-
-commit 99880898620f9e7630d26bf9e61287c1516f122d
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jul 25 14:44:36 2016 +0200
-
-    sel4: workaround deadlock in core
-    
-    Issue #2044
-
+seL4 is a modern microkernel that undergoes verification and promises to be
+a well foundation for trustworthy systems. Genode, as operating system
+framework, on top of a microkernel pursues goals of the same direction.
+Therefore we added already basic Genode/seL4 platform support in the last
+releases. Additionally Genode
+contributes highly dynamic workloads to the seL4 community, which up to
+now focuses on static loads. With over hundred ready-to-use
+components, Genode provides a rich pool of building blocks, starting from
+native device drivers, resource multiplexer, protocol stacks,
+application frameworks (e.g. Qt) and applications (e.g. web browser Arora).
+
+The experimental support, until now, was sufficient to showcase the potential
+of the combination - admittedly mainly to technical enthusiasts. With this
+release we rump up the platform support of Genode/seL4 to a degree that most
+interactive and dynamic workloads of Genode can be executed.
+
+With this release we updated to the seL4 version 3.2.0 and enabled all
+available time-tested x86 Genode drivers for seL4. The main working items has
+been the implementation of the IRQ session, IOPORT session, IOMEM session and
+SIGNAL session support and the lifetime management (freeing) of resources
+in core for seL4.
+
+Finally we tested our setups on Qemu and on native x86 hardware and are
+happy to report that the following drivers are available for Genode/seL4,
+namely the PIT timer, PS/2, USB, AHCI, ACPI driver, VESA driver,
+Audio driver, Intel Wifi card driver and Intel Graphics driver. All automated
+test scenarios are now successfully executed nightly on Qemu and on native
+hardware as done for all supported x86 kernels.
+
+Minor adjustments and patches to the seL4 kernel have been necessary, which
+we are contributing back to the seL4 kernel community currently. The changes
+comprise device memory required by ACPI, VESA and Intel graphic, comprise
+the IRQ IOAPIC handling and the syscall bindings. As Genode uses shared
+libraries, the syscall bindings must be able to be compiled position
+independent. The extension to read ot the I/O ports for the serial
+cards via the BIOS data area already upstream on seL4.
+
+Still, some working items for Genode/seL4 remain for the future, namely:
+- message signaled interrupt (MSI) support
+- multi processor support
+- Genode capability integrity support
+- incomplete Genode capability lifetime management, e.g. freeing of selectors
+- thread priorities
+- IOMMU support
+- VirtualMachineMonitor (VMM) support
+
+Additionally, some allocators for memory and capabilities in Genode/seL4 are
+statically chosen which will not fit every x86 machine with lot of memory.
 
 Virtual networking and transparent support for TOR
 ##################################################
@@ -625,19 +323,21 @@ collaboration!
 Experimental version of VirtualBox 5 for NOVA
 =============================================
 
-; @alexab
+We experimented with upgrading our VirtualBox 4 port to some newer VirtualBox
+5 version to keep close to the current developments of VirtualBox.
+Additionally, we tried with our experimental port of VirtualBox 5 to reduce
+the Genode specific patches by using most of the original PGM source code
+(Page Manager and Monitor). One major benefit using the original code is that
+it became now feasible to enable the IEM component of Virtualbox, a
+instruction emulator developed by Virtualbox, that has less overhead than
+the REM (Recompiled Execution Monitor) component that is based partially on
+Qemu sources.
 
-commit 1bcabdc6c99710d64faa51ce8b1aab21c5fe2fe3
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Aug 15 12:27:54 2016 +0200
-
-    vmm: experimental virtualbox 5 support
-    
-    The main feature for this version upgrade is the use of the instruction
-    emulator (IEM) to speed up execution and less often the slow recompiler.
-    
-    issue #2059
-
+The current state is sufficient to run Windows 7 32bit VMs on Genode/Nova
+64bit. Since the port is still incomplete, largely untested for other VMs and
+avoid trouble with the newly added Virtualbox4 Genode/Muen support, we
+decided to make this port available as separate VMM beside the VirtualBox 4
+VMM and the Seoul VMM on Genode/Nova.
 
 Functional enhancements
 =======================
@@ -835,16 +535,39 @@ Date:   Wed Mar 9 15:06:42 2016 +0100
 Configurable mapping of ACPI events to input events
 ===================================================
 
-; @alexab
+With the last release we added support for detection of dynamic ACPI stat changes
+like some Fn * keys, Lid close/open and battery status information.
+Unfortunately, not all state changes are reported the same way on various
+notebooks, e.g. Fn * keys may get reported as ordinary PS/2 input events, or
+are reported via the Embedded controller. Lid close/open changes may be reported
+by a ACPI Lid event or by the embedded controller.
 
-commit 7556663e7ef9d39368de0a4a57ac9eb41219a7f9
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jun 16 11:34:57 2016 +0200
+To be able to handle those different event sources uniformly in Genode
+applications, we added a component which transforms ACPI events to Genode
+input session events. The component is located in
+repos/libports/server/acpi_input and can be configured as shown below:
 
-    acpi_input: transform ACPI events to Genode input
-    
-    Issue #1962
+! <start name="acpi_input">
+!  <resource name="RAM" quantum="1M"/>
+!   <provides><service name="Input"/></provides>
+!   <config>
+!   <!-- example mapping - adapt to your target notebook !!! -->
+!   <!-- as="PRESS_RELEASE" is default if nothing specified -->
+!   <map acpi="ec"      value="25"      to_key="KEY_VENDOR"/>
+!   <map acpi="ec"      value="20"      to_key="KEY_BRIGHTNESSUP"/>
+!   <map acpi="ec"      value="21"      to_key="KEY_BRIGHTNESSDOWN"/>
+!   <map acpi="fixed"   value="0"       to_key="KEY_POWER"  as="PRESS_RELEASE"/>
+!   <map acpi="lid"     value="CLOSED"  to_key="KEY_SLEEP"  as="PRESS"/>
+!   <map acpi="lid"     value="OPEN"    to_key="KEY_SLEEP"  as="RELEASE"/>
+!   <map acpi="ac"      value="ONLINE"  to_key="KEY_WAKEUP"/>
+!   <map acpi="ac"      value="OFFLINE" to_key="KEY_SLEEP"/>
+!   <map acpi="battery" value="0"       to_key="KEY_BATTERY"/>
 
+The ACPI event source can be the embedded controller (ec), a fixed ACPI event
+(fixed), the notebook lid (lid), a ACPI battery (battery) or the ACPI
+alternating current (ac) status. The value of the event source can be
+mapped to a Genode input session key as either a a single press or release
+input event or as both.
 
 Improved RAM-based pseudo block device
 ======================================
