@@ -878,64 +878,36 @@ Date:   Tue Jul 5 11:40:26 2016 +0200
     Fixes #2031.
 
 
-Framebuffer scaler
-==================
+Utility servers for base services
+=================================
 
-; @emery
+Four new servers were added to the world repository. These so-called "shim servers" do
+not provide services by themselves but are intended to be imposed between clients and
+full-fledged servers to provide some extra functionality. They are summarized here and
+each is accompanied with README in the world repository.
 
-commit bf93d7a9f07ed46bc62ab0c0595df50427d81bca
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Tue Aug 16 08:01:06 2016 +0200
+The rom_fallback server was created for scenarios where a system is expected
+to be populated with new components in a dynamic and intuitive way. ROM requests
+that arrive at rom_fallback are forward through a list of possible routes and the first
+successfully opened session is returned. Example use would be to fetch objects remotely
+that are not present initially using the tftp_rom server, or in the future to override
+objects provided by a package manager with local versions.
 
-    server/fb_upscale: sever to scale up small framebuffers
-    
-    Fixes #29
+When using the framework as a primary operating system there is a need to view log
+information both in real-time and retrospectively without the aid of an external host.
+The new log_tee server can be used to duplicate and reroute log streams at arbitrary
+points in the component tree. This allows information to be simultaneously directed
+on-screen and to local storage as an example.
 
-
-Duplication of LOG streams
-==========================
-
-; @emery
-
-commit 3c25710f431fd9b5d44f2c4c30aa9a821d7ce501
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Thu Jul 28 20:56:36 2016 +0200
-
-    server/log_tee: shim to duplicate log streams
-    
-    Fixes #28
-
-
-ROM fallback service
-====================
-
-; @emery
-
-commit 3af80e2d888a1da0d34b54b7bc8d1a65045a2018
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Thu Jul 21 13:44:17 2016 +0200
-
-    new server 'rom_fallback'
-    
-    Forwards a ROM ssesion request to a list of label prefixes.
-    
-    Fixes #26
-
-
-Input remapper
-==============
-
-; @emery
-
-commit 1e0fa7571c7fb7f4e6673b8e2458e204cd4f2889
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sat Jul 16 11:26:20 2016 +0200
-
-    server/input_remap
-    
-    General purpose component for remapping input codes.
-    
-    Fixes #25
+The remaining two were creating with emulated gaming in mind, input_remap and fb_upscale.
+Hardware emulators for gaming are typically provide local facilities for customizing
+input and scaling and shading graphics. A componentized architecture allows these tasks
+to performed externally for greater flexibility. The input_remap server modifies input
+events to remap keys and buttons. This allows emulation to target only an idealized set
+of controller inputs without compromising the users ability to remap. It is equally suited
+to adjusting keyboard layouts. The fb_upscale server enlarges a small client framebuffer
+to a larger, modern display. This encourages emulation to focus on pixel-accurate output
+rather than account for personal preference in the final render.
 
 
 Libraries and applications
@@ -983,15 +955,11 @@ Date:   Mon Apr 25 12:58:03 2016 +0200
 File-downloading component based on libcurl
 ===========================================
 
-; @emery
-
-commit 04c42f34bc67a628189de6d72167ce536cd4a4e7
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Tue Jul 5 17:45:46 2016 +0200
-
-    app/fetchurl: libcURL frontend
-    
-    Fixes #19
+A native frontend to the curl library was crafted, fetuchurl.
+This utility is intended as a source or package management
+primative. As a warning, it sidesteps verification of transport
+layer security and is expected to be used where content can be
+verified out-of-band.
 
 
 RISC-V front-end server
