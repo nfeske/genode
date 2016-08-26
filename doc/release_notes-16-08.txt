@@ -339,6 +339,7 @@ avoid trouble with the newly added Virtualbox4 Genode/Muen support, we
 decided to make this port available as separate VMM beside the VirtualBox 4
 VMM and the Seoul VMM on Genode/Nova.
 
+
 Functional enhancements
 =======================
 
@@ -497,6 +498,8 @@ Low-level OS infrastructure
 Network-transparent ROM sessions to a remote Genode system
 ==========================================================
 
+[image remote_rom]
+
 ; @valivalpas
 
 commit 2687de237690e53ea4c756afea45a4779fc550c7
@@ -510,6 +513,8 @@ Date:   Tue Jul 5 11:51:45 2016 +0200
 
 Statistical profiling
 =====================
+
+[image cpu_sampler]
 
 ; @cproc
 
@@ -562,43 +567,13 @@ repos/libports/server/acpi_input and can be configured as shown below:
 !   <map acpi="ac"      value="ONLINE"  to_key="KEY_WAKEUP"/>
 !   <map acpi="ac"      value="OFFLINE" to_key="KEY_SLEEP"/>
 !   <map acpi="battery" value="0"       to_key="KEY_BATTERY"/>
+! ...
 
 The ACPI event source can be the embedded controller (ec), a fixed ACPI event
 (fixed), the notebook lid (lid), a ACPI battery (battery) or the ACPI
 alternating current (ac) status. The value of the event source can be
 mapped to a Genode input session key as either a a single press or release
 input event or as both.
-
-Improved RAM-based pseudo block device
-======================================
-
-; @cnuke
-
-commit c25c4e34118cee24b3d1f5ffe4416fe161143ce0
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue Jul 5 11:40:26 2016 +0200
-
-    ram_blk: transition to the new base API
-    
-    In addition to modernizing the component now also supports using
-    empty RAM dataspace as backing store.
-    
-    For example to use an ISO file the component has to be configured
-    as follows:
-    
-    ! <config file="image.iso" block_size="2048"/>
-    
-    To use a empty RAM dataspace that is 256MiB large and has a block
-    size of 4KiB the configuration looks like this:
-    
-    ! <config size="256M" block_size="4096"/>
-    
-    Either 'size' or 'file' has to specified. If both are declared the
-    'file' attribute is soley evaluated.
-    
-    Issue #1987.
-    
-    Fixes #2031.
 
 
 Utility servers for base services
@@ -678,9 +653,15 @@ Date:   Mon Apr 25 12:58:03 2016 +0200
 File-downloading component based on libcurl
 ===========================================
 
-A native frontend to the curl library was crafted, fetuchurl.
+A native front end to the curl library was crafted, _fetchurl_.
 This utility is intended as a source or package management
-primative. As a warning, it sidesteps verification of transport
+primitive.
+
+:Fetchurl at the Genode-World repository:
+
+  [https://github.com/genodelabs/genode-world/tree/master/src/app/fetchurl]
+
+As a warning, fetchurl sidesteps the verification of transport
 layer security and is expected to be used where content can be
 verified out-of-band.
 
@@ -688,15 +669,30 @@ verified out-of-band.
 RISC-V front-end server
 =======================
 
-; @nfeske
+In version
+[http://genode.org/documentation/release-notes/16.02#New_support_for_the_RISC-V_CPU_architecture - 16.02],
+Genode gained support for the RISC-V CPU architecture. Genode can be
+executed on either a simulator or a synthesized FPGA softcore, e.g., on Xilinx
+Zynq FPGAs. On the latter platform, the RISC-V core is a secondary CPU that
+accompanies an ARM core built-in in the FPGA. The ARM core usually run a Linux
+system. The Linux system interacts with the RISC-V system via a so-called
+front-end server, which allows the management of the RISC-V core and the
+retrieval of log output.
 
-commit 7f61d9a84a289ca469be7063c278673ea542b583
-Author: Menno Valkema <menno.valkema@nlcsl.com>
-Date:   Mon Jun 27 09:43:40 2016 +0200
+Thanks to the added Zynq support described in Section
+[Execution on bare Zynq hardware (base-hw)], is is possible to run Genode
+on the ARM core of Zynq FPGAs as well. So a single Zynq FPGA can effectively
+host two Genode systems at the same time, one running on a RISC-V softcore CPU
+and one running on ARM. A ported version of the RISC-V front-end server
+enables the ARM-based Genode system to interact with the RISC-V-based Genode
+system. This scenario is described in detail in the README file of the port:
 
-    Added fesrv port
-    
-    Fixes #18
+:RISC-V front-end server at the Genode-world repository:
+
+  [https://github.com/genodelabs/genode-world/tree/master/src/app/fesrv]
+
+Thanks to Menno Valkema of [https://nlcsl.com/ - NLCSL] for contributing
+this line of work!
 
 
 Platforms
@@ -705,78 +701,53 @@ Platforms
 Binary compatibility across all supported kernels
 =================================================
 
-; @nfeske
+Since its inception, Genode provides a uniform API that abstracts from the
+underlying kernel. This way a component developed once for one kernel can be
+easily re-targeted to other kernels by mere re-compilation. With version
+16.08, we go even a step further: Dynamically linked executables and libraries
+have become kernel-agnostic. That means that a single binary is able to run on
+various kernels with no recompilation needed.
 
-commit f7bdd383e22797caa21233c42782c807794fb831
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Jun 13 13:53:58 2016 +0200
+To make this possible, two steps were needed:
 
-    Remove base/native_types.h headers
-    
-    Issue #1993
+* The Genode ABI - the binary interface provided by Genode's dynamic
+  linker - had to become void of any kernel specifics. The kernel-specific
+  code had to become completely encapsulated within the dynamic linker
+  and Genode's core component.
 
-commit d71f0a960621e6aa302486721ddbfdf1fa9deb9b
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Jun 13 15:14:32 2016 +0200
+* The Genode API - the header files as included by components during
+  their compilation - must not reveal any types or interfaces of a
+  specific kernel. The representation of all Genode types had to be
+  generalized.
 
-    Cleanup of parent-cap handling
-    
-    This patch alleviates the need for a Native_capability::Dst at the API
-    level. The former use case of this type as argument to
-    Deprecated_env::reinit uses the opaque Native_capability::Raw type
-    instead. The 'Raw' type contains the portion of the capability that is
-    transferred as-is when delegating the capability (i.e., when installing
-    the parent capability into a new component, or when installing a new
-    parent capability into a new forked Noux process). This information can
-    be retrieved via the new Native_capability::raw method.
-    
-    Furthermore, this patch moves the functions for retriving the parent
-    capability to base/internal/parent_cap.h, which is meant to be
-    implemented in platform-specific ways. It replaces the former set of
-    startup/internal/_main_parent_cap.h headers.
-    
-    Issue #1993
+This effort required us to form a holistic view of the kernel interfaces
+of all 8 kernels supported by Genode, which made the topic very
+challenging and exciting. The biggest stumbling blocks were the parts
+of the API that were traditionally mapped directly to kernel-specific data
+types, in particular the representation of capabilities.
+The generalized capability type is based on the version originally developed
+for base-sel4. All traditional L4 kernels and Linux use the same
+implementation of the capability-lifetime management. On base-hw, NOVA,
+Fiasco.OC, and seL4, custom implementations (based on their original
+mechanisms) are used, with the potential to unify them further in the
+future.
 
-commit 88b358c5efde4754f7e2db898b0b459b3201c97e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jun 15 15:04:54 2016 +0200
+At the current stage, all dynamically linked programs (such as any program
+that use the C library) are no longer tied of a specific kernel but can
+be directly executed on any kernel supported by Genode. E.g., a Qt5
+application - once built for Genode - can be run directly on Linux and seL4
+with no recompilation needed. This paves the ground for the efficient
+implementation of binary packages in the near future.
 
-    Unification of native_capability.h
-    
-    This patch establishes the sole use of generic headers across all
-    kernels. The common 'native_capability.h' is based on the version of
-    base-sel4. All traditional L4 kernels and Linux use the same
-    implementation of the capability-lifetime management. On base-hw, NOVA,
-    Fiasco.OC, and seL4, custom implementations (based on their original
-    mechanisms) are used, with the potential to unify them further in the
-    future.
-    
-    This change achieves binary compatibility of dynamically linked programs
-    across all kernels.
-    
-    Furthermore, the patch introduces a Native_capability::print method,
-    which allows the easy output of the kernel-specific capability
-    representation using the base/log.h API.
-    
-    Issue #1993
-
-commit 62d65d00e0da1343c67f61bb4d0f46f971b53bbd
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jul 12 16:33:18 2016 +0200
-
-    Remove signal-source headers from public API
-    
-    Those headers implement a platform-specific mechanism. They are never
-    used by components directly.
-    
-    This patch also cleans up a few other remaining platform-specific
-    artifact such as the Fiasco.OC-specific assert.h.
-    
-    Issue #1993
+It is still possible to create kernel-specific components that leverage
+certain kernel features that are not accessible through Genode's API. For
+example, our version of VirtualBox facilitates the direct use of the kernel.
+Or Genode's set of pseudo device drivers for Linux interact directly with the
+Linux kernel. But those components are rare exceptions.
 
 
-Execution on bare hardware (base-hw)
-====================================
+Execution on bare Zynq hardware (base-hw)
+=========================================
 
 ; @valivalpas
 
@@ -804,38 +775,10 @@ Date:   Thu Mar 24 14:52:10 2016 +0100
     - zynq_zc702
 
 
-Tools and build system
-######################
-
-Build system
-============
-
-; @nfeske
-
-commit a15a86b02485bbde78163559552784dc42fb38ac
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue May 17 20:28:44 2016 +0200
-
-    Build-system support for building a single library
-    
-    This patch equips the build system with the feature of building an
-    individual library with its dependencies by specifying the library
-    as 'LIB' argument. E.g., 'make LIB=libc' builds the libc.
-
-
 Removal of stale features
 #########################
 
-; @nfeske
-
-commit 5dec689b6d25a93300c3a0dbafe5e2dbc6f9ee42
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sun Jun 26 19:46:48 2016 +0200
-
-    remove server/tar_fs
-    
-    Tar_fs is superseded by the vfs server.
-    
-    Fixes #2024
+We removed the *tar_fs* server because it is superseded by the VFS server
+with its built-in support for mounting TAR archives.
 
 
