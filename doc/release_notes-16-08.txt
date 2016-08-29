@@ -352,39 +352,27 @@ Date:   Wed Jun 8 20:15:27 2016 +0200
     
     Fixes #2006
 
-commit 761db4bc73cf3a5d103f437bde0b39aed7095f9a
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon Jun 27 17:04:34 2016 +0200
+Configuration option to enable the virtual XHCI controller
+----------------------------------------------------------
 
-    vbox: config option for the virtual XHCI controller
-    
-    This commit adds the VirtualBox configuration option
-    
-    <config xhci="yes">
-    
-    to enable the virtual XHCI controller.
-    
-    Fixes #2028
+The virtual XHCI controller, which is used for passing through host USB devices
+to a VM, is now disabled by default and can be enabled with the new
 
-commit 22e908e8014cda9a02af72ae11278d2bd7ae94a6
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon Jun 27 14:38:43 2016 +0200
+! <config xhci="yes">
 
-    vbox: add config option to enforce use of IOAPIC
-    
-    The virtual PCI model delivers IRQs to the PIC by default and to the
-    IOAPIC only if the guest operating system selected the IOAPIC with the
-    '_PIC' ACPI method and if it called the '_PRT' ACPI method afterwards.
-    When running a guest operating system which uses the IOAPIC, but does
-    not call these ACPI methods (for example Genode/NOVA), the new
-    configuration option
-    
-    <config force_ioapic="yes">
-    
-    enforces the delivery of PCI IRQs to the IOAPIC.
-    
-    Fixes #2029
+configuration option.
 
+Configuration option to enforce the use of the IOAPIC
+-----------------------------------------------------
+
+The virtual PCI model delivers IRQs to the PIC by default and to the IOAPIC
+only if the guest operating system selected the IOAPIC via ACPI method calls.
+When running a guest operating system which uses the IOAPIC, but does not call
+these ACPI methods (for example Genode on NOVA), the new configuration option
+    
+! <config force_ioapic="yes">
+    
+enforces the delivery of PCI IRQs to the IOAPIC.
 
 Base framework
 ##############
