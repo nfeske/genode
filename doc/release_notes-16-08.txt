@@ -94,14 +94,12 @@ Our initial plan when we started our work on Genode was to leverage its
 VirtualBox support as a means to run Windows on Muen. As a first step we ported
 the base-hw kernel, then ARM-only, to the 64-bit Intel architecture. The
 resulting hw_x86_64 platform was included in the
-[https://genode.org/documentation/release-notes/15.05#Principal_support_for_the_64-bit_x86_architecture
-- 15.05 release].
+[https://genode.org/documentation/release-notes/15.05#Principal_support_for_the_64-bit_x86_architecture - 15.05 release].
 
 Building on top of 'hw_x86_64' we then implemented support for running the
 base-hw kernel as guest on the Muen SK. As the porting work progressed quite
 quickly, this line of work was part of Genode
-[https://genode.org/documentation/release-notes/15.08#Genode_on_top_of_the_Muen_Separation_Kernel
-- 15.08].
+[https://genode.org/documentation/release-notes/15.08#Genode_on_top_of_the_Muen_Separation_Kernel - 15.08].
 
 Having laid the groundwork we could then tackle the task we initially set out
 to do.
@@ -330,15 +328,18 @@ Additionally, we tried with our experimental port of VirtualBox 5 to reduce
 the Genode specific patches by using most of the original PGM source code
 (Page Manager and Monitor). One major benefit using the original code is that
 it became now feasible to enable the IEM component of Virtualbox, a
-instruction emulator developed by Virtualbox, that has less overhead than
+instruction emulator developed by VirtualBox, that has less overhead than
 the REM (Recompiled Execution Monitor) component that is based partially on
 Qemu sources.
 
-The current state is sufficient to run Windows 7 32bit VMs on Genode/Nova
+The current state is sufficient to run Windows 7 32bit VMs on Genode/NOVA
 64bit. Since the port is still incomplete, largely untested for other VMs and
 avoid trouble with the newly added Virtualbox4 Genode/Muen support, we
 decided to make this port available as separate VMM beside the VirtualBox 4
 VMM and the Seoul VMM on Genode/Nova.
+
+To test-drive VirtualBox 5 on NOVA, please refer to the run script at
+_ports/run/vbox_auto_win7_vbox5.run_.
 
 
 Functional enhancements
@@ -587,19 +588,22 @@ Statistical profiling
 Init configuration changes
 ==========================
 
-; @nfeske
+We refined the label-based server-side policy-selection mechanism introduced in
+[http://genode.org/documentation/release-notes/15.11#Label-dependent_session_routing - version 15.11]
+to limit the damage of spelling mistakes in manually crafted configuration.
+I.e., consider the following policy of a file-system server with a misspelled
+'label_prefix' attribute:
 
-commit 877676c29f6071eb97103c1112df681e937d679d
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Mar 9 15:06:42 2016 +0100
+! <policy prefix_label="trusted_client" root="/" writeable="yes" />
 
-    Make label-based policy selection more strict
-    
-    A configuration policy must match against a policy node label,
-    label_prefix, or label_suffix atttribute. A fallback to
-    <default-policy/> is provided as a label wildcard.
-    
-    Fixes #1901
+Because the file-system server does not find any of the 'label',
+'label_prefix', or 'label_suffix' attributes, it would conclude that this
+policy is a default policy, which is certainly against the intention of policy
+writer. We now enforce the presence of at least one of those attributes. An
+all-matching policy can be explicitly expressed by a new '<default-policy>'
+node, which is intuitively clear. When editing a configuration by hand, one
+would need to take a deliberate effort to specify such a policy. A spelling
+mistake would remain without effect.
 
 
 Configurable mapping of ACPI events to input events
