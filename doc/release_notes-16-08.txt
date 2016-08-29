@@ -470,20 +470,20 @@ Date:   Wed Jul 13 19:07:09 2016 +0200
 Revised utilities for the handling of session labels
 ====================================================
 
-; @nfeske  !!! note the API incomptibility !!!
+We changed the construction argument of the 'Session_label' to make it
+more flexible to use. Originally, the class took an entire session-argument
+string as argument and extracted the label portion. The new version takes
+the verbatim label as argument. The extraction of the label from an argument
+string must be manually done via function 'label_from_args' now. This way,
+the label operations become self-descriptive in the code. At the same time,
+this change will ease our plan to eventually abandon the ancient session-argument
+syntax.
 
-commit f8337b511b83da81cd1e4fa7b6377f4c06856dbd
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Tue Jan 12 14:11:58 2016 +0100
-
-    Move Session_label from os to base
-    
-    Session_label constructor now takes a bare string rather than a
-    serialized argument buffer.
-    Replace all instances of previous constructor with 'label_from_args'
-    function.
-    
-    Issue #1787
+Note that this *API change* effects the semantics of existing code but
+unfortunately does not trigger a compile error for components that rely on the
+original meaning! Of course, we updated all mainline Genode components. But
+custom components outside the Genode source tree should be revisited with
+respect to the use of the 'Session_label' utility.
 
 
 Low-level OS infrastructure
