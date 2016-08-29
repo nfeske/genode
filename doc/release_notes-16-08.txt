@@ -60,6 +60,7 @@ Still, some working items for Genode/seL4 remain for the future, namely:
 - thread priorities
 - IOMMU support
 - VirtualMachineMonitor (VMM) support
+- usable physical memory must be below a kernel constant named PADDR_TOP (0x1fc00000 ~508 MB)
 
 Additionally, some allocators for memory and capabilities in Genode/seL4 are
 statically chosen which will not fit every x86 machine with lot of memory.
