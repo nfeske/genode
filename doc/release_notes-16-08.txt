@@ -499,17 +499,89 @@ Low-level OS infrastructure
 Network-transparent ROM sessions to a remote Genode system
 ==========================================================
 
+For building Genode-based distributed systems, a communication mechanism is
+required which interconnects multiple Genode devices. As a first step, we added
+proxy components that transparently forward ROM sessions to a remote Genode
+system. As one of the most common session interfaces, this already enables the
+distribution of many existing Genode applications. 
+
 [image remote_rom]
 
-; @valivalpas
+The basic usage scenario comprises two hosts (A and B) that are connected to the
+same networks and are both running the NIC driver. One of the hosts (A) is running
+the application that shall communicate with the ROM service running on the other
+host (B). In order to establish this communication transparently, init is
+configured such that the application component connects to the ROM client proxy,
+which acts as a proxy ROM service. On host B, init is configured such that the
+ROM service proxy connects to the actual ROM service. Both proxy components
+connect to the corresponding NIC driver and use a minimalistic IP-based protocol
+to transport the data and signals of the ROM session. Furthermore, the proxy
+components must be configured with static IP addresses and the module name of
+the ROM session. Optionally, the ROMs can be populated with a default content.
 
-commit 2687de237690e53ea4c756afea45a4779fc550c7
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Tue Jul 5 11:51:45 2016 +0200
+For testing purposes you can use the `rom_logger` as an application and the
+`dynamic_rom` as a ROM service. 
 
-    Add remote_rom proxy component
-    
-    Fixes #20
+!<start name="rom_logger">
+!   <resource name="RAM" quantum="4M"/>
+!   <config rom="remote" />
+!   <route>
+!      <service name="ROM"> <child name="remote_rom_client"/> </service>
+!      <any-service> <parent/> </any-service>
+!   </route>
+!</start>
+!<start name="remote_rom_client">
+!   <resource name="RAM" quantum="8M"/>
+!   <provides><service name="ROM"/></provides>
+!   <config>
+!      <remote_rom name="remote" src="192.168.42.11" dst="192.168.42.10">
+!         <default> <foobar /> </default>
+!      </remote_rom>
+!   </config>
+!</start>
+
+!<start name="dynamic_rom">
+!   <resource name="RAM" quantum="4M"/>
+!   <provides><service name="ROM"/></provides>
+!   <config verbose="yes">
+!      <rom name="remote">
+!         <sleep milliseconds="1000" />
+!         <inline description="disable">
+!            <test enabled="no"/>
+!         </inline>
+!         <sleep milliseconds="5000" />
+!         <inline description="enable">
+!            <test enabled="yes"/>
+!         </inline>
+!         <sleep milliseconds="10000" />
+!         <inline description="finished"/>
+!      </rom>
+!   </config>
+!</start>
+!<start name="remote_rom_server">
+!   <resource name="RAM" quantum="8M"/>
+!   <route>
+!      <service name="ROM"> <child name="dynamic_rom"/> </service>
+!      <any-service> <any-child/> <parent/> </any-service>
+!   </route>
+!   <config>
+!      <remote_rom name="remote" src="192.168.42.10" dst="192.168.42.11">
+!         <default> <foobar /> </default>
+!      </remote_rom>
+!   </config>
+!</start>
+
+Note that the implementation is not fixed to the NIC session or the IP-based
+protocol but is actually intended to be modular and extensible e.g. to use
+arbitrary inter-system communication and existing protocols. In order to achieve
+this, the implementation is split into a ROM-specific part and a backend part.
+The backend is implemented as a library and is used by both the client and
+server proxy. In summary, the client proxy implements the `Rom_receiver_base` 
+and registers an instance at the backend, whereas the server proxy implements
+the `Rom_forwarder_base` and registers it at the backend. You can find the base
+classes in `include/remote_rom/`.
+
+Thanks to Johannes Schlatow for this implementation.
 
 
 Statistical profiling
