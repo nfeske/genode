@@ -16,7 +16,7 @@ Interactive and dynamic workloads on top of the seL4 kernel
 ###########################################################
 
 seL4 is a modern microkernel that undergoes verification and promises to be
-a well foundation for trustworthy systems. Genode, as operating system
+a firm foundation for trustworthy systems. Genode, as operating system
 framework, on top of a microkernel pursues goals of the same direction.
 Therefore we added already basic Genode/seL4 platform support in the last
 releases. Additionally Genode
@@ -739,33 +739,47 @@ Utility servers for base services
 =================================
 
 Four new servers were added to the world repository. These so-called "shim servers" do
-not provide services by themselves but are intended to be imposed between clients and
-full-fledged servers to provide some extra functionality. They are summarized here and
-each is accompanied with README in the world repository.
+not provide services by themselves but are imposed between clients and true servers to
+provide some additional feature.
 
-The rom_fallback server was created for scenarios where a system is expected
+The _rom_fallback_ server was created for scenarios where a system is expected
 to be populated with new components in a dynamic and intuitive way. ROM requests
-that arrive at rom_fallback are forward through a list of possible routes and the first
+that arrive at _rom_fallback_ are forward through a list of possible routes and the first
 successfully opened session is returned. Example use would be to fetch objects remotely
-that are not present initially using the tftp_rom server, or in the future to override
+that are not present initially using a networked ROM server, or in the future to override
 objects provided by a package manager with local versions.
+
+:Rom_fallback at the Genode-World repository:
+
+  [https://github.com/genodelabs/genode-world/tree/master/src/server/rom_fallback]
 
 When using the framework as a primary operating system there is a need to view log
 information both in real-time and retrospectively without the aid of an external host.
-The new log_tee server can be used to duplicate and reroute log streams at arbitrary
+The new _log_tee_ server can be used to duplicate and reroute log streams at arbitrary
 points in the component tree. This allows information to be simultaneously directed
 on-screen and to local storage as an example.
 
-The remaining two were creating with emulated gaming in mind, input_remap and fb_upscale.
-Hardware emulators for gaming are typically provide local facilities for customizing
-input and scaling and shading graphics. A componentized architecture allows these tasks
-to performed externally for greater flexibility. The input_remap server modifies input
-events to remap keys and buttons. This allows emulation to target only an idealized set
-of controller inputs without compromising the users ability to remap. It is equally suited
-to adjusting keyboard layouts. The fb_upscale server enlarges a small client framebuffer
-to a larger, modern display. This encourages emulation to focus on pixel-accurate output
-rather than account for personal preference in the final render.
+:Log_tee at the Genode-World repository:
 
+  [https://github.com/genodelabs/genode-world/tree/master/src/server/log_tee]
+
+Users occasionally need to remap keys and buttons. While traditional operating systems
+provide such facilities with very broad granularity, the _input_remap_ server allows
+arbitary key code remapping between any dedicated input server and client.
+
+:Input_remap at the Genode-World repository:
+
+  [https://github.com/genodelabs/genode-world/tree/master/src/server/input_remap]
+
+When emulating gaming hardware there is often a need to resize original display
+hardware to modern outputs. This is typically implemented in emulation software
+or at worst the entire native display resolution is downgraded to match an original
+output. The _fb_upscale_ server performs scaling of small client framebuffers to
+larger framebuffers servers, isolating this task to a general and reusable component.
+
+:Fb_upscale at the Genode-World repository:
+
+  [https://github.com/genodelabs/genode-world/tree/master/src/server/fb_upscale]
 
 Libraries and applications
 ##########################
