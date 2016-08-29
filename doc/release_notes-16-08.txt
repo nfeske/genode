@@ -344,13 +344,15 @@ VMM and the Seoul VMM on Genode/Nova.
 Functional enhancements
 =======================
 
-commit 4f23e78f108a3521476ad4834c0028bf049d6e5a
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 8 20:15:27 2016 +0200
+Virtual AHCI controller
+-----------------------
 
-    vbox: add AHCI model
-    
-    Fixes #2006
+By adding the device model for the AHCI controller to our version of
+VirtualBox, virtual machines become able to use virtual SATA disks. This way,
+we can benefit from the more efficient virtualization of AHCI compared to IDE
+and - at the same time - Genode's version of VirtualBox becomes more
+interoperable with existing VirtualBox configurations.
+
 
 Configuration option to enable the virtual XHCI controller
 ----------------------------------------------------------
@@ -362,6 +364,7 @@ to a VM, is now disabled by default and can be enabled with the new
 
 configuration option.
 
+
 Configuration option to enforce the use of the IOAPIC
 -----------------------------------------------------
 
@@ -369,10 +372,11 @@ The virtual PCI model delivers IRQs to the PIC by default and to the IOAPIC
 only if the guest operating system selected the IOAPIC via ACPI method calls.
 When running a guest operating system which uses the IOAPIC, but does not call
 these ACPI methods (for example Genode on NOVA), the new configuration option
-    
+
 ! <config force_ioapic="yes">
-    
+
 enforces the delivery of PCI IRQs to the IOAPIC.
+
 
 Base framework
 ##############
