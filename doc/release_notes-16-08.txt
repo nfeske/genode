@@ -501,9 +501,9 @@ Network-transparent ROM sessions to a remote Genode system
 
 For building Genode-based distributed systems, a communication mechanism is
 required which interconnects multiple Genode devices. As a first step, we added
-proxy components that transparently forward ROM sessions to a remote Genode
-system. As one of the most common session interfaces, this already enables the
-distribution of many existing Genode applications. 
+proxy components to the world repository that transparently forward ROM sessions
+to a remote Genode system. As one of the most common session interfaces, this 
+already enables the distribution of many existing Genode applications. 
 
 [image remote_rom]
 
@@ -822,31 +822,28 @@ Linux kernel. But those components are rare exceptions.
 Execution on bare Zynq hardware (base-hw)
 =========================================
 
-; @valivalpas
+Support for zynq-based hardware has been added to the world repository by means
+of additional drivers and spec files. Due to the fact that there is a rather
+large number of zynq-based hardware available, adding these as separate build
+targets to the main repository was not practicable. Instead, we went for the
+approach of adding SPECS for the different boards. Another benefit of this is
+that these can be specified in a separate repository.
 
-commit ecfb4e490408b2735b34191cd0a15a959326ebc6
-Author: Timo Wischer <t.wischer@tu-bs.de>
-Date:   Thu Mar 24 17:27:12 2016 +0100
+When you create the `hw_zynq` build directory, `zynq_qemu` is added to the SPECS
+by default. You can replace this with one of the following in order to run the
+image on actual zynq-based board:
 
-    zynq: add sd_card driver
+* zynq_parallella
+* zynq_zedboard
+* zynq_zc706
+* zynq_zc702
 
-commit 6418f3408283ee17bf8aefcd7346e78b8cc18940
-Author: Mark <albers@ida.ing.tu-bs.de>
-Date:   Thu Mar 24 17:03:20 2016 +0100
+Note that changing the SPECS might require a `make clean`.
 
-    zynq: add gpio, i2c and vdma drivers
+Furthermore, we added driver components for the SD card, GPIO, I2C and Video DMA
+to the world repository.
 
-commit 2e7bb650dce72842cd46b90638467baddaee2d3f
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Thu Mar 24 14:52:10 2016 +0100
-
-    zynq: add specs for zynq-based boards
-    
-    - zynq_parallella
-    - zynq_zedboard
-    - zynq_zc706
-    - zynq_zc702
-
+Thanks to Timo Wischer, Mark Albers and Johannes Schlatow.
 
 Removal of stale features
 #########################
