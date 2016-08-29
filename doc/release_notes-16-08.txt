@@ -683,40 +683,12 @@ Libraries and applications
 Ported 3rd-party software
 =========================
 
-; @nfeske
+The current release introduces the _diffutils_ and _less_ to the Genode's
+runtime environment for Unix software (called Noux).
 
-commit 868bf6c9d0bd367e1fce8df2117f3bf717c3e2e8
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 8 14:35:11 2016 +0200
-
-    noux-pkg: port of diffutils 3.3
-    
-    Fixes #2005
-
-commit b80939cc0a0ed80ba236c8fa831601908525cfc6
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Oct 4 11:33:57 2012 +0200
-
-    Noux: add noux-pkg/less
-    
-    Issue #2014
-
-
-commit 45570065fda39d15a00675371d3be10e9a3ef2c3
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sat Aug 20 21:17:17 2016 +0200
-
-    Port of libxml2
-
-commit 10a42e8c145d3d63df27bcee421f15c25ef912af
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Mon Apr 25 12:58:03 2016 +0200
-
-    Port of mbed TLS
-    
-    Thanks to Menno Valkema for the initial patch.
-    
-    Fixes #17
+Furthermore, the libraries _libxml2_ and _mbed TLS_ were added to the
+[https://github.com/genodelabs/genode-world - Genode-world] repository.
+Thanks to Menno Valkema for the initial port of mbed TLS.
 
 
 File-downloading component based on libcurl
