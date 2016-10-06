@@ -34,9 +34,10 @@ void * Mapped_avl_allocator::map_addr(void * addr)
 
 
 Range_allocator::Alloc_return
-Mapped_mem_allocator::alloc_aligned(size_t size, void **out_addr, int align, addr_t from, addr_t to)
+Mapped_mem_allocator::alloc_aligned(Allocation_size size, void **out_addr,
+                                    int align, addr_t from, addr_t to)
 {
-	size_t page_rounded_size = align_addr(size, get_page_size_log2());
+	size_t page_rounded_size = align_addr(size.value(), get_page_size_log2());
 	void  *phys_addr = 0;
 	align = max((size_t)align, get_page_size_log2());
 

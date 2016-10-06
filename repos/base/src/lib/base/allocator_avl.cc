@@ -196,12 +196,11 @@ void Allocator_avl_base::_revert_allocations_and_ranges()
 }
 
 
-int Allocator_avl_base::add_range(addr_t new_addr, size_t new_size)
+int Allocator_avl_base::add_range(addr_t new_addr, Allocation_size size)
 {
 	Block *b;
 
-	/* sanity check for insane users ;-) */
-	if (!new_size) return -2;
+	size_t new_size = size.value();
 
 	/* check for conflicts with existing blocks */
 	if (_find_by_address(new_addr, new_size, true))
@@ -232,11 +231,8 @@ int Allocator_avl_base::add_range(addr_t new_addr, size_t new_size)
 }
 
 
-int Allocator_avl_base::remove_range(addr_t base, size_t size)
+int Allocator_avl_base::remove_range(addr_t base, Allocation_size const size)
 {
-	/* sanity check for insane users ;-) */
-	if (!size) return -1;
-
 	Block *dst1, *dst2;
 	if (!_alloc_two_blocks_metadata(&dst1, &dst2))
 		return -2;
@@ -246,7 +242,7 @@ int Allocator_avl_base::remove_range(addr_t base, size_t size)
 
 		/* find block overlapping the specified range */
 		Block *b = _addr_tree.first();
-		b = b ? b->find_by_address(base, size, 1) : 0;
+		b = b ? b->find_by_address(base, size.value(), 1) : 0;
 
 		/*
 		 * If there are no overlappings with any existing blocks (b == 0), we
@@ -261,7 +257,7 @@ int Allocator_avl_base::remove_range(addr_t base, size_t size)
 
 		/* cut intersecting address range */
 		addr_t intersect_beg = max(base, b->addr());
-		size_t intersect_end = min(base + size - 1, b->addr() + b->size() - 1);
+		size_t intersect_end = min(base + size.value() - 1, b->addr() + b->size() - 1);
 
 		_cut_from_block(b, intersect_beg, intersect_end - intersect_beg + 1, dst1, dst2);
 		if (!_alloc_two_blocks_metadata(&dst1, &dst2))
@@ -271,8 +267,8 @@ int Allocator_avl_base::remove_range(addr_t base, size_t size)
 
 
 Range_allocator::Alloc_return
-Allocator_avl_base::alloc_aligned(size_t size, void **out_addr, int align,
-                                  addr_t from, addr_t to)
+Allocator_avl_base::alloc_aligned(Allocation_size size, void **out_addr,
+                                  int align, addr_t from, addr_t to)
 {
 	Block *dst1, *dst2;
 	if (!_alloc_two_blocks_metadata(&dst1, &dst2))
@@ -280,7 +276,7 @@ Allocator_avl_base::alloc_aligned(size_t size, void **out_addr, int align,
 
 	/* find best fitting block */
 	Block *b = _addr_tree.first();
-	b = b ? b->find_best_fit(size, align, from, to) : 0;
+	b = b ? b->find_best_fit(size.value(), align, from, to) : 0;
 
 	if (!b) {
 		_md_alloc->free(dst1, sizeof(Block));
@@ -292,7 +288,7 @@ Allocator_avl_base::alloc_aligned(size_t size, void **out_addr, int align,
 	addr_t new_addr = align_addr(b->addr() < from ? from : b->addr(), align);
 
 	/* remove new block from containing block */
-	_cut_from_block(b, new_addr, size, dst1, dst2);
+	_cut_from_block(b, new_addr, size.value(), dst1, dst2);
 
 	/* create allocated block */
 	Block *new_block = _alloc_block_metadata();
@@ -300,17 +296,18 @@ Allocator_avl_base::alloc_aligned(size_t size, void **out_addr, int align,
 		_md_alloc->free(new_block, sizeof(Block));
 		return Alloc_return(Alloc_return::OUT_OF_METADATA);
 	}
-	_add_block(new_block, new_addr, size, Block::USED);
+	_add_block(new_block, new_addr, size.value(), Block::USED);
 
 	*out_addr = reinterpret_cast<void *>(new_addr);
 	return Alloc_return(Alloc_return::OK);
 }
 
 
-Range_allocator::Alloc_return Allocator_avl_base::alloc_addr(size_t size, addr_t addr)
+Range_allocator::Alloc_return
+Allocator_avl_base::alloc_addr(Allocation_size size, addr_t addr)
 {
 	/* sanity check */
-	if (!_sum_in_range(addr, size))
+	if (!_sum_in_range(addr, size.value()))
 		return Alloc_return(Alloc_return::RANGE_CONFLICT);
 
 	Block *dst1, *dst2;
@@ -319,7 +316,7 @@ Range_allocator::Alloc_return Allocator_avl_base::alloc_addr(size_t size, addr_t
 
 	/* find block at specified address */
 	Block *b = _addr_tree.first();
-	b = b ? b->find_by_address(addr, size) : 0;
+	b = b ? b->find_by_address(addr, size.value()) : 0;
 
 	/* skip if there's no block or block is used */
 	if (!b || b->used()) {
@@ -329,7 +326,7 @@ Range_allocator::Alloc_return Allocator_avl_base::alloc_addr(size_t size, addr_t
 	}
 
 	/* remove new block from containing block */
-	_cut_from_block(b, addr, size, dst1, dst2);
+	_cut_from_block(b, addr, size.value(), dst1, dst2);
 
 	/* create allocated block */
 	Block *new_block = _alloc_block_metadata();
@@ -337,7 +334,7 @@ Range_allocator::Alloc_return Allocator_avl_base::alloc_addr(size_t size, addr_t
 		_md_alloc->free(new_block, sizeof(Block));
 		return Alloc_return(Alloc_return::OUT_OF_METADATA);
 	}
-	_add_block(new_block, addr, size, Block::USED);
+	_add_block(new_block, addr, size.value(), Block::USED);
 
 	return Alloc_return(Alloc_return::OK);
 }

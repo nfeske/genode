@@ -129,12 +129,13 @@ class Genode::Translation_table_allocator_tpl<TABLES>::Allocator
 		 * Allocator interface **
 		 ************************/
 
-		bool   alloc(size_t, void **addr) override {
+		bool alloc(Allocation_size, void **addr) override {
 			return (*addr = _alloc()); }
-		void   free(void *addr, size_t)   override { _free(addr); }
-		size_t consumed()           const override { return 0; }
-		size_t overhead(size_t)     const override { return 0; }
-		bool   need_size_for_free() const override { return false; }
+
+		void   free(void *addr, size_t)        override { _free(addr); }
+		size_t consumed()                const override { return 0; }
+		size_t overhead(Allocation_size) const override { return 0; }
+		bool   need_size_for_free()      const override { return false; }
 };
 
 #endif /* _CORE__INCLUDE__TRANSLATION_TABLE_ALLOCATOR_TPL_H_ */

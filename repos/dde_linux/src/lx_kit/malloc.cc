@@ -105,7 +105,7 @@ class Lx_kit::Slab_backend_alloc : public Lx::Slab_backend_alloc,
 		 ** Lx::Slab_backend_alloc interface **
 		 **************************************/
 
-		bool alloc(size_t size, void **out_addr) override
+		bool alloc(Genode::Allocation_size size, void **out_addr) override
 		{
 			bool done = _range.alloc(size, out_addr);
 
@@ -125,7 +125,7 @@ class Lx_kit::Slab_backend_alloc : public Lx::Slab_backend_alloc,
 			_range.free(addr); }
 
 		void   free(void *addr, size_t size) override { _range.free(addr, size); }
-		size_t overhead(size_t size) const override { return  0; }
+		size_t overhead(Genode::Allocation_size) const override { return  0; }
 		bool need_size_for_free() const override { return false; }
 
 		addr_t phys_addr(addr_t addr)
@@ -253,12 +253,14 @@ class Lx_kit::Malloc : public Lx::Malloc
 		 ** Lx::Malloc interface **
 		 **************************/
 
-		void *alloc(Genode::size_t size, int align = 0, Genode::addr_t *phys = 0)
+		void *alloc(Genode::Allocation_size const requested_size, int align = 0,
+		            Genode::addr_t *phys = 0)
 		{
 			using namespace Genode;
 
 			/* save requested size */
-			size_t orig_size = size;
+			size_t size = requested_size.value();
+			size_t const orig_size = size;
 			size += sizeof(addr_t);
 
 			/* += slab index + aligment size */
@@ -317,11 +319,11 @@ class Lx_kit::Malloc : public Lx::Malloc
 			_allocator[nr]->free((void *)(addr - 2));
 		}
 
-		void *alloc_large(size_t size)
+		void *alloc_large(Genode::Allocation_size size)
 		{
 			void *addr;
 			if (!_back_allocator.alloc(size, &addr)) {
-				Genode::error("large back end allocation failed (", size, " bytes)");
+				Genode::error("large back end allocation failed (", size.value(), " bytes)");
 				return nullptr;
 			}
 

@@ -43,7 +43,7 @@ namespace Genode
 			 ** Allocator interface **
 			 *************************/
 
-			bool alloc(size_t size, void **out_addr) override {
+			bool alloc(Allocation_size size, void **out_addr) override {
 				return _alloc->alloc(size, out_addr); }
 
 			void free(void *addr, size_t size) override {
@@ -56,7 +56,7 @@ namespace Genode
 				return 0;
 			}
 
-			size_t overhead(size_t size) const override
+			size_t overhead(Allocation_size) const override
 			{
 				warning(__func__, "unexpectedly called");
 				while (1) ;

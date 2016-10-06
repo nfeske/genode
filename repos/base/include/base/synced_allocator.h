@@ -56,7 +56,7 @@ class Genode::Synced_allocator : public Allocator
 		 ** Allocator interface **
 		 *************************/
 
-		bool alloc(size_t size, void **out_addr) override {
+		bool alloc(Allocation_size size, void **out_addr) override {
 			return _synced_object()->alloc(size, out_addr); }
 
 		void free(void *addr, size_t size) override {
@@ -65,7 +65,7 @@ class Genode::Synced_allocator : public Allocator
 		size_t consumed() const override {
 			return _synced_object()->consumed(); }
 
-		size_t overhead(size_t size) const override {
+		size_t overhead(Allocation_size size) const override {
 			return _synced_object()->overhead(size); }
 
 		bool need_size_for_free() const override {

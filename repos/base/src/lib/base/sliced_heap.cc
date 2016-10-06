@@ -38,10 +38,10 @@ Sliced_heap::~Sliced_heap()
 }
 
 
-bool Sliced_heap::alloc(size_t size, void **out_addr)
+bool Sliced_heap::alloc(Allocation_size requested_size, void **out_addr)
 {
 	/* allocation includes space for block meta data and is page-aligned */
-	size = align_addr(size + sizeof(Block), 12);
+	size_t const size = align_addr(requested_size.value() + sizeof(Block), 12);
 
 	Ram_dataspace_capability ds_cap;
 	Block *block = nullptr;
@@ -105,7 +105,7 @@ void Sliced_heap::free(void *addr, size_t size)
 }
 
 
-size_t Sliced_heap::overhead(size_t size) const
+size_t Sliced_heap::overhead(Allocation_size size) const
 {
-	return align_addr(size + sizeof(Block), 12) - size;
+	return align_addr(size.value() + sizeof(Block), 12) - size.value();
 }

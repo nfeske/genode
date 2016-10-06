@@ -47,6 +47,8 @@ class Platform::Irq_allocator : public Genode::Range_allocator
 		Genode::Bit_array<LEGACY_ARRAY> _legacy;
 		Genode::Bit_allocator<MSI>      _msi;
 
+		typedef Genode::Allocation_size Allocation_size;
+
 	public:
 
 		Irq_allocator()
@@ -64,10 +66,10 @@ class Platform::Irq_allocator : public Genode::Range_allocator
 
 		void free_msi(unsigned msi) { _msi.free(msi); }
 
-		Alloc_return alloc_addr(size_t size, addr_t addr) override
+		Alloc_return alloc_addr(Allocation_size size, addr_t addr) override
 		{
 			try {
-				_legacy.set(addr, size);
+				_legacy.set(addr, size.value());
 				return Alloc_return::OK;
 			} catch (...) {
 				return Alloc_return::RANGE_CONFLICT;
@@ -75,17 +77,17 @@ class Platform::Irq_allocator : public Genode::Range_allocator
 		}
 
 		/* unused methods */
-		int    remove_range(addr_t, size_t) override { return 0; }
-		int    add_range(addr_t, size_t)    override { return 0; }
-		bool   valid_addr(addr_t)     const override { return false; }
-		size_t avail()                const override { return 0; }
-		bool   alloc(size_t, void **)       override { return false; }
-		void   free(void *)                 override { }
-		void   free(void *, size_t)         override { }
-		size_t overhead(size_t)       const override { return 0; }
-		bool   need_size_for_free()   const override { return 0; }
+		int    remove_range(addr_t, Allocation_size) override { return 0; }
+		int    add_range(addr_t, Allocation_size)    override { return 0; }
+		bool   valid_addr(addr_t)              const override { return false; }
+		size_t avail()                         const override { return 0; }
+		bool   alloc(Allocation_size, void **)       override { return false; }
+		void   free(void *)                          override { }
+		void   free(void *, size_t)                  override { }
+		size_t overhead(Allocation_size)       const override { return 0; }
+		bool   need_size_for_free()            const override { return 0; }
 
-		Alloc_return alloc_aligned(size_t, void **, int, addr_t, addr_t) override {
+		Alloc_return alloc_aligned(Allocation_size, void **, int, addr_t, addr_t) override {
 			 return Alloc_return::RANGE_CONFLICT; }
 };
 

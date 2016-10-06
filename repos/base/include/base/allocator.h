@@ -20,6 +20,7 @@
 namespace Genode {
 
 	struct Deallocator;
+	class  Allocation_size;
 	struct Allocator;
 	struct Range_allocator;
 
@@ -54,6 +55,34 @@ struct Genode::Deallocator
 };
 
 
+/**
+ * Argument type for allocations
+ *
+ * The size argument for memory allocations is expected to never be zero. This
+ * type transparently enforces this invariant for all allocators.
+ *
+ * \throw Out_of_range  if 0 is supplied as an allocation size
+ */
+class Genode::Allocation_size
+{
+	private:
+
+		size_t _value;
+
+	public:
+
+		class Out_of_range : Exception { };
+
+		Allocation_size(size_t value) : _value(value)
+		{
+			if (value == 0UL)
+				throw Out_of_range();
+		}
+
+		size_t value() const { return _value; }
+};
+
+
 struct Genode::Allocator : Deallocator
 {
 	/**
@@ -74,7 +103,7 @@ struct Genode::Allocator : Deallocator
 	 *                  undefined in the error case
 	 * \return          true on success
 	 */
-	virtual bool alloc(size_t size, void **out_addr) = 0;
+	virtual bool alloc(Allocation_size size, void **out_addr) = 0;
 
 	/**
 	 * Allocate typed block
@@ -84,7 +113,7 @@ struct Genode::Allocator : Deallocator
 	 * compiler from warning us about "dereferencing type-punned
 	 * pointer will break strict-aliasing rules".
 	 */
-	template <typename T> bool alloc(size_t size, T **out_addr)
+	template <typename T> bool alloc(Allocation_size size, T **out_addr)
 	{
 		void *addr = 0;
 		bool ret = alloc(size, &addr);
@@ -100,7 +129,7 @@ struct Genode::Allocator : Deallocator
 	/**
 	 * Return meta-data overhead per block
 	 */
-	virtual size_t overhead(size_t size) const = 0;
+	virtual size_t overhead(Allocation_size size) const = 0;
 
 	/**
 	 * Allocate block and signal error as an exception
@@ -109,7 +138,7 @@ struct Genode::Allocator : Deallocator
 	 * \return  pointer to the new block
 	 * \throw   Out_of_memory
 	 */
-	void *alloc(size_t size)
+	void *alloc(Allocation_size size)
 	{
 		void *result = 0;
 		if (!alloc(size, &result))
@@ -130,12 +159,12 @@ struct Genode::Range_allocator : Allocator
 	/**
 	 * Add free address range to allocator
 	 */
-	virtual int add_range(addr_t base, size_t size) = 0;
+	virtual int add_range(addr_t base, Allocation_size size) = 0;
 
 	/**
 	 * Remove address range from allocator
 	 */
-	virtual int remove_range(addr_t base, size_t size) = 0;
+	virtual int remove_range(addr_t base, Allocation_size size) = 0;
 
 	/**
 	 * Return value of allocation functons
@@ -169,7 +198,8 @@ struct Genode::Range_allocator : Allocator
 	 * \param align     alignment of new block specified
 	 *                  as the power of two
 	 */
-	virtual Alloc_return alloc_aligned(size_t size, void **out_addr, int align, addr_t from=0, addr_t to = ~0UL) = 0;
+	virtual Alloc_return alloc_aligned(Allocation_size size, void **out_addr,
+	                                   int align, addr_t from=0, addr_t to = ~0UL) = 0;
 
 	/**
 	 * Allocate block at address
@@ -181,7 +211,7 @@ struct Genode::Range_allocator : Allocator
 	 *          'OUT_OF_METADATA' if meta-data allocation failed, or
 	 *          'RANGE_CONFLICT' if specified range is occupied
 	 */
-	virtual Alloc_return alloc_addr(size_t size, addr_t addr) = 0;
+	virtual Alloc_return alloc_addr(Allocation_size size, addr_t addr) = 0;
 
 	/**
 	 * Free a previously allocated block

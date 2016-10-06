@@ -108,12 +108,12 @@ class Malloc : public Genode::Allocator
 		 * Allocator interface
 		 */
 
-		bool alloc(size_t size, void **out_addr) override
+		bool alloc(Genode::Allocation_size const requested_size, void **out_addr) override
 		{
 			Genode::Lock::Guard lock_guard(_lock);
 
 			/* enforce size to be a multiple of 4 bytes */
-			size = (size + 3) & ~3;
+			size_t const size = (requested_size.value() + 3) & ~3;
 
 			/*
 			 * We store the size of the allocation at the very
@@ -121,8 +121,8 @@ class Malloc : public Genode::Allocator
 			 * the subsequent address. This way, we can retrieve
 			 * the size information when freeing the block.
 			 */
-			unsigned long real_size = size + sizeof(Block_header);
-			unsigned long msb = _slab_log2(real_size);
+			size_t const real_size = size + sizeof(Block_header);
+			size_t const msb       = _slab_log2(real_size);
 			void *addr = 0;
 
 			/* use backing store if requested memory is larger than largest slab */
@@ -155,9 +155,9 @@ class Malloc : public Genode::Allocator
 			}
 		}
 
-		size_t overhead(size_t size) const override
+		size_t overhead(Genode::Allocation_size const requested_size) const override
 		{
-			size += sizeof(Block_header);
+			size_t const size = requested_size.value() + sizeof(Block_header);
 
 			if (size > (1U << SLAB_STOP))
 				return _backing_store->overhead(size);

@@ -264,11 +264,11 @@ class Genode::Allocator_avl_base : public Range_allocator
 		 ** Range allocator interface **
 		 *******************************/
 
-		int          add_range(addr_t base, size_t size) override;
-		int          remove_range(addr_t base, size_t size) override;
-		Alloc_return alloc_aligned(size_t size, void **out_addr, int align,
+		int          add_range(addr_t, Allocation_size) override;
+		int          remove_range(addr_t, Allocation_size) override;
+		Alloc_return alloc_aligned(Allocation_size, void **, int,
 		                           addr_t from = 0, addr_t to = ~0UL) override;
-		Alloc_return alloc_addr(size_t size, addr_t addr) override;
+		Alloc_return alloc_addr(Allocation_size, addr_t) override;
 		void         free(void *addr) override;
 		size_t       avail() const override;
 		bool         valid_addr(addr_t addr) const override;
@@ -278,7 +278,7 @@ class Genode::Allocator_avl_base : public Range_allocator
 		 ** Allocator interface **
 		 *************************/
 
-		bool alloc(size_t size, void **out_addr) override
+		bool alloc(Allocation_size size, void **out_addr) override
 		{
 			return (Allocator_avl_base::alloc_aligned(
 				size, out_addr, log2(sizeof(addr_t))).ok());
@@ -301,7 +301,7 @@ class Genode::Allocator_avl_base : public Range_allocator
 		 * The 'sizeof(umword_t)' represents the overhead of the meta-data
 		 * slab allocator.
 		 */
-		size_t overhead(size_t) const override { return sizeof(Block) + sizeof(umword_t); }
+		size_t overhead(Allocation_size) const override { return sizeof(Block) + sizeof(umword_t); }
 
 		bool need_size_for_free() const override { return false; }
 };
@@ -367,7 +367,7 @@ class Genode::Allocator_avl_tpl : public Allocator_avl_base
 			return b && b->used() ? b : 0;
 		}
 
-		int add_range(addr_t base, size_t size)
+		int add_range(addr_t base, Allocation_size size)
 		{
 			/*
 			 * We disable the slab block allocation while

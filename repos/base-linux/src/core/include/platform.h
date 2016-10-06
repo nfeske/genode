@@ -41,32 +41,32 @@ namespace Genode {
 			 */
 			struct Pseudo_ram_allocator : Range_allocator
 			{
-				bool alloc(size_t size, void **out_addr)
+				bool alloc(Allocation_size, void **out_addr)
 				{
 					*out_addr = 0;
 					return true;
 				}
 
-				Alloc_return alloc_aligned(size_t, void **out_addr, int,
-				                           addr_t, addr_t)
+				Alloc_return alloc_aligned(Allocation_size, void **out_addr,
+				                           int, addr_t, addr_t)
 				{
 					*out_addr = 0;
 					return Alloc_return::OK;
 				}
 
-				Alloc_return alloc_addr(size_t, addr_t)
+				Alloc_return alloc_addr(Allocation_size, addr_t)
 				{
 					return Alloc_return::OK;
 				}
 
-				int    add_range(addr_t, size_t)    override { return 0; }
-				int    remove_range(addr_t, size_t) override { return 0; }
-				void   free(void *) override                 { }
-				void   free(void *, size_t) override         { }
-				size_t avail() const override                { return ~0; }
-				bool   valid_addr(addr_t) const override     { return true; }
-				size_t overhead(size_t) const override       { return 0; }
-				bool   need_size_for_free() const override   { return true; }
+				int    add_range(addr_t, Allocation_size)    override { return 0; }
+				int    remove_range(addr_t, Allocation_size) override { return 0; }
+				void   free(void *)                          override { }
+				void   free(void *, size_t)                  override { }
+				size_t avail()                         const override { return ~0; }
+				bool   valid_addr(addr_t)              const override { return true; }
+				size_t overhead(Allocation_size)       const override { return 0; }
+				bool   need_size_for_free()            const override { return true; }
 			};
 
 			Pseudo_ram_allocator _ram_alloc;

@@ -83,7 +83,7 @@ class Linker::Rm_area
 		 * Reserve VM region of 'size' at 'vaddr'. Allocate any free region if
 		 * 'vaddr' is zero
 		 */
-		addr_t alloc_region(size_t size, addr_t vaddr = 0)
+		addr_t alloc_region(Allocation_size size, addr_t vaddr = 0)
 		{
 			addr_t addr = vaddr;
 

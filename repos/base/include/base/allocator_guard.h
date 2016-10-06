@@ -68,17 +68,17 @@ class Genode::Allocator_guard : public Allocator
 		 *                  undefined in the error case
 		 * \return          true on success
 		 */
-		bool alloc(size_t size, void **out_addr) override
+		bool alloc(Allocation_size size, void **out_addr) override
 		{
-			if ((_amount - _consumed) < (size + _allocator->overhead(size))) {
+			if ((_amount - _consumed) < (size.value() + _allocator->overhead(size))) {
 				warning("Quota exceeded! amount=", _amount,
-				        ", size=", (size + _allocator->overhead(size)),
+				        ", size=", (size.value() + _allocator->overhead(size)),
 				        ", consumed=", _consumed);
 				return false;
 			}
 			bool const b = _allocator->alloc(size, out_addr);
 			if (b)
-				_consumed += size + _allocator->overhead(size);
+				_consumed += size.value() + _allocator->overhead(size);
 			return b;
 		}
 
@@ -88,7 +88,9 @@ class Genode::Allocator_guard : public Allocator
 		void free(void *addr, size_t size) override
 		{
 			_allocator->free(addr, size);
-			_consumed -= size + _allocator->overhead(size);
+
+			if (size > 0)
+				_consumed -= size + _allocator->overhead(size);
 		}
 
 		/**
@@ -104,7 +106,10 @@ class Genode::Allocator_guard : public Allocator
 		/**
 		 * Return meta-data overhead per block
 		 */
-		size_t overhead(size_t size) const override { return _allocator->overhead(size); }
+		size_t overhead(Allocation_size size) const override
+		{
+			return _allocator->overhead(size);
+		}
 
 		bool need_size_for_free() const override {
 			return _allocator->need_size_for_free(); }

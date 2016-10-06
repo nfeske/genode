@@ -312,7 +312,7 @@ void Slab::insert_sb(void *ptr)
 }
 
 
-bool Slab::alloc(size_t size, void **out_addr)
+bool Slab::alloc(Allocation_size, void **out_addr)
 {
 	/*
 	 * If we run out of slab, we need to allocate a new slab block. For the

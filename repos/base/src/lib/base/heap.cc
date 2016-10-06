@@ -203,16 +203,16 @@ bool Heap::_unsynchronized_alloc(size_t size, void **out_addr)
 }
 
 
-bool Heap::alloc(size_t size, void **out_addr)
+bool Heap::alloc(Allocation_size size, void **out_addr)
 {
 	/* serialize access of heap functions */
 	Lock::Guard lock_guard(_lock);
 
 	/* check requested allocation against quota limit */
-	if (size + _quota_used > _quota_limit)
+	if (size.value() + _quota_used > _quota_limit)
 		return false;
 
-	return _unsynchronized_alloc(size, out_addr);
+	return _unsynchronized_alloc(size.value(), out_addr);
 }
 
 

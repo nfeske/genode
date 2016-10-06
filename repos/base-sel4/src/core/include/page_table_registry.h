@@ -146,12 +146,12 @@ class Genode::Page_table_registry
 
 				class Alloc_failed { };
 
-				bool alloc(size_t size, void **out_addr) override
+				bool alloc(Allocation_size size, void **out_addr) override
 				{
 					*out_addr = nullptr;
 
-					if (size > sizeof(Elem_space)) {
-						error("unexpected allocation size of ", size);
+					if (size.value() > sizeof(Elem_space)) {
+						error("unexpected allocation size of ", size.value());
 						return false;
 					}
 
@@ -163,7 +163,7 @@ class Genode::Page_table_registry
 					return true;
 				}
 
-				size_t overhead(size_t) const override { return 0; }
+				size_t overhead(Allocation_size) const override { return 0; }
 
 				void free(void *ptr, size_t) override
 				{
@@ -175,7 +175,7 @@ class Genode::Page_table_registry
 				bool need_size_for_free() const { return false; }
 		};
 
-		Static_allocator<Page_table, 128>         _page_table_alloc;
+		Static_allocator<Page_table, 128>             _page_table_alloc;
 		Static_allocator<Page_table::Entry, 3 * 1024> _page_table_entry_alloc;
 
 		List<Page_table> _page_tables;

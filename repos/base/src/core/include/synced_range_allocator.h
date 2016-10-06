@@ -65,7 +65,7 @@ class Genode::Synced_range_allocator : public Range_allocator
 		 ** Allocator interface **
 		 *************************/
 
-		bool alloc(size_t size, void **out_addr) override {
+		bool alloc(Allocation_size size, void **out_addr) override {
 			return _synced_object()->alloc(size, out_addr); }
 
 		void free(void *addr, size_t size) override {
@@ -74,7 +74,7 @@ class Genode::Synced_range_allocator : public Range_allocator
 		size_t consumed() const override {
 			return _synced_object()->consumed(); }
 
-		size_t overhead(size_t size) const override {
+		size_t overhead(Allocation_size size) const override {
 			return _synced_object()->overhead(size); }
 
 		bool need_size_for_free() const override {
@@ -85,17 +85,17 @@ class Genode::Synced_range_allocator : public Range_allocator
 		 ** Range-allocator interface **
 		 *******************************/
 
-		int add_range(addr_t base, size_t size) override {
+		int add_range(addr_t base, Allocation_size size) override {
 			return _synced_object()->add_range(base, size); }
 
-		int remove_range(addr_t base, size_t size) override {
+		int remove_range(addr_t base, Allocation_size size) override {
 			return _synced_object()->remove_range(base, size); }
 
-		Alloc_return alloc_aligned(size_t size, void **out_addr, int align,
+		Alloc_return alloc_aligned(Allocation_size size, void **out_addr, int align,
 		                           addr_t from = 0, addr_t to = ~0UL) override {
 			return _synced_object()->alloc_aligned(size, out_addr, align, from, to); }
 
-		Alloc_return alloc_addr(size_t size, addr_t addr) override {
+		Alloc_return alloc_addr(Allocation_size size, addr_t addr) override {
 			return _synced_object()->alloc_addr(size, addr); }
 
 		void free(void *addr) override {
