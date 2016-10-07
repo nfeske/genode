@@ -8,6 +8,7 @@ LIBS += cxx
 
 SRC_CC += avl_tree.cc
 SRC_CC += slab.cc
+SRC_CC += allocator.cc
 SRC_CC += allocator_avl.cc
 SRC_CC += heap.cc sliced_heap.cc
 SRC_CC += console.cc

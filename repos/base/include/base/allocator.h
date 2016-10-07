@@ -14,6 +14,7 @@
 #ifndef _INCLUDE__BASE__ALLOCATOR_H_
 #define _INCLUDE__BASE__ALLOCATOR_H_
 
+#include <util/misc_math.h>
 #include <base/stdint.h>
 #include <base/exception.h>
 
@@ -59,9 +60,9 @@ struct Genode::Deallocator
  * Argument type for allocations
  *
  * The size argument for memory allocations is expected to never be zero. This
- * type transparently enforces this invariant for all allocators.
- *
- * \throw Out_of_range  if 0 is supplied as an allocation size
+ * type transparently enforces this invariant for all allocators. If an
+ * allocation of size 0 is reqested, the size is adjusted to 1 and a diagnostic
+ * message is printed.
  */
 class Genode::Allocation_size
 {
@@ -69,14 +70,14 @@ class Genode::Allocation_size
 
 		size_t _value;
 
+		void _print_error_message();
+
 	public:
 
-		class Out_of_range : Exception { };
-
-		Allocation_size(size_t value) : _value(value)
+		Allocation_size(size_t value) : _value(max(1UL, value))
 		{
 			if (value == 0UL)
-				throw Out_of_range();
+				_print_error_message();
 		}
 
 		size_t value() const { return _value; }
