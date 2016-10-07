@@ -67,38 +67,39 @@ class Genode::Packet_allocator : public Genode::Range_allocator
 		 ** Range-allocator interface **
 		 *******************************/
 
-		int add_range(addr_t base, size_t size) override
+		int add_range(addr_t base, Allocation_size size) override
 		{
 			if (_base || _array) return -1;
 
 			_base  = base;
-			_bits  = _md_alloc->alloc(_block_cnt(size)/8);
-			_array = new (_md_alloc) Bit_array_base(_block_cnt(size),
+			_bits  = _md_alloc->alloc(_block_cnt(size.value())/8);
+			_array = new (_md_alloc) Bit_array_base(_block_cnt(size.value()),
 			                                        (addr_t*)_bits,
 			                                        true);
 			return 0;
 		}
 
-		int remove_range(addr_t base, size_t size) override
+		int remove_range(addr_t base, Allocation_size size) override
 		{
 			if (_base != base) return -1;
 
 			if (_array) destroy(_md_alloc, _array);
-			if (_bits)  _md_alloc->free(_bits, _block_cnt(size)/8);
+			if (_bits)  _md_alloc->free(_bits, _block_cnt(size.value())/8);
 			return 0;
 		}
 
-		Alloc_return alloc_aligned(size_t size, void **out_addr, int, addr_t,
-			                       addr_t) override
+		Alloc_return alloc_aligned(Allocation_size size, void **out_addr,
+		                           int, addr_t, addr_t) override
 		{
 			return alloc(size, out_addr) ? Alloc_return::OK
 			                             : Alloc_return::RANGE_CONFLICT;
 		}
 
-		bool alloc(size_t size, void **out_addr) override
+		bool alloc(Allocation_size size, void **out_addr) override
 		{
-			addr_t const cnt = (size % _block_size) ? size / _block_size + 1
-			                                        : size / _block_size;
+			addr_t const cnt = (size.value() % _block_size)
+			                 ? size.value() / _block_size + 1
+			                 : size.value() / _block_size;
 			addr_t max = ~0UL;
 
 			do {
@@ -140,10 +141,10 @@ class Genode::Packet_allocator : public Genode::Range_allocator
 
 		bool need_size_for_free() const override { return false; }
 		void free(void *addr) override { }
-		size_t overhead(size_t) const override {  return 0;}
+		size_t overhead(Allocation_size) const override {  return 0;}
 		size_t avail() const override { return 0; }
 		bool valid_addr(addr_t) const override { return 0; }
-		Alloc_return alloc_addr(size_t, addr_t) override {
+		Alloc_return alloc_addr(Allocation_size, addr_t) override {
 			return Alloc_return(Alloc_return::OUT_OF_METADATA); }
 };
 
