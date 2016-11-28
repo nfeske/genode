@@ -401,50 +401,39 @@ Libraries and applications
 Cryptography/security
 =====================
 
-; @emery
+Time-based password generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-commit 41fa0537fd23447e6fb4ea6cf8e0b98cd21ea97c
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Sep 7 19:47:38 2016 +0200
+A time-based one-time password authentication client that adheres to the
+Google Authenticator standard was introduced into the world repository.
 
-    port of Crypto++
-    
-    http://www.cryptopp.com/
-    
-    Issue #45
+Single use, time-based password are commonly used as an additional authentication
+step for web-based services. In this scheme a user generates and presents a six
+digit passcode to a service generated using a shared secret and timestamp.
+This short passcode length makes manual entry convenient so that the shared secret
+may be stored on seperate device from the service client, such as a smartphone,
+layering the security properties of both devices.
 
-commit 785d836cee9180ddec58f18a3439eb43d7ad6070
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Sep 7 20:01:42 2016 +0200
+The 'gtotp' VFS plugin provides these passcodes by embedding the generator as a
+special file in the file-system layer of a component. This approach provides
+readily available passcodes for programatic and manual use without enlarging the
+code base to encompase a GUI, command-line, or networked interface.
 
-    lib/vfs/gtotp: Google Authenticator VFS plugin
-    
-    Generates time-based one time use passwords,
-    use it anywhere you might have a filesystem.
-    
-    Fixes #45
+At the time of this release the common use case is to manually retrieve codes for
+clients running in VirtualBox by reading special files with an isolated instance
+of the Noux runtime. Storing the shared secret on the same device contradicts
+the recommendations of the standard, but the tradeoff is that the software stack
+required to host the shared secret is significantly smaller than that found on a
+mobile device.
 
-commit 8b8491aaf1177d6c6d6d91e785d9ffc6796edc45
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Thu Dec 10 15:24:10 2015 +0100
+Random number generator testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Port of the TestU01 test suite
-    
-    Library for statistical testing of uniform random number generators.
-    http://simul.iro.umontreal.ca/testu01/tu01.html
-    
-    Fix #48
-
-commit 7a61552f8cd84024878d58d6cba93c8e2a1f7a14
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Tue Oct 11 17:01:03 2016 +0200
-
-    Jitterentropy TestU01 scenarios
-    
-    Test the Jitterentropy VFS plugin against the TestU01 Alphabet and
-    Rabbit batteries.
-    
-    Ref #48
+No random number generator can be proven to be good, but empirical statistical
+tests can prove that some are bad. A port of the TestU01 RNG test suite is provided
+in the word repository. The TestU01 batteries give independent assurance of the
+fitness of Genode's CPU jitter based RNG and are available for testing future
+physical and non-phyical RNGs.
 
 
 Audio synthesis
@@ -452,61 +441,7 @@ Audio synthesis
 
 ; @emery
 
-commit 2a7572d374e3c3360d65805226ed015863358e0e
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sat Oct 15 16:10:39 2016 +0200
-
-    ports of Xiph's Ogg, Vorbis, FLAC libraries
-    
-    https://xiph.org/
-    
-    Ref #47
-
-commit ce07e3c8f090e6b8f54d89531d429ff479c76b04
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sat Oct 15 16:19:22 2016 +0200
-
-    port of libsndfile
-    
-    http://www.mega-nerd.com/libsndfile/
-    
-    Ref #47
-
-commit 9c917acc37c95e65030551007469b14d154f3f0e
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sat Oct 15 16:37:12 2016 +0200
-
-    port of RtAudio
-    
-    C++ API for realtime audio input/output
-    
-    http://www.music.mcgill.ca/~gary/rtaudio/
-    
-    Ref #47
-
-commit aa91eb1857e3a2d06d984fda4e7ca2fd5e3a7d5b
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sun Oct 30 11:48:29 2016 +0100
-
-    port of liblo
-    
-    A lightweight Open Sound Control implementation
-    
-    http://liblo.sourceforge.net/
-    
-    Ref #47
-
-commit f428df2deeb54c4a646a2e242b48c1f84999499e
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Sun Oct 30 12:46:07 2016 +0100
-
-    port of ChucK
-    
-    A Strongly-timed, Concurrent, and On-the-fly Music Programming Language
-    
-    http://chuck.cs.princeton.edu/
-    
-    Fix #47
+; No coherent scernario for use at the moment, I say wait.
 
 
 VirtualBox on top on the NOVA hypervisor
