@@ -1,0 +1,611 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 16.11
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+
+; @nfeske
+
+
+Asynchronous parent-child interactions
+######################################
+
+; @nfeske
+
+commit d477a3e76d6b402e340043fb3a7ff4c492c9eca6
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 6 14:19:47 2016 +0100
+
+    Avoid use of Connection::KEEP_OPEN feature
+    
+    This feature is not compatible with the forthcoming nonblocking parent
+    interface. The patch removes the use of feature in all places except for
+    the components of the demo repository, which will under go a redesign
+    anyway.
+    
+    Issue #2120
+    Issue #2165
+
+commit 82107bef9b123e9e80e0aece23f729aa6935b51e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Nov 8 16:37:27 2016 +0100
+
+    base: buffer session args in 'Connection'
+    
+    This patch is a preparation of the forthcoming async parent interface.
+    Note that this patch increases the size of connection objects.
+    Furthermore it adds a diagnostic message whenever a connection fails.
+    
+    Issue #2166
+
+commit 513a3f1d37d287db308cdd1ab12c85a2601e5ae1
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 6 14:23:28 2016 +0100
+
+    base: new 'Id_space' data structure
+    
+    This data structure allows the association of objects with IDs. IDs are
+    kept in an AVL tree. So in contrast to a bit allocator, the ID space can be
+    sparsely populated and does not need to be dimensioned. The lifetime of
+    an ID is bound to an 'Element' object, which relieves the programmer
+    from manually allocating/deallocating IDs for objects.
+    
+    Issue #2120
+
+commit baf61df0fd0d2a8a29d8c7758c74b83f913f650f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Nov 3 20:24:32 2016 +0100
+
+    base: new 'Registry' data structure
+    
+    This data structure is meant as a safe alternative for a list wherever
+    the list is solely used to remember objects and iterate through them in
+    an unspecified order. One use case is the 'Service_registry'.
+
+commit 3cc2a3f08563282ea8f0b1ea0a0e9c558e142c12
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Nov 11 12:30:09 2016 +0100
+
+    terminal: increase stack size
+
+commit cfdbccc5c2cdbbeb76c2d20f93e34322c9bb3478
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 6 14:26:34 2016 +0100
+
+    Remove blocking calls from root and parent RPCs
+    
+    This is a redesign of the root and parent interfaces to eliminate
+    blocking RPC calls.
+    
+    - New session representation at the parent (base/session_state.h)
+    - base-internal root proxy mechanism as migration path
+    - Redesign of base/service.h
+    - Removes ancient 'Connection::KEEP_OPEN' feature
+    - Interface change of 'Child', 'Child_policy', 'Slave', 'Slave_policy'
+    - New 'Slave::Connection'
+    - Changed child-construction procedure to be compatible with the
+      non-blocking parent interface and to be easier to use
+    - The child's initial LOG session, its binary ROM session, and the
+      linker ROM session have become part of the child's envirenment.
+    - Session upgrading must now be performed via 'env.upgrade' instead
+      of performing a sole RPC call the parent. To make RAM upgrades
+      easier, the 'Connection' provides a new 'upgrade_ram' method.
+    
+    Issue #2120
+
+commit 8bafb9d41bc82bfd7f31638a3fe491fc961a88ea
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 6 14:27:26 2016 +0100
+
+    Adapt low-level components to new parent interface
+    
+    This patch adjusts the components of the os repository as well as device
+    drivers to the new parent interface.
+    
+    Issue #2120
+
+commit 5c852eb8f2984689e8a127204b7e9130fc23dcdc
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Nov 23 17:07:49 2016 +0100
+
+    Adapt high-level components to new parent API
+    
+    This patch adjusts the various users of the 'Child' API to the changes
+    on the account of the new non-blocking parent interface. It also removes
+    the use of the no-longer-available 'Connection::KEEP_OPEN' feature.
+    
+    With the adjustment, we took the opportunity to redesign several
+    components to fit the non-blocking execution model much better, in
+    particular the demo applications.
+    
+    Issue #2120
+
+
+Further improved virtual networking
+###################################
+
+; @m-stein
+
+commit 25b38113aae73e12e394e7cffd29ffb5a09b9cf5
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Sep 12 12:55:12 2016 +0200
+
+    nic_router: new user interface and optimizations
+    
+    Fixes #2139
+
+
+Base framework
+##############
+
+Improved RPC mechanism
+======================
+
+; @nfeske
+
+commit a285b94014c06ba542db1cf3baf8271131846ec9
+Author: Edgard Schmidt <schmidt@edik.ch>
+Date:   Sat Oct 8 04:37:32 2016 +0200
+
+    Allow RPC arguments w/o default constructor
+    
+    Fixes #2150
+
+
+Unification and tightening of session labels
+============================================
+
+; @nfeske
+
+commit c6c1eecc862af2b2602047b1a975fca2317bcc1e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Nov 24 15:28:32 2016 +0100
+
+    Make label prefixing more strict
+    
+    This patch unconditionally applies the labeling of sessions and thereby
+    removes the most common use case of 'Child_policy::filter_session_args'.
+    Furthermore, the patch removes an ambiguity of the session labels of
+    sessions created by the parent of behalf of its child, e.g., the PD
+    session created as part of 'Child' now has the label "<child-name>"
+    whereas an unlabeled PD-session request originating from the child
+    has the label "<child-name> -> ". This way, the routing-policy of
+    'Child_policy::resolve_session_request' can differentiate both cases.
+    
+    As a consequence, the stricter labeling must now be considered wherever
+    a precise label was specified as a key for a session route or a server-
+    side policy selection. The simplest way to adapt those cases is to use a
+    'label_prefix' instead of the 'label' attribute. Alternatively, the
+    'label' attribute may used by appending " -> " (note the whitespace).
+    
+    Fixes #2171
+
+
+Transition to new framework API
+===============================
+
+; @nfeske
+
+; give some stats
+
+
+commit 80558374f572b4e5397b8115f1be72d5294c4587
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue Sep 13 11:26:18 2016 +0200
+
+    base: print support for Xml_node
+    
+    Ref #1987
+
+commit 71f0757a30d9924ee8cff4d5139c6f7eb1aa25ea
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Mon Sep 12 18:41:37 2016 +0200
+
+    transition Input infrastructure to new base API
+    
+    * Supply Env to Input::Session_component
+    * Attach input event dataspace at Input::Client
+    * Process input events by lambda rather than pointer
+    * Supply Env and a label to Input::Connection
+    
+    * Wm serves valid input_session to decorator
+    * Per-source signal handling at input_merger
+    * Base API update for dummy_input_drv, test_input
+    * Input API update for launcher, menu_view, terminal,
+      mupdf, sdl, seoul, virtualbox
+    
+    Ref #1987
+
+commit 2a2e5c2df4c0f7eb40aa57ad1b0eb9da5946fba9
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Oct 10 16:22:43 2016 +0200
+
+    base-*: remove usage of printf
+    
+    base generic code:
+      * Remove unused verbosity code from mmio framework
+      * Remove escape sequence end heuristic from LOG
+      * replace Core_console with Core_log (no format specifiers)
+      * move test/printf to test/log
+      * remove `printf()` tests from the log test
+      * check for exact match of the log test output
+    base-fiasco:
+      * remove unused Fiasco::print_l4_threadid function
+    base-nova:
+      * remove unused hexdump utility from core
+    base-hw:
+      * remove unused Kernel::Thread::_print_* debug utilities
+      * always print resource summary of core during startup
+      * remove Kernel::Ipc_node::pd_label (not used anymore)
+    base*:
+      * Turn `printf`,`PWRN`, etc. calls into their log equivalents
+    
+    Ref #1987
+    Fix #2119
+
+commit ef5f36bf4e4c44c819377b93b76f761787a3ceae
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Oct 13 01:53:05 2016 +0200
+
+    Redefine PDBG to use new log output function
+    
+    PDBG is redefined in base/debug.h, an aide to development which is not
+    to be included in release code.
+    
+    Fix #2125
+
+
+commit 784e728727cb86840b89a638bca87ea98739451b
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Oct 30 15:17:24 2016 +0100
+
+    Clean ldso from using deprecated APIs
+    
+    Issue #1987
+
+commit 02233b64fb55c20bd42c484615291239a9effe3f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Oct 31 19:19:27 2016 +0100
+
+    device_pd: use component API
+    
+    Issue #1987
+
+commit eee0489a0556e121c83dc0bb9f76b147af06d8b0
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sat Oct 29 18:38:36 2016 +0200
+
+    server/mixer: transition to new base API
+    
+    Ref #1987
+
+
+Minor API adjustments
+=====================
+
+; @nfeske
+
+commit 20faa8b84e49208a08c704f5cfe1c94690a97ac2
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Oct 28 12:12:08 2016 +0200
+
+    base: 'String' constructor overload for literals
+    
+    This overload covers the common case for initializing a string from a
+    literal without employing the 'Output' mechanism. This way, such
+    strings can by constructed without calling virtual functions, which in
+    turn makes the 'String' usable for the 'init_rtld' phase of the dynamic
+    linker.
+
+commit afed9cfd95077e09d2c07f36e5c8f77d55568866
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Oct 25 11:39:24 2016 +0200
+
+    base: let string accept multiple arguments
+    
+    Issue #2064
+
+commit e370e08e01d19bdfd6bec05d033aa0bd25317112
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Sep 15 14:40:37 2016 +0200
+
+    Define Genode::size_t as unsigned long
+    
+    Fixes #2105
+
+
+OS-level infrastructure and device drivers
+##########################################
+
+
+New timeout-handing API
+=======================
+
+; @m-stein
+
+commit 468ed3027e51c965891fcbe28c2f5ac4f235dc80
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Nov 7 13:59:37 2016 +0100
+
+    os: introduce and test timeout framework
+    
+    Ref #2170
+
+commit be5c4b59070f74d268f0bf09630a90cbd7b0ef3b
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Tue Nov 8 14:06:20 2016 +0100
+
+    timer: move to the new timeout framework
+    
+    Ref #2170
+
+
+Improvements of lxIP (Linux-based TCP/IP stack)
+===============================================
+
+; @cnuke
+
+commit d647b6c797234d17f329fba82adf7af13b071f00
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Oct 19 14:42:27 2016 +0200
+
+    lxip: use xoroshiro128+ as random backend
+
+commit ca3be471a99474b7d0ef9c3f10a21c42d69ad0b4
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Oct 20 15:09:37 2016 +0200
+
+    lxip: get_random_once must be called once
+
+
+Support for smart cards
+=======================
+
+; @cproc
+
+commit 55d709a175ebba2798d362b87e7a79c9b70dbd66
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Oct 20 13:48:44 2016 +0200
+
+    libports: add libusb
+    
+    Fixes #2142
+
+commit 9ed69d8b4728cdda8bc2ae9406afd8b3a0f5286d
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Oct 20 15:16:36 2016 +0200
+
+    libports: add CCID library
+    
+    Fixes #2144
+
+commit 9d84541e6ffa5afbb6adb0b4887c0bebb0afeb41
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Oct 20 15:47:19 2016 +0200
+
+    libports: add pcsc-lite library
+    
+    Fixes #2145
+
+
+Libraries and applications
+##########################
+
+
+Cryptography/security
+=====================
+
+; @emery
+
+commit 41fa0537fd23447e6fb4ea6cf8e0b98cd21ea97c
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Wed Sep 7 19:47:38 2016 +0200
+
+    port of Crypto++
+    
+    http://www.cryptopp.com/
+    
+    Issue #45
+
+commit 785d836cee9180ddec58f18a3439eb43d7ad6070
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Wed Sep 7 20:01:42 2016 +0200
+
+    lib/vfs/gtotp: Google Authenticator VFS plugin
+    
+    Generates time-based one time use passwords,
+    use it anywhere you might have a filesystem.
+    
+    Fixes #45
+
+commit 8b8491aaf1177d6c6d6d91e785d9ffc6796edc45
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Dec 10 15:24:10 2015 +0100
+
+    Port of the TestU01 test suite
+    
+    Library for statistical testing of uniform random number generators.
+    http://simul.iro.umontreal.ca/testu01/tu01.html
+    
+    Fix #48
+
+commit 7a61552f8cd84024878d58d6cba93c8e2a1f7a14
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue Oct 11 17:01:03 2016 +0200
+
+    Jitterentropy TestU01 scenarios
+    
+    Test the Jitterentropy VFS plugin against the TestU01 Alphabet and
+    Rabbit batteries.
+    
+    Ref #48
+
+
+Audio synthesis
+===============
+
+; @emery
+
+commit 2a7572d374e3c3360d65805226ed015863358e0e
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sat Oct 15 16:10:39 2016 +0200
+
+    ports of Xiph's Ogg, Vorbis, FLAC libraries
+    
+    https://xiph.org/
+    
+    Ref #47
+
+commit ce07e3c8f090e6b8f54d89531d429ff479c76b04
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sat Oct 15 16:19:22 2016 +0200
+
+    port of libsndfile
+    
+    http://www.mega-nerd.com/libsndfile/
+    
+    Ref #47
+
+commit 9c917acc37c95e65030551007469b14d154f3f0e
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sat Oct 15 16:37:12 2016 +0200
+
+    port of RtAudio
+    
+    C++ API for realtime audio input/output
+    
+    http://www.music.mcgill.ca/~gary/rtaudio/
+    
+    Ref #47
+
+commit aa91eb1857e3a2d06d984fda4e7ca2fd5e3a7d5b
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sun Oct 30 11:48:29 2016 +0100
+
+    port of liblo
+    
+    A lightweight Open Sound Control implementation
+    
+    http://liblo.sourceforge.net/
+    
+    Ref #47
+
+commit f428df2deeb54c4a646a2e242b48c1f84999499e
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Sun Oct 30 12:46:07 2016 +0100
+
+    port of ChucK
+    
+    A Strongly-timed, Concurrent, and On-the-fly Music Programming Language
+    
+    http://chuck.cs.princeton.edu/
+    
+    Fix #47
+
+
+VirtualBox on top on the NOVA hypervisor
+########################################
+
+; @alex-ab
+
+commit 10ec9806d304fbf401efb5ba44d189c3f45bf2aa
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Sep 6 14:44:03 2016 +0200
+
+    vbox: update to 4.3.40
+    
+    Fixes #2090
+
+commit 77087c1bc5095f02b2db1299aacc3ed3a688596a
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Nov 22 00:14:37 2016 +0100
+
+    vbox: update to 5.1.10
+    
+    Issue #2059
+
+commit 9ba7b2eddea284506d2ec22227cd8fd05230a25b
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Oct 6 11:26:26 2016 +0200
+
+    vbox: improve network backend
+    
+    VirtualBox mainly derives the initial link-state for its device models
+    from checking the <Adapter ... cable="true"/> attribute. Our backend
+    only propagates the current state of the Nic session if it receives a
+    link-state signal. This may lead to problems if a guest detects a link
+    up state when it is actually down and wants to use the interface. The
+    backend now queries the Nic session and sets the link-state accordingly
+    when it is constructed.
+    
+    In case there is no link do not attempt to submit a packet to the packet
+    stream but return with an error so that upper layers can handle it.
+    
+    Enable signals for network on poweron and not already during
+    construction. The network model may be not yet ready to process incoming
+    signals and data.
+    
+    Fixes #2117.
+
+
+Platforms
+#########
+
+Unified handling of boot modules
+================================
+
+; @skalk
+
+commit 7e1692d9973a03cfb99bc3476f0cf7afa12e4255
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Sep 15 16:08:33 2016 +0200
+
+    core: unify handling of boot modules
+    
+    Instead of solving the problem to deliver ROM modules to core while booting
+    differently for the several kernels (multi-boot, elfweaver, core re-linking),
+    this commit unifies the approaches. It always builds core as a library, and
+    after all binaries are built from a run-script, the run-tool will link an
+    ELF image out of the core-library and all boot modules. Thereby, core can
+    access its ROM modules directly.
+    
+    This approach now works for all kernels except Linux.
+    
+    With this solution, there is no [build_dir]/bin/core binary available anymore.
+    For debugging purposes you will find a core binary without boot modules, but
+    with debug symbols under [run_dir].core.
+    
+    Fix #2095
+
+
+NOVA hypervisor
+===============
+
+; @alex-ab
+
+commit a085b4f53697aa40e5b3cfcc438f430a7c346930
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Nov 4 13:01:09 2016 +0100
+
+    nova: remap kernel cpu ids to genode cpu ids
+    
+    to have a predictable order. First all CPU ids with hyper-thread id 0 are taken,
+    next the hyper-threads with 1 of all cores and so on.
+    
+    Fixes #2163
+
+commit 57949c2bbb163f1238a880f00898d7f3ee397758
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Nov 10 11:46:30 2016 +0100
+
+    nova: support asynchronous delegate
+    
+    Issue #2173
+
+
