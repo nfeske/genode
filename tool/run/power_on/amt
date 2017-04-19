@@ -126,6 +126,6 @@ proc run_power_on { } {
 		}
 	}
 
-	sleep 5
+	sleep 10
 	return true
 }
