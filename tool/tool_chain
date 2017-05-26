@@ -192,13 +192,13 @@ COMMON_BOOTSTRAP_CONFIG = $(CONFIG_QUIET) \
 BINUTILS_BOOTSTRAP_CONFIG += $(COMMON_BOOTSTRAP_CONFIG)
 
 ifeq ($(PLATFORM),riscv)
-LANGUAGES =c,c++
+LANGUAGES              = c,c++
 GDB_INSTALLED_BINARIES =
 LIB_GCC                = cd $(INSTALL_LOCATION)/lib/gcc/riscv64-unknown-elf/$(GCC_VERSION)/rv64imac/lp64 && \
                          sudo ln -sf ../../include include
 INSTALL_ADA            =
 else
-LANGUAGES             +=c,c++,ada
+LANGUAGES              = c,c++,ada
 GDB_INSTALLED_BINARIES = $(LOCAL_INSTALL_LOCATION)/bin/genode-$(PLATFORM)-gdb
 LIB_GCC                =
 INSTALL_ADA            = sudo cp $(LOCAL_BOOTSTRAP_INSTALL_LOCATION)/bin/gnatmake $(INSTALL_LOCATION)/bin/genode-$(PLATFORM)-gnatmake
