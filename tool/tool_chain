@@ -205,7 +205,7 @@ INSTALL_ADA            = sudo cp $(LOCAL_BOOTSTRAP_INSTALL_LOCATION)/bin/gnatmak
 endif
 
 GCC_BOOTSTRAP_CONFIG += $(COMMON_BOOTSTRAP_CONFIG) \
-                        --enable-languages=$(LANGUAGES) \
+                        --enable-languages=c,c++,ada \
                         --disable-bootstrap \
                         --disable-libatomic \
                         --disable-libcilkrts \
