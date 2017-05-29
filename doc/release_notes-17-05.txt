@@ -346,125 +346,108 @@ Date:   Mon Apr 3 10:45:51 2017 +0200
 OS-level libraries and components
 #################################
 
-Dynamic init
-============
-; @nfeske
+Dynamic resource management and service forwarding via init
+===========================================================
 
-commit fcf25c22d1cb1a8e6b829360ffcf3367e3b88b6a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Mar 2 13:19:14 2017 +0100
+The
+[https:/documentation/release-notes/17.02#Dynamically_reconfigurable_init_component - previous release]
+equipped Genode's init component with the ability to be used as dynamic
+component-composition engine. The current release extends this approach
+to the dynamic balancing of memory assignments, and introduces the forwarding
+of session requests from init's parent to init's children.
 
-    init: respond to binary-name changes
-    
-    This patch covers the resolution of the ROM route for child binaries
-    via the generic label-rewriting mechanics. Now, the <binary> node has
-    become merely sytactic sugar for a route like the following:
-    
-    <start name="test"/>
-      <route>
-        <service name="ROM" unscoped_label="test">
-          <parent label="test-binary-name"/> </service>
-          ...
-      </route>
-      ...
-    </start>
-    
-    A change of the binary name has an effect on the child's ROM route to
-    the binary and thereby implicitly triggers a child restart due to the
-    existing re-validation of the routing.
 
-commit 8d4fb288d9d0d6a628eb0739e40a6d5f0f0b085e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Mar 2 14:34:27 2017 +0100
+Responding to binary-name changes
+---------------------------------
 
-    init: add version attribute to start nodes
-    
-    The optional 'version' attribute allows for the forced restart of a
-    child with an otherwise unmodified start node. The specified value is
-    also reflected in the state report.
+By subjecting the ROM module request for the ELF binary to init's regular
+routing and label-rewriting mechanism instead of handing it as a special case,
+init's '<binary>' node has become merely syntactic sugar for a route like the
+following:
 
-commit 9dca1503a85e5b0a96ff83cf5ce97693cf4e643c
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Mar 3 12:50:29 2017 +0100
+!<start name="test"/>
+!  <route>
+!    <service name="ROM" unscoped_label="test">
+!      <parent label="test-binary-name"/> </service>
+!      ...
+!  </route>
+!  ...
+!</start>
 
-    init: apply changes of <provides> nodes
-    
-    This patch enables init to apply changes of any server's <provides>
-    declarations in a differential way. Servers can in principle be extended
-    by new services without re-starting them. Of course, changes of the
-    <provides> declarations may affect clients or would-be clients as this
-    information is taken into account for the session routing.
+A change of the binary name has an effect on the child's ROM route to the
+binary and thereby implicitly triggers a child restart due to the existing
+re-validation of the routing.
 
-commit 06943f413d478d12d7fb8f141136787e02d15375
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Mar 6 15:19:35 2017 +0100
 
-    init: respond to RAM-quota changes in config
-    
-    This patch improves init's dynamic reconfigurability with respect to
-    adjustments of the RAM quota assigned to the children.
-    
-    If the RAM quota is decreased, init withdraws as much quota from the
-    child's RAM session as possible. If the child's RAM session does not
-    have enough available quota, a resource-yield request is issued to
-    the child. Cooparative children may respond to such a request by
-    releasing memory.
-    
-    If the RAM quota is increased, the child's RAM session is upgraded.
-    If the configuration exceeds init's available RAM, init re-attempts
-    the upgrade whenever new slack memory becomes available (e.g., by
-    disappearing other children).
+Optional version attribute for start nodes
+------------------------------------------
 
-commit 1489791d5e6dcebfdfe5b86f5ddad1a31b4dd7da
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Mar 6 18:04:10 2017 +0100
+The now 'version' attribute allows for the forced restart of a child with an
+otherwise unmodified start node. The specified value is also reflected in
+init's state report such that a subsystem management component is able to
+validate the effects of an init configuration change.
 
-    init: explicit response to resource requests
-    
-    This patch removes the formerly built-in policy of responding to
-    resource requests with handing out slack quota. Instead, resource
-    requests have to be answered by an update of the init configuration with
-    adjusted quota values.
-    
-    Note that this patch may break run scripts that depend on init's
-    original policy. Those run scripts may be adjusted by increasing the
-    quota for the components that use to inflate their RAM usage during
-    runtime such that the specified quota suffices for the entire lifetime
-    of the component.
 
-commit 1fde4d638c2181d3df2588b5a60bd917539912d5
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Mar 8 10:21:49 2017 +0100
+Applying changes of '<provides>' nodes
+--------------------------------------
 
-    init: service forwarding
-    
-    This patch equips init with the ability to act as a server that forwards
-    session requests to its children. Session requests can be routed
-    depending of the requested service type and the session label
-    originating from init's parent.
-    
-    The feature is configured by one or multiple <service> nodes hosted in
-    init's <config> node. The routing policy is selected by via the regular
-    server-side policy-selection mechanism, for example:
-    
-    <config>
-      ...
-      <service name="LOG">
-        <policy label="noux">
-          <child name="terminal_log" label="important"/>
-        </policy>
-        <default-policy> <child name="nitlog"/> </default-policy>
-      </service>
-      ...
-    </config>
-    
-    Each policy node must have a <child> sub node, which denotes name of the
-    server with the 'name' attribute. The optional 'label' attribute defines
-    the session label presented to the server, analogous to how the
-    rewriting of session labels works in session routes. If not specified,
-    the client-provided label is presented to the server as is.
-    
-    Fixes #2247
+The new version of init is able to apply changes of any server's '<provides>'
+declarations in a differential way. Servers can in principle be extended by
+new services without re-starting them. Of course, changes of the '<provides>'
+declarations may affect clients or would-be clients as this information is
+taken into account for the session routing.
+
+
+Responding to RAM-quota changes
+-------------------------------
+
+If the RAM quota is decreased, init withdraws as much quota from the child's
+RAM session as possible. If the child's RAM session does not have enough
+available quota, a resource-yield request is issued to the child. Cooperative
+children may respond to such a request by releasing memory.
+
+If the RAM quota is increased, the child's RAM session is upgraded. If the
+configuration exceeds init's available RAM, init re-attempts the upgrade
+whenever new slack memory becomes available (e.g., by disappearing other
+children).
+
+The formerly built-in policy of responding to resource requests with handing
+out slack quota does not exist anymore. Instead, resource requests have to be
+answered by an update of the init configuration with adjusted quota values.
+
+Note that this change may break run scripts that depend on init's original
+policy. Those run scripts may be adjusted by increasing the quota for the
+components that use to inflate their RAM usage during runtime such that the
+specified quota suffices for the entire lifetime of the component.
+
+
+Service forwarding
+------------------
+
+Init has become able to act as a server that forwards session requests to its
+children. Session requests can be routed depending of the requested service
+type and the session label originating from init's parent.
+
+The feature is configured by one or multiple '<service>' nodes hosted in
+init's '<config>' node. The routing policy is selected by via the regular
+server-side policy-selection mechanism, for example:
+
+! <config>
+!   ...
+!   <service name="LOG">
+!     <policy label="noux">
+!       <child name="terminal_log" label="important"/>
+!     </policy>
+!     <default-policy> <child name="nitlog"/> </default-policy>
+!   </service>
+!   ...
+! </config>
+
+Each policy node must have a '<child>' sub node, which denotes the name of the
+server via the 'name' attribute. The optional 'label' attribute defines the
+session label presented to the server, analogous to how the rewriting of
+session labels works in session routes. If not specified, the client-provided
+label is presented to the server as is.
 
 
 Interpolated wall-clock times
