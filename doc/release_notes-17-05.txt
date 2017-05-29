@@ -187,122 +187,71 @@ scope):
 * The 'Allocator::Out_of_memory' exception has become an alias for 'Out_of_ram'.
 
 
-Assignment and trading for capability quotas
-============================================
-; @nfeske
+Assignment and trading of capability quotas
+===========================================
 
-commit 0ec359c904973e60bb5b7d5a15fc8d2d43fc3b0d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 7 22:44:15 2017 +0200
+Genode employs a resource-trading scheme for memory management. Under this
+regime, parent components explicitly assign memory to child components, and
+client components are able to "lend" memory to servers. (the details are
+described in the "Genode Foundations" book).
 
-    core: add Platform::max_caps()
-    
-    This method returns the kernel-specific system-global limit of the total
-    number of capabilities.
-    
-    Issue #2398
+Even though capabilities are data structures (residing in the kernel), their
+costs cannot be accounted via Genode's regular memory-trading scheme because
+those data structures are - generally speaking - not easily extensible by the
+user land on top of the kernel. E.g., on Linux where we use file descriptors
+to represent capabilities, we are bound by the fd-limit of the kernel. On
+base-hw, the maximum number of capabilities is fixed at the build time of the
+kernel and used to dimension statically allocated data structures. Even on
+seL4 (which in principle allows user memory to be turned into kernel memory),
+the maximum number of capabilities is somehow limited by the ID namespace
+within core. For this reason, capabilities should be regarded as a limited
+physical resource from the component's point of view, very similar to how
+physical memory is modeled at a limited physical resource.
 
-commit 0b2184da13e62b49631dfa938cccae6b8cc52431
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 7 22:03:25 2017 +0200
+On Genode, any regular component implicitly triggers the allocation of
+capabilities whenever a RPC object or a signal context is created. As previous
+versions of Genode did not impose a limit on how many capabilities a component
+can allocate, a misbehaving component may exhaust the system-global capability
+space and thereby poses a denial-of-service threat. The current version solves
+this problem by mirroring the accounting and trading scheme that Genode
+employs for physical memory to the accounting of capability allocations.
 
-    Annotate session interfaces with CAP_QUOTA
-    
-    The new 'CAP_QUOTA' enum value denotes the capability quota to be
-    transferred from the client to the server at session-creation time.
-    
-    Issue #2398
+Capability quotas must now be explicitly assigned to subsystems by specifying
+a 'caps=<amount>' attribute to init's start nodes. Analogously to RAM quotas,
+cap quotas can be traded between clients and servers as part of the session
+protocol. The capability budget of each component is maintained by the
+component's corresponding PD session at core.
 
-commit 66939cff284345a7f474a443cc70cdf128530087
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 7 23:08:33 2017 +0200
+At the current stage, the accounting is applied to RPC capabilities,
+signal-context capabilities, dataspace capabilities, and static per-session
+capability costs. Capabilities that are dynamically allocated via core's CPU
+and TRACE service are not yet covered. Also, the capabilities allocated by
+resource multiplexers outside of core (like nitpicker) must be accounted by
+the respective servers, which is not covered yet. The static per-session
+capability costs are declared via the new 'CAP_QUOTA' enum value in the scope
+of the respective session type. The value is used by clients to dimension a
+session's initial quota donation, and by servers to validate the session
+construction argument against the 'CAP_QUOTA' value as written in the
+"contract" (the session interface).
 
-    base: 'Quota_guard' utility for tracking quotas
-    
-    * Introduces 'Cap_quota' and 'Ram_quota' types
-    * Introduces 'Out_of_caps' and 'Out_of_ram' exceptions
-    
-    Issue #2398
+If a component runs out of capabilities, core's PD service prints a warning to
+the log. To observe the consumption of capabilities per component in detail,
+the PD service is equipped with a diagnostic mode, which can be enabled via
+the 'diag' attribute in the target node of init's routing rules. E.g., the
+following route enables the diagnostic mode for the PD session of the "timer"
+component:
 
-commit fc954bb33a754d03e55c31cc961daaa980e14414
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 7 23:44:48 2017 +0200
+! <default-route>
+!   <service name="PD" unscoped_label="timer">
+!     <parent diag="yes"/>
+!   </service>
+!   ...
+! </default-route>
 
-    base: new session-creation helper types
-    
-    This patch augments the existing session/session.h with useful types for
-    the session creation:
-    
-    * The new 'Insufficient_ram_quota' and 'Insufficient_cap_quota'
-      exceptions are meant to supersede the old 'Quota_exceeded' exception
-      of the 'Parent' and 'Root' interfaces.
-    
-    * The 'Session::Resources' struct subsumes the information about the
-      session quota provided by the client.
-    
-    * The boolean 'Session::Diag' type will allow sessions to operate in a
-      diagnostic mode.
-    
-    * The existing 'Session_label' is not also available under the alias
-      'Session::Label'.
-    
-    * A few helper functions ease the extraction of typed session arguments
-      from the session-argument string.
-    
-    Issue #2398
-
-commit 4053bf47f16da47862d20b4ae67e179fbcdcd008
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 7 22:36:11 2017 +0200
-
-    Assign cap quotas in run scripts and recipes
-    
-    Issue #2398
-
-commit 2fe8c0e503bcdf6ec133f6ab4ee945137a66555e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon May 8 21:35:43 2017 +0200
-
-    Capability quota accounting and trading
-    
-    This patch mirrors the accounting and trading scheme that Genode employs
-    for physical memory to the accounting of capability allocations.
-    
-    Capability quotas must now be explicitly assigned to subsystems by
-    specifying a 'caps=<amount>' attribute to init's start nodes.
-    Analogously to RAM quotas, cap quotas can be traded between clients and
-    servers as part of the session protocol. The capability budget of each
-    component is maintained by the component's corresponding PD session at
-    core.
-    
-    At the current stage, the accounting is applied to RPC capabilities,
-    signal-context capabilities, and dataspace capabilities. Capabilities
-    that are dynamically allocated via core's CPU and TRACE service are not
-    yet covered. Also, the capabilities allocated by resource multiplexers
-    outside of core (like nitpicker) must be accounted by the respective
-    servers, which is not covered yet.
-    
-    If a component runs out of capabilities, core's PD service prints a
-    warning to the log. To observe the consumption of capabilities per
-    component in detail, the PD service is equipped with a diagnostic
-    mode, which can be enabled via the 'diag' attribute in the target
-    node of init's routing rules. E.g., the following route enables the
-    diagnostic mode for the PD session of the "timer" component:
-    
-      <default-route>
-        <service name="PD" unscoped_label="timer">
-          <parent diag="yes"/>
-        </service>
-        ...
-      </default-route>
-    
-    For subsystems based on a sub-init instance, init can be configured
-    to report the capability-quota information of its subsystems by
-    adding the attribute 'child_caps="yes"' to init's '<report>'
-    config node. Init's own capability quota can be reported by adding
-    the attribute 'init_caps="yes"'.
-    
-    Fixes #2398
+For subsystems based on a sub-init instance, init can be configured to report
+the capability-quota information of its subsystems by adding the attribute
+'child_caps="yes"' to init's '<report>' configuration node. Init's own
+capability quota can be reported by adding the attribute 'init_caps="yes"'.
 
 
 Merged RAM and PD services of the core component
