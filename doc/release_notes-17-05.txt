@@ -147,72 +147,45 @@ longer, we are not forced to drop those components before their replacements
 are in place.
 
 
-Unification of exception types
-==============================
-; @nfeske
+Streamlining exception types
+============================
 
-commit c9f75132c771b65789e05ef79733bcbd00b88f39
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon May 8 14:32:03 2017 +0200
+During the organic evolution of the Genode API, we usually introduced
+exception types as needed without a global convention. In particular
+the exception types as thrown by RPC functions were usually defined
+in the scope of the RPC interface. This approach ultimately led to a
+proliferation of ambiguously named exception types such as
+'Root::Quota_exceeded' and 'Ram_session::Quota_exceeded'.
 
-    Replace Quota_exceeded by Insufficient_ram_quota
-    
-    This patch replaces the 'Parent::Quota_exceeded',
-    'Service::Quota_exceeded', and 'Root::Quota_exceeded' exceptions
-    by the single 'Insufficient_ram_quota' exception type.
-    
-    Furthermore, the 'Parent' interface distinguished now between
-    'Out_of_ram' (the child's RAM is exhausted) from
-    'Insufficient_ram_quota' (the child's RAM donation does not suffice to
-    establish the session).
-    
-    This eliminates ambiguities and removes the need to convert exception
-    types along the path of the session creation.
-    
-    Issue #2398
+With the current release, we replace the organically grown exception landscape
+by a framework-wide convention. The following changes ease the error handling
+(there are fewer exceptions to handle), alleviates the need to convert
+exceptions along the session-creation call chain, and avoids possible aliasing
+problems (catching the wrong type with the same name but living in a different
+scope):
 
-commit 101d00d52b43b23fa472c9d3ca75b91825526b63
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon May 8 19:55:54 2017 +0200
+* RPC functions that demand a session-resource upgrade no longer reflect this
+  condition via a session-specific exception but via the new 'Out_of_ram'
+  or 'Out_of_caps' exception types, declared in _base/quota_quard.h_.
 
-    core: RAM service based on 'Session_object'
-    
-    This patch reworks the implementation of core's RAM service to make use
-    of the 'Session_object' and to remove the distinction between the
-    "metadata" quota and the managed RAM quota. With the new implementation,
-    the session implicitly allocates its metadata from its own account. So
-    there is not need to handle 'Out_of_metadata' and 'Quota_exceeded' via
-    different exceptions. Instead, the new version solely uses the
-    'Out_of_ram' exception.
-    
-    Furthermore, the 'Allocator::Out_of_memory' exception has become an alias
-    for 'Out_of_ram', which simplifies the error handling.
-    
-    Issue #2398
+* The former 'Parent::Service_denied', 'Parent::Unavailable',
+  'Root::Invalid_args', 'Root::Unavailable', 'Service::Invalid_args',
+  'Service::Unavailable', and 'Local_service::Factory::Denied' types have
+  been replaced by the single 'Service_denied' exception type defined in
+  'session/session.h'.
+  This simplification eliminates ambiguities and removes the need to convert
+  exception types along the path of the session creation.
 
-commit 1c54aa3dd28151777ebe2729a8f175072eae63bb
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 7 22:03:22 2017 +0200
+* The former 'Parent::Quota_exceeded', 'Service::Quota_exceeded', and
+  'Root::Quota_exceeded' exceptions are covered by the single
+  'Insufficient_ram_quota' exception type now.
 
-    Streamline exception types
-    
-    This patch reduces the number of exception types by facilitating
-    globally defined exceptions for common usage patterns shared by most
-    services. In particular, RPC functions that demand a session-resource
-    upgrade not longer reflect this condition via a session-specific
-    exception but via the 'Out_of_ram' or 'Out_of_caps' types.
-    
-    Furthermore, the 'Parent::Service_denied', 'Parent::Unavailable',
-    'Root::Invalid_args', 'Root::Unavailable', 'Service::Invalid_args',
-    'Service::Unavailable', and 'Local_service::Factory::Denied' types have
-    been replaced by the single 'Service_denied' exception type defined in
-    'session/session.h'.
-    
-    This consolidation eases the error handling (there are fewer exceptions
-    to handle), alleviates the need to convert exceptions along the
-    session-creation call chain, and avoids possible aliasing problems
-    (catching the wrong type with the same name but living in a different
-    scope).
+* The 'Parent' interface has become able to distinguish between 'Out_of_ram'
+  (the child's RAM is exhausted) and 'Insufficient_ram_quota' (the child's
+  RAM donation does not suffice to establish the session).
+
+* The 'Allocator::Out_of_memory' exception has become an alias for 'Out_of_ram'.
+
 
 Assignment and trading for capability quotas
 ============================================
