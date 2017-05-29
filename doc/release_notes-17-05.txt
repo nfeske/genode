@@ -645,18 +645,22 @@ Date:   Wed Mar 8 15:40:18 2017 +0100
 
 POSIX libc profile as shared library
 ====================================
-; @nfeske
 
-commit 88d18a3df291ece2fff17362607f6c37f1bbfafc
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 14 21:55:57 2017 +0200
+As described in the
+[https:/documentation/release-notes/17.02#New_execution_model_of_the_C_runtime - previous release notes],
+the 'posix' library supplements Genode's libc with an implementation of a
+'Libc::Component::construct' function that calls a traditional 'main'
+function. It is primarily being used for ported 3rd-party software. As the
+library is just a small supplement to the libc, we used to provide it as a
+static library. However, by providing it as shared object with an ABI, we
+effectively decouple the posix-library-using programs from the library
+implementation, which happens to depend on several OS-level APIs such as the
+VFS. We thereby eliminate the dependency of pure POSIX applications from the
+Genode-API details.
 
-    Turn posix lib into shared library
-    
-    By building the posix library as shared object with an ABI, we
-    effectively decouple posix-using programs from the library
-    implementation (which happens to depend on several os-level APIs such as
-    the VFS).
+This change requires all run scripts that depend on POSIX components to
+extend the list of boot modules as passed to 'build_boot_image' with
+'posix.lib.so'.
 
 
 State reporting of block-device-level components
@@ -988,27 +992,19 @@ Date:   Mon Mar 27 12:39:13 2017 +0200
 
 Separated debug versions of built executables
 =============================================
-; @nfeske
 
-commit 8f27babf16d4a0b66cdf53963338e1631249393b
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 5 16:51:47 2017 +0200
+The _<build-dir>/bin/_ directory used to contain symbolic links to the
+unstripped build results. However, since the new depot tool introduced with
+Genode's package management extracts the content of binary archives from
+_bin/_, the resulting archives would contain overly large unstripped binaries,
+which is undesired. On the other hand, unconditionally stripping the build
+results is not a good option either because we rely of symbol information
+during debugging.
 
-    mk: strip binaries at <build-dir>/bin/
-    
-    The <build-dir>/bin/ directory used to contain symbolic links to the
-    unstripped build results. However, since the upcoming depot tool
-    extracts the content of binary archives from bin/, the resulting
-    archives would contain overly large unstripped binaries, which is
-    undesired. On the other hand, always stripping the build results is not
-    a good option either because we rely of symbol information during
-    debugging.
-    
-    This patch changes the installation of build results such that a new
-    'debug/' directory is populated besides the existing 'bin/' directory.
-    The debug directory contains symbolic links to the unstripped build
-    results whereas the bin directory contains stripped binaries that are
-    palatable for packaging (depot tool) and for assembling boot images (run
-    tool).
+For this reason, build results are now installed at a new 'debug/' directory
+located aside the existing 'bin/' directory. The debug directory contains
+symbolic links to the unstripped build results whereas the bin directory
+contains stripped binaries that are palatable for packaging (depot tool) and
+for assembling boot images (run tool).
 
 
