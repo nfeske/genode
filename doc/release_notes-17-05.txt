@@ -1,0 +1,1041 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 17.05
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+
+
+Package management
+##################
+
+; @nfeske
+
+commit 44e5f1c2d43941ea19838ecb791b38adaa12a5ee
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Mar 30 18:01:39 2017 +0200
+
+    ABIs for libm, libpng, zlib
+
+commit 3a14fb5877f1ebcffa4c3c53c883019d15e153aa
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Mar 28 18:41:41 2017 +0200
+
+    Tool for assembling API/source/binary archives
+    
+    Issue #2339
+
+commit 2c05b7fec2c16ebc7bfee77a61f06f206662080e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Mar 28 18:42:41 2017 +0200
+
+    Depot-archive recipes
+    
+    Issue #2339
+
+commit 5a45d41e89d7353a3577554426ce953e336af345
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Mar 29 16:04:07 2017 +0200
+
+    run: support for accessing depot content
+    
+    Run scripts can use the new 'import_from_depot' function to incorporate
+    archive content from the depot into a scenario. The function must be
+    called after the 'create_boot_directory' function and takes any number
+    of pkg, src, or raw archives as arguments. An archive is specified as
+    depot-relative path of the form <user>/<type>/name. Run scripts may
+    call 'import_from_depot' repeatedly.
+    
+    An argument can refer to a specific version of an archive or just the
+    version-less archive name. In the latter case, the current version (as
+    defined by a corresponding archive recipe in the source tree) is used.
+    
+    If a 'src' archive is specified, the run tool integrates the content of
+    the corrsponding binary archive into the scenario. The binary archives
+    are selected according the spec values as defined for the build directory.
+    As of now, only x86_32 and x86_64 are supported by the 'depot_spec'
+    function.
+    
+    Issue #2339
+
+commit cc85939f57f6fd72c8f45c329739c06cdbf31859
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Apr 14 19:19:39 2017 +0200
+
+    gems: import run-script ingredients from depot
+    
+    This patch adjusts the interactive scenarios of the gems repository to
+    use the depot. This has three immediate benefits. First, once the depot
+    is populated with binary archives, the start time of the scenarios
+    becomes very quick because most dependency checks and build steps are
+    side-stepped. Second, the run scripts become more versatile. In
+    particular, run scripts that were formerly supported on base-linux only
+    (nit_fader, decorator, menu_view) have become usable on all base
+    platforms that have a 'drivers_interactive' package defined. Finally,
+    the run scripts have become much shorter.
+    
+    Issue #2339
+
+commit e312f79ce9a9dce0de811568c4e557d1eb05996a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 14 21:58:56 2017 +0200
+
+    Recipes for noux API, bash, posix
+
+
+Base framework
+##############
+
+New revision of the Genode Foundations book
+===========================================
+
+Genode underwent substantial changes over the coures of the past year. This
+prompts us to update the "Genode Foundations" book to reflect the most current
+state of the framework. Specifically, the changes since the last year's
+edition are:
+
+: <div class="visualClear"><!-- --></div>
+: <p>
+:  <div style="clear: both; float: left; margin-right:20px;">
+:   <a class="internal-link" href="https://genode.org">
+:    <img class="image-inline" src="http://genode.org/documentation/genode-foundations-title.png">
+:   </a>
+:  </div>
+: </p>
+
+* The consolidation of the PD and RAM services of core,
+* The assignment and trading of capability quotas,
+* An extension of the getting-starting section with an example of a typical
+  component skeleton and the handling of external events,
+* New init-configuration features, including the use of unscoped labels,
+  state report, service forwarding, and label rewriting,
+* The use of kernel-agnostic build directories,
+* A new under-the-hood description of the asynchronous parent-child interplay,
+* An updated API reference
+
+: <div class="visualClear"><!-- --></div>
+
+To see the changes in detail, please refer to the book's
+[https://github.com/nfeske/genode-manual/commits/master - revision history].
+
+
+Completed component transition to modern API
+============================================
+
+One year ago, we profoundly
+[https:/documentation/release-notes/16.05#The_great_API_renovation - overhauled Genode's API].
+The modernized framework interface promotes a safe programming style that greatly
+reduces the chances for memory-safety bugs, eases the assessment of the code
+by shunning the use of global side effects, and models the internal state of
+components in an explict way. We are happy to report that we have updated
+almost all of Genode's over 400 components to the new API now, so that we can
+fade out the deprecated legacies from our past.
+
+Originally, we planned to drop the deprecated API altogether with the current
+release. But we will hold on for one release cycle as we identified a few
+components that we better replace by new implementations rather than updating
+them, i.e., our old Mesa EGL back end that will be replaced in August, or a
+few libc plugins that are superseded by the recently introduced VFS
+infrastructure. By keeping the compatibility with the old API for a bit
+longer, we are not forced to drop those components before their replacements
+are in place.
+
+
+Unification of exception types
+==============================
+; @nfeske
+
+commit c9f75132c771b65789e05ef79733bcbd00b88f39
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon May 8 14:32:03 2017 +0200
+
+    Replace Quota_exceeded by Insufficient_ram_quota
+    
+    This patch replaces the 'Parent::Quota_exceeded',
+    'Service::Quota_exceeded', and 'Root::Quota_exceeded' exceptions
+    by the single 'Insufficient_ram_quota' exception type.
+    
+    Furthermore, the 'Parent' interface distinguished now between
+    'Out_of_ram' (the child's RAM is exhausted) from
+    'Insufficient_ram_quota' (the child's RAM donation does not suffice to
+    establish the session).
+    
+    This eliminates ambiguities and removes the need to convert exception
+    types along the path of the session creation.
+    
+    Issue #2398
+
+commit 101d00d52b43b23fa472c9d3ca75b91825526b63
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon May 8 19:55:54 2017 +0200
+
+    core: RAM service based on 'Session_object'
+    
+    This patch reworks the implementation of core's RAM service to make use
+    of the 'Session_object' and to remove the distinction between the
+    "metadata" quota and the managed RAM quota. With the new implementation,
+    the session implicitly allocates its metadata from its own account. So
+    there is not need to handle 'Out_of_metadata' and 'Quota_exceeded' via
+    different exceptions. Instead, the new version solely uses the
+    'Out_of_ram' exception.
+    
+    Furthermore, the 'Allocator::Out_of_memory' exception has become an alias
+    for 'Out_of_ram', which simplifies the error handling.
+    
+    Issue #2398
+
+commit 1c54aa3dd28151777ebe2729a8f175072eae63bb
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 7 22:03:22 2017 +0200
+
+    Streamline exception types
+    
+    This patch reduces the number of exception types by facilitating
+    globally defined exceptions for common usage patterns shared by most
+    services. In particular, RPC functions that demand a session-resource
+    upgrade not longer reflect this condition via a session-specific
+    exception but via the 'Out_of_ram' or 'Out_of_caps' types.
+    
+    Furthermore, the 'Parent::Service_denied', 'Parent::Unavailable',
+    'Root::Invalid_args', 'Root::Unavailable', 'Service::Invalid_args',
+    'Service::Unavailable', and 'Local_service::Factory::Denied' types have
+    been replaced by the single 'Service_denied' exception type defined in
+    'session/session.h'.
+    
+    This consolidation eases the error handling (there are fewer exceptions
+    to handle), alleviates the need to convert exceptions along the
+    session-creation call chain, and avoids possible aliasing problems
+    (catching the wrong type with the same name but living in a different
+    scope).
+
+Assignment and trading for capability quotas
+============================================
+; @nfeske
+
+commit 0ec359c904973e60bb5b7d5a15fc8d2d43fc3b0d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 7 22:44:15 2017 +0200
+
+    core: add Platform::max_caps()
+    
+    This method returns the kernel-specific system-global limit of the total
+    number of capabilities.
+    
+    Issue #2398
+
+commit 0b2184da13e62b49631dfa938cccae6b8cc52431
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 7 22:03:25 2017 +0200
+
+    Annotate session interfaces with CAP_QUOTA
+    
+    The new 'CAP_QUOTA' enum value denotes the capability quota to be
+    transferred from the client to the server at session-creation time.
+    
+    Issue #2398
+
+commit 66939cff284345a7f474a443cc70cdf128530087
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 7 23:08:33 2017 +0200
+
+    base: 'Quota_guard' utility for tracking quotas
+    
+    * Introduces 'Cap_quota' and 'Ram_quota' types
+    * Introduces 'Out_of_caps' and 'Out_of_ram' exceptions
+    
+    Issue #2398
+
+commit fc954bb33a754d03e55c31cc961daaa980e14414
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 7 23:44:48 2017 +0200
+
+    base: new session-creation helper types
+    
+    This patch augments the existing session/session.h with useful types for
+    the session creation:
+    
+    * The new 'Insufficient_ram_quota' and 'Insufficient_cap_quota'
+      exceptions are meant to supersede the old 'Quota_exceeded' exception
+      of the 'Parent' and 'Root' interfaces.
+    
+    * The 'Session::Resources' struct subsumes the information about the
+      session quota provided by the client.
+    
+    * The boolean 'Session::Diag' type will allow sessions to operate in a
+      diagnostic mode.
+    
+    * The existing 'Session_label' is not also available under the alias
+      'Session::Label'.
+    
+    * A few helper functions ease the extraction of typed session arguments
+      from the session-argument string.
+    
+    Issue #2398
+
+commit 4053bf47f16da47862d20b4ae67e179fbcdcd008
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 7 22:36:11 2017 +0200
+
+    Assign cap quotas in run scripts and recipes
+    
+    Issue #2398
+
+commit 2fe8c0e503bcdf6ec133f6ab4ee945137a66555e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon May 8 21:35:43 2017 +0200
+
+    Capability quota accounting and trading
+    
+    This patch mirrors the accounting and trading scheme that Genode employs
+    for physical memory to the accounting of capability allocations.
+    
+    Capability quotas must now be explicitly assigned to subsystems by
+    specifying a 'caps=<amount>' attribute to init's start nodes.
+    Analogously to RAM quotas, cap quotas can be traded between clients and
+    servers as part of the session protocol. The capability budget of each
+    component is maintained by the component's corresponding PD session at
+    core.
+    
+    At the current stage, the accounting is applied to RPC capabilities,
+    signal-context capabilities, and dataspace capabilities. Capabilities
+    that are dynamically allocated via core's CPU and TRACE service are not
+    yet covered. Also, the capabilities allocated by resource multiplexers
+    outside of core (like nitpicker) must be accounted by the respective
+    servers, which is not covered yet.
+    
+    If a component runs out of capabilities, core's PD service prints a
+    warning to the log. To observe the consumption of capabilities per
+    component in detail, the PD service is equipped with a diagnostic
+    mode, which can be enabled via the 'diag' attribute in the target
+    node of init's routing rules. E.g., the following route enables the
+    diagnostic mode for the PD session of the "timer" component:
+    
+      <default-route>
+        <service name="PD" unscoped_label="timer">
+          <parent diag="yes"/>
+        </service>
+        ...
+      </default-route>
+    
+    For subsystems based on a sub-init instance, init can be configured
+    to report the capability-quota information of its subsystems by
+    adding the attribute 'child_caps="yes"' to init's '<report>'
+    config node. Init's own capability quota can be reported by adding
+    the attribute 'init_caps="yes"'.
+    
+    Fixes #2398
+
+
+Merged RAM and PD services of the core component
+================================================
+; @nfeske
+
+commit 838f8f8fcf0b4a2c0f6d8febd3a2f2390bd8b574
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 7 23:49:43 2017 +0200
+
+    base: new 'Ram_allocator' interface
+    
+    The 'Ram_allocator' interface contains the subset of the RAM session
+    interface that is needed to satisfy the needs of the 'Heap' and
+    'Sliced_heap'. Its small size makes it ideal for intercepting memory
+    allocations as done by the new 'Constrained_ram_allocator' wrapper
+    class, which is meant to replace the existing 'base/allocator_guard.h'
+    and 'os/ram_session_guard.h'.
+    
+    Issue #2398
+
+commit 28218df50d00d077583977d5379a31cddf59294e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon May 8 01:33:40 2017 +0200
+
+    base: use 'Ram_quota' in 'Ram_session' args
+    
+    This patch replaces the former use of size_t with the use of the
+    'Ram_quota' type to improve type safety (in particular to avoid
+    accidentally mixing up RAM quotas with cap quotas).
+    
+    Issue #2398
+
+commit 18132233d17d79568e5ca7130bbb5230381a8ecf
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon May 8 12:33:56 2017 +0200
+
+    base: remove int return types from 'Ram_session'
+    
+    This patch replaces the existing C-style error codes with C++
+    exceptions.
+    
+    Fixes #895
+
+commit 6bfe17e789a0576eb2177a260a9c7bf8f9870cbe
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu May 11 20:03:28 2017 +0200
+
+    Integrate core's RAM service into the PD service
+    
+    Fixes #2407
+
+
+Explicit execution of static constructors
+=========================================
+; @chelmuth
+
+commit cb43e04691d3cdb5f2052a2fd7d5999c70047b54
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Wed Mar 15 15:40:55 2017 +0100
+
+    ldso: defer execution of static constructors
+    
+    Ldso now does not automatically execute static constructors of the
+    binary and shared libraries the binary depends on. If static
+    construction is required (e.g., if a shared library with constructor is
+    used or a compilation unit contains global statics) the component needs
+    to execute the constructors explicitly in Component::construct() via
+    Genode::Env::exec_static_constructors().
+    
+    In the case of libc components this is done by the libc startup code
+    (i.e., the Component::construct() implementation in the libc).
+    
+    The loading of shared objects at runtime is not affected by this change
+    and constructors of those objects are executed immediately.
+    
+    Fixes #2332
+
+
+Separation of I/O signals from application-level signals
+========================================================
+; @chelmuth
+
+commit 9f83fa9a79e37f51e7f7bc89b72224d7da5932b4
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Mon Apr 3 10:45:51 2017 +0200
+
+    base: classify signals as I/O and application level
+    
+    Fixes #2363
+
+OS-level libraries and components
+#################################
+
+Dynamic init
+============
+; @nfeske
+
+commit fcf25c22d1cb1a8e6b829360ffcf3367e3b88b6a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Mar 2 13:19:14 2017 +0100
+
+    init: respond to binary-name changes
+    
+    This patch covers the resolution of the ROM route for child binaries
+    via the generic label-rewriting mechanics. Now, the <binary> node has
+    become merely sytactic sugar for a route like the following:
+    
+    <start name="test"/>
+      <route>
+        <service name="ROM" unscoped_label="test">
+          <parent label="test-binary-name"/> </service>
+          ...
+      </route>
+      ...
+    </start>
+    
+    A change of the binary name has an effect on the child's ROM route to
+    the binary and thereby implicitly triggers a child restart due to the
+    existing re-validation of the routing.
+
+commit 8d4fb288d9d0d6a628eb0739e40a6d5f0f0b085e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Mar 2 14:34:27 2017 +0100
+
+    init: add version attribute to start nodes
+    
+    The optional 'version' attribute allows for the forced restart of a
+    child with an otherwise unmodified start node. The specified value is
+    also reflected in the state report.
+
+commit 9dca1503a85e5b0a96ff83cf5ce97693cf4e643c
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Mar 3 12:50:29 2017 +0100
+
+    init: apply changes of <provides> nodes
+    
+    This patch enables init to apply changes of any server's <provides>
+    declarations in a differential way. Servers can in principle be extended
+    by new services without re-starting them. Of course, changes of the
+    <provides> declarations may affect clients or would-be clients as this
+    information is taken into account for the session routing.
+
+commit 06943f413d478d12d7fb8f141136787e02d15375
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Mar 6 15:19:35 2017 +0100
+
+    init: respond to RAM-quota changes in config
+    
+    This patch improves init's dynamic reconfigurability with respect to
+    adjustments of the RAM quota assigned to the children.
+    
+    If the RAM quota is decreased, init withdraws as much quota from the
+    child's RAM session as possible. If the child's RAM session does not
+    have enough available quota, a resource-yield request is issued to
+    the child. Cooparative children may respond to such a request by
+    releasing memory.
+    
+    If the RAM quota is increased, the child's RAM session is upgraded.
+    If the configuration exceeds init's available RAM, init re-attempts
+    the upgrade whenever new slack memory becomes available (e.g., by
+    disappearing other children).
+
+commit 1489791d5e6dcebfdfe5b86f5ddad1a31b4dd7da
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Mar 6 18:04:10 2017 +0100
+
+    init: explicit response to resource requests
+    
+    This patch removes the formerly built-in policy of responding to
+    resource requests with handing out slack quota. Instead, resource
+    requests have to be answered by an update of the init configuration with
+    adjusted quota values.
+    
+    Note that this patch may break run scripts that depend on init's
+    original policy. Those run scripts may be adjusted by increasing the
+    quota for the components that use to inflate their RAM usage during
+    runtime such that the specified quota suffices for the entire lifetime
+    of the component.
+
+commit 1fde4d638c2181d3df2588b5a60bd917539912d5
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Mar 8 10:21:49 2017 +0100
+
+    init: service forwarding
+    
+    This patch equips init with the ability to act as a server that forwards
+    session requests to its children. Session requests can be routed
+    depending of the requested service type and the session label
+    originating from init's parent.
+    
+    The feature is configured by one or multiple <service> nodes hosted in
+    init's <config> node. The routing policy is selected by via the regular
+    server-side policy-selection mechanism, for example:
+    
+    <config>
+      ...
+      <service name="LOG">
+        <policy label="noux">
+          <child name="terminal_log" label="important"/>
+        </policy>
+        <default-policy> <child name="nitlog"/> </default-policy>
+      </service>
+      ...
+    </config>
+    
+    Each policy node must have a <child> sub node, which denotes name of the
+    server with the 'name' attribute. The optional 'label' attribute defines
+    the session label presented to the server, analogous to how the
+    rewriting of session labels works in session routes. If not specified,
+    the client-provided label is presented to the server as is.
+    
+    Fixes #2247
+
+
+Interpolated wall-clock times
+=============================
+; @mstein
+
+commit 12b006286797e16db54d75aaa7b48b3abbe671d9
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Sat Apr 22 00:52:23 2017 +0200
+
+    os/timer: interpolate time via timestamps
+    
+    Previously, the Genode::Timer::curr_time always used the
+    Timer_session::elapsed_ms RPC as back end.  Now, Genode::Timer reads
+    this remote time only in a periodic fashion independently from the calls
+    to Genode::Timer::curr_time. If now one calls Genode::Timer::curr_time,
+    the function takes the last read remote time value and adapts it using
+    the timestamp difference since the remote-time read. The conversion
+    factor from timestamps to time is estimated on every remote-time read
+    using the last read remote-time value and the timestamp difference since
+    the last remote time read.
+    
+    This commit also re-works the timeout test. The test now has two stages.
+    In the first stage, it tests fast polling of the
+    Genode::Timer::curr_time. This stage checks the error between locally
+    interpolated and timer-driver time as well as wether the locally
+    interpolated time is monotone and sufficiently homogeneous. In the
+    second stage several periodic and one-shot timeouts are scheduled at
+    once. This stage checks if the timeouts trigger sufficiently precise.
+    
+    This commit adds the new Kernel::time syscall to base-hw. The syscall is
+    solely used by the Genode::Timer on base-hw as substitute for the
+    timestamp. This is because on ARM, the timestamp function uses the ARM
+    performance counter that stops counting when the WFI (wait for
+    interrupt) instruction is active. This instruction, however is used by
+    the base-hw idle contexts that get active when no user thread needs to
+    be scheduled.  Thus, the ARM performance counter is not a good choice for
+    time interpolation and we use the kernel internal time instead.
+    
+    With this commit, the timeout library becomes a basic library. That means
+    that it is linked against the LDSO which then provides it to the program it
+    serves. Furthermore, you can't use the timeout library anymore without the
+    LDSO because through the kernel-dependent LDSO make-files we can achieve a
+    kernel-dependent timeout implementation.
+    
+    This commit introduces a structured Duration type that shall successively
+    replace the use of Microseconds, Milliseconds, and integer types for duration
+    values.
+    
+    Open issues:
+    
+    * The timeout test fails on Raspberry PI because of precision errors in the
+      first stage. However, this does not render the framework unusable in general
+      on the RPI but merely is an issue when speaking of microseconds precision.
+    
+    * If we run on ARM with another Kernel than HW the timestamp speed may
+      continuously vary from almost 0 up to CPU speed. The Timer, however,
+      only uses interpolation if the timestamp speed remained stable (12.5%
+      tolerance) for at least 3 observation periods. Currently, one period is
+      100ms, so its 300ms. As long as this is not the case,
+      Timer_session::elapsed_ms is called instead.
+    
+      Anyway, it might happen that the CPU load was stable for some time so
+      interpolation becomes active and now the timestamp speed drops. In the
+      worst case, we would now have 100ms of slowed down time. The bad thing
+      about it would be, that this also affects the timeout of the period.
+      Thus, it might "freeze" the local time for more than 100ms.
+    
+      On the other hand, if the timestamp speed suddenly raises after some
+      stable time, interpolated time can get too fast. This would shorten the
+      period but nonetheless may result in drifting away into the far future.
+      Now we would have the problem that we can't deliver the real time
+      anymore until it has caught up because the output of Timer::curr_time
+      shall be monotone. So, effectively local time might "freeze" again for
+      more than 100ms.
+    
+      It would be a solution to not use the Trace::timestamp on ARM w/o HW but
+      a function whose return value causes the Timer to never use
+      interpolation because of its stability policy.
+    
+    Fixes #2400
+
+
+In-band notifications in file-system session
+============================================
+; @emery
+
+commit e591570b6f7e3d3f3939a4feb94cb51e9a4cfd8f
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Apr 20 12:02:43 2017 -0500
+
+    File_system: replace per-handle signals with notification packets
+    
+    Replace registration and signaling of per-handle signal capabilities
+    with CONTENT_CHANGED notification packets.
+    
+    Fix #2397
+
+
+Log-based CPU-load display
+==========================
+; @alexab
+
+commit 451c08ac016f18933fbe87b38c0486bc6d92f55d
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Mar 6 10:36:05 2017 +0100
+
+    os: app showing top style CPU utilization via LOG
+    
+    Fixes #2307
+
+
+Network-traffic monitoring
+==========================
+; @mstein
+
+commit 35cc020e9c22460ce9175b09cdb6dbd60a23cc25
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed Mar 8 15:40:18 2017 +0100
+
+    os/server: nic_dump
+    
+    A tiny bump-in-the-wire tool for dumping NIC packet information.
+    
+    Ref #2314
+
+
+POSIX libc profile as shared library
+====================================
+; @nfeske
+
+commit 88d18a3df291ece2fff17362607f6c37f1bbfafc
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun May 14 21:55:57 2017 +0200
+
+    Turn posix lib into shared library
+    
+    By building the posix library as shared object with an ABI, we
+    effectively decouple posix-using programs from the library
+    implementation (which happens to depend on several os-level APIs such as
+    the VFS).
+
+
+State reporting of block-device-level components
+================================================
+; @chelmuth
+
+commit caafb4b17fa035bd91f62ec142557ce36d1cf713
+Author: Boris Mulder <boris.mulder@nlcsl.com>
+Date:   Thu May 18 11:12:11 2017 +0200
+
+    part_blk: added optional partitions report
+
+commit c0e7ec2416d9ca40972c547f047e220c23243fcc
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Sun May 14 17:02:59 2017 +0200
+
+    ahci: optionally report discovered devices
+    
+    Issue #2417
+
+
+Runtimes and applications
+#########################
+
+Feature-completeness of VirtualBox 5 on NOVA
+============================================
+; @alexab
+
+commit 4f8a497bbf513d06a470a02d8fc4f88ffcf5f851
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jan 31 16:10:52 2017 +0100
+
+    vbox5: update to 5.1.14
+    
+    - use more upstream hm code
+    - add call to memory check as done in vbox4
+    - add in principle all vbox devices and drivers
+    - avoid null pointer during VM startup (patch reported to vbox-devel list)
+    - avoid endless loop in usb root hub
+    
+    Issue #2338
+
+commit e4aea2efebffb2afac5ac78a88d5d5c80759283b
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Feb 14 11:18:12 2017 +0100
+
+    vbox5: enable SMP setups
+    
+    We use the use old IOAPIC implementation, which works for us much better than
+    the new one.
+    
+    Issue #2338
+
+commit a19662abc707fc284c1479953a6da0f68d0848b1
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Mar 10 14:37:15 2017 +0100
+
+    vbox5: update to 5.1.18
+    
+    Issue #2338
+
+commit 4dd287bc7325fef5a8df21c304f751e7209071b4
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Mar 30 13:16:05 2017 +0200
+
+    vbox5: enable xhci model
+    
+    Issue #2338
+
+commit c126d6413992c46a9551f15e2a042ed6d1b597d7
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Apr 7 11:30:43 2017 +0200
+
+    vbox5: use gip thread also for timer watchdog
+    
+    causes the rem timer callback pending check to run more often (every 1 ms
+    instead 10 ms). This is essential to met the timeout requirements of the
+    audio backend, which must be checked&run every 5ms.
+
+commit cabe090b35e4ad1ac43c296d6d5cfbb58ef001e8
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Apr 4 17:00:58 2017 +0200
+
+    vbox5: enable audio support
+    
+    Issue #2338
+
+commit 75337298989b256bf7cca55c4d37e3aa4958cc11
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Apr 19 10:43:14 2017 +0200
+
+    vbox5: add shared folder test
+    
+    Issue #2338
+
+commit f723325ea10ffc94634a914aa1a4c1ebc3ccb2bf
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Apr 26 11:19:40 2017 +0200
+
+    vbox4/5: enable key/value store for guest addition
+    
+    required for enable vbox 5 guest additions, which otherwise deny to work
+    
+    Issue #2338
+
+commit 858e04129313645d7b1c5b9d660096e9e90b3867
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Apr 26 11:46:40 2017 +0200
+
+    vbox5: update to 5.1.20
+    
+    Issue #2338
+
+commit 1cb3e38d5efba729474514fbc84fbfa9cfe47930
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed May 3 14:02:42 2017 +0200
+
+    vbox5: update to 5.1.22
+    
+    Issue #2338
+
+
+Nim programming language
+========================
+; @emery
+
+commit b0d91fcc12751c09f5befbbaf3ab94f6962785a5
+Author: Emery Hemingway <git@spam.works>
+Date:   Sat Apr 1 12:49:30 2017 -0500
+
+    initial Nim compiler and standard library support
+    
+    https://nim-lang.org/
+    
+    Fix #1879
+
+
+Qt5 updated to version 5.8
+==========================
+; @cproc
+
+commit c92e188e2f20b635d3fbfae8eb2590cf89a45201
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon May 22 14:50:09 2017 +0200
+
+    qt5: update to version 5.6.2
+    
+    Issue #2424
+
+commit 90fd5f4de2a1006c92234d47f45b8413de9b574c
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue May 23 17:42:43 2017 +0200
+
+    qt5: update to version 5.7.1
+    
+    Issue #2424
+
+
+Platforms
+#########
+
+Execution on bare hardware (base-hw)
+====================================
+; @skalk
+
+commit ede15967109c04f92bc9750547539e0e50ac80ca
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Feb 21 13:46:59 2017 +0100
+
+    hw: separate bootstrap and core strictly
+    
+    * Introduce Hw namespace and library files under src/lib/hw
+    * Introduce Bootstrap namespace
+    * Move all initialization logic into Bootstrap namespace
+    
+    Ref #2388
+
+commit 074a58db50d49de8a8ba8a5e943640411a847672
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Apr 12 10:06:29 2017 +0200
+
+    hw: remove core internal header directories
+    
+    Fix #2393
+
+commit 37ee0682830ae6ab9c9eac26c4c606d89b8d0da7
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Apr 28 15:27:26 2017 +0200
+
+    base: remove include/spec/* other than ISA
+    
+    This commit moves the headers residing in `repos/base/include/spec/*/drivers`
+    to `repos/base/include/drivers/defs` or repos/base/include/drivers/uart`
+    respectively. The first one contains definitions about board-specific MMIO
+    iand RAM addresses, or IRQ lines. While the latter contains device driver
+    code for UART devices. Those definitions are used by driver implementations
+    in `repos/base-hw`, `repos/os`, and `repos/dde-linux`, which now need to
+    include them more explicitely.
+    
+    This work is a step in the direction of reducing 'SPEC' identifiers overall.
+    
+    Ref #2403
+
+
+Muen separation kernel update
+=============================
+; @codelabs
+
+commit 1e090f1f6bd87b3c09011c8ca2271dd6e69d8b7b
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Thu Mar 30 16:12:58 2017 +0200
+
+    Update Muen port
+    
+    Fixes #2356
+
+commit 36acacea7e65c87825ac0d62c69bb68b346dc6c0
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Thu Mar 30 15:41:04 2017 +0200
+
+    tool: Adjust Muen RUN_OPTs
+    
+    The Muen component build has been reworked and so Tau0 does no longer
+    need to be specified.
+
+commit c600484d686d549b802cd6eb51bb5c49cfcc8586
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Thu Mar 30 15:43:41 2017 +0200
+
+    hw/doc: Update Muen tutorial
+
+commit 80f704ae0ef9d8c5173a13a3c88dd8f3684a10fe
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Thu Mar 30 17:37:26 2017 +0200
+
+    muen: Update Muen build target.mk
+
+
+Fiasco.OC kernel update
+=======================
+; @skalk
+
+commit 4bfdbd34dae18f135443c2c51eae44fd805a1a7b
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 8 13:08:52 2017 +0200
+
+    foc: remove obsolete features (ref #2405)
+    
+    Removes the following Fiasco.OC specific features:
+    * GDB extensions for Fiasco.OC
+    * i.MX53 support for Fiasco.OC
+    * Kernel debugger terminal driver
+    * Obsolete interface Native_pd
+    * Obsolete function of interface Native_cpu
+
+
+Tool chain
+##########
+
+GNU compiler collection (GCC) 6.3
+=================================
+; @cproc
+
+commit 890317953724d8beb3f0924e887553cab8cb1cc2
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Mar 17 13:10:55 2017 +0100
+
+    tool_chain: use port mechanism
+    
+    Fixes #2340
+
+commit 7cde6ac89ab616706c4816150009dfd9c8f4e204
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Sun Apr 9 21:02:29 2017 +0200
+
+    binutils: update to version 2.28
+    
+    Fixes #2401
+    Issue #2372
+
+commit 5c5696be173292c22b7c70efd79a1d23602e31e8
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Sun Apr 9 21:02:34 2017 +0200
+
+    gcc: update to version 6.3.0
+    
+    Issue #2372
+
+commit b6162b65581fcea677c82cd5f1b4fa1744e8a44c
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Sun Apr 9 21:02:41 2017 +0200
+
+    stdcxx: update to version 6.3.0
+    
+    Issue #2372
+
+commit e18ded3a4edf19ec428c84d8ae83a58074ca7541
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed May 3 15:40:44 2017 +0200
+
+    gcc: RISC-V 6.3.0
+    
+    issue #2423
+
+
+Improved support for the Ada programming language
+=================================================
+; @cproc
+
+
+Chain-boot loader for gzip-compressed boot modules
+==================================================
+; @skalk
+
+commit 79143f67820000740a362211d9424f0adea32b91
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Mar 27 12:39:13 2017 +0200
+
+    tool/boot: add chain_loader 'unzip'
+    
+    'unzip' can uncompress and load raw multiboot images and ELF files.
+    
+    Usage together with the PXE bootloader ease life running the muen hypervisor
+    together with a Genode/x86_64 VM, where the raw boot image is typically quite
+    large.
+    
+    Ref #2358
+
+
+Separated debug versions of built executables
+=============================================
+; @nfeske
+
+commit 8f27babf16d4a0b66cdf53963338e1631249393b
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 5 16:51:47 2017 +0200
+
+    mk: strip binaries at <build-dir>/bin/
+    
+    The <build-dir>/bin/ directory used to contain symbolic links to the
+    unstripped build results. However, since the upcoming depot tool
+    extracts the content of binary archives from bin/, the resulting
+    archives would contain overly large unstripped binaries, which is
+    undesired. On the other hand, always stripping the build results is not
+    a good option either because we rely of symbol information during
+    debugging.
+    
+    This patch changes the installation of build results such that a new
+    'debug/' directory is populated besides the existing 'bin/' directory.
+    The debug directory contains symbolic links to the unstripped build
+    results whereas the bin directory contains stripped binaries that are
+    palatable for packaging (depot tool) and for assembling boot images (run
+    tool).
+
+
