@@ -256,53 +256,39 @@ capability quota can be reported by adding the attribute 'init_caps="yes"'.
 
 Merged RAM and PD services of the core component
 ================================================
-; @nfeske
 
-commit 838f8f8fcf0b4a2c0f6d8febd3a2f2390bd8b574
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 7 23:49:43 2017 +0200
+Traditionally, Genode's core component used to decouple the management of RAM
+from the notion of protection domains (PD). Both concerns were addressed by
+separate core services. While nice from an academic point of view, in
+practice, this separation did not provide any tangible benefit. As a matter of
+fact, there is a one-to-one relationship between PD sessions and RAM sessions
+in all current Genode systems. As this superficial flexibility is needless
+complexity, we identified the potential to simplify core as well as the
+framework libraries by merging the RAM session functionality into the PD
+session interface.
 
-    base: new 'Ram_allocator' interface
-    
-    The 'Ram_allocator' interface contains the subset of the RAM session
-    interface that is needed to satisfy the needs of the 'Heap' and
-    'Sliced_heap'. Its small size makes it ideal for intercepting memory
-    allocations as done by the new 'Constrained_ram_allocator' wrapper
-    class, which is meant to replace the existing 'base/allocator_guard.h'
-    and 'os/ram_session_guard.h'.
-    
-    Issue #2398
+Since the implementation of capability-quota accounting as explained in
+Section [Assignment and trading of capability quotas], PD sessions already
+serve the role of an account for physical resources, which was previously a
+distinctive feature of RAM sessions. That includes the support for trading
+resource quotas between sessions, and the definition of a reference account.
+The only unique functionality provided by the RAM service is the actual
+allocation and deallocation of RAM. So the consolidation appeared as a natural
+step to take.
 
-commit 28218df50d00d077583977d5379a31cddf59294e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon May 8 01:33:40 2017 +0200
+From the framework's API perspective, this change mainly affects the use case
+of the 'Ram_session' interface as a physical-memory allocation back end. This
+use case is covered by the new 'Ram_allocator' interface, which is implemented
+by the 'Pd_session' and contains the subset of the former RAM session
+interface that is needed to satisfy the needs of the 'Heap' and 'Sliced_heap'.
+Its narrow scope makes it ideal for intercepting memory allocations as done by
+the new 'Constrained_ram_allocator' wrapper class, which is meant to replace
+the existing _base/allocator_guard.h_ and _os/ram_session_guard.h_.
 
-    base: use 'Ram_quota' in 'Ram_session' args
-    
-    This patch replaces the former use of size_t with the use of the
-    'Ram_quota' type to improve type safety (in particular to avoid
-    accidentally mixing up RAM quotas with cap quotas).
-    
-    Issue #2398
-
-commit 18132233d17d79568e5ca7130bbb5230381a8ecf
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon May 8 12:33:56 2017 +0200
-
-    base: remove int return types from 'Ram_session'
-    
-    This patch replaces the existing C-style error codes with C++
-    exceptions.
-    
-    Fixes #895
-
-commit 6bfe17e789a0576eb2177a260a9c7bf8f9870cbe
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu May 11 20:03:28 2017 +0200
-
-    Integrate core's RAM service into the PD service
-    
-    Fixes #2407
+From a system integrator's point of view, the change makes the routing of
+environment sessions to core's RAM service superfluous. Routes to core's RAM
+service along with the corresponding '<parent-provides>' declarations can
+safely be removed from run scripts.
 
 
 Explicit execution of static constructors
