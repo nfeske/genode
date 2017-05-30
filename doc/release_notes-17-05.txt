@@ -780,46 +780,33 @@ Platforms
 
 Execution on bare hardware (base-hw)
 ====================================
-; @skalk
 
-commit ede15967109c04f92bc9750547539e0e50ac80ca
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Feb 21 13:46:59 2017 +0100
+The Genode port executing on bare hardware is under heavy maintainance
+under the hood. Originally started as an experiment, this kernel written
+from scratch has evolved to a serious kernel component of the Genode
+building blocks. While more and more hardware architectures and
+boards got supported by it, the internal structure got too complicated
+recently. We started to reduce the code parts that are included implicitely
+via so called SPEC variables, and describe the code structure now more
+explicitely to aid reviewers and developers that are new to Genode.
+This progress has not entirely finished.
 
-    hw: separate bootstrap and core strictly
-    
-    * Introduce Hw namespace and library files under src/lib/hw
-    * Introduce Bootstrap namespace
-    * Move all initialization logic into Bootstrap namespace
-    
-    Ref #2388
+Another important change of the base-hw internals is the introduction
+of a component, which bootstraps the kernel resp. core. Instead of combining
+the hardware initialization and kernel run-time into one component, those
+functions are now split into separate ones. Thereby, complex procedures
+and custom-built assembler code that is needed during the initialization only,
+is not accessable by the kernel run-time anymore. It is thrown away once
+the initialization got finished. Genode's core starts in an environment,
+where the MMU is already enabled. The kernel is not necessarily mapped
+one-by-one anymore.
 
-commit 074a58db50d49de8a8ba8a5e943640411a847672
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Wed Apr 12 10:06:29 2017 +0200
-
-    hw: remove core internal header directories
-    
-    Fix #2393
-
-commit 37ee0682830ae6ab9c9eac26c4c606d89b8d0da7
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri Apr 28 15:27:26 2017 +0200
-
-    base: remove include/spec/* other than ISA
-    
-    This commit moves the headers residing in `repos/base/include/spec/*/drivers`
-    to `repos/base/include/drivers/defs` or repos/base/include/drivers/uart`
-    respectively. The first one contains definitions about board-specific MMIO
-    iand RAM addresses, or IRQ lines. While the latter contains device driver
-    code for UART devices. Those definitions are used by driver implementations
-    in `repos/base-hw`, `repos/os`, and `repos/dde-linux`, which now need to
-    include them more explicitely.
-    
-    This work is a step in the direction of reducing 'SPEC' identifiers overall.
-    
-    Ref #2403
-
+The introduction of the bootstrap component for base-hw is the last
+preparation step to execute Genode's core as privileged kernel-code
+inside the protection domain of every component. Nowadays, every kernel
+entry on base-hw means an address-space switch. With the next Genode release
+17.08 this will finally change to a solution with better performance,
+and low-complex kernel entry/exit paths.
 
 Muen separation kernel update
 =============================
@@ -835,21 +822,26 @@ of Lenovo x260 and Intel NUC 6i7KYK hardware configurations, support for Linux
 
 Fiasco.OC kernel update
 =======================
-; @skalk
 
-commit 4bfdbd34dae18f135443c2c51eae44fd805a1a7b
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon May 8 13:08:52 2017 +0200
+Four years have elapsed since the Fiasco.OC kernel used by the Genode OS
+framework got updated lastly. Due to the toolchain update of the current
+release we took the opportunity to replace this kernel with the last
+open-source version (r72) that is publicly available.
 
-    foc: remove obsolete features (ref #2405)
-    
-    Removes the following Fiasco.OC specific features:
-    * GDB extensions for Fiasco.OC
-    * i.MX53 support for Fiasco.OC
-    * Kernel debugger terminal driver
-    * Obsolete interface Native_pd
-    * Obsolete function of interface Native_cpu
+Upgrading to a newer kernel version after such a long period of time
+always means to invest some effort. To lower the hurdle some kernel-specific
+features got dropped. On the one hand, they would have needed additional
+patches of the original kernel code, but primarily they were not used by
+anyone actively. Those features are:
 
+* GDB debugging extensions for Genode/Fiasco.OC
+* i.MX53 support for Fiasco.OC
+* A terminal driver to access the Fiasco.OC kernel debugger
+
+Apart from the features that got omitted, the new Fiasco.OC version
+comprises support of new architectures and boards, as well as several
+bugfixes. Thereby, it serves as a more sustainable base for the integrator
+looking for an appropriate kernel component.
 
 Tool chain
 ##########
@@ -868,25 +860,6 @@ language. This addition was motivated by several members of the Genode
 community. In particular, it paves the ground for new components jointly
 developed with Codelabs (the developers of the Muen separation kernel), or
 the potential reuse of recent coreboot device drivers on Genode.
-
-
-Chain-boot loader for gzip-compressed boot modules
-==================================================
-; @skalk
-
-commit 79143f67820000740a362211d9424f0adea32b91
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon Mar 27 12:39:13 2017 +0200
-
-    tool/boot: add chain_loader 'unzip'
-    
-    'unzip' can uncompress and load raw multiboot images and ELF files.
-    
-    Usage together with the PXE bootloader ease life running the muen hypervisor
-    together with a Genode/x86_64 VM, where the raw boot image is typically quite
-    large.
-    
-    Ref #2358
 
 
 Separated debug versions of built executables
