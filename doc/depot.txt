@@ -8,6 +8,10 @@
                                Norman Feske
 
 
+
+Motivation and inspiration
+##########################
+
 The established system-integration work flow with Genode is based on
 the 'run' tool, which automates the building, configuration, integration,
 and testing of Genode-based systems. Whereas the run tool succeeds in
