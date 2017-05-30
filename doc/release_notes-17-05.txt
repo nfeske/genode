@@ -785,36 +785,14 @@ Date:   Fri Apr 28 15:27:26 2017 +0200
 
 Muen separation kernel update
 =============================
-; @codelabs
 
-commit 1e090f1f6bd87b3c09011c8ca2271dd6e69d8b7b
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Thu Mar 30 16:12:58 2017 +0200
+The Muen Separation Kernel port has been brought up to date. Most relevant to
+Genode are the build system adaptations which enable smoother integration with
+the Autopilot testing infrastructure.
 
-    Update Muen port
-    
-    Fixes #2356
-
-commit 36acacea7e65c87825ac0d62c69bb68b346dc6c0
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Thu Mar 30 15:41:04 2017 +0200
-
-    tool: Adjust Muen RUN_OPTs
-    
-    The Muen component build has been reworked and so Tau0 does no longer
-    need to be specified.
-
-commit c600484d686d549b802cd6eb51bb5c49cfcc8586
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Thu Mar 30 15:43:41 2017 +0200
-
-    hw/doc: Update Muen tutorial
-
-commit 80f704ae0ef9d8c5173a13a3c88dd8f3684a10fe
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Thu Mar 30 17:37:26 2017 +0200
-
-    muen: Update Muen build target.mk
+Aside from this change, other features include support for xHCI debug, addition
+of Lenovo x260 and Intel NUC 6i7KYK hardware configurations, support for Linux
+4.10 and many other improvements.
 
 
 Fiasco.OC kernel update
