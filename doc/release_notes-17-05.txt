@@ -755,8 +755,8 @@ that abstracts the POSIX interface offered by the Genode C runtime.
 This has the benefit of easing high-level application development while
 supplying additional test coverage of the low-level runtime.
 
-Thanks to the portable design of the language and compiler integrating
-Genode platform support was accomplished in a few relatively simple steps:
+Thanks to the portable design of the language and compiler it only took
+a few relatively simple steps to incorporate Genode platform support:
 
 * Platform declarations were added to the compiler to standardize
   compile-time conditional code for Genode.
@@ -775,7 +775,7 @@ Genode platform support was accomplished in a few relatively simple steps:
 
 To build Nim targets, the Genode toolchain invokes the Nim compiler to produce
 C++ code and a JSON formatted build recipe. These recipes are then processed
-into conventional makefiles for the generated C++ files and included to complete
+into conventional makefiles for the generated C++ files and imported to complete
 the dependency chain.
 
 To get started with Nim, a local installation of the 0.17 Nim compiler is
@@ -863,7 +863,7 @@ Fiasco.OC kernel update
 =======================
 
 Four years have elapsed since the Fiasco.OC kernel used by the Genode OS
-framework got updated the last time. Due to the tool-chain update of the current
+framework was last updated. Due to the tool-chain update of the current
 release, we took the opportunity to replace this kernel with the most recent
 open-source version (r72) that is publicly available.
 
