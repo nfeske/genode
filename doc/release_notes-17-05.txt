@@ -521,16 +521,27 @@ In-band notifications in file-system session
 ============================================
 ; @emery
 
-commit e591570b6f7e3d3f3939a4feb94cb51e9a4cfd8f
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Thu Apr 20 12:02:43 2017 -0500
+With capability accounting in place we are compelled to examine the framework
+for any wasteful allocation of capablities. Prior to this release it was convenient to
+allocate signal contexts for any number of application contexts. It is now apparent
+that signals should instead drive a fixed number of state machine transitions that
+monitor application state by other means. A good example of this is the File_system
+session.
 
-    File_system: replace per-handle signals with notification packets
-    
-    Replace registration and signaling of per-handle signal capabilities
-    with CONTENT_CHANGED notification packets.
-    
-    Fix #2397
+Previously a component would watch for changes to a file by associating a signal
+context at the client with an open file context at the server. As signals carry no
+payload or metadata the client would be encouraged to allocate a new signal context for
+each file it monitored. In practice this rarely caused problems but nevertheless there
+lurked a limit to scalability.
+
+This release eliminates the allocation of additional signal contexts over the lifetime
+of a 'File_system' session by incorporating notifications into the existing asynchronous
+I/O channel. I/O at the 'File_system' session operates via a circular packet buffer. Each
+packet contains metadata associating an operation with an open file handle. In this release
+we define the new packet type 'CONTENT_CHANGED' to request and to receive notifications of
+changes to an open file. This limits the signal capabilities allocated to those of the packet
+handlers and consolidates I/O and notification handling to no less than a single per-session
+signal handler at client and server.
 
 
 Log-based CPU-load display
@@ -705,15 +716,32 @@ Nim programming language
 ========================
 ; @emery
 
-commit b0d91fcc12751c09f5befbbaf3ab94f6962785a5
-Author: Emery Hemingway <git@spam.works>
-Date:   Sat Apr 1 12:49:30 2017 -0500
+The in the previous release we were proud to debut a
+[http://genode.org/documentation/release-notes/17.02#Linux_TCP_IP_stack_as_VFS_plugin plugable TCP/IP stack]
+for the VFS library. This required an overhaul of the the Berkley sockets
+and 'select' implementation within the POSIX runtime, but scrutiny of the
+POSIX standard leaves us reluctant to endorse it as a network API.
 
-    initial Nim compiler and standard library support
-    
-    https://nim-lang.org/
-    
-    Fix #1879
+We have committed to maintaining our own low-level "socket_fs" API but
+we would not recommend using it directly in applications, nor would we
+commit to creating a high-level, native API. An economic approach would
+be to support existing network libraries, or one step further, support
+existing high-level languages with well integrated standard libraries.
+
+One such language would be [https://nim-lang.org/ Nim]. This release adds
+supports for Nim targets to the build-system and the Nim 0.17 release adds
+Genode support to the Nim runtime. Nim supports compilation to C++ which
+yields high integration at a low maintenance cost, and a full-featured
+standard library that supports high-level application programming. Nim
+features an intuitive asynchronous socket API for single-threaded applications
+that abstracts the POSIX interface offered by the Genode C runtime.
+This has the benefit of easing high-level application development while
+supplying additional test coverage of the low-level runtime.
+
+If Nim proves to be well suited to Genode then further topics of development
+will be support for the Nimble package manager, including Genode signals in
+Nim event dispatching, and replacing POSIX abstractions with a fully native
+OS layer.
 
 
 Qt5 updated to version 5.8
