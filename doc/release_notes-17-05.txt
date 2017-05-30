@@ -436,85 +436,145 @@ session labels works in session routes. If not specified, the client-provided
 label is presented to the server as is.
 
 
-Interpolated wall-clock times
-=============================
-; @mstein
+New framework for userlevel timing
+==================================
 
-commit 12b006286797e16db54d75aaa7b48b3abbe671d9
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Sat Apr 22 00:52:23 2017 +0200
+In the past, application level timing was almost directly build on the bare
+Timer session interface. Thus, developers themselves had to deal with the
+deficiencies of the cross-component protocol:
 
-    os/timer: interpolate time via timestamps
-    
-    Previously, the Genode::Timer::curr_time always used the
-    Timer_session::elapsed_ms RPC as back end.  Now, Genode::Timer reads
-    this remote time only in a periodic fashion independently from the calls
-    to Genode::Timer::curr_time. If now one calls Genode::Timer::curr_time,
-    the function takes the last read remote time value and adapts it using
-    the timestamp difference since the remote-time read. The conversion
-    factor from timestamps to time is estimated on every remote-time read
-    using the last read remote-time value and the timestamp difference since
-    the last remote time read.
-    
-    This commit also re-works the timeout test. The test now has two stages.
-    In the first stage, it tests fast polling of the
-    Genode::Timer::curr_time. This stage checks the error between locally
-    interpolated and timer-driver time as well as wether the locally
-    interpolated time is monotone and sufficiently homogeneous. In the
-    second stage several periodic and one-shot timeouts are scheduled at
-    once. This stage checks if the timeouts trigger sufficiently precise.
-    
-    This commit adds the new Kernel::time syscall to base-hw. The syscall is
-    solely used by the Genode::Timer on base-hw as substitute for the
-    timestamp. This is because on ARM, the timestamp function uses the ARM
-    performance counter that stops counting when the WFI (wait for
-    interrupt) instruction is active. This instruction, however is used by
-    the base-hw idle contexts that get active when no user thread needs to
-    be scheduled.  Thus, the ARM performance counter is not a good choice for
-    time interpolation and we use the kernel internal time instead.
-    
-    With this commit, the timeout library becomes a basic library. That means
-    that it is linked against the LDSO which then provides it to the program it
-    serves. Furthermore, you can't use the timeout library anymore without the
-    LDSO because through the kernel-dependent LDSO make-files we can achieve a
-    kernel-dependent timeout implementation.
-    
-    This commit introduces a structured Duration type that shall successively
-    replace the use of Microseconds, Milliseconds, and integer types for duration
-    values.
-    
-    Open issues:
-    
-    * The timeout test fails on Raspberry PI because of precision errors in the
-      first stage. However, this does not render the framework unusable in general
-      on the RPI but merely is an issue when speaking of microseconds precision.
-    
-    * If we run on ARM with another Kernel than HW the timestamp speed may
-      continuously vary from almost 0 up to CPU speed. The Timer, however,
-      only uses interpolation if the timestamp speed remained stable (12.5%
-      tolerance) for at least 3 observation periods. Currently, one period is
-      100ms, so its 300ms. As long as this is not the case,
-      Timer_session::elapsed_ms is called instead.
-    
-      Anyway, it might happen that the CPU load was stable for some time so
-      interpolation becomes active and now the timestamp speed drops. In the
-      worst case, we would now have 100ms of slowed down time. The bad thing
-      about it would be, that this also affects the timeout of the period.
-      Thus, it might "freeze" the local time for more than 100ms.
-    
-      On the other hand, if the timestamp speed suddenly raises after some
-      stable time, interpolated time can get too fast. This would shorten the
-      period but nonetheless may result in drifting away into the far future.
-      Now we would have the problem that we can't deliver the real time
-      anymore until it has caught up because the output of Timer::curr_time
-      shall be monotone. So, effectively local time might "freeze" again for
-      more than 100ms.
-    
-      It would be a solution to not use the Trace::timestamp on ARM w/o HW but
-      a function whose return value causes the Timer to never use
-      interpolation because of its stability policy.
-    
-    Fixes #2400
+* a Timer session can not manage multiple timeouts at once,
+
+* binding timeout signals to handler methods must be done manually,
+
+* the precision is limited to milliseonds, and
+
+* the session interface leaves a lot of space and also the need for individual
+  front-end implementations which makes maintenance of timing aspects harder
+  in general.
+
+The new timeout framework is a wrapper for the Timer session. It raises the
+abstraction level and narrows the interface according to our experiences with
+former solutions. It is mainly motivated by the broadly used 'Signal_handler'
+class and in that is a clear step away from blocking timeouts (e.g. usleep,
+msleep). Furthermore, it provides scheduling of multiple timeouts at one Timer
+session, local time-interpolation for higher precision, and integrated
+dispatching to individual handler methods.
+
+The credentials of the framework are the three classes 'Timer::Connection',
+'Timer::Periodic_timeout', and 'Timer::One_shot_timeout' that can be found all
+together in the 'timer_session/connection.h' header. Let's visualize their
+application with some small examples. Assume you have two object members that
+you'd like to sample every 1.5 seconds respectively everey 2 seconds. You can
+achieve this as follows:
+
+! #include <timer_session/connection.h>
+!
+! using namespace Genode;
+!
+! struct Data
+! {
+! 	unsigned value_1, value_2;
+!
+! 	void handle_timeout_1(Duration elapsed) { log("Value 1: ", value_1); }
+! 	void handle_timeout_2(Duration elapsed) { log("Value 2: ", value_2); }
+!
+! 	Timer::Periodic_timeout<Data> timeout_1, timeout_2;
+!
+! 	Data(Timer::Connection &timer)
+! 	: timeout_1(timer, *this, &Data::handle_timeout_1, Microseconds(1500000)),
+! 	  timeout_2(timer, *this, &Data::handle_timeout_2, Microseconds(2000000)) { }
+! };
+
+The periodic timeouts take a Timer connection as construction parameter. You
+can use the same Timer connection for multiple timeouts. Additionally, you
+have to tell the timeout constructor which handler method to call and on which
+object. A handler method has no return value and one parameter 'elapsed',
+which contains the time since the creation of the underlying Timer connection.
+As its last parameter, the timeout constructor takes the period length.
+Periodic timeouts start automatically calling the handler methods on the
+object with the given period.
+
+If you now would like to sample the members only once, adapt the example as
+follows:
+
+! struct Data
+! {
+! 	...
+!
+! 	Timer::One_shot_timeout<Data> timeout_1, timeout_2;
+!
+! 	Data(Timer::Connection &timer)
+! 	: timeout_1(timer, *this, &Data::handle_timeout_1),
+! 	  timeout_2(timer, *this, &Data::handle_timeout_2)
+! 	{
+! 		timeout_1.schedule(Microseconds(1500000));
+! 		timeout_2.schedule(Microseconds(2000000));
+! 	}
+! };
+
+In constrast to a periodic timeout, a one-shot timeout is started
+manually with the 'schedule' method. It can be started multiple times
+with different timeout lengths. You can also restart the timeout inside the
+handler method itself:
+
+! struct Data
+! {
+! 	Timer::One_shot_timeout<Data> timeout;
+!
+! 	void handle(Duration elapsed) { timeout.schedule(Microseconds(1000)); }
+!
+! 	Data(Timer::Connection &timer) : timeout(timer, *this, &Data::handle)
+! 	{
+! 		timeout.schedule(Microseconds(2000));
+! 	}
+! };
+
+Furthermore, you can discard a one-shot timeout and check wether it is active
+or not:
+
+! struct Data
+! {
+! 	Timer::One_shot_timeout<Data> timeout;
+!
+! 	...
+!
+! 	void abort_sampling()
+! 	{
+! 		if (timeout.scheduled()) {
+! 			timeout.discard();
+! 		}
+! 	}
+! };
+
+The lifetime of a Timer connection can be read out also independent from any
+timeout via the 'Timer::Connection::curr_time' method. In general, the Timer
+session lifetime provided through 'curr_time' or the timeout-handler parameter
+is calculated using the remote time as well as a local interpolation. This
+raises the precision up to the level of microseconds. The interpolation
+happens transparently. The only thing to remember is that a Timer connection
+always needs some time (approximately 1 second) after construction to reach
+this precision because the interpolation parameters are determined
+empirically.
+
+Although having this improved new timeout interface, the Timer connection
+stays backwards-compatible for now. However, the modern and the legacy
+interface cannot be used in parallel at one connection. Thus, a Timer
+connection now has two modes. Initially it is in the legacy mode with the raw
+session interface and blocking calls like 'usleep' and 'msleep' available.
+But as soon as the new timeout interface is used for the first time, it
+permanently switches to the modern mode. Attempts to use the legacy interface
+in the modern mode cause an exception.
+
+The timeout framework is part of the base library which means that it is
+automatically available in each Genode component.
+
+For technical reasons, the lifetime precision up to microseconds cannot be
+provided when using Fiasco.OC or Linux on ARM platforms.
+
+For a comprehensive example of how to use the timeout framework, see the run
+script 'os/run/timeout.run' respectively the corresponding test component
+'os/src/test/timeout'.
 
 
 In-band notifications in file-system session
@@ -578,17 +638,37 @@ A example output looks like:
 
 Network-traffic monitoring
 ==========================
-; @mstein
 
-commit 35cc020e9c22460ce9175b09cdb6dbd60a23cc25
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Wed Mar 8 15:40:18 2017 +0100
+The new 'nic_dump' server in 'os/src/server/nic_dump' is a bump-in-the-wire
+component for the NIC service. It does deep packet inspection for each passing
+packet and dumps the gathered information to its LOG session. This includes
+information about Ethernet, ARP, IPv4, TCP, UDP, and DHCP by now. The
+monitored information can also be stored to a file by using the 'fs_log'
+server or printed to a terminal session using the 'terminal_log' server.
 
-    os/server: nic_dump
-    
-    A tiny bump-in-the-wire tool for dumping NIC packet information.
-    
-    Ref #2314
+Here is an examplary  snippet of Init-configuration that integrates the NIC
+dump into a scenario between a NIC bridge and a NIC router.
+
+! <start name="nic_dump">
+! 	<resource name="RAM" quantum="6M"/>
+! 	<provides> <service name="Nic"/> </provides>
+! 	<config uplink="bridge" downlink="router" time="yes"/>
+! 	<route>
+! 		<service name="Nic"> <child name="nic_bridge"/> </service>
+! 		...
+! 	</route>
+! </start>
+
+As you can see, NIC dump knows three config parameters by now. The parameters
+'uplink' and 'downlink' determine how the two NIC session are called in the
+output. The 'time' parameter decides wether to print a timestamp in front of
+each packet dump or not. What protocol information is printed and in which
+format is not configurable yet. But it can be altered in the 'print'
+methods of the corresponding protocol classes. You can find them in the 'net'
+library in 'os/src/lib/net' respectively 'os/include/net'.
+
+For a comprehensive example of how to use the NIC dump, see the
+run script 'libports/run/nic_dump.run'.
 
 
 POSIX libc profile as shared library
