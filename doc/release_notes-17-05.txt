@@ -718,23 +718,23 @@ Date:   Sat Apr 1 12:49:30 2017 -0500
 
 Qt5 updated to version 5.8
 ==========================
-; @cproc
 
-commit c92e188e2f20b635d3fbfae8eb2590cf89a45201
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon May 22 14:50:09 2017 +0200
+We updated our Qt5 port to version 5.8. In the process, we removed the use
+of deprecated Genode APIs, which has some implications for Qt5 application
+developers, as some parts of Qt5 now need to be initialized with the Genode
+environment:
 
-    qt5: update to version 5.6.2
-    
-    Issue #2424
+* Qt5 applications with a 'main()' function need to link with the new
+  'qt5_component' library instead of the 'posix' library.
 
-commit 90fd5f4de2a1006c92234d47f45b8413de9b574c
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue May 23 17:42:43 2017 +0200
+* Qt5 applications implementing 'Libc::Component::construct()' must
+  initialize the QtCore and QtGui libraries by calling the
+  'initialize_qt_core(Genode::Env &)' and 'initialize_qt_gui(Genode::Env &)'
+  functions.
 
-    qt5: update to version 5.7.1
-    
-    Issue #2424
+* Qt5 applications using the 'QPluginWidget' class must implement
+  'Libc::Component::construct()' and call 'QPluginWidget::env(Genode::Env &)'
+  in addition to the QtCore and QtGui initialization functions.
 
 
 Platforms
