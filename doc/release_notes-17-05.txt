@@ -15,78 +15,83 @@
 Package management
 ##################
 
-; @nfeske
+Genode's established work flows facilitate the run tool for the automated
+building, configuration, integration, and testing of Genode system scenarios.
+Thereby, the subject of work is a system as a whole. The system may be
+composed of an arbitrary number of components or even host dynamic
+subsystems, but whenever a change of the system is desired, a new work-flow
+iteration is needed. This works well for appliance-like scenarios with a
+well defined scope of features. But as indicated by our experience with
+using Genode as a general-purpose OS with the so-dubbed Turmvilla scenario,
+it does not scale well to scenarios where the shape of system changes over
+time. In practice, modelling a general-purpose OS as one single piece becomes
+inconvenient.
 
-commit 44e5f1c2d43941ea19838ecb791b38adaa12a5ee
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Mar 30 18:01:39 2017 +0200
+The natural solution is the introduction of a package manager that relieves
+the system integrator from compiling all components from source and abstracts
+away low-level details into digestible "packages". After reviewing several
+package-management approaches, we grew very fond of the
+[https://nixos.org/nix/ - Nix] package manager, which opened our eyes to
+package management done right. However, in the process of our intensive
+experimentation with combining Nix with Genode, we also learned that Nix
+solves a number problems that do not exist in the clean-slate Genode world.
+This realization prompted us to explore a custom Genode approach. The current
+release bears the fruit of this line of work in the form of a new tool set
+called "depot".
 
-    ABIs for libm, libpng, zlib
+:New documentation of Genode's package management:
 
-commit 3a14fb5877f1ebcffa4c3c53c883019d15e153aa
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Mar 28 18:41:41 2017 +0200
+  [https://genode.org/documentation/developer-resources/package_management]
 
-    Tool for assembling API/source/binary archives
-    
-    Issue #2339
+In short, the new depot tools provide the following features:
 
-commit 2c05b7fec2c16ebc7bfee77a61f06f206662080e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Mar 28 18:42:41 2017 +0200
+* Packaged content is categorized into different types of "archives", each
+  type modelled after a specific purpose. We distinguish API, source, raw
+  data, binary, and package archives.
 
-    Depot-archive recipes
-    
-    Issue #2339
+* Flat build-time dependencies: Source archives can merely depend on API
+  archives but not on other source archives. API archives cannot have any
+  dependencies.
 
-commit 5a45d41e89d7353a3577554426ce953e336af345
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Mar 29 16:04:07 2017 +0200
+* Loose coupling between source archives. Applications do not directly
+  depend of libraries but merely on the library's API archives. Unless a
+  bugfix of a library affects its API, it does not affect library-using
+  applications.
 
-    run: support for accessing depot content
-    
-    Run scripts can use the new 'import_from_depot' function to incorporate
-    archive content from the depot into a scenario. The function must be
-    called after the 'create_boot_directory' function and takes any number
-    of pkg, src, or raw archives as arguments. An archive is specified as
-    depot-relative path of the form <user>/<type>/name. Run scripts may
-    call 'import_from_depot' repeatedly.
-    
-    An argument can refer to a specific version of an archive or just the
-    version-less archive name. In the latter case, the current version (as
-    defined by a corresponding archive recipe in the source tree) is used.
-    
-    If a 'src' archive is specified, the run tool integrates the content of
-    the corrsponding binary archive into the scenario. The binary archives
-    are selected according the spec values as defined for the build directory.
-    As of now, only x86_32 and x86_64 are supported by the 'depot_spec'
-    function.
-    
-    Issue #2339
+* Archives are organized in a hierarchic name space that includes its
+  origin, type, and version.
 
-commit cc85939f57f6fd72c8f45c329739c06cdbf31859
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Apr 14 19:19:39 2017 +0200
+* Different versions of software can be installed side by side.
 
-    gems: import run-script ingredients from depot
-    
-    This patch adjusts the interactive scenarios of the gems repository to
-    use the depot. This has three immediate benefits. First, once the depot
-    is populated with binary archives, the start time of the scenarios
-    becomes very quick because most dependency checks and build steps are
-    side-stepped. Second, the run scripts become more versatile. In
-    particular, run scripts that were formerly supported on base-linux only
-    (nit_fader, decorator, menu_view) have become usable on all base
-    platforms that have a 'drivers_interactive' package defined. Finally,
-    the run scripts have become much shorter.
-    
-    Issue #2339
+That said, the new depot tools may not be the end of all means. In order to
+fully promote them, we first need to use the tools to experience their weak
+spots. The current implementation should therefore be regarded as
+experimental. During the development, we stressed the tools intensively by
+realizing reasonably complex scenarios - in particular interactive scenarios
+that include the window manager. The immediate result of this playful process
+are more than 80 easily reusable archives, in particular archives for all of
+the framework's supported kernels.
 
-commit e312f79ce9a9dce0de811568c4e557d1eb05996a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun May 14 21:58:56 2017 +0200
+The new depot does not exist isolated from the run tool. Instead, the current
+release enhances the existing run tool with the ability to incorporate
+ready-to-use depot content into scenarios. This is best illustrated with the
+_gems/run/wm.run_ script, which creates a system image our of depot content
+only. Most of the other run scripts of the _gems_ repository leverage the
+depot in an even more interesting way: The majority of content is taken from
+the depot but a few components of special interest are handled by the build
+system. The combination of the depot with the established work flow has three
+immediate benefits. First, once the depot is populated with binary archives,
+the start time of the scenarios becomes very quick because most dependency
+checks and build steps are side-stepped. Second, the run scripts become more
+versatile. In particular, run scripts that were formerly supported on
+base-linux only (nit_fader, decorator, menu_view) have become usable on all
+base platforms that have a 'drivers_interactive' package defined. Finally, the
+run scripts have become much shorter.
 
-    Recipes for noux API, bash, posix
+Right now, the depot tools are still focused on Genode's traditional work
+flows in order to provide an immediate benefit for our everyday development.
+But they also represent the groundwork for the next step, which is on-target
+package management and system updates.
 
 
 Base framework
