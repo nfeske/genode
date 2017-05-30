@@ -579,7 +579,6 @@ script 'os/run/timeout.run' respectively the corresponding test component
 
 In-band notifications in file-system session
 ============================================
-; @emery
 
 With capability accounting in place we are compelled to examine the framework
 for any wasteful allocation of capablities. Prior to this release it was convenient to
@@ -723,9 +722,9 @@ shared folders, clipboard and dynamic desktop resizing.
 The configuration of VBox 5 stayed the same as for VBox4 on Genode - so mainly
 the existing run scripts must be adjusted regarding the build and binary names.
 
+
 Nim programming language
 ========================
-; @emery
 
 The in the previous release we were proud to debut a
 [http://genode.org/documentation/release-notes/17.02#Linux_TCP_IP_stack_as_VFS_plugin plugable TCP/IP stack]
@@ -855,55 +854,20 @@ Date:   Mon May 8 13:08:52 2017 +0200
 Tool chain
 ##########
 
-GNU compiler collection (GCC) 6.3
-=================================
-; @cproc
+GNU compiler collection (GCC) 6.3 including Ada support
+=======================================================
 
-commit 890317953724d8beb3f0924e887553cab8cb1cc2
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri Mar 17 13:10:55 2017 +0100
+Genode's official tool chain has received a major update to GCC version 6.3
+and binutils version 2.28. The new tool-chain build script facilitates
+Genode's ports mechanism for downloading the tool-chain source code. This way,
+the tool chain built for the host system is created from the exact same source
+code as the version that runs inside Genode's Noux runtime.
 
-    tool_chain: use port mechanism
-    
-    Fixes #2340
-
-commit 7cde6ac89ab616706c4816150009dfd9c8f4e204
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Sun Apr 9 21:02:29 2017 +0200
-
-    binutils: update to version 2.28
-    
-    Fixes #2401
-    Issue #2372
-
-commit 5c5696be173292c22b7c70efd79a1d23602e31e8
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Sun Apr 9 21:02:34 2017 +0200
-
-    gcc: update to version 6.3.0
-    
-    Issue #2372
-
-commit b6162b65581fcea677c82cd5f1b4fa1744e8a44c
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Sun Apr 9 21:02:41 2017 +0200
-
-    stdcxx: update to version 6.3.0
-    
-    Issue #2372
-
-commit e18ded3a4edf19ec428c84d8ae83a58074ca7541
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Wed May 3 15:40:44 2017 +0200
-
-    gcc: RISC-V 6.3.0
-    
-    issue #2423
-
-
-Improved support for the Ada programming language
-=================================================
-; @cproc
+Furthermore, the new version includes support for the Ada programming
+language. This addition was motivated by several members of the Genode
+community. In particular, it paves the ground for new components jointly
+developed with Codelabs (the developers of the Muen separation kernel), or
+the potential reuse of recent coreboot device drivers on Genode.
 
 
 Chain-boot loader for gzip-compressed boot modules
