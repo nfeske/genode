@@ -755,6 +755,37 @@ that abstracts the POSIX interface offered by the Genode C runtime.
 This has the benefit of easing high-level application development while
 supplying additional test coverage of the low-level runtime.
 
+Thanks to the portable design of the language and compiler integrating
+Genode platform support was accomplished in a few relatively simple steps:
+
+* Platform declarations were added to the compiler to standardize
+  compile-time conditional code for Genode.
+
+* An additional template for generating C++ code was defined to wrap application
+  entry into 'Libc::component' rather than the conventional 'main` function.
+
+* Nim procedures were defined for mapping pages into heaps managed by Nim's garbage
+  collector.
+
+* Some of the standard library procedures for missing platform facilities
+  such as command line arguments were stubbed out.
+
+* Threading, synchronization, and TLS support was defined in C++ classes and
+  wrapped into the Nim standard platform procedures.
+
+To build Nim targets, the Genode toolchain invokes the Nim compiler to produce
+C++ code and a JSON formatted build recipe. These recipes are then processed
+into conventional makefiles for the generated C++ files and included to complete
+the dependency chain.
+
+To get started with Nim, a local installation of the 0.17 Nim compiler is
+required along with the 'jq' JSON parsing utility. Defining components
+in pure Nim is uncomplicated and unchanged from normal targets, however
+defining libraries is unsupported at the moment. A sample networked server
+is provided at _repos/libports/src/test/nim_echo_server_. For a comprehensive
+introduction to the language, please refer to
+[https://nim-lang.org/documentation.html].
+
 If Nim proves to be well suited to Genode then further topics of development
 will be support for the Nimble package manager, including Genode signals in
 Nim event dispatching, and replacing POSIX abstractions with a fully native
