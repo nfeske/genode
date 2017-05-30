@@ -34,8 +34,8 @@ Second, general-purpose systems tend to become too complex and diverse to be
 treated as system images. When looking as commodity OSes, each installation
 differs with respect to the installed set of applications, user preferences,
 used device drivers and system preferences. A system based on the run tool's
-work flow would require the user customize the run script of the system for
-each tweak. To stay up to date with, the user would need to re-create the
+work flow would require the user to customize the run script of the system for
+each tweak. To stay up to date, the user would need to re-create the
 system image from time to time while manually maintaining any customizations.
 In practice, this is a burden, very few end users are willing to endure.
 
@@ -53,11 +53,11 @@ scalability limitations, in particular:
 * Fostering a federalistic evolution of Genode systems,
 * Low friction for existing developers.
 
-The design of Genode's package-management concept is largely influenced
-by Git as well as the [https://nixos.org/nix/ - Nix] package manager. In
-particular the latter opened our eyes to discover the potential that lies
-beyond the package management of state-of-the art commodity systems. Even
-though we considered adapting Nix for Genode and actually conducted intensive
+The design of Genode's package-management concept is largely influenced by Git
+as well as the [https://nixos.org/nix/ - Nix] package manager. In particular
+the latter opened our eyes to discover the potential that lies beyond the
+package management employed in state-of-the art commodity systems. Even though
+we considered adapting Nix for Genode and actually conducted intensive
 experiments in this direction (thanks to Emery Hemingway who pushed forward
 this line of work), we settled on a custom solution that leverages Genode's
 holistic view on all levels of the operating system including the build system
@@ -84,10 +84,10 @@ between hard and soft dependencies.
 
 Genode's package management does not follow this notion of a "package".
 Instead of subsuming all deliverable content under one term, we distinguish
-different kinds of content in a simpler form. To avoid the clash of the
-notions of the common meaning of a "package", we speak of "archives" as the
-basic unit of delivery. The following subsections introduce the different
-categories.
+different kinds of content, each in a tailored and simple form. To avoid the
+clash of the notions of the common meaning of a "package", we speak of
+"archives" as the basic unit of delivery. The following subsections introduce
+the different categories.
 Archives are named with their version as suffix, appended via a dash. The
 suffix is maintained by the author of the archive. The recommended naming
 scheme is the use of the release date as version suffix, e.g.,
@@ -109,21 +109,21 @@ API archive
 ===========
 
 An API archive has the structure of a Genode source-code repository. It may
-contain all the typical content of a source-code repository such as header
+contain all the typical content of such a source-code repository such as header
 files (in the _include/_ subdirectory), source codes (in the _src/_
 subdirectory), library-description files (in the _lib/mk/_ subdirectory), or
 ABI symbols (_lib/symbols/_ subdirectory). At the top level, a LICENSE file is
 expected that clarifies the license of the contained source code. There is no
 meta data contained in an API archive.
 
-An API archive is meant to provide ingredients for building components. The
+An API archive is meant to provide _ingredients_ for building components. The
 canonical example is the public programming interface of a library (header
-files) and the library's binary interface in the form of an ABI symbols file.
+files) and the library's binary interface in the form of an ABI-symbols file.
 One API archive may contain the interfaces of multiple libraries. For example,
 the interfaces of libc and libm may be contained in a single "libc" API
-archive because they are tightly related to each other. Conversely, an API
+archive because they are closely related to each other. Conversely, an API
 archive may contain a single header file only. The granularity of those
-archives may vary. But the have in common that they are used at build time
+archives may vary. But they have in common that they are used at build time
 only, not at runtime.
 
 
@@ -138,23 +138,24 @@ it contains descriptions of actual build targets in the form of Genode's usual
 
 In addition to the source code, a source archive contains a file
 called 'used_apis', which contains a list of API-archive names with each
-name on a separate line.
-For example, the 'used_apis' file of the 'report_rom' source archive looks as follows:
+name on a separate line. For example, the 'used_apis' file of the 'report_rom'
+source archive looks as follows:
 
 ! base-2017-05-14
 ! os-2017-05-13
 ! report_session-2017-05-13
 
-The 'used_apis' file declared the APIs needed to incorporate into the build
-process when building the source archive. Hence, they represent _build-time
-dependencies_ on the specific API versions.
+The 'used_apis' file declares the APIs needed to incorporate into the build
+process when building the source archive. Hence, they represent _build-time_
+_dependencies_ on the specific API versions.
 
 A source archive may be equipped with a top-level file called 'api' containing
 the name of exactly one API archive. If present, it declares that the source
 archive _implements_ the specified API. For example, the 'libc-2017-05-14'
 source archive contains the actual source code of the libc and libm as well as
 an 'api' file with the content 'libc-2017-04-13'. The latter refers to the API
-implemented by this version of the libc source package.
+implemented by this version of the libc source package (note the differing
+versions of the API and source archives)
 
 
 Binary archive
@@ -163,7 +164,7 @@ Binary archive
 A binary archive contains the build result of the equally-named source archive
 when built for a particular architecture. That is, all files that would appear
 at the _<build-dir>/bin/_ subdirectory when building all targets present in
-the source archive. There are no meta data present in a binary archive.
+the source archive. There is no meta data present in a binary archive.
 
 A binary archive is created out of the content of its corresponding source
 archive and all API archives listed in the source archive's 'used_apis' file.
@@ -194,11 +195,11 @@ the 'archives' file denotes the origin of the respective archives
 ("genodelabs"), the archive type, followed by the versioned name of the
 archive.
 
-An 'archives' file may specify raw archives, source archives, or other
-package archives (as type 'pkg'). It thereby allows the expression
-of _runtime dependencies_. If a package archive lists another package
-archive, it inherits the content of the listed archive. This way, a
-package archive may easily customize an existing archive.
+An 'archives' file may specify raw archives, source archives, or package
+archives (as type 'pkg'). It thereby allows the expression of _runtime
+dependencies_. If a package archive lists another package archive, it inherits
+the content of the listed archive. This way, a new package archive may easily
+customize an existing package archive.
 
 In addition to an 'archives' file, a package archive is expected to contain
 a 'README' file explaining the purpose of the collection.
@@ -221,12 +222,11 @@ is structured as follows:
 
 The <user> stands for the origin of the contained archives. For example, the
 official archives provided by Genode Labs reside in a _genodelabs/_
-subdirectory. Within this directory, there is a 'pubkey' file with the ASCII
-version of the user's public key that is used to verify the integrity of
-archives downloaded from the user. The file 'download' specifies the download
-location as an URL.
+subdirectory. Within this directory, there is a 'pubkey' file with the
+user's public key that is used to verify the integrity of archives downloaded
+from the user. The file 'download' specifies the download location as an URL.
 
-By subsuming archives in a subdirectory that correspond their the origin
+Subsuming archives in a subdirectory that correspond to their the origin
 (user) serves two purposes. First, it provides a user-local name space for
 versioning archives. E.g., there might be two versions of a
 'nitpicker-2017-04-15' source archive, one by "genodelabs" and one by
@@ -238,12 +238,12 @@ federalistic development, where contributions of different origins can be
 easily combined.
 
 The actual archives are stored in the subdirectories named after the archive
-types. Archives contained in the _bin/_ subdirectories are further subdivided
-in the various architectures (like 'x86_64', or 'arm_v7'). Note that for
-binaries created for source archives that implement an API (libraries), there
-exists a further nesting level with API version. Therefore, multiple library
-implementations (or versions) that implement the same API are located in the
-same API subdirectory.
+types ('raw', 'api', 'src', 'bin', 'pkg'). Archives contained in the _bin/_
+subdirectories are further subdivided in the various architectures (like
+'x86_64', or 'arm_v7'). Note that for binaries created for source archives
+that implement an API (libraries), there exists a further nesting level with
+API version. Therefore, multiple library implementations (or versions) that
+implement the same API are located in the same API subdirectory.
 
 
 Depot management
@@ -301,7 +301,7 @@ Archive content is not downloaded directly to the depot. Instead, the
 individual archives and signature files are downloaded to a quarantine area in
 the form of a _public/_ directory located in the root of Genode's source tree.
 As its name suggests, the _public/_ directory contains data that is imported
-from or to-be exported to the public. The download tool populates its with the
+from or to-be exported to the public. The download tool populates it with the
 downloaded archives in their compressed form accompanied with their
 signatures.
 
@@ -317,7 +317,7 @@ Building binary archives from source archives
 
 With the depot populated with source and API archives, one can use the
 _tool/depot/build_ tool to produce binary archives. The arguments have the
-form <user>/bin/<arch>/<src-name> where <arch> stands for the targeted
+form '<user>/bin/<arch>/<src-name>' where '<arch>' stands for the targeted
 CPU architecture. For example, the following command builds the 'zlib'
 library for the 64-bit x86 architecture. It uses four CPU cores during the
 build process.
@@ -325,10 +325,10 @@ build process.
 ! ./tool/depot/build nfeske/bin/x86_64/zlib-2017-05-30 -j4
 
 Note that the command expects a specific version of the source archive as
-argument. The depot may contain several version. So the user has to decide,
+argument. The depot may contain several versions. So the user has to decide,
 which one to build.
 
-After the tools finished, the freshly built binary archive can be found in the
+After the tool is finished, the freshly built binary archive can be found in the
 depot within the _genodelabs/bin/_ subdirectory. If the source archive
 implements an API (if it is a library), the result is stored at
 _bin/<arch>/<api>-<version>/<src>-<version>/_. Otherwise, the result is stored
@@ -338,7 +338,7 @@ is preserved. In the example above, that would be the _zlib.lib.so_ library.
 For debugging purposes, it might be interesting to inspect the intermediate
 state of the build. This is possible by adding 'KEEP_BUILD_DIR=1' as argument
 to the build command. The binary's intermediate build directory can be
-found besides the binary archive's location named with '.build' suffix.
+found besides the binary archive's location named with a '.build' suffix.
 
 By default, the build tool won't attempt to rebuild a binary archive that is
 already present in the depot. However, it is possible to force a rebuild via
@@ -366,7 +366,7 @@ For example:
 The command checks that the specified archive and all dependencies are present
 in the depot. It then proceeds with the archiving and signing operations. For
 the latter, the pass phrase for your private key will be requested. The
-publish toll prints the information about the processed archives, e.g.:
+publish tool prints the information about the processed archives, e.g.:
 
 ! publish /.../genode/public/<you>/pkg/wm-2017-05-30.tgz
 ! publish /.../genode/public/<you>/src/decorator-2017-05-30.tgz
@@ -386,7 +386,7 @@ publish toll prints the information about the processed archives, e.g.:
 
 According to the output, the tool populates a directory called _public/_
 at the root of the Genode source tree with the to-be-published archives.
-The content of the _public/_ directory is now prepared to be copied to a
+The content of the _public/_ directory is now ready to be copied to a
 web server, e.g., by using rsync.
 
 
@@ -405,18 +405,18 @@ definition of what a particular API entails, and the relationship between
 archives must be augmented by the archive creator as this kind of information
 is not present in the source tree as is. This is where so-called "archive
 recipes" enter the picture. An archive recipe defines the content of an
-archive. Such recipes can be located an _recipes/_ subdirectory of any
+archive. Such recipes can be located at an _recipes/_ subdirectory of any
 source-code repository, similar to how port descriptions and run scripts
 are organized. Each _recipe/_ directory contains subdirectories for the
-archive types, which, in turn, contain a directory for each archive, in
-short a _recipe directory_.
+archive types, which, in turn, contain a directory for each archive. The
+latter is called a _recipe directory_.
 
 Recipe directory
 ----------------
 
 The recipe directory is named after the archive _omitting the archive version_
 and contains at least one file named _hash_. This file defines the version
-of the archive along with a hash value of the archive's content, both
+of the archive along with a hash value of the archive's content
 separated by a space character. By tying the version name to a particular hash
 value, the _extract_ tool is able to detect the appropriate points in time
 whenever the version should be increased due to a change of the archive's
@@ -428,15 +428,18 @@ API, source, and raw-data archive recipes
 Recipes directories for API, source, or raw-data archives contain a
 _content.mk_ file that defines the archive content in the form of make
 rules. The content.mk file is executed from the archive's location within
-the depot. Hence, it can refer to archive-relative files as targets.
+the depot. Hence, the contained rules can refer to archive-relative files as targets.
 The first (default) rule of the content.mk file is executed with a customized
-make environment that provides easy access to the source tree:
+make environment:
 
-:GENODE_DIR: The root of the Genode source tree
-:REP_DIR: The source code repository where the recipe is located
+:GENODE_DIR: A variable that holds the path to root of the Genode source tree,
+:REP_DIR: A variable with the path to source code repository where the recipe
+  is located
 :port_dir: A make function that returns the directory of a port within the
   _contrib/_ directory. The function expects the location of the
-  corresponding ports files as argument, for example, '$(REP_DIR)/ports/zlib'.
+  corresponding port file as argument, for example, the 'zlib' recipe
+  residing in the _libports/_ repository may specify '$(REP_DIR)/ports/zlib'
+  to access the 3rd-party zlib source code.
 
 Source archive recipes contain simplified versions of the 'used_apis' and
 (for libraries) 'api' files as found in the archives. In contrast to the
@@ -451,7 +454,7 @@ Package-archive recipes
 
 The recipe directory for a package archive contains the verbatim content of
 the to-be-created package archive except for the _archives_ file. All other
-files are copies in verbatim to the archive. The content of the recipe's
+files are copied as verbatim to the archive. The content of the recipe's
 _archives_ file may omit the version information from the listed ingredients.
 Furthermore, the user part of each entry can be left blank by using '_' as a
 wildcard. When generating the package archive from the recipe, the extract
@@ -461,9 +464,9 @@ tool will replace this wildcard with the user that creates the archive.
 Convenience front-end to the extract, build tools
 #################################################
 
-For developers, the work flow of interacting with the depot is often the
+For developers, the work flow of interacting with the depot is most often the
 combination of the _extract_ and _build_ tools whereas the latter expects
-concrete version names as arguments. To _create_ tool accelerates this common
+concrete version names as arguments. The _create_ tool accelerates this common
 usage pattern by allowing the user to omit the version names. Operations
 implicitly refer to the _current_ version of the archives as defined in
 the recipes.
@@ -471,9 +474,9 @@ the recipes.
 Furthermore, the _create_ tool is able to manage version updates for the
 developer. If invoked with the argument 'UPDATE_VERSIONS=1', it automatically
 updates hash files of the involved recipes by taking the current data as
-version name. This is a big help in situations where a commonly used API
-changes. In this case, the versions of the API and all dependent archives
-must be increased.
+version name. This is a valuable assistance in situations where a commonly
+used API changes. In this case, the versions of the API and all dependent
+archives must be increased, which would be a labour-intensive task otherwise.
 
 
 Accessing depot content from run scripts
@@ -481,10 +484,9 @@ Accessing depot content from run scripts
 
 The depot tools are not meant to replace the run tool but rather to complement
 it. When both tools are combined, the run tool implicitly refers to "current"
-archive versions as defined for the archive's corresponding recipes found in
-Genode's source tree. This way, the regular run-tool work flow can be
-maintained while attaining a productivity boost by fetching content from the
-depot instead of building it.
+archive versions as defined for the archive's corresponding recipes. This way,
+the regular run-tool work flow can be maintained while attaining a
+productivity boost by fetching content from the depot instead of building it.
 
 Run scripts can use the 'import_from_depot' function to incorporate archive
 content from the depot into a scenario. The function must be called after the
@@ -498,5 +500,4 @@ just the version-less archive name. In the latter case, the current version
 If a 'src' archive is specified, the run tool integrates the content of
 the corresponding binary archive into the scenario. The binary archives
 are selected according the spec values as defined for the build directory.
-
 
