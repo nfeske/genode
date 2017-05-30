@@ -546,16 +546,35 @@ signal handler at client and server.
 
 Log-based CPU-load display
 ==========================
-; @alexab
 
-commit 451c08ac016f18933fbe87b38c0486bc6d92f55d
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Mar 6 10:36:05 2017 +0100
+The new component 'top' obtains information about the existing trace subjects
+from core's "TRACE" service, as the cpu_load_monitor does, and shows via the
+LOG session the highest CPU consumers per CPU in percentage. The tool is
+especially handy if no graphical setup is available, in contrast to the
+cpu_load_monitor app. Additionally, the actual thread and process name can be
+obtained from logs. By the attribute 'period_ms' the timeframe for requesting,
+processing and showing the cpu load can be configured:
 
-    os: app showing top style CPU utilization via LOG
-    
-    Fixes #2307
+!<config>
+! <parent-provides>
+!  <service name="TRACE"/>
+! </parent-provides>
+! ...
+! <start name="top">
+!  <resource name="RAM" quantum="2M"/>
+!  <config period_ms="2000"/>
+! </start>
+!</config>
 
+A example output looks like:
+
+! [init -> top] cpu=0.0  98.16% thread='idle0' label='kernel'
+! [init -> top] cpu=0.0   0.74% thread='test-thread' label='init -> test-trace'
+! [init -> top] cpu=0.0   0.55% thread='initial' label='init -> test-trace'
+! [init -> top] cpu=0.0   0.23% thread='threaded_time_source' label='init -> timer'
+! [init -> top] cpu=0.0   0.23% thread='initial' label='init -> top'
+! [init -> top] cpu=0.0   0.04% thread='signal handler' label='init -> test-trace'
+! [init -> top] cpu=1.0 100.00% thread='idle1' label='kernel'
 
 Network-traffic monitoring
 ==========================
@@ -616,101 +635,13 @@ Runtimes and applications
 
 Feature-completeness of VirtualBox 5 on NOVA
 ============================================
-; @alexab
 
-commit 4f8a497bbf513d06a470a02d8fc4f88ffcf5f851
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jan 31 16:10:52 2017 +0100
+We updated our Virtualbox 5 port to 5.1.22 and enabled missing features
+like SMP support, USB pass-through, audio, guest additions features like
+shared folders, clipboard and dynamic desktop resizing.
 
-    vbox5: update to 5.1.14
-    
-    - use more upstream hm code
-    - add call to memory check as done in vbox4
-    - add in principle all vbox devices and drivers
-    - avoid null pointer during VM startup (patch reported to vbox-devel list)
-    - avoid endless loop in usb root hub
-    
-    Issue #2338
-
-commit e4aea2efebffb2afac5ac78a88d5d5c80759283b
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Feb 14 11:18:12 2017 +0100
-
-    vbox5: enable SMP setups
-    
-    We use the use old IOAPIC implementation, which works for us much better than
-    the new one.
-    
-    Issue #2338
-
-commit a19662abc707fc284c1479953a6da0f68d0848b1
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Mar 10 14:37:15 2017 +0100
-
-    vbox5: update to 5.1.18
-    
-    Issue #2338
-
-commit 4dd287bc7325fef5a8df21c304f751e7209071b4
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Mar 30 13:16:05 2017 +0200
-
-    vbox5: enable xhci model
-    
-    Issue #2338
-
-commit c126d6413992c46a9551f15e2a042ed6d1b597d7
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Apr 7 11:30:43 2017 +0200
-
-    vbox5: use gip thread also for timer watchdog
-    
-    causes the rem timer callback pending check to run more often (every 1 ms
-    instead 10 ms). This is essential to met the timeout requirements of the
-    audio backend, which must be checked&run every 5ms.
-
-commit cabe090b35e4ad1ac43c296d6d5cfbb58ef001e8
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Apr 4 17:00:58 2017 +0200
-
-    vbox5: enable audio support
-    
-    Issue #2338
-
-commit 75337298989b256bf7cca55c4d37e3aa4958cc11
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Apr 19 10:43:14 2017 +0200
-
-    vbox5: add shared folder test
-    
-    Issue #2338
-
-commit f723325ea10ffc94634a914aa1a4c1ebc3ccb2bf
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Apr 26 11:19:40 2017 +0200
-
-    vbox4/5: enable key/value store for guest addition
-    
-    required for enable vbox 5 guest additions, which otherwise deny to work
-    
-    Issue #2338
-
-commit 858e04129313645d7b1c5b9d660096e9e90b3867
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Apr 26 11:46:40 2017 +0200
-
-    vbox5: update to 5.1.20
-    
-    Issue #2338
-
-commit 1cb3e38d5efba729474514fbc84fbfa9cfe47930
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed May 3 14:02:42 2017 +0200
-
-    vbox5: update to 5.1.22
-    
-    Issue #2338
-
+The configuration of VBox 5 stayed the same as for VBox4 on Genode - so mainly
+the existing run scripts must be adjusted regarding the build and binary names.
 
 Nim programming language
 ========================
