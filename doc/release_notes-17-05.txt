@@ -389,12 +389,11 @@ The most prominent example of ported software is our C library in
 combination with any POSIX program using I/O facilities like files or
 sockets. In this case, our adaption layer that maps the library back
 end to Genode services has to support synchronous calls to classical
-POSIX API functions, which require the operation has completed to a
-degree before the function call returns. The precondition in this
-context is the handling of signals originating from used Genode
-services (e.g., file-system session) without any interference of
-signals on application level. Application level signals can just be
-deferred.
+POSIX API functions, which require that the operation has completed to a
+certain degree before the function call returns. While a function
+blocks for external I/O signals (e.g., file-system session), application-level
+signal handlers are not expected to be triggered. Instead, they must be
+deferred until the component enters its idle state.
 
 From this background, we decided to classify signal handlers and so
 the signal contexts. For application-level signals, the existing
@@ -782,13 +781,13 @@ for the AHCI driver and partition manager. As this is a top
 requirement for a Genode installer, we addressed this issue in the
 relaxing atmosphere of this years Hack'n'Hike.
 
-Our ahci_drv now supports a configuration node to enable reporting of
+Our AHCI driver now supports a configuration node to enable reporting of
 port states.
 
 ! <report ports="yes"/>
 
 The resulting report contains information about active ports and types
-of attached devices in '<port>' nodes. In case of ATA disks the node
+of attached devices in '<port>' nodes. In case of ATA disks, the node
 also contains the block count and size as well as model and serial
 information.
 
@@ -800,12 +799,12 @@ information.
 !     model="QEMU HARDDISK" serial="QM00009"/>
 ! </ports>
 
-In a similar fashion, part_blk now supports partition reporting, which
+In a similar fashion, 'part_blk' now supports partition reporting, which
 can be enabled via the <report> configuration node.
 
 ! <report partitions="yes"/>
 
-The partition report contains information about partition table type
+The partition report contains information about the partition table type
 and available partitions with number, type, first block and length of
 the partition. In case of GPT tables, the report also contains name
 and GUID per partition.
@@ -823,7 +822,7 @@ and GUID per partition.
 !     guid="87199a83-d0f4-4a01-b9e3-6516a8579d61" start="4096" length="16351"/>
 ! </partitions>
 
-We would like to thank Boris Mulder for contributing the part_blk
+We would like to thank Boris Mulder for contributing the 'part_blk'
 reporting facility.
 
 
