@@ -773,7 +773,7 @@ Nim programming language
 ========================
 
 The in the previous release, we were proud to debut a
-[http://genode.org/documentation/release-notes/17.02#Linux_TCP_IP_stack_as_VFS_plugin plugable TCP/IP stack]
+[http://genode.org/documentation/release-notes/17.02#Linux_TCP_IP_stack_as_VFS_plugin - pluggable TCP/IP stack]
 for the VFS library. This required an overhaul of the Berkley sockets
 and 'select' implementation within the POSIX runtime, but scrutiny of the
 POSIX standard leaves us reluctant to endorse it as a network API.
