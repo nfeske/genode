@@ -387,22 +387,14 @@ ported software with inherent requirements for the execution model.
 
 The most prominent example of ported software is our C library in
 combination with any POSIX program using I/O facilities like files or
-sockets. In this case, our adaption layer that maps the library
-back end to Genode services (via the VFS) has to cope with all kinds of
-semantics including mixing files with sockets or even terminal files,
-blocking vs. non-blocking access modes, and timeouts. Still, functions
-of the classical POSIX API are synchronous, which requires that the
-operation has completed to a degree before the function call returns.
-For example, a call to 'select()' with zero-timeout, i.e., polling the
-passed file set, should return only after the files were checked. On
-the VFS level, this requires to handle pending signals of Genode
-sessions because, otherwise, 'select()' would always return an empty
-set. But, in this narrow context only signals originating from Genode
-session for I/O and timeouts should be handled. Signals that may
-execute handlers on the application level (like configuration ROM
-updates) should be deferred as the application code cannot expect to
-be executed while it's inside a synchronous POSIX call. In the worst
-case, it may call 'select()' again.
+sockets. In this case, our adaption layer that maps the library back
+end to Genode services has to support synchronous calls to classical
+POSIX API functions, which require the operation has completed to a
+degree before the function call returns. The precondition in this
+context is the handling of signals originating from used Genode
+services (e.g., file-system session) without any interference of
+signals on application level. Application level signals can just be
+deferred.
 
 From this background, we decided to classify signal handlers and so
 the signal contexts. For application-level signals, the existing
@@ -782,21 +774,57 @@ extend the argument list of 'build_boot_image' with 'posix.lib.so'.
 
 State reporting of block-device-level components
 ================================================
-; @chelmuth
 
-commit caafb4b17fa035bd91f62ec142557ce36d1cf713
-Author: Boris Mulder <boris.mulder@nlcsl.com>
-Date:   Thu May 18 11:12:11 2017 +0200
+Before this release, it was impossible to gain detailed information
+about available block devices in Genode at runtime. The information
+was generated offline and used for quite static configuration policies
+for the AHCI driver and partition manager. As this is a top
+requirement for a Genode installer, we addressed this issue in the
+relaxing atmosphere of this years Hack'n'Hike.
 
-    part_blk: added optional partitions report
+Our ahci_drv now supports a configuration node to enable reporting of
+port states.
 
-commit c0e7ec2416d9ca40972c547f047e220c23243fcc
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Sun May 14 17:02:59 2017 +0200
+! <report ports="yes"/>
 
-    ahci: optionally report discovered devices
-    
-    Issue #2417
+The resulting report contains information about active ports and types
+of attached devices in '<port>' nodes. In case of ATA disks the node
+also contains the block count and size as well as model and serial
+information.
+
+! <ports>
+!   <port num="0" type="ATA" block_count="32768" block_size="512"
+!     model="QEMU HARDDISK" serial="QM00005"/>
+!   <port num="1" type="ATAPI"/>
+!   <port num="2" type="ATA" block_count="32768" block_size="512"
+!     model="QEMU HARDDISK" serial="QM00009"/>
+! </ports>
+
+In a similar fashion, part_blk now supports partition reporting, which
+can be enabled via the <report> configuration node.
+
+! <report partitions="yes"/>
+
+The partition report contains information about partition table type
+and available partitions with number, type, first block and length of
+the partition. In case of GPT tables, the report also contains name
+and GUID per partition.
+
+! <partitions type="mbr">
+!   <partition number="1" type="12" start="2048" length="2048"/>
+!   <partition number="2" type="15" start="4096" length="16384"/>
+!   <partition number="5" type="12" start="6144" length="4096"/>
+!   <partition number="6" type="12" start="12288" length="8192"/>
+! </partitions>
+! <partitions type="gpt">
+!   <partition number="1" name="one" type="ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
+!     guid="5f4061cc-8d4a-4e6f-ad15-10b881b79aee" start="2048" length="2048"/>
+!   <partition number="2" name="two" type="ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
+!     guid="87199a83-d0f4-4a01-b9e3-6516a8579d61" start="4096" length="16351"/>
+! </partitions>
+
+We would like to thank Boris Mulder for contributing the part_blk
+reporting facility.
 
 
 Runtimes and applications
