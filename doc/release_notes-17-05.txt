@@ -323,7 +323,7 @@ required (e.g., if a shared library with constructor is used or a
 compilation unit contains global statics) the component needs to
 execute the constructors explicitly in 'Component::construct()' via
 'Genode::Env::exec_static_constructors()'. In the case of C library
-components, this is done by the libc startup code, i.e., the
+components, this is done automatically by the libc startup code, i.e., the
 'Component::construct()' implementation in the libc. The loading of
 shared objects at runtime is not affected by this change and
 constructors of those objects are executed immediately.
@@ -332,7 +332,7 @@ constructors of those objects are executed immediately.
 Separation of I/O signals from application-level signals
 ========================================================
 
-The use of signals and signal handlers can be found across the whole
+The use of signals and signal handlers can be found across the entire
 Genode code base in a diverse range of contexts. IRQs, timeouts, and
 completion of requests in block-device or file-system sessions apply
 signals just like notifications of configuration ROM updates. As a
@@ -343,10 +343,10 @@ ported software with inherent requirements for the execution model.
 The most prominent example of ported software is our C library in
 combination with any POSIX program using I/O facilities like files or
 sockets. In this case, our adaption layer that maps the library
-backend to Genode services (via the VFS) has to cope with all kinds of
+back end to Genode services (via the VFS) has to cope with all kinds of
 semantics including mixing files with sockets or even terminal files,
 blocking vs. non-blocking access modes, and timeouts. Still, functions
-of the classical POSIX API are synchronous, which requires the
+of the classical POSIX API are synchronous, which requires that the
 operation has completed to a degree before the function call returns.
 For example, a call to 'select()' with zero-timeout, i.e., polling the
 passed file set, should return only after the files were checked. On
@@ -360,10 +360,10 @@ be executed while it's inside a synchronous POSIX call. In the worst
 case, it may call 'select()' again.
 
 From this background, we decided to classify signal handlers and so
-the signal contexts. For application level signals, the existing
-'Signal_handler' class can still be used, but for I/O signals we
+the signal contexts. For application-level signals, the existing
+'Signal_handler' class is used, but for I/O signals we
 introduced the 'Io_signal_handler' class template. In regular Genode
-components both classes of signals are handled equally by the
+components, both classes of signals are handled equally by the
 entrypoint. The difference is that components (or libraries) that use
 'wait_and_dispatch_one_io_signal()' to complete I/O operations in
 place defer application-level signals and dispatch only I/O-level
