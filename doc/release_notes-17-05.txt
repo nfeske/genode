@@ -8,8 +8,53 @@
 
 
 
-; intro
-; @nfeske
+According to the feedback we received for our this year's
+[https:/about/road-map - road map], version 17.05 is a highly anticipated
+release as it strives to be a suitable basis for being supported over longer
+time frame. Guided by this theme, the release updates important parts
+of the framework's infrastructure with the expectation to stay stable
+over the next year or longer. In particular, the official tool chain has
+been updated to GCC 6.3 (Section [Tool chain]),
+Qt to version 5.8 (Section [Qt5 updated to version 5.8]), and
+VirtualBox to version 5.1.22 ([Feature-completeness of VirtualBox 5 on NOVA]).
+The latter is not just an update. VirtualBox 5 on NOVA reached feature
+parity with the previous VirtualBox version 4 now, including the support for
+guest additions and USB pass-through.
+
+As another aspect of being supportable over a longer time, the framework's
+architecture and API should not undergo significant changes in the foreseeable
+future. For this reason, all pending architectural changes had to be realized
+in this release cycle. Fortunately, there are not many - compared to the
+sweeping changes of the previous releases. However, as explained in
+Section [Base framework], changes like the accounting and trading of
+capability resources or the consolidation of core services are user-visible.
+
+Since the previous edition of the "Genode Foundations" book was written prior
+our great overhaul that started one year ago, it does no longer accurately
+represent the current state of Genode. Therefore, the current release is
+accompanied with a new edition of the book
+(Section [New revision of the Genode Foundations book]).
+
+Even though the overall theme of Genode 17.05 long-term maintainability,
+we do not yet publicly commit to providing it as an "LTS" release. Our plan
+is to first gain the experience with the challenges that come with long-term
+support as an in-house experiment. Those uncertainties include the effort
+needed for upholding Genode's continuous test and integration infrastructure
+for multiple branches of development instead of just one as well as the
+selective back-porting of bug fixes. In short, we don't want to over-promise.
+
+In anticipation of architectural and API stability, however, now seems the
+perfect time to enter the next level of Genode's scalability by introducing a
+form of package management. We worked on this topic one-and-off for multiple
+years now, trying to find an approach that fits well with Genode's unusual
+architecture. We eventually ended up following an entirely new direction
+presented in Section [Package management].
+
+Further highlights of the current release are new user-level timing
+facility that greatly improves the precision of time as observed by
+components [New API for user-level timing], added support for the Nim
+programming language (Section [Nim programming language]), and new components
+for monitoring network traffic and CPU load.
 
 
 Package management
@@ -22,7 +67,7 @@ system may be composed of an arbitrary number of components or even host
 dynamic subsystems, but whenever a change of the system is desired, a new
 work-flow iteration is needed. This works well for appliance-like scenarios
 with a well-defined scope of features. But as indicated by our experience with
-using Genode as a general-purpose OS with the so-dubbed Turmvilla scenario, it
+using Genode as a general-purpose OS with the so-dubbed "Turmvilla" scenario, it
 does not scale well to scenarios where the shape of the system changes over time.
 In practice, modelling a general-purpose OS as one single piece becomes
 inconvenient.
@@ -55,7 +100,7 @@ In short, the new depot tools provide the following features:
 
 * Loose coupling between source archives. Applications do not directly
   depend of libraries but merely on the library's API archives. Unless a
-  bugfix of a library affects its API, it the fixed library version is
+  bug fix of a library affects its API, it the fixed library version is
   transparent to library-using applications.
 
 * Archives are organized in a hierarchic name space that includes its
@@ -480,8 +525,8 @@ session labels works in session routes. If not specified, the client-provided
 label is presented to the server as is.
 
 
-New framework for user-level timing
-===================================
+New API for user-level timing
+=============================
 
 In the past, application-level timing was almost directly built on the bare
 'Timer' session interface. Thus, developers had to manually deal with the
@@ -497,7 +542,7 @@ deficiencies of the cross-component protocol:
   front-end implementations, which makes maintenance of timing aspects harder
   in general.
 
-The new timeout framework is a wrapper for the timer session. It raises the
+The new timeout API is a wrapper for the timer session. It raises the
 abstraction level and narrows the interface according to our experiences with
 former solutions. It is mainly motivated by the broadly used 'Signal_handler'
 class and in that is a clear step away from blocking timeouts (e.g., usleep,
@@ -505,7 +550,7 @@ msleep). Furthermore, it provides scheduling of multiple timeouts at one Timer
 session, local time-interpolation for higher precision, and integrated
 dispatching to individual handler methods.
 
-The timing framework is composed of three classes 'Timer::Connection',
+The timing API is composed of three classes 'Timer::Connection',
 'Timer::Periodic_timeout', and 'Timer::One_shot_timeout' that can be found
 in the _timer_session/connection.h_ header. Let's visualize their
 application with small examples. Assume you have two object members that
@@ -611,13 +656,13 @@ But as soon as the new timeout interface is used for the first time, it
 permanently switches to the modern mode. Attempts to use the legacy interface
 in the modern mode cause an exception.
 
-The timeout framework is part of the base library, which means that it is
+The timeout API is part of the base library, which means that it is
 automatically available in each Genode component.
 
 For technical reasons, the lifetime precision up to microseconds cannot be
 provided when using Fiasco.OC or Linux on ARM platforms.
 
-For a comprehensive example of how to use the timeout framework, see the run
+For a comprehensive example of how to use the timeout API, see the run
 script 'os/run/timeout.run' respectively the corresponding test component
 'os/src/test/timeout'.
 
