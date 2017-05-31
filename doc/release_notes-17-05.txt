@@ -69,7 +69,7 @@ work-flow iteration is needed. This works well for appliance-like scenarios
 with a well-defined scope of features. But as indicated by our experience with
 using Genode as a general-purpose OS with the so-dubbed "Turmvilla" scenario, it
 does not scale well to scenarios where the shape of the system changes over time.
-In practice, modelling a general-purpose OS as one single piece becomes
+In practice, modeling a general-purpose OS as one single piece becomes
 inconvenient.
 
 The natural solution is a package manager that relieves the system integrator
@@ -90,7 +90,7 @@ of a new tool set called "depot":
 In short, the new depot tools provide the following features:
 
 * Packaged content is categorized into different types of "archives" with
-  each type being modelled after a specific purpose. We distinguish API,
+  each type being modeled after a specific purpose. We distinguish API,
   source, raw-data, binary, and package archives.
 
 * Flat build-time dependencies: Source archives can merely depend on API
@@ -100,7 +100,7 @@ In short, the new depot tools provide the following features:
 
 * Loose coupling between source archives. Applications do not directly
   depend of libraries but merely on the library's API archives. Unless a
-  bug fix of a library affects its API, it the fixed library version is
+  bug fix of a library affects its API, the fixed library version is
   transparent to library-using applications.
 
 * Archives are organized in a hierarchic name space that includes its
