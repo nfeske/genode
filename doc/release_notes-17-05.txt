@@ -298,41 +298,80 @@ safely be removed from run scripts.
 
 Explicit execution of static constructors
 =========================================
-; @chelmuth
 
-commit cb43e04691d3cdb5f2052a2fd7d5999c70047b54
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Wed Mar 15 15:40:55 2017 +0100
+Static constructors and constructor functions marked by
+'__attribute__(constructor)__' enable the compiler and developer to
+specify code that should be executed before any other application code
+is running. That sounds innocent but comes with a couple of
+implications. First, there is no chance to explicitly pass parameters
+to these functions. Therefore, additional context must be globally
+accessible, which contradicts the capability-based programming model
+at heart. Also, beside some weird static priority scheme there is no
+approach to specify an inter-dependency of constructor functions, which
+results in an arbitrary execution order and limits the practical
+applicability.
 
-    ldso: defer execution of static constructors
-    
-    Ldso now does not automatically execute static constructors of the
-    binary and shared libraries the binary depends on. If static
-    construction is required (e.g., if a shared library with constructor is
-    used or a compilation unit contains global statics) the component needs
-    to execute the constructors explicitly in Component::construct() via
-    Genode::Env::exec_static_constructors().
-    
-    In the case of libc components this is done by the libc startup code
-    (i.e., the Component::construct() implementation in the libc).
-    
-    The loading of shared objects at runtime is not affected by this change
-    and constructors of those objects are executed immediately.
-    
-    Fixes #2332
+On that account, we have been shunning static constructors since the
+early times of Genode. For existing applications and libraries that's
+not an option and we also implemented the required mechanisms in our
+startup code. With this release, we took the next step to banish
+static constructors from native Genode components by making the
+execution of those constructors optional. Our dynamic linker does no
+longer automatically execute static constructors of the binary and
+shared libraries the binary depends on. If static construction is
+required (e.g., if a shared library with constructor is used or a
+compilation unit contains global statics) the component needs to
+execute the constructors explicitly in 'Component::construct()' via
+'Genode::Env::exec_static_constructors()'. In the case of C library
+components, this is done by the libc startup code, i.e., the
+'Component::construct()' implementation in the libc. The loading of
+shared objects at runtime is not affected by this change and
+constructors of those objects are executed immediately.
 
 
 Separation of I/O signals from application-level signals
 ========================================================
-; @chelmuth
 
-commit 9f83fa9a79e37f51e7f7bc89b72224d7da5932b4
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Mon Apr 3 10:45:51 2017 +0200
+The use of signals and signal handlers can be found across the whole
+Genode code base in a diverse range of contexts. IRQs, timeouts, and
+completion of requests in block-device or file-system sessions apply
+signals just like notifications of configuration ROM updates. As a
+consequence, components must handle different types of signals at any
+time. This sounds tricky but is quite challenging when it comes to
+ported software with inherent requirements for the execution model.
 
-    base: classify signals as I/O and application level
-    
-    Fixes #2363
+The most prominent example of ported software is our C library in
+combination with any POSIX program using I/O facilities like files or
+sockets. In this case, our adaption layer that maps the library
+backend to Genode services (via the VFS) has to cope with all kinds of
+semantics including mixing files with sockets or even terminal files,
+blocking vs. non-blocking access modes, and timeouts. Still, functions
+of the classical POSIX API are synchronous, which requires the
+operation has completed to a degree before the function call returns.
+For example, a call to 'select()' with zero-timeout, i.e., polling the
+passed file set, should return only after the files were checked. On
+the VFS level, this requires to handle pending signals of Genode
+sessions because, otherwise, 'select()' would always return an empty
+set. But, in this narrow context only signals originating from Genode
+session for I/O and timeouts should be handled. Signals that may
+execute handlers on the application level (like configuration ROM
+updates) should be deferred as the application code cannot expect to
+be executed while it's inside a synchronous POSIX call. In the worst
+case, it may call 'select()' again.
+
+From this background, we decided to classify signal handlers and so
+the signal contexts. For application level signals, the existing
+'Signal_handler' class can still be used, but for I/O signals we
+introduced the 'Io_signal_handler' class template. In regular Genode
+components both classes of signals are handled equally by the
+entrypoint. The difference is that components (or libraries) that use
+'wait_and_dispatch_one_io_signal()' to complete I/O operations in
+place defer application-level signals and dispatch only I/O-level
+signals. An illustrative example of I/O-signal declaration in
+combination with 'wait_and_dispatch_one_io_signal()' can be found in
+the USB-raw session utility in _os/include/usb/packet_handler.h_ to
+provide synchronous semantics for packet submission and reception.
+
 
 OS-level libraries and components
 #################################
@@ -762,7 +801,7 @@ a few relatively simple steps to incorporate Genode platform support:
   compile-time conditional code for Genode.
 
 * An additional template for generating C++ code was defined to wrap application
-  entry into 'Libc::component' rather than the conventional 'main` function.
+  entry into 'Libc::component' rather than the conventional 'main' function.
 
 * Nim procedures were defined for mapping pages into heaps managed by Nim's garbage
   collector.
