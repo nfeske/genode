@@ -67,8 +67,8 @@ install_config {
 		<config arch="} [depot_spec] {">
 			<vfs> <dir name="depot"> <fs label="depot"/> </dir> </vfs>
 			<env>
-				<rom name="ld.lib.so"/>
-				<rom name="init"/>
+				<rom label="ld.lib.so"/>
+				<rom label="init"/>
 			</env>
 			<scan user="genodelabs"/>
 			<query pkg="genodelabs/pkg/} [query_pkg] {"/>

@@ -139,12 +139,13 @@ void Depot_deploy::Main::_gen_start_node(Xml_generator &xml, Xml_node pkg, Xml_n
 				return;
 
 			typedef String<160> Path;
-			Path const path = rom.attribute_value("path", Path());
-			Name const name = rom.attribute_value("name", Name());
+			typedef Name        Label;
+			Path  const path  = rom.attribute_value("path",  Path());
+			Label const label = rom.attribute_value("label", Label());
 
 			xml.node("service", [&] () {
 				xml.attribute("name", "ROM");
-				xml.attribute("label", name);
+				xml.attribute("label", label);
 				xml.node("parent", [&] () {
 					xml.attribute("label", path);
 				});

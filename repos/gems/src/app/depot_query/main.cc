@@ -109,13 +109,13 @@ struct Depot_query::Main
 	Reporter _directory_reporter { _env, "directory" };
 	Reporter _blueprint_reporter { _env, "blueprint" };
 
-	typedef String<64> Rom_name;
+	typedef String<64> Rom_label;
 	typedef String<16> Architecture;
 
 	Architecture _architecture;
 
 	Archive::Path _find_rom_in_pkg(Directory::Path const &pkg_path,
-	                               Rom_name        const &rom_name,
+	                               Rom_label       const &rom_label,
 	                               unsigned        const  nesting_level);
 
 	void _scan_depot_user_pkg(Archive::User const &user, Directory &dir, Xml_generator &xml);
@@ -179,7 +179,7 @@ void Depot_query::Main::_scan_depot_user_pkg(Archive::User const &user,
 
 Depot_query::Archive::Path
 Depot_query::Main::_find_rom_in_pkg(Directory::Path const &pkg_path,
-                                    Rom_name        const &rom_name,
+                                    Rom_label       const &rom_label,
                                     unsigned        const  nesting_level)
 {
 	if (nesting_level == 0) {
@@ -212,7 +212,7 @@ Depot_query::Main::_find_rom_in_pkg(Directory::Path const &pkg_path,
 				Archive::Path const
 					rom_path(Archive::user(archive_path), "/bin/",
 					         _architecture, "/",
-					         Archive::name(archive_path), "/", rom_name);
+					         Archive::name(archive_path), "/", rom_label);
 
 				if (depot_dir.file_exists(rom_path))
 					result = rom_path;
@@ -255,17 +255,17 @@ void Depot_query::Main::_query_pkg(Directory::Path const &pkg_path, Xml_generato
 				if (!node.has_type("rom") && !node.has_type("binary"))
 					return;
 
-				Rom_name const name = node.attribute_value("name", Rom_name());
+				Rom_label const label = node.attribute_value("label", Rom_label());
 
 				/* skip ROM that is provided by the environment */
 				bool provided_by_env = false;
 				env_xml.for_each_sub_node("rom", [&] (Xml_node node) {
-					if (node.attribute_value("name", Rom_name()) == name)
+					if (node.attribute_value("label", Rom_label()) == label)
 						provided_by_env = true; });
 
 				if (provided_by_env) {
 					xml.node("rom", [&] () {
-						xml.attribute("name", name);
+						xml.attribute("label", label);
 						xml.attribute("env", "yes");
 					});
 					return;
@@ -273,18 +273,18 @@ void Depot_query::Main::_query_pkg(Directory::Path const &pkg_path, Xml_generato
 
 				unsigned const max_nesting_levels = 8;
 				Archive::Path const rom_path =
-					_find_rom_in_pkg(pkg_path, name, max_nesting_levels);
+					_find_rom_in_pkg(pkg_path, label, max_nesting_levels);
 
 				if (rom_path.valid()) {
 					xml.node("rom", [&] () {
-						xml.attribute("name", name);
+						xml.attribute("label", label);
 						xml.attribute("path", rom_path);
 					});
 
 				} else {
 
 					xml.node("missing_rom", [&] () {
-						xml.attribute("name", name); });
+						xml.attribute("label", label); });
 				}
 			});
 
