@@ -1,0 +1,184 @@
+create_boot_directory
+
+import_from_depot genodelabs/src/[base_src] \
+                  genodelabs/pkg/[drivers_interactive_pkg] \
+                  genodelabs/src/init \
+                  genodelabs/src/nitpicker \
+                  genodelabs/src/nit_fader \
+                  genodelabs/src/report_rom \
+                  genodelabs/src/menu_view
+
+install_config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="LOG"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+	</parent-provides>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+
+	<start name="drivers" caps="2000">
+		<resource name="RAM" quantum="32M"/>
+		<binary name="init"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+		<provides>
+			<service name="Input"/> <service name="Framebuffer"/>
+		</provides>
+	</start>
+
+	<start name="nitpicker" caps="100">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Nitpicker"/></provides>
+		<config>
+			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
+			<domain name="panel"   layer="2" content="client" label="no" hover="always" focus="transient" />
+			<domain name="default" layer="3" hover="always" focus="click" />
+
+			<policy label_prefix="pointer" domain="pointer"/>
+			<default-policy                domain="default"/>
+		</config>
+		<route> <any-service> <parent/> <any-child/> </any-service> </route>
+	</start>
+
+	<start name="pointer">
+		<resource name="RAM" quantum="1M"/>
+		<route>
+			<service name="Nitpicker"> <child name="nitpicker" /> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="report_rom">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="no">
+			<policy label="subspace -> config"                 report="subspace_manager -> subspace.config"/>
+			<policy label="subspace_manager -> subspace.state" report="subspace -> state"/>
+			<policy label="subspace_manager -> main.hover"     report="subspace -> main -> hover"/>
+			<policy label="subspace_manager -> main.input"     report="subspace -> main -> input"/>
+			<policy label="subspace_manager -> select.hover"   report="subspace -> select -> hover"/>
+			<policy label="subspace_manager -> select.input"   report="subspace -> select -> input"/>
+			<policy label="subspace -> main -> dialog"         report="subspace_manager -> main.dialog"/>
+			<policy label="subspace -> select -> dialog"       report="subspace_manager -> select.dialog"/>
+		</config>
+	</start>
+
+	<start name="subspace_manager">
+		<resource name="RAM" quantum="1M"/>
+		<config>
+
+			<!-- information provided by the packaged software (pkg) -->
+
+			<runtime name="nano3d" ram="8M" caps="100">
+				<rom label="ld.lib.so"/>
+				<rom label="nano3d"/>
+				<timer/>
+				<nitpicker/>
+				<log/>
+				<config/>
+			</runtime>
+
+			<runtime name="nit_fader" ram="8M" caps="100">
+				<rom label="ld.lib.so"/>
+				<rom label="nit_fader"/>
+				<timer/>
+				<nitpicker/>
+				<log/>
+				<provides> <nitpicker label="faded"/> </provides>
+				<config alpha="127"/>
+			</runtime>
+
+			<!-- user-specific policy -->
+
+			<macro name="nano3d" runtime="nano3d">
+				<rom label="nano3d"> <parent/> </rom>
+			</macro>
+
+			<macro name="nit_fader" runtime="nit_fader">
+				<rom label="nit_fader"> <parent/> </rom>
+			</macro>
+
+			<global>
+				<timer> <parent/> </timer>
+				<log> <parent/> </log>
+				<pd> <parent/> </pd>
+				<cpu> <parent/> </cpu>
+				<rom label="init"> <parent/> </rom>
+				<rom label="ld.lib.so"> <parent/> </rom>
+			</global>
+
+			<scene>
+				<nitpicker label="default" multi="yes"/>
+				<child name="nit_fader.1" macro="nit_fader">
+					<nitpicker> <parent label="default"/> </nitpicker>
+				</child>
+				<child name="nano3d.1" macro="nano3d">
+					<nitpicker> <child name="nit_fader.1" label="faded"/> </nitpicker>
+				</child>
+				<child name="name3d.2" macro="nano3d">
+					<nitpicker> <parent label="default"/> </nitpicker>
+				</child>
+			</scene>
+
+			<!--
+			<depot> <child name="ext2fs" label="depot"/> </depot>
+			<depot> <parent/> </depot>
+			<subspace> <parent/> </subspace> -->
+
+		</config>
+
+		<route>
+			<service name="ROM" label="subspace.state"> <child name="report_rom"/> </service>
+			<service name="ROM" label="main.hover">     <child name="report_rom"/> </service>
+			<service name="ROM" label="select.hover">   <child name="report_rom"/> </service>
+			<service name="ROM" label="main.input">     <child name="report_rom"/> </service>
+			<service name="ROM" label="select.input">   <child name="report_rom"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="subspace" caps="10000">
+		<binary name="init"/>
+		<resource name="RAM" quantum="1G"/>
+		<route>
+			<service name="ROM" label="config"> <child name="report_rom"/> </service>
+			<service name="ROM" unscoped_label="ld.lib.so"> <parent/> </service>
+			<service name="ROM" unscoped_label="init">      <parent/> </service>
+			<service name="ROM" label_suffix="ld.lib.so"> <parent/> </service>
+			<service name="ROM" label_suffix="init">      <parent/> </service>
+			<service name="ROM" label_suffix="menu_view"> <parent/> </service>
+			<service name="Report">    <child name="report_rom"/> </service>
+			<service name="Timer">     <child name="timer"/>     </service>
+			<service name="Nitpicker"> <child name="nitpicker"/> </service>
+			<service name="PD">  <parent/> </service>
+			<service name="CPU"> <parent/> </service>
+			<service name="LOG"> <parent/> </service>
+		</route>
+	</start>
+
+</config>}
+
+build { app/nano3d app/subspace_manager }
+
+build_boot_image { nano3d subspace_manager }
+
+run_genode_until forever
