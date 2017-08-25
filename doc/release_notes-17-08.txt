@@ -1,0 +1,1051 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 17.08
+              ===============================================
+
+                               Genode Labs
+
+
+
+;intro
+;@nfeske
+
+
+Hardware-accelerated graphics for Intel Gen-8 GPUs
+##################################################
+
+;@cnuke @ssumpf
+
+commit 3edfe377049559e428251b4e4777651342b4000e
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 17 13:07:39 2017 +0200
+
+    libports: DRM library 2.4.65
+    
+    issue #2488
+
+commit 7563ca495b79c37d3355513dbc4274b857bc03f9
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 17 13:27:18 2017 +0200
+
+    libports: Mesa 11.2.2
+    
+    OpenGL 4.5 with software and i965 rendering back ends.
+    
+    issue #2488
+
+commit 02782a991c4fe010e2f0cbcc3f0ef86696148caf
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 17 13:29:32 2017 +0200
+
+    libports: Mesa demos + adjust Qt5
+    
+    * Adjust Qt5 to new Mesa version
+    * Added eglgears
+    * Adjust Mesa library build target
+    
+    fixes #2488
+
+commit 1fb7037e86103767b31714ec640bfb4ac11ba3a7
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Apr 26 11:10:52 2017 +0200
+
+    os: add Gpu driver for Intel Gen8 HD graphics
+    
+    This commit introduces a experimental 3D driver for Intel Gen8 HD
+    graphics devices as well as the corresponding Gpu session.
+    
+    Fixes #2507.
+
+commit 740859f5db567a38dda2e99c8929fc0ee9af6502
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed May 10 16:07:52 2017 +0200
+
+    drm: use Gpu session for i965 driver
+    
+    Issue #2507.
+
+commit b1a7269a359912297cd687e5389cb3c508366efa
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 17 18:17:30 2017 +0200
+
+    mesa: adjust i965 EGL backend for Gpu session
+    
+    Issue #2507.
+
+commit 75ea4e49b600954d828f69b7419d7489745b3448
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 17 18:19:17 2017 +0200
+
+    mesa-demos: add more examples
+    
+    Issue #2507.
+
+commit 1dbfff120e2820511aea96e0a16ed70e7d2d91b5
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon Aug 21 14:22:58 2017 +0200
+
+    mesa: split lib and API (headers)
+    
+    Issue #2507.
+
+commit 669f3b81f50da3b28d87c19580c26232d995a9b4
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon Aug 21 14:21:42 2017 +0200
+
+    sdl: adapt test programm
+    
+    Issue #2507.
+
+commit 8e7df8935221692440814b375fb2f0579e5b65ab
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri Aug 18 14:50:12 2017 +0200
+
+    sdl: add OpenGL support
+    
+    Issue #2507.
+
+
+The seL4 kernel on ARM and 64-bit x86 hardware
+##############################################
+
+;@alex-ab
+
+commit 95329c82e2585338f1977c384c20f58250b861d9
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jun 12 12:41:38 2017 +0200
+
+    sel4: update to 5.2.0
+    
+    Issue #2451
+
+commit 92db5d2c4ee4522ffaf3832e6ad365e9541b788b
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sat Jun 24 14:20:12 2017 +0200
+
+    sel4: limit max relocation memory to 256M
+    
+    relocation is required, to avoid overlapping phdr in the elf binaries, but
+    sel4 will fail to boot if bender relocates the images at the end of physical
+    memory. Limit the physical relocation address to a fixed 256M value, so that
+    sel4 will work.
+    
+    Issue #2451
+
+commit 66c0c7b6f11ea8b8d08bb7e40640501caeb10304
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jun 22 18:47:02 2017 +0200
+
+    sel4: add x86_64 support
+    
+    Issue #2451
+
+commit 782b457476949f7f8a662556a35c5dbc421153ee
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 7 20:09:39 2017 +0200
+
+    wand_quad: re-enable i.MX6 EPIT user level timer
+    
+    Issue #2451
+
+commit c22b60f0c4219e3d7b09e2af2b2c7e2a2cda350f
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 4 16:41:07 2017 +0200
+
+    base: add initial r0 register to crt0.s for arm
+    
+    Issue #2451
+
+commit da5441292afffbbda27e0dad5f09d0a797e29f49
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jul 4 14:17:38 2017 +0200
+
+    sel4: add Wandboard Quad (iMX6) support
+    
+    Issue #2451
+
+commit 7a8e0e59af3146b9f82139d748bda49e17b13388
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Aug 7 17:55:15 2017 +0200
+
+    sel4: enable smp for x86
+    
+    Issue #2451
+
+commit 0ddda795114e589cc50204d55f3f3e7142ebd7d6
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Aug 8 14:35:14 2017 +0200
+
+    sel4: add priority support
+    
+    Issue #2451
+
+commit f825775e40c81382ea38b055f8ba94b1577ef9e1
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Aug 1 14:02:35 2017 +0200
+
+    sel4: update to kernel 6.0
+    
+    Issue #2451
+
+commit fd0b256f7c8c71b2485543b211d6a96bf9d098b8
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Aug 9 16:28:44 2017 +0200
+
+    sel4: support cpu utilization via TRACE service
+    
+    using benchmark infrastructure of the seL4 kernel
+    
+    Issue #2451
+
+commit b9aa16eb3e671a7e3c1474b076a244c7c97e5dea
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Aug 11 18:31:57 2017 +0200
+
+    sel4: kernel patch to get ACPI information
+    
+    Issue #2242
+
+commit 5d5e7d0294bf76c470be19c7d787206f2bbe225d
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Aug 11 18:26:29 2017 +0200
+
+    sel4: provide ACPI infos by 'platform_info' ROM
+    
+    Issue #2242
+
+commit c09783eed9a52ad72e8a1a986b832303574612ba
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Aug 16 20:06:54 2017 +0200
+
+    sel4: add uefi boot support via mbi2
+    
+    Multiboot2 provides the ACPI RSDP pointer from the GRUB2 bootloader.
+    
+    Issue #2242
+
+
+Base framework and OS-level infrastructure
+##########################################
+
+Simplified IOMMU handling
+=========================
+
+;@alex-ab
+
+commit 58e4f6cf9deea0fa2ac1da9632c4875a3e641df2
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Aug 2 17:30:49 2017 +0200
+
+    core: add map method to pd_session interface
+    
+    The method can be used to trigger the eager insertion of page frames into
+    page tables. Intention: to be used for memory used for DMA.
+    
+    Issue #2209
+
+commit 69e71147efa8eed76d46f51e796f1cbd4c0caed8
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Aug 1 19:05:56 2017 +0200
+
+    platform_drv: replace nova specific device_pd
+    
+    by using generic Pd_session::map instead for eager memory mappings of DMA
+    memory.
+    
+    Issue #2209
+
+
+New report server for capturing reports to files
+================================================
+
+;@emery
+
+commit 47c616ab949886c301651f32be3b20282c95d3f2
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Fri May 19 19:36:13 2017 -0500
+
+    server/fs_report: write reports to file-systems
+    
+    Fix #2422
+
+
+New runtime environment for starting components sequentially
+============================================================
+
+;@emery
+
+commit 5f35175644c1e9d00e8d15085407eeb3bd0be82f
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Wed Aug 9 19:24:27 2017 -0500
+
+    app/sequence: execute components in sequence
+    
+    Fix #2476
+
+
+Support for boot-time initialized frame buffer
+==============================================
+
+;@nfeske
+
+commit 1205607e783adb9a7a8f570eb8ca20a88a478a75
+Author: Johannes Kliemann <jk@jkliemann.de>
+Date:   Mon Jun 12 20:29:42 2017 +0200
+
+    os: add framebuffer based on platform_info of core
+    
+    Issue #2242
+
+
+Extended non-blocking operation of the VFS
+==========================================
+
+;@cproc
+
+commit 8be641002226ac455394fcefb131c730f8e9b5d2
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue Aug 15 20:51:53 2017 +0200
+
+    VFS: nonblocking interface
+    
+    The VFS library can be used in single-threaded or multi-threaded
+    environments and depending on that, signals are handled by the same thread
+    which uses the VFS library or possibly by a different thread. If a VFS
+    plugin needs to block to wait for a signal, there is currently no way
+    which works reliably in both environments.
+    
+    For this reason, this commit makes the interface of the VFS library
+    nonblocking, similar to the File_system session interface.
+    
+    The most important changes are:
+    
+    - Directories are created and opened with the 'opendir()' function and the
+      directory entries are read with the recently introduced 'queue_read()'
+      and 'complete_read()' functions.
+    
+    - Symbolic links are created and opened with the 'openlink()' function and
+      the link target is read with the 'queue_read()' and 'complete_read()'
+      functions and written with the 'write()' function.
+    
+    - The 'write()' function does not wait for signals anymore. This can have
+      the effect that data written by a VFS library user has not been
+      processed by a file system server yet when the library user asks for the
+      size of the file or closes it (both done with RPC functions at the file
+      system server). For this reason, a user of the VFS library should
+      request synchronization before calling 'stat()' or 'close()'. To make
+      sure that a file system server has processed all write request packets
+      which a client submitted before the synchronization request,
+      synchronization is now requested at the file system server with a
+      synchronization packet instead of an RPC function. Because of this
+      change, the synchronization interface of the VFS library is now split
+      into 'queue_sync()' and 'complete_sync()' functions.
+    
+    Fixes #2399
+
+
+Make block sessions read-only by default
+========================================
+
+;@nfeske
+
+commit d8164f0a43b8423f08097c4fd9bb756db513657c
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Mon Jul 31 12:53:34 2017 -0500
+
+    default ahci_drv and part_blk Block sessions to read-only
+    
+    Add a "writeable" policy option to the ahci_drv and part_blk Block
+    servers and default from writeable to ready-only. Should a policy
+    permit write acesss the session request argument "writeable" may still
+    downgrade a session to ready-only.
+    
+    Fix #2469
+
+
+Refined time handling
+=====================
+
+;@m-stein
+
+commit 685f509a4335a63680cd1ce7d508900d0c95ac08
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed May 31 15:24:56 2017 +0200
+
+    timer connection: no interpolation on arm w/o hw
+    
+    On ARM, we do not have a component-local hardware time-source. The ARM
+    performance counter has no reliable frequency as the ARM idle command
+    halts the counter. Thus, we do not do local time interpolation on ARM.
+    Except we're on the HW kernel. In this case we can read out the kernel
+    time instead.
+    
+    Ref #2435
+
+commit 23337eb6e77c74258e2e613a26203d2347bca41d
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed May 31 16:08:08 2017 +0200
+
+    run/timeout: run also on arm w/o hw and qemu
+    
+    On platforms were we do not have local time interpolation we can simply
+    skip the first test stage in the timeout test. This way, we can at least
+    test the rest.
+    
+    Fixes #2435
+
+commit 94095a27acd33368a60207a3b3de688af78fe6d7
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jun 16 13:45:43 2017 +0200
+
+    nova: adjust calibration time
+    
+    Extend the calibration time of CPUs with Local-APIC that does not support the
+    TSC-Deadline mode. Improves the accuracy of timeouts.
+    
+    Issue #2400
+
+commit 9b1c26ab7f0eea15fb1e311bbb902b468508f9f7
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Jun 19 12:56:16 2017 +0200
+
+    timeout lib: dynamic interpolation-factor shift
+    
+    In the timeout framework, we maintain a translation factor value to
+    translate between time and timestamps. To raise precision we scale-up
+    the factor when we calculate it and scale-down the result of its
+    appliance later again. This up and down scaling is achieved through
+    left and right shifting. Until now, the shift width was statically
+    choosen. However, some platforms need a big shift width and others a
+    smaller one. The one static shift width couldn't cover all platforms
+    which caused overflows or precision problems.
+    
+    Now, the shift width is choosen optimally for the actual translation
+    factor each time it gets re-calculated. This way, we can take care that
+    the shift always renders the best precision level without the risk for
+    overflows.
+    
+    Ref #2400
+
+commit 67a1cb92f24db35946ef1e7b66009762dee6b012
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 21 11:06:45 2017 +0200
+
+    nova: handle instable TSC calibration
+    
+    Issue #2400
+
+commit 8750e373a00c4871c719cf4038b37886325ad069
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Fri Aug 4 15:11:27 2017 +0200
+
+    timer session: add elapsed_us method
+    
+    As timer sessions are not expected to be microseconds precise (because
+    of RPC latency and scheduling), the session interface provided only a
+    method 'elapsed_ms' although the back end of this method in the timer
+    driver works with microseconds.
+    
+    However, in some cases it makes sense to have a method 'elapsed_us'. The
+    values it returns might be milliseconds away from the "real" time but it
+    allows you to work with delays smaller than a millisecond without
+    getting a zero delta value.
+    
+    This commit is motivated by the need for fast bursts of calibration
+    steps for the time interpolation in the new timer connection.
+    
+    Ref #2400
+
+commit 6dfb903bd0a8b69d0b6d69dd9d817417503f2df0
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Fri Aug 4 15:28:56 2017 +0200
+
+    timer connection: always work with microseconds
+    
+    As the timer session now provides a method 'elapsed_us', there is no more need
+    for doing any internal calculations with values of milliseconds.
+    
+    Ref #2400
+
+commit 31af206a8c2fdd340b9b9e8fda29316ce047a482
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Aug 7 14:27:55 2017 +0200
+
+    hw rpi: fix bug that caused bad timer precision
+    
+    The kernel timer on RPI is able to measure time microseconds-precise.
+    Howeer, due to a bug, we dropped precision during the ticks-to-time
+    translation and return only milliseconds-precise time.
+    
+    Ref #2400
+
+commit adaad64fbb7cc07b2bc63fe777454e85059083a6
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Tue Aug 8 14:32:50 2017 +0200
+
+    timer connection: relax factor shifting
+    
+    When in modern mode (with local time interpolation), the timer
+    connection used to maximize the left shifting of its
+    timestamp-to-microseconds factor. The higher the shift the more precise
+    is the translation from timestamps to microseconds. If the timestamp
+    values used for determining the best shift were small - i.e.  the delay
+    between the calibration steps were small - we may got a pretty big
+    shift.  If we then used the shift with bigger timestamp values - i.e.
+    called curr_time seldom or raised calibration delays - the big shift
+    value became a problem. The framework had to scale down all measured
+    timestamps and time values temporarily to stay operative until the next
+    calibration step.
+    
+    Thus, we now raise the shift only that much that the resulting factor
+    fullfills a given minimum. This keeps it as low as possible according
+    to the precision requirement. Currently, this requirement is set to 8
+    meaning that the shifted factor shall be at least 2^8 = 256.
+    
+    Ref #2400
+
+commit b6efa7f6f98fab1ab306ca08196c48e93433cec8
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Tue Aug 8 15:18:14 2017 +0200
+
+    timer connection: fast initial calibration
+    
+    The calibration of the interpolation parameters was previously only done
+    periodically every 500 ms. Together with the fact that the parameters
+    had to be stable for at least 3 calibration steps to enable
+    interpolation, it took at least 1.5 seconds after establishing a
+    connection to get microseconds-precise time values.
+    
+    This is a problem for some drivers that directly start to poll time.
+    Thus, the timer connection now does a calibration burst as soon as it
+    switches to the modern mode (the mode with microseconds precision).
+    During this phase it does several (currently 9) calibration steps
+    without a delay inbetween. It is assumed that this is fast enough to not
+    get interrupted by scheduling. Thus, despite being small, the measured
+    values should be very stable which is why the burst should in most cases
+    be sufficient to get the interpolation initialized.
+    
+    Ref #2400
+
+commit 47dc70888795d8798aa7cdefe8f008897bf49d1b
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Tue Aug 8 15:46:53 2017 +0200
+
+    usb rpi: get rid of local hardware timer
+    
+    We used a hardware timer locally in the RPI USB driver because a timer
+    connection was not precise enough to fullfill the host controllers
+    requirements.
+    
+    With the modern timer connection interface, however, reading out time at
+    a connection is microseconds precise and we can remove the local timer.
+    But we cannot use the same timer connection for doing legacy-interface
+    stuff like usleep (currently used in LX kit) and modern-interface stuff
+    like curr_time. Thus, we open two connections for now.
+    
+    Ref #2400
+
+commit 4b6904ff34e537955c12855a9375516a15a2eecd
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed Aug 23 18:38:24 2017 +0200
+
+    timer pit: fix precision reduction to milliseconds
+    
+    Due to the simplicity of the algorithm that translated from timer ticks
+    to time, we lost microseconds precision although the timer allows for it.
+    
+    Ref #2400
+
+commit a68ce0c0668f9d8a95f96b3a075e725baadd663c
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed Aug 23 19:16:27 2017 +0200
+
+    timer: generic timer_ticks_to_us implementation
+    
+    There are hardware timers whose frequency can't be expressed as
+    ticks-per-microsecond integer-value because only a ticks-per-millisecond
+    integer-value is precise enough. We don't want to use expensive
+    floating-point values here but nonetheless want to translate from ticks
+    to time with microseconds precision. Thus, we split the input in two and
+    translate both parts separately. This way, we can raise precision by
+    shifting the values to their optimal bit position. Afterwards, the results
+    are shifted back and merged together again.
+    
+    As this algorithm is not so trivial anymore and used by at least three
+    timer drivers (base-hw/x86_64, base-hw/cortex_a9, timer/pit), move it to a
+    generic header to avoid redundancy.
+    
+    Ref #2400
+
+commit 7cab53acb5af29f5cecc0c43d4b092432780f78f
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Thu Aug 24 13:30:22 2017 +0200
+
+    hw lapic: find best frequency dynamically
+    
+    Some x86 machines do have a LAPIC speed < 1000 ticks per millisecond
+    when configured to use the maximum divider (as it was always the case).
+    But we need microseconds precision for the timeout framework. Thus,
+    reduce the divider dynamically until the frequency fullfills our
+    requirements.
+    
+    Ref #2400
+
+
+FatFS-based VFS plugin
+======================
+
+;@emery
+
+commit f09fc4a5a263a8167a346e844dd7d21a2d89f9a2
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue May 16 13:59:37 2017 -0500
+
+    Update FatFS port to version 0.13
+    
+    - Update FatFS port from 0.07e to 0.13
+    - Multi-device support
+    - Basic test at run/fatfs
+    - Adaption of existing components
+    
+    Note, ffat is now consistently renamed to fatfs.
+    
+    Ref #2410
+
+commit 31caae476548b89236aec520710947ccecbffc07
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Mon Jul 24 11:46:24 2017 -0500
+
+    lib/vfs/fatfs: FAT file-system plugin using FatFS library
+    
+    See repos/libports/src/lib/vfs/fatfs/README and
+    /home/user/repo/genode/repos/libports/run/libc_vfs_fat.run for
+    documentation.
+    
+    Ref #2410
+
+
+Enhanced GUI primitives
+=======================
+
+;@nfeske
+
+commit e741c77bf6b529cb95eb8c72e8bbf93df1f627a6
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 26 15:54:32 2017 +0200
+
+    menu_view: add '<float>' widget
+    
+    The new widget allows one to align a child widget within a larger parent
+    widget by specifying the boolean attributes 'north', 'south', 'east',
+    and 'west'. If none is specified, the child is centered. If opposite
+    attributes are specified, the child is stretched.
+
+commit fb4bf37088da4f8c91a01231df9f57116299f7e3
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 26 16:04:30 2017 +0200
+
+    menu_view: handle disppearing child widgets
+
+commit dacf87e94ed200c36ce3a16a5dfb6442ed775ca0
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 26 17:03:36 2017 +0200
+
+    menu_view: split implementation into several files
+
+commit 15610feb9c42a9fe5304fe18e003f0610e8d480d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Aug 9 19:52:00 2017 +0200
+
+    menu_view: generalized data-model-update utility
+    
+    The utility simplifies the synchronization of a list-based data model
+    from an XML structure.
+
+commit 6677b1304c8bd1868b822c31480d7197e90dbf13
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Aug 9 19:52:19 2017 +0200
+
+    menu_view: use list_model_from_xml.h
+
+commit 098b90b782ce3d4ee0fcda39d5b35acee0cc640d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Aug 15 13:41:38 2017 +0200
+
+    menu_view: support labels with no background
+    
+    By applying the text output to the alpha buffer in addition to the pixel
+    buffer, labels can now appear without the need for an underlying frame
+    or button.
+
+commit 4171d2b8317eef681f82717b1ca01b8fccb0685a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Aug 18 08:50:47 2017 +0200
+
+    menu_view: depgraph widget
+    
+    The new <depgraph> widget arranges child widgets in the form of a
+    dependency graph.
+
+commit 5bf107834b19160c77753a398847e86754a97a4e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Aug 18 08:46:41 2017 +0200
+
+    menu_view: fix frame dropping after sleep
+    
+    When idle, menu_view de-schedules timer events to save processing time.
+    Once reactivated by a dialog update, it computes the passed time and
+    applies the result to the animator. However, the animation was most likely
+    started by the update not during the sleep. So the passed time must not
+    be applied to the animation in this case. Otherwise, many animation steps
+    are computed at once within a single visible frame.
+    
+    Furthermore, the patch adjusts the REDRAW_PERIOD to 2, which is a better
+    value for geometric movements as opposed to mere color-blending effects
+    where the frame rate does not matter so much.
+    
+    It also refines the nitpicker-buffer relocation in a way that extends
+    the buffer but does not shrink it. This lowers the interaction with
+    nitpicker in situations where the dialog size changes a lot.
+
+commit 268e69136f2b39a82f251d93a154a75110d9c2bc
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Aug 17 17:11:38 2017 +0200
+
+    menu_view: animate geometric changes
+
+commit 9287d287b3443c2417799deb283ef3edc526b265
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Aug 18 08:51:08 2017 +0200
+
+    gems: update menu_view.run, show depgraph
+
+
+C runtime
+=========
+
+;@chelmuth
+
+commit c223f74ce53a6195752d3d552ea945df06396401
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Tue Jun 6 17:36:33 2017 +0200
+
+    libc: support getsockopt(SO_TYPE)
+
+commit 2d4678f15c7a0a7173ebbb6b0153b3c47de3ecf6
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Jul 28 18:03:02 2016 +0200
+
+    libc: allow RTLD_GLOBAL for dlopen
+    
+    issue #2488
+
+commit d40876fec754cff9887453a446e19c9091acf6ed
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Aug 18 14:37:35 2017 +0200
+
+    libc: generate nslexer.c,nsparser.c at build stage
+    
+    The files are generated via flex and bison. Until now, this step was
+    performed when preparing the libc port. Unfortunately, the generated
+    files have subtle differences depending on the flex/bison versions
+    installed in the host. For example, the bison version number appears in
+    the generated code. This, in turn, breaks the hash mechanism of the
+    depot where a src/libc archive ends up being slightly different when
+    created on different hosts.
+    
+    By moving the code generation to the build stage, the src/libc archive
+    merely contains the nslexer.l and nsparser.y source files but not the
+    generated files.
+
+
+Package management
+##################
+
+;@nfeske
+
+New depot recipes
+=================
+
+commit 18cea099f09c4d2630d985e0939b7ec955d0353e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jun 14 15:40:51 2017 +0200
+
+    depot: recipes for ahci, fs_rom, ram_fs, usb_block
+
+commit e2c1ea04ea15f66278b4c7f76b0ace48e3e83deb
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Mon Jul 3 13:44:43 2017 -0500
+
+    depot: recipes for src/ram_blk, src/vfs
+    
+    Ref #2446
+
+commit 4dfa55d8a129fcd8c02874b6472b590eb349bfb1
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Fri Aug 18 09:16:52 2017 -0500
+
+    depot recipe for blk_cache
+    
+    Ref #2460
+
+Simplified depot layout for library binaries
+============================================
+
+commit c8e4d2715bd286e5f67da0a987fd3892cf438cc2
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jun 9 17:03:40 2017 +0200
+
+    depot: fix binary-archive handling for libs
+    
+    The depot tool did not consistently distinct libraries from regular
+    targets when handling binary archives. The binary archive of a regular
+    target is located at <user>/<bin>/<arch>/<name> whereas a library is
+    located at <user>/<bin>/<arch>/<api>/<name>.
+    
+    Fixes #2438
+
+commit bb1077ada29a2aa92a5c5b629a9fa12cbfbe3d35
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jul 4 14:08:51 2017 +0200
+
+    depot: remove bin/<arch>/<api-version> subdir
+    
+    Fixes #2459
+
+commit fdb49ad3d9eeee139a41eeee40d29f944a377ca9
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jul 4 14:09:52 2017 +0200
+
+    run: add create_tar_from_depot_binaries function
+    
+    This function can be used to mirror parts of the depot to be used at
+    runtime.
+
+On-target depot access
+======================
+
+commit 23edfe65add158638c7f4d6b1e2bae1e1ddb5d02
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 5 10:40:29 2017 +0200
+
+    gems: app/depot_query
+
+
+Platforms
+#########
+
+Genode as Xen DomU
+==================
+
+;@cproc
+
+commit f57cd0b4ae06eadb592a7396c2dead37946c9fc4
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Aug 7 15:24:40 2017 +0200
+
+    run: add Xen support
+    
+    When building Genode on a Linux system running in a Xen Dom0, the 'xen'
+    run target can run a Genode scenario in a Xen DomU.
+    
+    Usage: in build/x86_*/etc/build.conf, define:
+    
+    RUN_OPT = --include boot_dir/$(KERNEL) --include image/iso --include power_on/xen --include log/xen --include power_off/xen
+    
+    The Xen DomU runs in HVM mode and loads Genode from an ISO image. Serial
+    log output is printed to the console and graphical output is shown in an
+    SDL window.
+    
+    The Xen DomU ist managed using the 'xl' command line tool and it is
+    possible to add configuration options in the 'xen_args' variable in a run
+    script. Common options are:
+    
+    - disabling the graphical output:
+    
+      append xen_args { sdl="0" }
+    
+    - configuring a network device:
+    
+      append xen_args { vif=\["model=e1000,mac=02:00:00:00:01:01,bridge=xenbr0"\] }
+    
+    - configuring USB input devices:
+    
+      append xen_args { usbdevice=\["mouse","keyboard"\] }
+    
+    Note: the 'xl' tool requires super-user permissions and interactive
+    password input can be troublesome in combination with 'expect' and is not
+    practical for automatic tests. For this reason, the current implementation
+    assumes that no password input is needed when running 'sudo xl', which can
+    be achieved by creating a file '/etc/sudoers.d/xl' with the content
+    'user ALL=(root) NOPASSWD: /usr/sbin/xl'
+    (where 'user' is the Linux user name).
+    
+    Fixes #2504
+
+
+Execution on bare hardware (base-hw)
+====================================
+
+;@alex-ab @skalk @ssumpf
+
+UEFI support
+------------
+
+commit a269c471631babee7b151d05cb27181d77cc5879
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Feb 2 14:25:06 2017 +0100
+
+    hw: add UEFI boot support
+    
+    via grub2 using multiboot 2
+    
+    Issue #2242
+
+commit 1636694ec3d67f2470b451f6112cbdc779e46211
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Aug 11 14:29:16 2017 +0200
+
+    hw: provide ACPI infos via platform_info ROM
+    
+    in uefi/mbi2 boot case
+    
+    Issue #2242
+
+
+RISC-V
+------
+
+commit 1c4c42b7a40325365259e6fc3d4b06f37fba4c4d
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 24 16:17:54 2017 +0200
+
+    run: update RISC-V run script support
+    
+    * fix build error for bbl upon intial build
+    * set memory to 128 MB in spike
+    * support 'forever' timeout
+    
+    issue #2423
+
+commit 973c19cc4d1267d06cd0e87dcad8bc92995e7566
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 24 16:22:02 2017 +0200
+
+    base-hw: RISC-V save/restore 'x29' correctly
+    
+    * register x29/t4 was not saved and therefore not restored correctly
+    * change 'warning' to 'error' before '_die' is called
+    
+    issue #2423
+
+commit 169b8e3b1f960fd97bdd6474d98b2c47dfe871ac
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Aug 24 16:24:04 2017 +0200
+
+    ldso: export symbols required by RISC-V
+    
+    issue #2423
+
+
+Muen separation kernel
+======================
+
+;@nfeske
+
+commit c14149b4eb188c077a21a63d687010b8c36f2a2e
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Thu Jun 15 19:07:26 2017 +0200
+
+    Update Muen port
+    
+    - Use latest Muen version
+    - Sync VirtualBox Muen subject state
+    - Rework Muen download so contrib/muen-* remains untouched after port
+      has been prepared
+
+* VirtualBox on Muen
+
+
+NOVA microhypervisor
+====================
+
+;@alex-ab
+
+commit f30f0a81e0971a2e75975f12cccb7b44f5371cd1
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jun 12 22:12:17 2017 +0200
+
+    nova: uefi boot support using multiboot2
+    
+    - kernel provides ACPI RSDT/XSDT pointer
+    - core exports it via a ROM called "platform_info"
+    
+    Issue #2242
+
+commit 04b2919a1abeadb9189ac6623e21333daa15b0f6
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jan 30 23:00:19 2017 +0100
+
+    acpi_drv: use platform_info for rsdt/xsdt lookup
+    
+    Issue #2242
+
+commit f48e71e070217cdba662dcc588e903f085c84777
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Jan 31 20:46:18 2017 +0100
+
+    acpica: use platform_info for rsdt/xsdt lookup
+    
+    Issue #2242
+
+commit 615f2ba2dae56dca82e317297ebcfcfe74f58550
+Author: Johannes Kliemann <jk@jkliemann.de>
+Date:   Mon Jun 12 22:59:08 2017 +0200
+
+    nova: support mbi2 framebuffer
+    
+    - export framebuffer information as platform_info ROM by core
+    
+    Issue #2242
+
+commit 3aca3256c608ed59704b0d1c844482db64f4fafe
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jun 12 22:12:11 2017 +0200
+
+    tool: support image/uefi for grub2/uefi boot
+    
+    - add x86_32/64 GRUB2 UEFI boot loader
+    - enable support for nova
+    
+    Issue #2242
+
+commit 9f9c5a3166534f5dffbcd375d129c5cb82e39730
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jan 11 22:05:03 2017 +0100
+
+    tool: qemu support for UEFI boot
+    
+    - add UEFI firmware for Qemu
+    
+    Issue #2242
+
+commit 9b93ebfa18eb06cacd7d2ada3b9c7cfd7e80cdd2
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 21 22:38:48 2017 +0200
+
+    nova: extend SVM support
+    
+    - Win7 32 bit VM on 32bit Genode/Nova runs fin runs fine
+    - tested on Phenom II X4
+    
+    Issue #2454
+
+commit a9f263db16434acb5256c5063fc0fad41f4bf183
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Mar 27 23:07:45 2017 +0200
+
+    vbox4: extended AMD SVM support
+    
+    Issue #2454
