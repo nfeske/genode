@@ -288,15 +288,25 @@ Date:   Wed Aug 9 19:24:27 2017 -0500
 Support for boot-time initialized frame buffer
 ==============================================
 
-;@nfeske
+UEFI-based systems do not carry along the legacy BIOS infrastructure, on which
+our generic VESA driver depends. Hence, when booting via UEFI, one has to use
+either a hardware-specific driver like our Intel-FB driver or - alternatively -
+facilitate the generic UEFI mechanism.
 
-commit 1205607e783adb9a7a8f570eb8ca20a88a478a75
-Author: Johannes Kliemann <jk@jkliemann.de>
-Date:   Mon Jun 12 20:29:42 2017 +0200
+Instead of booting in VGA text mode and leaving the switch to a graphics mode
+(via real-mode SVGA BIOS subroutines) to the booted OS, UEFI employs the
+so-called graphics output protocol to set up a reasonable default graphics
+mode prior booting the operating system. In order to produce graphical output,
+the operating system merely has no know the physical address and layout of the
+frame buffer. Genode's core exposes this information as a so-called
+"platform_info" ROM module. The new _fb_boot_drv_ driver picks up this
+information to provide a Genode framebuffer session interface. Hence, on
+UEFI-based systems, it can be used as a drop-in replacement for the VESA
+driver. In contrast to the VESA driver, however, it is not able to switch
+graphics modes at runtime.
 
-    os: add framebuffer based on platform_info of core
-    
-    Issue #2242
+The new component is located at _os/src/drivers/framebuffer/boot/_. Thanks
+to Johannes Kliemann for this contribution.
 
 
 Extended non-blocking operation of the VFS
@@ -952,20 +962,10 @@ Date:   Thu Aug 24 16:24:04 2017 +0200
 Muen separation kernel
 ======================
 
-;@nfeske
-
-commit c14149b4eb188c077a21a63d687010b8c36f2a2e
-Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
-Date:   Thu Jun 15 19:07:26 2017 +0200
-
-    Update Muen port
-    
-    - Use latest Muen version
-    - Sync VirtualBox Muen subject state
-    - Rework Muen download so contrib/muen-* remains untouched after port
-      has been prepared
-
-* VirtualBox on Muen
+Besides updating the Muen port to the latest kernel version in the end of
+June, the Muen feature has been added to Genode's automated testing
+infrastructure. This includes the revived support for VirtualBox 4 on this
+kernel.
 
 
 NOVA microhypervisor
