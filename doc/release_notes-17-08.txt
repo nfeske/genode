@@ -614,76 +614,31 @@ are also some SDL based examples in _repos/world/src/test/sdl_opengl_.
 
 
 Package management
-##################
+==================
 
-;@nfeske
+The previous release featured the initial version of Genode's
+[https://genode.org/documentation/release-notes/17.05#Package_management - custom package-management tools].
+Since then, we continued this line of work in three directions.
 
-New depot recipes
-=================
+First, we refined the depot tools and the integration of the depot with our
+custom work-flow ("run") tool. One important refinement is a simplification of
+the depot's directory layout for library binaries. We found that the initial
+version implied unwelcome complexities down the road. Instead of placing
+library binaries in a directory named after their API, they are now placed
+directly in the architecture directory along with regular binaries.
 
-commit 18cea099f09c4d2630d985e0939b7ec955d0353e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jun 14 15:40:51 2017 +0200
+Second, driven by the proliferated use of the depot by more and more run
+scripts, we enhanced the depot with new depot recipes as needed.
 
-    depot: recipes for ahci, fs_rom, ram_fs, usb_block
-
-commit e2c1ea04ea15f66278b4c7f76b0ace48e3e83deb
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Mon Jul 3 13:44:43 2017 -0500
-
-    depot: recipes for src/ram_blk, src/vfs
-    
-    Ref #2446
-
-commit 4dfa55d8a129fcd8c02874b6472b590eb349bfb1
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Fri Aug 18 09:16:52 2017 -0500
-
-    depot recipe for blk_cache
-    
-    Ref #2460
-
-Simplified depot layout for library binaries
-============================================
-
-commit c8e4d2715bd286e5f67da0a987fd3892cf438cc2
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Jun 9 17:03:40 2017 +0200
-
-    depot: fix binary-archive handling for libs
-    
-    The depot tool did not consistently distinct libraries from regular
-    targets when handling binary archives. The binary archive of a regular
-    target is located at <user>/<bin>/<arch>/<name> whereas a library is
-    located at <user>/<bin>/<arch>/<api>/<name>.
-    
-    Fixes #2438
-
-commit bb1077ada29a2aa92a5c5b629a9fa12cbfbe3d35
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jul 4 14:08:51 2017 +0200
-
-    depot: remove bin/<arch>/<api-version> subdir
-    
-    Fixes #2459
-
-commit fdb49ad3d9eeee139a41eeee40d29f944a377ca9
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jul 4 14:09:52 2017 +0200
-
-    run: add create_tar_from_depot_binaries function
-    
-    This function can be used to mirror parts of the depot to be used at
-    runtime.
-
-On-target depot access
-======================
-
-commit 23edfe65add158638c7f4d6b1e2bae1e1ddb5d02
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jul 5 10:40:29 2017 +0200
-
-    gems: app/depot_query
+Third, we took the first steps to use the depot on target. The experimentation
+with on-target depots is eased by the new 'create_tar_from_depot_binaries'
+function of the run tool, which allows one to assemble a new depot in the
+form of a tar archive out of a subset of packages.
+Furthermore, the new _depot_query_ component is able to scan an on-target
+depot for runtime descriptions and return all the information needed to start
+a subsystem based on the depot content. The concept is exemplified by the new
+_gems/run/depot_deploy.run_ script, which executes the "fs_report" test case
+supplied via a depot package.
 
 
 Platforms
