@@ -157,30 +157,26 @@ Base framework and OS-level infrastructure
 Simplified IOMMU handling
 =========================
 
-;@alex-ab
+Memory used for DirectMemoryAccess (DMA) by devices, must be eagerly entered
+to the respective PageTable for the device when IOMMUs are used on x86. Up to
+now the adding of such DMA memory could not be triggered explicitly, however
+had to be done by issuing virtual page-faults, so that core would add it
+explicitly.
+Unfortunately, such triggering of page-faults is partially kernel
+specific and was up to now hidden in the device_pd implementation of the
+platform driver specifically done for Genode/NOVA. Nowadays more kernels
+support IOMMUs, so that the perspective to add this to other kernels used by
+Genode becomes desireable. Because of that, we decided to add a explicit way
+to trigger the insertion of DMA memory into the right page-tables.
 
-commit 58e4f6cf9deea0fa2ac1da9632c4875a3e641df2
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Aug 2 17:30:49 2017 +0200
+The Pd_session interface got extended by a 'map' function, which takes a
+virtual region of the calling process as argument. The page frames of the
+previously attached dataspace or dataspaces are added eagerly by core to
+the IOMMU page-tables.
 
-    core: add map method to pd_session interface
-    
-    The method can be used to trigger the eager insertion of page frames into
-    page tables. Intention: to be used for memory used for DMA.
-    
-    Issue #2209
-
-commit 69e71147efa8eed76d46f51e796f1cbd4c0caed8
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Aug 1 19:05:56 2017 +0200
-
-    platform_drv: replace nova specific device_pd
-    
-    by using generic Pd_session::map instead for eager memory mappings of DMA
-    memory.
-    
-    Issue #2209
-
+With this explicit 'map' support, we were able to replace the Genode/NOVA
+specific device_pd implementation with a generic one, which will fit other
+supported Genode kernels in the future.
 
 New report server for capturing reports to files
 ================================================
