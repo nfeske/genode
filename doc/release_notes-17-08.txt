@@ -279,20 +279,15 @@ Date:   Tue Aug 15 20:51:53 2017 +0200
 Make block sessions read-only by default
 ========================================
 
-;@nfeske
-
-commit d8164f0a43b8423f08097c4fd9bb756db513657c
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Mon Jul 31 12:53:34 2017 -0500
-
-    default ahci_drv and part_blk Block sessions to read-only
-    
-    Add a "writeable" policy option to the ahci_drv and part_blk Block
-    servers and default from writeable to ready-only. Should a policy
-    permit write acesss the session request argument "writeable" may still
-    downgrade a session to ready-only.
-    
-    Fix #2469
+Throughout Genode, we in general follow the principle of least privilege. On
+the configuration level, this translates to default-deny policy schemes where
+the starting point is as restrictive as possible and the user has to
+explicitly add permissions. So far, the block servers such as the block-device
+drivers and the part_blk component did not adhere to this good practice.
+With the curren release, we add a "writeable"  policy option to the ahci_drv
+and part_blk block servers and default from writeable to read-only. Should the
+policy permit write acesss, the client may still downgrade its own session by
+specifying the "writeable" session-request argument at session-creation time.
 
 
 Refined time handling
