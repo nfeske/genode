@@ -651,39 +651,13 @@ Date:   Fri Aug 18 08:51:08 2017 +0200
 C runtime
 =========
 
-;@chelmuth
-
-commit c223f74ce53a6195752d3d552ea945df06396401
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Tue Jun 6 17:36:33 2017 +0200
-
-    libc: support getsockopt(SO_TYPE)
-
-commit 2d4678f15c7a0a7173ebbb6b0153b3c47de3ecf6
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Jul 28 18:03:02 2016 +0200
-
-    libc: allow RTLD_GLOBAL for dlopen
-    
-    issue #2488
-
-commit d40876fec754cff9887453a446e19c9091acf6ed
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Aug 18 14:37:35 2017 +0200
-
-    libc: generate nslexer.c,nsparser.c at build stage
-    
-    The files are generated via flex and bison. Until now, this step was
-    performed when preparing the libc port. Unfortunately, the generated
-    files have subtle differences depending on the flex/bison versions
-    installed in the host. For example, the bison version number appears in
-    the generated code. This, in turn, breaks the hash mechanism of the
-    depot where a src/libc archive ends up being slightly different when
-    created on different hosts.
-    
-    By moving the code generation to the build stage, the src/libc archive
-    merely contains the nslexer.l and nsparser.y source files but not the
-    generated files.
+The growing number of ported applications used on Genode is
+accompanied by the requirement of extensive POSIX compatibility of our
+C runtime. Therefore, we enhanced our implementation by half a dozen
+features (e.g., O_ACCMODE tracking) during the past release cycle. We
+thank the contributors of patches or test cases and will continue our
+efforts to accommodate more ported open-source components in the
+future.
 
 
 Package management
