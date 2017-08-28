@@ -555,97 +555,40 @@ Date:   Mon Jul 24 11:46:24 2017 -0500
 Enhanced GUI primitives
 =======================
 
-;@nfeske
+Even though we consider Qt5 as the go-to solution for creating advanced
+graphical user interfaces on Genode, we also continue to explore an alternative
+approach that facilitates Genode's component architecture. The so-called
+menu-view component takes an XML description of a dialog as input and produces
+rendered pixels as output. It also gives marginal feedback to user input such
+as the hovered widget at a given pointer position. The menu view does not
+implement any application logic but is meant to be embedded as a child
+component into the actual application. This approach relieves the application
+from the complexity (and bugs) of widget rendering. It also reinforces a
+rigid separation of a view and its underlying data model.
 
-commit e741c77bf6b529cb95eb8c72e8bbf93df1f627a6
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jul 26 15:54:32 2017 +0200
+The menu view was first introduced in
+[https://genode.org/documentation/release-notes/14.11#New_menu_view_application - version 14.11].
+The current release improves it in the following ways:
 
-    menu_view: add '<float>' widget
-    
-    The new widget allows one to align a child widget within a larger parent
-    widget by specifying the boolean attributes 'north', 'south', 'east',
-    and 'west'. If none is specified, the child is centered. If opposite
-    attributes are specified, the child is stretched.
+* The new '<float>' widget aligns a child widget within a
+  larger parent widget by specifying the boolean attributes 'north', 'south',
+  'east', and 'west'. If none is specified, the child is centered. If opposite
+  attributes are specified, the child is stretched.
 
-commit fb4bf37088da4f8c91a01231df9f57116299f7e3
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jul 26 16:04:30 2017 +0200
+* A new '<depgraph>' widget arranges child widgets in the form of a
+  dependency graph, which will be the cornerstone for Genode's upcoming
+  interactive component-composition feature. As a prerequisite for
+  implementing the depgraph widget, Genode's set of basic graphical primitives
+  received new operations for drawing sub-pixel-accurate anti-aliased lines
+  and bezier curves.
 
-    menu_view: handle disppearing child widgets
+* All geometric changes of the widget layout are animated now. This includes
+  structural changes of the new '<depgraph>' widget.
 
-commit dacf87e94ed200c36ce3a16a5dfb6442ed775ca0
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jul 26 17:03:36 2017 +0200
+[image depgraph]
 
-    menu_view: split implementation into several files
-
-commit 15610feb9c42a9fe5304fe18e003f0610e8d480d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Aug 9 19:52:00 2017 +0200
-
-    menu_view: generalized data-model-update utility
-    
-    The utility simplifies the synchronization of a list-based data model
-    from an XML structure.
-
-commit 6677b1304c8bd1868b822c31480d7197e90dbf13
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Aug 9 19:52:19 2017 +0200
-
-    menu_view: use list_model_from_xml.h
-
-commit 098b90b782ce3d4ee0fcda39d5b35acee0cc640d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Aug 15 13:41:38 2017 +0200
-
-    menu_view: support labels with no background
-    
-    By applying the text output to the alpha buffer in addition to the pixel
-    buffer, labels can now appear without the need for an underlying frame
-    or button.
-
-commit 4171d2b8317eef681f82717b1ca01b8fccb0685a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Aug 18 08:50:47 2017 +0200
-
-    menu_view: depgraph widget
-    
-    The new <depgraph> widget arranges child widgets in the form of a
-    dependency graph.
-
-commit 5bf107834b19160c77753a398847e86754a97a4e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Aug 18 08:46:41 2017 +0200
-
-    menu_view: fix frame dropping after sleep
-    
-    When idle, menu_view de-schedules timer events to save processing time.
-    Once reactivated by a dialog update, it computes the passed time and
-    applies the result to the animator. However, the animation was most likely
-    started by the update not during the sleep. So the passed time must not
-    be applied to the animation in this case. Otherwise, many animation steps
-    are computed at once within a single visible frame.
-    
-    Furthermore, the patch adjusts the REDRAW_PERIOD to 2, which is a better
-    value for geometric movements as opposed to mere color-blending effects
-    where the frame rate does not matter so much.
-    
-    It also refines the nitpicker-buffer relocation in a way that extends
-    the buffer but does not shrink it. This lowers the interaction with
-    nitpicker in situations where the dialog size changes a lot.
-
-commit 268e69136f2b39a82f251d93a154a75110d9c2bc
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Aug 17 17:11:38 2017 +0200
-
-    menu_view: animate geometric changes
-
-commit 9287d287b3443c2417799deb283ef3edc526b265
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Aug 18 08:51:08 2017 +0200
-
-    gems: update menu_view.run, show depgraph
+The menu-view component is illustrated by the run script at
+_gems/run/menu_view.run_.
 
 
 C runtime
