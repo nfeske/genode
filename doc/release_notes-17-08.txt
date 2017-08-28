@@ -185,29 +185,68 @@ supported Genode kernels in the future.
 New report server for capturing reports to files
 ================================================
 
-;@emery
+The *Report* session is a simple mechanism for components to publish structed data
+without the complexity of a file-system layer. In the simpliest case a client component
+will produce a report and communicate it directly to component acting as a server.
+The disadvantage is that the report client becomes reliant on the liveliness and
+presence of the consumer component, so in the more robust case the *report_rom*
+component acts as the server hosting the *Report* service as well as a *ROM* service
+for components consuming reports.
 
-commit 47c616ab949886c301651f32be3b20282c95d3f2
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Fri May 19 19:36:13 2017 -0500
+The *report_rom* server permits *ROM* access only to clients matching an explicit
+configuration policy, this is good for security but opaque to a user. Reports
+can only be read where an explicit policy is in place and only a single *Report*
+session can report to an active *ROM* session.
 
-    server/fs_report: write reports to file-systems
-    
-    Fix #2422
+The new *fs_report* component is a friendlier and more flexible *Report* server.
+Reports are written to a file-system using a file and directory hierarchy
+that expresses session routing. This allows for intuitive report inspection and
+injection via a file-system. When used with the *ram_fs* and *fs_rom* servers
+it can also replicate the functionality of *report_rom*.
 
 
 New runtime environment for starting components sequentially
 ============================================================
 
-;@emery
+The *init* component is a prime example of software with emphasis on function over
+features. It is the fundamental building block for combining components yet its
+behavior is simple and without heuristics. Like other contemporary init managers
+it starts components in parallel, but to a more extreme degree in that it has no
+concept of "runlevels" or "targets", all components are started as soon a possible.
+The concrete sequence of execution is instead determined by when server components
+make service annoucements and how quickly they respond to requests by clients.
 
-commit 5f35175644c1e9d00e8d15085407eeb3bd0be82f
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Aug 9 19:24:27 2017 -0500
+In some cases the execution of one component must not occur until the execution
+of another component ends, be it that the first produces output that is consumed
+by the second, or that the two contend for a service that cannot be multiplexed.
+*Init* contains no provisions to inforce ordering, but we are free to define new
+behaviors in other management components.
 
-    app/sequence: execute components in sequence
-    
-    Fix #2476
+The solution to the problem of ordering is the *sequence* component. *Sequence*
+walks a list of children and executes them in order, one at a time. With only
+one child active there is no need for any local resource or routing management.
+By applying the same session label transformations as *init*, external routing
+and policy handling is unchanged.
+
+An example of ordering a producer and consumer within an *init* configuration follows:
+! <start name="sequence">
+!   <resource name="RAM" quantum="128M"/>
+!   <config>
+!     <start name="producer">
+!       <config .. />
+!     </start>
+!     <start name="consumer">
+!       <config .. />
+!     </start>
+!   </config>
+!   <route>
+!     <service name="LOG" label_prefix="producer">
+!       <child name="log_a"/> </service>
+!     <service name="LOG" label_prefix="consumer">
+!       <child name="log_b"/> </service>
+!     <any-service> <parent/> <any-child/> </any-service>
+!   </route>
+! </start>
 
 
 Support for boot-time initialized frame buffer
@@ -274,15 +313,19 @@ The most important changes are:
 Make block sessions read-only by default
 ========================================
 
-Throughout Genode, we in general follow the principle of least privilege. On
-the configuration level, this translates to default-deny policy schemes where
-the starting point is as restrictive as possible and the user has to
-explicitly add permissions. So far, the block servers such as the block-device
-drivers and the part_blk component did not adhere to this good practice.
-With the curren release, we add a "writeable"  policy option to the ahci_drv
-and part_blk block servers and default from writeable to read-only. Should the
-policy permit write acesss, the client may still downgrade its own session by
-specifying the "writeable" session-request argument at session-creation time.
+Genode server components are expected to apply the safest and strictest
+behavior when exposing cross-component state or persistent data. In practice
+the *Block* and *File_system* servers only allow access to clients matching
+explictly configured local policies. The *File_system* servers enforce an
+additional provision that sessions are implicitly read-only unless overriden
+by policy. This release introduces a similar restriction to the AHCI driver and
+partition multiplexer. Clients of these servers require an affirmative "writeable"
+attribute on policies to permit the writing of blocks. Write permission at these
+servers may also be revoked by components that forward *Block* session requests
+by placing _writeable="no"_ into session request arguements.
+
+_All users of *ahci_drv* and *part_blk* are advised that this change may break existed
+configurations without "writeable" policies_.
 
 
 Refined time handling
@@ -517,34 +560,17 @@ Date:   Thu Aug 24 13:30:22 2017 +0200
 FatFS-based VFS plugin
 ======================
 
-;@emery
-
-commit f09fc4a5a263a8167a346e844dd7d21a2d89f9a2
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Tue May 16 13:59:37 2017 -0500
-
-    Update FatFS port to version 0.13
-    
-    - Update FatFS port from 0.07e to 0.13
-    - Multi-device support
-    - Basic test at run/fatfs
-    - Adaption of existing components
-    
-    Note, ffat is now consistently renamed to fatfs.
-    
-    Ref #2410
-
-commit 31caae476548b89236aec520710947ccecbffc07
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Mon Jul 24 11:46:24 2017 -0500
-
-    lib/vfs/fatfs: FAT file-system plugin using FatFS library
-    
-    See repos/libports/src/lib/vfs/fatfs/README and
-    /home/user/repo/genode/repos/libports/run/libc_vfs_fat.run for
-    documentation.
-    
-    Ref #2410
+Genode has supported VFAT file-systems since the 09.11 release when the
+[http://elm-chan.org/fsw/ff/00index_e.html - FatFS] library was first ported.
+The 11.08 release fit the library into the libc plugin architechure and
+in 12.08 FatFS was used in the *ffat_fs* *File_system* server.
+Now, the 17.08 release revisits FatFS to mold the library into the newer and
+more flexible VFS plugin system.
+The *vfs_fatfs* plugin may be fitted into the VFS server or used directly by
+arbitrary components linked to the VFS library. As the collection of VFS plugins
+in combination with the VFS *File_system* server has a lower net maintence cost
+than a multiple *File_system* servers, the *ffat_fs* server may be retired in a
+future release.
 
 
 Enhanced GUI primitives
