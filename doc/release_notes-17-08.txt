@@ -110,121 +110,46 @@ Date:   Fri Aug 18 14:50:12 2017 +0200
 The seL4 kernel on ARM and 64-bit x86 hardware
 ##############################################
 
-;@alex-ab
+With the 16.08 release we brought the seL4 support to a level to be considered
+a serious combatant with the other supported kernels, however solely for the
+x86_32 platform.
 
-commit 95329c82e2585338f1977c384c20f58250b861d9
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jun 12 12:41:38 2017 +0200
+With this release we extended the platform support to x86_64 and to ARM in
+generral. We started to upgrade from seL4 3.2.0 to seL4 5.2.0 and finally to
+seL4 6.0. With the upgrade we're able to drop several Genode specific seL4
+patches, as used in the 16.08 release. One major improvement of 3.2.0 compared
+to 6.0 is the handling of the announcement of device memory by the kernel
+to Genode's roottask 'core'.
 
-    sel4: update to 5.2.0
-    
-    Issue #2451
+Afterwards, we had to inspect the x86 specific part thoroughly and split and
+separate it properly into platform independent and platform dependent seL4
+parts. Upon this work we added platform specific x86_64 and ARM seL4 code. One
+major work item was to make the page table handling in 'core' aware and
+generic enough to handle the differences in the page table sizes between the
+three platforms.
 
-commit 92db5d2c4ee4522ffaf3832e6ad365e9541b788b
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Sat Jun 24 14:20:12 2017 +0200
+For the ARM support we decided to enable a i.MX6 Freescale based SoC, namely
+the Wandboard Quard board. Since the seL4 kernel interface provides no timeout
+support, we re-enabled for this board a previously used user-level
+timer originally developed for our own base-hw kernel. The so called EPIT
+timer is part of most i.MX SoCs.
 
-    sel4: limit max relocation memory to 256M
-    
-    relocation is required, to avoid overlapping phdr in the elf binaries, but
-    sel4 will fail to boot if bender relocates the images at the end of physical
-    memory. Limit the physical relocation address to a fixed 256M value, so that
-    sel4 will work.
-    
-    Issue #2451
+After the essential work for the 3 platforms were done, surprisingly for us in
+shorter time than expected, we had time to enable and work on additional
+features.
 
-commit 66c0c7b6f11ea8b8d08bb7e40640501caeb10304
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Jun 22 18:47:02 2017 +0200
-
-    sel4: add x86_64 support
-    
-    Issue #2451
-
-commit 782b457476949f7f8a662556a35c5dbc421153ee
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jul 7 20:09:39 2017 +0200
-
-    wand_quad: re-enable i.MX6 EPIT user level timer
-    
-    Issue #2451
-
-commit c22b60f0c4219e3d7b09e2af2b2c7e2a2cda350f
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 4 16:41:07 2017 +0200
-
-    base: add initial r0 register to crt0.s for arm
-    
-    Issue #2451
-
-commit da5441292afffbbda27e0dad5f09d0a797e29f49
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jul 4 14:17:38 2017 +0200
-
-    sel4: add Wandboard Quad (iMX6) support
-    
-    Issue #2451
-
-commit 7a8e0e59af3146b9f82139d748bda49e17b13388
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Aug 7 17:55:15 2017 +0200
-
-    sel4: enable smp for x86
-    
-    Issue #2451
-
-commit 0ddda795114e589cc50204d55f3f3e7142ebd7d6
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Aug 8 14:35:14 2017 +0200
-
-    sel4: add priority support
-    
-    Issue #2451
-
-commit f825775e40c81382ea38b055f8ba94b1577ef9e1
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Aug 1 14:02:35 2017 +0200
-
-    sel4: update to kernel 6.0
-    
-    Issue #2451
-
-commit fd0b256f7c8c71b2485543b211d6a96bf9d098b8
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Aug 9 16:28:44 2017 +0200
-
-    sel4: support cpu utilization via TRACE service
-    
-    using benchmark infrastructure of the seL4 kernel
-    
-    Issue #2451
-
-commit b9aa16eb3e671a7e3c1474b076a244c7c97e5dea
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Aug 11 18:31:57 2017 +0200
-
-    sel4: kernel patch to get ACPI information
-    
-    Issue #2242
-
-commit 5d5e7d0294bf76c470be19c7d787206f2bbe225d
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Aug 11 18:26:29 2017 +0200
-
-    sel4: provide ACPI infos by 'platform_info' ROM
-    
-    Issue #2242
-
-commit c09783eed9a52ad72e8a1a986b832303574612ba
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Aug 16 20:06:54 2017 +0200
-
-    sel4: add uefi boot support via mbi2
-    
-    Multiboot2 provides the ACPI RSDP pointer from the GRUB2 bootloader.
-    
-    Issue #2242
-
+First we enabled multiprocessor support for Genode/seL4 on x86 and
+thread priority support for all seL4 platforms. Additionally we were able to
+utilize the seL4 benchmark interface for Genode's trace infrastructure in order
+to obtain utilization information about threads and CPUs. The Genode
+components 'top' (text-based) and 'cpu_load_monitor' (graphical) are now
+usable on Genode/seL4.
+Finally, we're in general in progress of exploring the support to boot on x86
+UEFI machines, which have no compatibility support module (CSM) for the legacy
+BIOS boot support anymore. In this course we extended the seL4 kernel for
+Genode as described by the Multiboot2 specification, which enables us to
+start Genode/seL4 together with GRUB2, as a UEFI capable bootloader, on UEFI
+machines without or not-enabled CSM support.
 
 Base framework and OS-level infrastructure
 ##########################################
