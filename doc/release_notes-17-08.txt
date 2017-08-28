@@ -823,31 +823,15 @@ Date:   Mon Aug 7 15:24:40 2017 +0200
 Execution on bare hardware (base-hw)
 ====================================
 
-;@alex-ab @skalk @ssumpf
+@skalk @ssumpf
 
 UEFI support
 ------------
 
-commit a269c471631babee7b151d05cb27181d77cc5879
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Feb 2 14:25:06 2017 +0100
-
-    hw: add UEFI boot support
-    
-    via grub2 using multiboot 2
-    
-    Issue #2242
-
-commit 1636694ec3d67f2470b451f6112cbdc779e46211
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Aug 11 14:29:16 2017 +0200
-
-    hw: provide ACPI infos via platform_info ROM
-    
-    in uefi/mbi2 boot case
-    
-    Issue #2242
-
+As done for the seL4 and NOVA kernel in this release, we extend our base-hw
+kernel to be also a Multiboot2 compliant kernel. Used together with GRUB2,
+our kernel can be run on x86 UEFI machines without or with disabled
+legacy BIOS support (called CSM).
 
 RISC-V
 ------
@@ -896,81 +880,38 @@ kernel.
 NOVA microhypervisor
 ====================
 
-;@alex-ab
+As done for the seL4 and our own kernel 'base-hw' in this release, we extend
+the NOVA kernel to be also a Multiboot2 compliant kernel. Used together with
+GRUB2, NOVA can be run on x86 UEFI machines without or with disabled
+legacy BIOS support (called CSM).
 
-commit f30f0a81e0971a2e75975f12cccb7b44f5371cd1
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jun 12 22:12:17 2017 +0200
+Grub2 provides to a Multiboot2 kernel the initial ACPI RSDP (Root System
+Description Pointer) data, which are required to bootstrap the kernel and
+the operating system in general on todays x86 machines. The information of
+the ACPI RSDP are propagated by the kernel to Genode's 'core' and from there
+via a Genode ROM called 'platform_info' to Genode's ACPI driver and the
+ACPICA library based component 'acpica'.
 
-    nova: uefi boot support using multiboot2
-    
-    - kernel provides ACPI RSDT/XSDT pointer
-    - core exports it via a ROM called "platform_info"
-    
-    Issue #2242
+In order to ease the setup of a UEFI bootable image, we added to our 'run'
+infrastructure a new image module. The run option 'image/uefi' can be used
+instead of normally used 'image/iso' to create a raw image which contains a
+EFI system partition in a GUID Partition Table (GPT). The image is equipped by
+the new 'image/uefi' module with the GRUB2 boot loader, a GRUB2 configuration
+and the Genode run scenario. The final image can be copied with 'dd' to a
+USB stick for boot on native machines. Additionally we added support to boot
+such an image on Qemu leveraging Tianocores (http://www.tianocore.org) UEFI
+firmware.
 
-commit 04b2919a1abeadb9189ac6623e21333daa15b0f6
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jan 30 23:00:19 2017 +0100
+GRUB2 provides support to enable graphical setups early in the bootloader
+and provides support to export the framebuffer information to a operating
+system so that it can leverage the already enabled graphical device.
 
-    acpi_drv: use platform_info for rsdt/xsdt lookup
-    
-    Issue #2242
+Thanks to Johannes Kliemann, we have a small Genode framebuffer driver
+that obtains the required framebuffer information from GRUB2, through the NOVA
+kernel and Genode 'core'. With his driver 'fb_boot_drv' one can utilize on
+UEFI booted machines the framebuffer.
 
-commit f48e71e070217cdba662dcc588e903f085c84777
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Jan 31 20:46:18 2017 +0100
-
-    acpica: use platform_info for rsdt/xsdt lookup
-    
-    Issue #2242
-
-commit 615f2ba2dae56dca82e317297ebcfcfe74f58550
-Author: Johannes Kliemann <jk@jkliemann.de>
-Date:   Mon Jun 12 22:59:08 2017 +0200
-
-    nova: support mbi2 framebuffer
-    
-    - export framebuffer information as platform_info ROM by core
-    
-    Issue #2242
-
-commit 3aca3256c608ed59704b0d1c844482db64f4fafe
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Jun 12 22:12:11 2017 +0200
-
-    tool: support image/uefi for grub2/uefi boot
-    
-    - add x86_32/64 GRUB2 UEFI boot loader
-    - enable support for nova
-    
-    Issue #2242
-
-commit 9f9c5a3166534f5dffbcd375d129c5cb82e39730
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jan 11 22:05:03 2017 +0100
-
-    tool: qemu support for UEFI boot
-    
-    - add UEFI firmware for Qemu
-    
-    Issue #2242
-
-commit 9b93ebfa18eb06cacd7d2ada3b9c7cfd7e80cdd2
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Jun 21 22:38:48 2017 +0200
-
-    nova: extend SVM support
-    
-    - Win7 32 bit VM on 32bit Genode/Nova runs fin runs fine
-    - tested on Phenom II X4
-    
-    Issue #2454
-
-commit a9f263db16434acb5256c5063fc0fad41f4bf183
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Mon Mar 27 23:07:45 2017 +0200
-
-    vbox4: extended AMD SVM support
-    
-    Issue #2454
+As a side project minor virtualisation support for AMD has been added to
+Virtualbox4 and to the Nova kernel on Genode, which enabled us to run 32bit
+Windows 7 VM on a 32bit Genode/NOVA host. The test machine was an (oldish)
+AMD Phenom II X4.
