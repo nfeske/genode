@@ -233,47 +233,38 @@ to Johannes Kliemann for this contribution.
 Extended non-blocking operation of the VFS
 ==========================================
 
-;@cproc
+In
+[https://genode.org/documentation/release-notes/17.02#VFS_support_for_asynchronous_I_O_and_reconfiguration - version 17.02],
+we added support for non-blocking reading to the VFS in the form of the
+'read_ready()', 'queue_read()' and 'complete_read()' functions. Since then it
+has turned out that blocking in the VFS is not only problematic in the VFS
+server with multiple clients, but also when the VFS is used in a multi-threaded
+environment and a VFS plugin needs to reliably wait for I/O completion signals.
 
-commit 8be641002226ac455394fcefb131c730f8e9b5d2
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue Aug 15 20:51:53 2017 +0200
+For this reason, we reworked the interface of the VFS even more towards
+non-blocking operation and adapted the existing users of the VFS accordingly.
 
-    VFS: nonblocking interface
+The most important changes are:
     
-    The VFS library can be used in single-threaded or multi-threaded
-    environments and depending on that, signals are handled by the same thread
-    which uses the VFS library or possibly by a different thread. If a VFS
-    plugin needs to block to wait for a signal, there is currently no way
-    which works reliably in both environments.
+* Directories are now created and opened with the 'opendir()' function and
+  the directory entries are read with the 'queue_read()' and 'complete_read()'
+  functions.
     
-    For this reason, this commit makes the interface of the VFS library
-    nonblocking, similar to the File_system session interface.
+* Symbolic links are now created and opened with the 'openlink()' function and
+  the link target is read with the 'queue_read()' and 'complete_read()'
+  functions and written with the 'write()' function.
     
-    The most important changes are:
-    
-    - Directories are created and opened with the 'opendir()' function and the
-      directory entries are read with the recently introduced 'queue_read()'
-      and 'complete_read()' functions.
-    
-    - Symbolic links are created and opened with the 'openlink()' function and
-      the link target is read with the 'queue_read()' and 'complete_read()'
-      functions and written with the 'write()' function.
-    
-    - The 'write()' function does not wait for signals anymore. This can have
-      the effect that data written by a VFS library user has not been
-      processed by a file system server yet when the library user asks for the
-      size of the file or closes it (both done with RPC functions at the file
-      system server). For this reason, a user of the VFS library should
-      request synchronization before calling 'stat()' or 'close()'. To make
-      sure that a file system server has processed all write request packets
-      which a client submitted before the synchronization request,
-      synchronization is now requested at the file system server with a
-      synchronization packet instead of an RPC function. Because of this
-      change, the synchronization interface of the VFS library is now split
-      into 'queue_sync()' and 'complete_sync()' functions.
-    
-    Fixes #2399
+* The 'write()' function does not wait for signals anymore. This can have the
+  effect that data written by a VFS library user has not been processed by a
+  file system server yet when the library user asks for the size of the file or
+  closes it (both done with RPC functions at the file system server). For this
+  reason, a user of the VFS library should request synchronization before
+  calling 'stat()' or 'close()'. To make sure that a file system server has
+  processed all write request packets which a client submitted before the
+  synchronization request, synchronization is now requested at the file system
+  server with a synchronization packet instead of an RPC function. Because of
+  this change, the synchronization interface of the VFS library is now split
+  into the 'queue_sync()' and 'complete_sync()' functions.
 
 
 Make block sessions read-only by default
