@@ -15,96 +15,100 @@
 Hardware-accelerated graphics for Intel Gen-8 GPUs
 ##################################################
 
-;@cnuke @ssumpf
+During this years Hack'n Hike event we ported the ioquake3 engine to Genode.
+As preliminary requirement we had to resurrect OpenGL support in our aging
+graphics stack and enable support for current Intel HD Graphics devices (IGD).
+We started by updating Mesa from the old 7.8.x to a more recent 11.2.2 release.
+Since we focused mainly on supporting Intel devices we dropped support for the
+Gallium back end as Intel still uses the old DRI infrastructure. This decision,
+however, also influenced the choice of the software rendering back end. Rather
+than keep using the softpipe implementation, we now use swrast. In addition, we
+changed the available OpenGL implementation from OpenGL ES 2.x to the fully
+fledged OpenGL 4.5 profile, including the corresponding shader language version.
+As with the previous Mesa port, EGL serves as front end API for system
+intergration and loads a DRI back end driver (i965 or swrast). EGL always request
+the back end driver 'egl_drv.lib.so' in form of a shared object. Genode's
+relabling features is used to select the proper back end via a route
+configuration. The following snippet illustrates such a configuration for
+software rendering:
 
-commit 3edfe377049559e428251b4e4777651342b4000e
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Aug 17 13:07:39 2017 +0200
+! <start name="gears" caps="200">
+!   <resource name="RAM" quantum="32M"/>"
+!   <route>
+!     <service name="ROM" label="egl_drv.lib.so">
+!       <parent label="egl_swrast.lib.so"/>
+!     </service>
+!     <any-service> <parent/> <any-child/> </any-service>
+!   </route>
+! </start>
 
-    libports: DRM library 2.4.65
-    
-    issue #2488
+With the graphics stack front end in place, it was time to take care of the
+GPU driver. In our case this meant implementating the DRM interface in our
+ported version of the Intel i915 DRM driver. Up to now, this driver was solely
+used for mode-setting, while we completely ommitted supporting the render
+engine.
 
-commit 7563ca495b79c37d3355513dbc4274b857bc03f9
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Aug 17 13:27:18 2017 +0200
+[image mesa_genode]
 
-    libports: Mesa 11.2.2
-    
-    OpenGL 4.5 with software and i965 rendering back ends.
-    
-    issue #2488
+With this new and adapted software stack, we successfully could play ioquake3
+ontop of Genode with a reasonable performance in 1080p on a Thinkpad X250.
 
-commit 02782a991c4fe010e2f0cbcc3f0ef86696148caf
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Aug 17 13:29:32 2017 +0200
+During this work we gathered a lot of inside into the architecture of a modern
+3D graphics software stack as well as into recent Intel HD Graphics hardware.
+We found that the Intel specific Mesa driver itself is far more complex than
+its kernel counter part. The DRM driver is mainly concered with resource and
+execution management, while the Mesa driver programs the GPU. For example,
+amongst others, Mesa compiles the OpenGL shaders into a GPU specific machine
+code that is passed on to the kernel for execution.
 
-    libports: Mesa demos + adjust Qt5
-    
-    * Adjust Qt5 to new Mesa version
-    * Added eglgears
-    * Adjust Mesa library build target
-    
-    fixes #2488
+While inspecting the DRM driver, it became obvious that one of the reasons for
+its complexity is the need to support a variety of different HD Graphics
+generations as well as different features driven by software usage patterns.
+For our security related use cases it is important to offer a clear isolation
+and separation mechanism per client. Hardware features provided by modern
+Intel GPUs like per-process graphics translation tables (PPGTT) and hardware
+contexts that are unique for each client make it possible to fullfill these
+requirements.
 
-commit 1fb7037e86103767b31714ec640bfb4ac11ba3a7
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Apr 26 11:10:52 2017 +0200
+By focusing on this particular feature-set, and thus limiting the supported
+hardware generations, writing a native Genode DRM driver and maintaining it
+becomes feasible. After all, we strife to keep all Genode components as low
+complex as possible, especially resource multiplexer which in this case holds
+certainly true for a GPU driver.
 
-    os: add Gpu driver for Intel Gen8 HD graphics
-    
-    This commit introduces a experimental 3D driver for Intel Gen8 HD
-    graphics devices as well as the corresponding Gpu session.
-    
-    Fixes #2507.
+[image intel_gpu_drv]
+  This image shows multiple Gpu session clients and the resources they are
+  using. The fence registers as well as the aperture is partioned between
+  them, the PPGTT is fed by the system memory and the contexts are located
+  in disjunct GGTT regions.
 
-commit 740859f5db567a38dda2e99c8929fc0ee9af6502
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed May 10 16:07:52 2017 +0200
+Within four months we implemented an experimental DRM driver for Intel HD
+Graphics Gen8 (Broadwell class) devices. We started out defining a Gpu session
+interface that is sufficient to implement the API used by the DRM library.  For
+each session the driver creates a context consisting of a hardware context, a
+set of page tables (PPGTT), and a part of the aperture. The client may use the
+session to allocate and map memory buffers used by the GPU. Every buffer is
+always eagerly mapped 1:1 into the PPGTT by using the local virtual address of
+the client. Special memory buffers, like a image buffer, are in addition mapped
+through the aperture to make use of the hardware provided de-tiling mechanism.
+As is essential in Genode components, the client must donate all resources that
+the driver might need to fullfill the request, i.e., quota for every memory and
+capability allocation. Adding this kind of accounting to the ported driver
+would have required a great effort. Clients may request execution of their
+workload by submitting an execution buffer. The DRM driver will then enqueue
+the request and schedule all pending requests sequentially. If the request is
+completed the client will be notified via a completion signal.
 
-    drm: use Gpu session for i965 driver
-    
-    Issue #2507.
+As being said, the DRM driver should be treated as experimental. As of now it
+only manages the render engine of the GPU. Mode-setting or rather display
+handling must be performed by another component. Currently the VESA driver is
+used for this purpose. It also lacks any power-management functionality and
+permanently keeps the GPU awake. Both limitations will be addressed in future
+releases and andd support for Gen9+ (Skylake) and newer devices might be added.
 
-commit b1a7269a359912297cd687e5389cb3c508366efa
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Aug 17 18:17:30 2017 +0200
-
-    mesa: adjust i965 EGL backend for Gpu session
-    
-    Issue #2507.
-
-commit 75ea4e49b600954d828f69b7419d7489745b3448
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Aug 17 18:19:17 2017 +0200
-
-    mesa-demos: add more examples
-    
-    Issue #2507.
-
-commit 1dbfff120e2820511aea96e0a16ed70e7d2d91b5
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Mon Aug 21 14:22:58 2017 +0200
-
-    mesa: split lib and API (headers)
-    
-    Issue #2507.
-
-commit 669f3b81f50da3b28d87c19580c26232d995a9b4
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Mon Aug 21 14:21:42 2017 +0200
-
-    sdl: adapt test programm
-    
-    Issue #2507.
-
-commit 8e7df8935221692440814b375fb2f0579e5b65ab
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri Aug 18 14:50:12 2017 +0200
-
-    sdl: add OpenGL support
-    
-    Issue #2507.
+All in all, in its current incarnation, the DRM driver component consists of
+about 4,200 lines of code, whereas the Mesa DRI i965 driver complements about
+78,000 lines of code.
 
 
 The seL4 kernel on ARM and 64-bit x86 hardware
@@ -592,6 +596,21 @@ features (e.g., O_ACCMODE tracking) during the past release cycle. We
 thank the contributors of patches or test cases and will continue our
 efforts to accommodate more ported open-source components in the
 future.
+
+
+Libraries and applications
+##########################
+
+Mesa adjustments
+================
+
+The Mesa update required the adaption of all components that use OpenGL.
+In particular that means the Qt5 framework. Furthermore, we also enabled
+OpenGL support in our SDL1 port.
+
+As playground there are a few OpenGL examples. The demos are located under
+_repos/libports/src/test/mesa_demos_, which use the EGLUT bindings and there
+are also some SDL based examples in _repos/world/src/test/sdl_opengl_.
 
 
 Package management
