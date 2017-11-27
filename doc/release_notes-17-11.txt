@@ -1,0 +1,966 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 17.11
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+; Package management
+; state of packaged components
+; mention sculpt as motivation
+
+commit c6690ea447c9317a16d253be4ec04824943d7c5b
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Sep 6 19:15:36 2017 +0200
+
+    ports: use depot in noux_vim.run, noux_bash.run
+
+
+
+
+Base framework and OS-level infrastructure
+##########################################
+
+Virtual file system and C runtime
+=================================
+
+; @chelmuth
+
+commit 488396e78b93f204b8c819c412d71787b575e4b3
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Tue Sep 5 15:13:27 2017 -0500
+
+    server/vfs: status completes or throw Invalid_handle
+    
+    The 'status' RPC method of the File_system session must complete
+    successfully or throw 'Invalid_handle' for any error.
+    
+    Ref #2512
+
+commit 8ca63d4a6e5281ba0d7fa591bc52b4a495a54ee9
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Sep 14 14:00:36 2017 -0500
+
+    libc: reintegrate libc_resolv library
+    
+    Remove getaddrinfo and freeaddrinfo from the Libc::Plugin and get rid of
+    the extra libc_resolv library. Remove getaddrinfo/freeaddrinfo symbol
+    hiding patch for FreeBSD sources. Remove libc_resolv from Makefiles and
+    run scenarios.
+    
+    Fix #2273
+
+commit 226fcbc02fa2e9fe36c81be3ea530f41efea2f7a
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Sep 28 10:43:30 2017 -0500
+
+    Remove remote shell support from libc
+    
+    The remote shell facilities are past deprecation and there is an
+    obligation to prevent their use rather than to support them. This patch
+    removes the related function definitions from 'unistd.h', which have not
+    been been included in the Genode libc ABI regardless.
+    
+    Fix #2530
+
+
+NIC-router improvements
+=======================
+
+; @m-stein
+
+commit a1e32a3ad97cea55b0c463f016f085584fbd8f89
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Aug 21 17:38:16 2017 +0200
+
+    nic_router: use local but individual MAC addresses
+    
+    IP stacks may treat a network interface as "down" when it states a MAC
+    address with the I/G bit (bit 40) set to "Group" (value 0) instead of
+    "Individual" (value 1). This was observed with a TinyCore 8 inside a
+    Virtualbox VM. Thus, the previously choosen 03:03:03:03:03:00 as base
+    for the MAC address allocator is bad. Now we use the 02:02:02:02:02:00
+    instead. This also ensures that the MAC addresses are not marked as
+    "Universal" but as "Local" (bit 41, value 1) which is correct in general
+    as the router allocates MAC addresses only for virtual networks.
+    
+    Ref #2490
+
+commit 215937ff0f37efcd18def54ed4f0a22a5c29e493
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Sep 25 17:40:35 2017 +0200
+
+    nic_router: handle ARP requests for foreign IPs
+    
+    If the router has no gateway attribute for a domain (means that the router
+    itself is the gateway), and it gets an ARP request for a foreign IP, it shall
+    answer with its own IP.
+    
+    Ref #2490
+
+commit 30a96706cb87dfebd6b4a3ecff210be64a4f5505
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Fri Oct 6 13:00:05 2017 +0200
+
+    nic_router: dhcp server functionality
+    
+    One can configure the NIC router to act as DHCP server at interfaces of a
+    domain by adding the <dhcp> tag to the configuration of the domain like
+    this:
+    
+    <domain name="vbox" interface="10.0.1.1/24">
+        <dhcp-server ip_first="10.0.1.80"
+                     ip_last="10.0.1.100"
+                     ip_lease_time_sec="3600"
+                     dns_server="10.0.0.2"/>
+        ...
+    </domain>
+    
+    The attributes ip_first and ip_last define the available IPv4 address
+    range while ip_lease_time_sec defines the lifetime of an IPv4 address
+    assignment in seconds. The IPv4 address range must be in the subnet
+    defined by the interface attribute of the domain tag and must not cover
+    the IPv4 address in this attribute. The dns_server attribute gives the
+    IPv4 address of the DNS server that might also be in another subnet.
+    The lifetime of an offered assignment is the configured round trip time of
+    the router while the ip_lease_time_sec is applied only if the offer is
+    requested by the client in time.
+    
+    The ports/run/virtualbox_nic_router.run script is an example of how to
+    use the new DHCP server functionality.
+    
+    Ref #2490
+
+commit db9d4d3a3ce045b4a56a6fde878416606c4453ba
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Oct 16 11:31:43 2017 +0200
+
+    nic_router: DHCP client functionality
+    
+    If the attribute 'interface' is not set in a 'domain' tag, the router tries to
+    dynamically receive and maintain an IP configuration for that domain by using
+    DHCP in the client role at all interfaces that connect to the domain. In the
+    DHCP discover phase, the router simply chooses the first DHCP offer that
+    arrives. So, no comparison of different DHCP offers is done. In the DHCP
+    request phase, the server is expected to provide an IP address, a gateway, a
+    subnet mask, and an IP lease time to the router. If anything substantial goes
+    wrong during a DHCP exchange, the router discards the outcome of the exchange
+    and goes back to the DHCP discover phase. At any time where there is no valid
+    IP configuration present at a domain, the domain does only act as DHCP client
+    and all other router functionality is disabled for the domain. A domain cannot
+    act as DHCP client and DHCP server at once. So, a 'domain' tag must either
+    have an 'interface' attribute or must not contain a 'dhcp-server' tag.
+    
+    Ref #2534
+
+
+New driver-manager subsystem
+============================
+
+; @nfeske
+
+commit 6bfd4f427675280a0dc83d33baf6939e411ff246
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jun 30 13:30:37 2017 +0200
+
+    gems: driver-manager subsystem for PC platforms
+    
+    This is a drivers subsystem that starts the most fundamental
+    (framebuffer, input, block) device drivers dynamically, depending on the
+    runtime-detected devices. The discovered block devices are reported
+    as a "block_devices" report.
+
+
+Configuration changes of acpica and platform driver
+===================================================
+
+; @alex-ab
+
+commit c8bea156b6f036ae5948d8ba7cab65bd8b0d8247
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Nov 10 15:21:18 2017 +0100
+
+    acpica: request 'Acpi' only if 'acpi_ready="yes"'
+    
+    The synchronization with the ACPI driver is not needed when starting
+    acpica at a later stage. It could already be disabled via the
+    'acpi_ready="yes"' config attribute. However, acpica still
+    unconditionally requests the so-called "Acpi" service, which is an
+    alias for the platform_drv's "Platform" service. This patch disables the
+    use of this alias when the 'acpi_ready' synchronization is disabled.
+
+commit 3dcf2d6c600ecf273dcbeb62d80c5780bea55f1f
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Nov 17 14:45:50 2017 +0100
+
+    platform_drv: separate acpi and system feature
+
+
+New ROM-filter abilities
+========================
+
+; @nfeske
+
+commit b57a0b4390aa0c3d804bcc65ed87c22dc7ea4802
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Nov 9 11:48:32 2017 +0100
+
+    rom_filter: copy input node content to output node
+    
+    Add suppport for copying the content of an 'input' node to the 'output'
+    node.
+    
+    Issue #2558.
+
+commit 1e7c9b45f63e19ea692c5e65765121ef36f31a95
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 19 23:24:18 2017 +0100
+
+    rom_filter: allow use of input as attribute value
+
+
+New user-input processing capabilities
+======================================
+
+; @nfeske
+
+commit 189c5fa628effcd55a4e29620a9a208123f3a201
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Oct 25 18:00:35 2017 +0200
+
+    input_filter: improve capslock handling
+    
+    Furthermore, the patch reduces the noise in the log produced by
+    false-positive error messages that are actually warnings.
+    
+    Fixes #2548
+
+commit a6b29530e8bbe6d0368b4670b19b7ed5fef55fe5
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Nov 1 18:07:27 2017 +0100
+
+    input_filter: scroll-wheel emulation
+    
+    The new '<button-scroll>' filter generates artificial wheel events from
+    relative motion events when the user holds a magic button.
+
+commit 26d4753a3c08c7e0f527c23848633f80c7ee4035
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Nov 3 15:29:29 2017 +0100
+
+    input_filter: accelerate relative motion events
+
+commit 5e8fcf8fc2d5d41b1bcff34756b7eafd9437a147
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Nov 20 20:41:02 2017 +0100
+
+    input_filter: support <include> in <remap> nodes
+
+
+Keyboard-LED support for PS/2 and USB HID
+=========================================
+
+; @nfeske
+
+commit a0a7d5d165b00a1074795ff5f39b1b9a8ddbe6e1
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Oct 24 17:17:33 2017 +0200
+
+    ps2_drv: drive mode indicator LEDs
+    
+    The new feature is demonstrated by the input.run script. It uses a
+    dynamic ROM service to toggle the keyboard LEDs at different intervals.
+    
+    Fixes #2546
+
+commit a5f9df2c5f6f47800c68a90dd994479a3ed7fb97
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Nov 2 18:21:51 2017 +0100
+
+    usb: LED suppport
+
+
+Revised nitpicker GUI server
+============================
+
+; @nfeske
+
+commit f3988a27d4b9d0bfa56a8d323ff1985134d1f5b4
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Oct 18 16:48:40 2017 +0200
+
+    nit_fb: support 'origin' attribute
+    
+    This patch makes the specification of screen coordinates more flexible.
+    First, the 'origin' attribute allows one to refer to either of the four
+    screen corners without knowing the screen size. Second, the 'width'
+    and 'height' values now accept negative values, which are relative to
+    the screen size.
+
+commit 4eebd140b0bc6e49fc7bdfad7b5c35434a68f300
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Oct 27 12:14:48 2017 +0200
+
+    nitpicker: report current key state
+    
+    Fixes #2552
+
+commit 27c9e5c6e80301eb48fd84285f141c7a09898d1f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Oct 27 12:39:22 2017 +0200
+
+    os: generalize xray trigger component
+    
+    This commit replaces the old xray_trigger component by a new component
+    called global_keys_handler. For details, please refer to the issue text
+    and the accompanied README file.
+    
+    Fixes #2554
+
+commit 7b4ef66d910e4410b9b379b7b2f5222fd1a66c3d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Nov 1 14:45:10 2017 +0100
+
+    nitpicker: update focus report after reconfig
+    
+    A new configuration may implicitly change the domain color of the
+    currently focused session. We need to refresh the report to trigger an
+    update of the status bar.
+
+commit d44bdf7aee6db70d016c343b9a6d80b9fc4259ae
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Nov 16 17:07:52 2017 +0100
+
+    nitpicker: re-organize implementation
+    
+    This patch revises the implementation of nitpicker in the following
+    respects:
+    
+    - Split the implementation into smaller files,
+    - Consistently use the 'Nitpicker' namespace,
+    - Avoid the use of format strings,
+    - Retire old (and hackish) debug mode,
+    - Removal of unused timer connection,
+    - Merging 'Session' into 'Session_component',
+    - Merging 'Mode' into 'User_state',
+    - Adding the notions of 'View_owner' and 'Focus' as interfaces,
+    - Untangle 'User_state' and 'View_stack'
+
+commit dca11334901efa98986607cb65dd63417e27be8f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 19 20:11:50 2017 +0100
+
+    nitpicker: report last clicked-on client
+    
+    The new report can be activated via the 'clicked' attribute of the
+    '<report>' configuration node.
+
+commit 8cac6c7b81ba1a15e9cae3fb8d8b5d1125c4bc03
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 19 22:24:58 2017 +0100
+
+    nitpicker: respond to external focus policy
+    
+    This patch enables nitpicker to use an external focus policy instead of
+    the traditional builtin click-to-focus policy. The external focus policy
+    is obtained from a 'focus' ROM. The focus ROM is expected to have a
+    'label' attribute with the value set to the label of the to-be focused
+    client.
+
+commit 8d1cbdd8c659a707590a5d77c42d0fe7824e00f8
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Nov 20 20:23:41 2017 +0100
+
+    nitpicker: equip hover report with 'active' info
+    
+    This patch supplements the existing 'hover' report with the information
+    whether or not the user has recently moved the pointer. This works
+    analogously to how the 'focus' report features the information about
+    recent button/keyboard activity.
+    
+    Together, the 'hover' and 'focus' reports may be combined to observe
+    prolonged user inactivity, e.g. to activate a lock screen.
+
+commit 99f08531faa220bc2eed0588747ca522f8efcee1
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 19 21:35:06 2017 +0100
+
+    nit_focus component that implements click-to-focus
+
+commit 24b1ccb5ef822251dea6f74d02e77875d0c122aa
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Nov 19 22:42:44 2017 +0100
+
+    demo.run: showcase the use of 'nit_focus'
+
+commit 831773c20a9fb585f52a833c87297ac4ef434967
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Nov 23 12:00:48 2017 +0100
+
+    vbox_pointer: use RGBA encoding in shape report
+    
+    RGBA is more likely to be supported by new clients than VirtualBox's BGRA encoding.
+    
+    Issue #2585
+
+commit 9f09fd9991ba289fdbc09923d8961c1a7a29c80f
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Nov 24 19:53:29 2017 +0100
+
+    vbox_pointer: provide a 'Report' service for shape reports
+    
+    Issue #2585
+
+commit 5c85000ecbeef8ae996968e11a266a268e5d4a46
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Nov 24 19:53:30 2017 +0100
+
+    vbox_pointer: make shape support configurable
+    
+    Have the 'Report' session announcement and "hover" and "xray" ROM requests
+    only when needed when 'vbox_pointer' becomes the new 'pointer'.
+    
+    Issue #2585
+
+commit de76781836ecddb9ec5ef36c199a396d68eabeea
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Nov 24 18:56:25 2017 +0100
+
+    pointer: custom pointer shape support
+    
+    Make the revised 'vbox_pointer' component the new 'pointer' component.
+    
+    Fixes #2585
+
+
+USB-driver support for RNDIS
+============================
+
+; @senier
+
+commit 50ec5c03c1bf254f02a656c250d2a4d9b4f24405
+Author: Alexander Senier <senier@componolit.com>
+Date:   Mon Oct 16 21:47:40 2017 +0200
+
+    dde_linux/usb: Support CDC Ethernet
+
+commit f15e8fec8f71880930feb15d8bf7d812f73f108b
+Author: Alexander Senier <senier@componolit.com>
+Date:   Wed Oct 18 14:01:12 2017 +0200
+
+    dde_linux/usb: Add RNDIS driver
+
+; thanks to Alexander Senier
+
+
+Refined Rump-kernel-based file-system support
+=============================================
+
+; @cnuke
+
+commit 611df2e9732b01820f0ef334297e1eb1d6f6a15c
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon Oct 23 11:00:41 2017 +0200
+
+    rump_fs: add support for session (un-)mounting
+    
+    Issue #2558.
+
+commit 52139cb6cdadb7ffebe1dd673dc61aef01f56cf3
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Nov 2 11:51:58 2017 +0100
+
+    rump_fs: try to mount the fs on startup
+    
+    By now the file system gets mounted and unmounted on demand (whenever
+    the first clients comes along and whenever the last client leaves).
+    As a precaution we now also try to mount and unmounted the file system
+    in the init phase to prevent the first client from failing to its own
+    surprise.
+    
+    Issue #2558.
+
+commit 29346f0cc3f97247d61ea33620a0b4183584b3be
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Oct 26 16:09:09 2017 +0200
+
+    libports: initial e2fsck port
+    
+    In contrast to the already available e2fsprogs port, this one does not
+    depend on Noux.
+    
+    Issue #2558.
+
+
+Runtime environments and programming languages
+##############################################
+
+Genode components based on the Nim language
+===========================================
+
+; @emery
+
+commit b20b14de2721c3bb8b6781b2d6e3f210879b64d5
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Wed Sep 6 09:43:48 2017 -0500
+
+    support for Nim {.compile.} pragma for C sources
+    
+    Inject bundled C files into build recipes with the Nim {.compile.}
+    pragma.
+    
+    Fix #2516
+
+commit 419e7b99e4dc7fd62b9b3e05e4a6028d9192dc10
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Thu Sep 28 09:15:24 2017 -0500
+
+    Enforce use of a custom Nim compiler
+    
+    Use a custom Nim compiler at '/usr/local/genode-nim' that can be built
+    with a makefile at 'tool/tool_chain_nim'.
+    
+    Fix #2545
+
+
+GDB-based debugging of server components
+========================================
+
+; @cproc
+
+commit 0fd4649a7c5ed05d6d6ebc51be066735a8dc2a87
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Nov 13 16:25:45 2017 +0100
+
+    gdb_monitor: handle session requests for child services
+    
+    Fixes #2574
+
+
+Capslock-state handling for VirtualBox5
+=======================================
+
+; @nfeske
+
+commit e54ad5c73a36f44e3027ab598c06ff862d07523a
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Nov 7 15:13:10 2017 +0100
+
+    vbox: support capslock state provided by ROM
+    
+    Fixes #2568
+
+
+Applications and libraries
+##########################
+
+Displaying of Qt5's custom pointer shapes
+=========================================
+
+; @cproc
+
+commit 2c1acd8ee245b50e3eb3226826205c6d444a4cbb
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Nov 24 20:23:45 2017 +0100
+
+    qt5: pointer shape support
+    
+    Fixes #2586
+
+
+Qt5-based virtual keyboard
+==========================
+
+; @chelmuth
+
+commit b0187ddc28471bdad042d78c38bd5bf5019297ea
+Author: Johannes Kliemann <jk@jkliemann.de>
+Date:   Mon Aug 14 11:14:43 2017 +0200
+
+    qt5: setup QPlatformInputContext on nitpicker
+    
+    Issue #2496
+    Fixes #2495
+
+commit 6cbf54aefb94fc85c26269ab85c2a93a79798897
+Author: Johannes Kliemann <jk@jkliemann.de>
+Date:   Wed Jul 26 14:46:22 2017 +0200
+
+    qt5: example of qtvirtualkeyboard
+    
+    Fixes #2496
+
+; thanks to Johannes Kliemann
+
+
+Resizable libSDL-based applications like avplay
+===============================================
+
+; @cnuke
+
+commit 6ce66974e4ee1df69cb0d326427732ceb7851946
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri Nov 17 13:03:22 2017 +0100
+
+    sdl: remove deprecated API usage
+    
+    In addition framebuffer resizing is now also supported.
+    
+    Fixes #2583.
+
+commit 165784d364a623bc3bbeafb7cd4a461be3ddce58
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Sat Nov 18 23:19:21 2017 +0100
+
+    sdl: forcefully disable double-buffering
+    
+    Issue #2583.
+
+commit 9d6827d26abb32a6b6c9f2763e8a1fdd6991837f
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri Nov 17 13:07:19 2017 +0100
+
+    test/sdl: handle resizing
+    
+    Issue #2583.
+
+commit 1438965bbc4e6c61b12533fb7adbd69ecf5cbb7d
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Nov 16 16:08:23 2017 +0100
+
+    avplay: limit requested video-mode
+    
+    In case the video geometry (WxH) is larger than the current size of
+    the framebuffer, match its size and let libav do the scaling. This
+    enables the playback of 1080p movies on smaller screens.
+    
+    Issue #2583.
+
+
+Resizable PDF viewer based on mypdf
+===================================
+
+; @emery
+
+commit 040e331f773604502faf466c7f01b1b06745a9b9
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jul 8 18:38:54 2015 +0200
+
+    mupdf: support resizeable framebuffers
+
+commit 979b6bccd441770add2bd9c33251c5313ffaace7
+Author: Emery Hemingway <emery@vfemail.net>
+Date:   Fri Nov 17 00:50:51 2017 -0600
+
+    Rename app/mupdf to app/pdf_view, create depot recipes
+    
+    The name 'mupdf' is both the name of a library and a component, thus
+    preventing a depot recipes for both the shared library and component.
+    
+    Fix #2582
+
+
+Platforms
+#########
+
+UEFI boot, consistent use of GRUB2 on x86
+=========================================
+
+; @alex-ab
+
+commit 5f1815e1d9438d815395ba5dd51af74409aa6cca
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Sep 20 22:56:00 2017 +0200
+
+    tool: use grub2 instead of grub1 for iso boot
+    
+    Fixes #2526
+
+commit 8b21e0e16d73578bfa6964748e6834517d2d279c
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Nov 14 09:10:37 2017 +0100
+
+    bender: fix free memory calculation for Multiboot2
+    
+    Fixes #2487
+
+
+Enabling MMU-based threat mitigations by default
+================================================
+
+; @alex-ab
+
+commit db0589727af61f77228528e3827b85d5b8370b18
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Oct 18 14:58:15 2017 +0200
+
+    seoul: attach executable memory as such
+    
+    Issue #1723
+
+commit c4c9e1fe7fbc01ac9233b25455b234d59f60060e
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Oct 18 14:58:36 2017 +0200
+
+    vbox: attach executable memory as such
+    
+    Issue #1723
+
+commit e6dcdcf2779466afe987b3c0b63cee179e9085e2
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Oct 18 16:32:17 2017 +0200
+
+    base: attach executable memory as such
+    
+    - tracing policy
+    
+    Issue #1723
+
+commit dfa8b787beed9fe5323c34a80426f4957e6d3f1a
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Oct 20 11:43:57 2017 +0200
+
+    noux: attach executable memory as such
+    
+    Issue #1723
+
+commit e87b322616c427e08806d67b89589baabe51776c
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Oct 18 14:14:07 2017 +0200
+
+    libc: support executable memory allocations
+    
+    in internal memory allocator used by libc and vbox*
+    
+    Issue #1723
+
+commit d18262da1f51ca933c774809f1a78e1e75ee0ee1
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Oct 18 14:20:49 2017 +0200
+
+    libc: add mempool for rwx memory
+    
+    Issue #1723
+
+commit e3d9f414964d458d126b2f24101d4ba51f643d45
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Oct 13 11:42:56 2017 +0200
+
+    base: provide dst fault address for write fault
+    
+    Issue #1723
+
+commit 03b8e70d3f7f920ad3531e1a4271645b0c9a7d7f
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Oct 12 14:33:04 2017 +0200
+
+    rm_fault: add fault test for exec access violation
+    
+    Issue #1723
+
+commit db329b02b51b608217079a216fd86faf936bd152
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Oct 13 15:26:33 2017 +0200
+
+    base: enable executable memory fault handling
+    
+    Fixes #1723
+
+commit f2c3225ab613f849fc68b3489e03f60fcebe456e
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Oct 13 14:18:29 2017 +0200
+
+    nova: enable nx bit handling for x86_64
+    
+    Issue #1723
+
+commit 8ea584b1d2078753c722911d101cede7da44ff08
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Oct 13 14:26:09 2017 +0200
+
+    foc: enable nx bit handling for x86_64 and arm
+    
+    Issue #1723
+
+commit aa1d5a7dd1b60756a49161002437ed092d7f68a8
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Oct 13 16:23:10 2017 +0200
+
+    hw: enable nx bit handling for x86_64
+    
+    Issue #1723
+
+commit 4dd5e6b266fbb8a312af5db97a82a6a6491882c6
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Oct 17 11:36:10 2017 +0200
+
+    hw: enable nx bit handling for arm
+
+commit 9655ebbefe95066997eabe0a33b55503cedcd6c4
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Oct 17 11:51:13 2017 +0200
+
+    sel4: enable nx bit handling for ARM
+    
+    Issue #1723
+
+commit 26eb0ce7946f62942176b33519a8f49f41016882
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Oct 19 13:26:49 2017 +0200
+
+    nova: use kernel with enabled SMAP feature
+    
+    Issue #1723
+
+
+Updated seL4 to kernel branch 7.0
+=================================
+
+; @alex-ab
+
+commit e8200e797733d2ba2ad6922cc90866031a17d3e8
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Sep 1 13:24:43 2017 +0200
+
+    sel4: use kernel branch 7.0 + our mastered commits
+    
+    for uefi, multiboot2, benchmark interface adaptations and ARM define build
+    fixes.
+    
+    Issue #2562
+
+commit 4b9859e162464ea630cd1e3b89b3076b99730d34
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Nov 9 22:20:07 2017 +0100
+
+    sel4: enable support for direct unmap in core
+    
+    Issue #2563
+
+commit e006f8629c5810ad7cc9f5145a23a907ca03f100
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sat Nov 18 14:17:11 2017 +0100
+
+    sel4: add mbi2 framebuffer support
+    
+    Issue #2555
+
+
+Execution on bare hardware (base-hw)
+====================================
+
+; @skalk
+
+commit 42db1e112bccdc5797100411f7da97d46eca4f86
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jun 20 15:25:04 2017 +0200
+
+    hw: introduce kernel/user address space split
+    
+    * introduces central memory map for core/kernel
+    * on 32-bit platforms the kernel/core starts at 0x80000000
+    * on 64-bit platforms the kernel/core starts at 0xffffffc000000000
+    * mark kernel/core mappings as global ones (tagged TLB)
+    * move the exception vector to begin of core's binary,
+      thereby bootstrap knows from where to map it appropriately
+    * do not map boot modules into core anymore
+    * constrain core's virtual heap memory area
+    * differentiate in between user's and core's main thread's UTCB,
+      which now resides inside the kernel segment
+    
+    Ref #2091
+
+commit 7e47fa58b325fcf1752fd1a4cfc4c0169ef42fcf
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Aug 30 11:34:21 2017 +0200
+
+    hw: use x86 exception stack unconditionally
+    
+    Always switch to the "exception stack" instead of having a hardware initiated
+    stack switch during exceptions/interrupts when the privilege level changes only.
+    Moreover, this commit increases the exception stack slightly.
+    
+    Ref #2091
+
+commit ca60e24ad98648e140e0550e4da32f2119bf6810
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Aug 30 11:59:35 2017 +0200
+
+    hw: run core threads in privileged mode
+    
+    * introduce new syscall (core-only) to create privileged threads
+    * take the privilege level of the thread into account
+      when doing a context switch
+    * map kernel segment as accessable for privileged code only
+    
+    Ref #2091
+
+commit 4e97a6511b9b20846cf6afc4007791d998d6c8f6
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Jun 30 12:00:27 2017 +0200
+
+    hw: switch page-tables only when necessary
+    
+    * Instead of always re-load page-tables when a thread context is switched
+      only do this when another user PD's thread is the next target,
+      core-threads are always executed within the last PD's page-table set
+    * remove the concept of the mode transition
+    * instead map the exception vector once in bootstrap code into kernel's
+      memory segment
+    * when a new page directory is constructed for a user PD, copy over the
+      top-level kernel segment entries on RISCV and X86, on ARM we use a designated
+      page directory register for the kernel segment
+    * transfer the current CPU id from bootstrap to core/kernel in a register
+      to ease first stack address calculation
+    * align cpu context member of threads and vms, because of x86 constraints
+      regarding the stack-pointer loading
+    * introduce Align_at template for members with alignment constraints
+    * let the x86 hardware do part of the context saving in ISS, by passing
+      the thread context into the TSS before leaving to user-land
+    * use one exception vector for all ARM platforms including Arm_v6
+    
+    Fix #2091
+
+commit 0635d5fffb8d95a76f8490122aecc270d6e7c6be
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Oct 5 16:11:24 2017 +0200
+
+    hw: turn Cpu_idle into a Thread
+    
+    Fix #2539
+
+commit 0f9801d1f03d6bfd37b8320641d0cf43e5c822ae
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sat Nov 18 15:22:22 2017 +0100
+
+    hw: evaluate also ACPI RSDP v1 with MBI2
+    
+    Issue #2526
+
+commit a620561d6248749de5530be0734ec2aefe588f7d
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sat Nov 18 15:53:02 2017 +0100
+
+    hw: add mbi2 framebuffer support
+    
+    Issue #2555
+
+
+Improved offline validation of Genode configurations
+====================================================
+
+; @alex-ab
+
+commit be753ee863d7ab8246c213b6ad178077c4f770ff
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Sep 5 23:05:43 2017 +0200
+
+    tool: add genode xml schema to xmllint check
+    
+    Fixes #2513
+
