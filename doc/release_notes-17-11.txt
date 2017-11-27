@@ -162,18 +162,55 @@ Date:   Mon Oct 16 11:31:43 2017 +0200
 New driver-manager subsystem
 ============================
 
-; @nfeske
+In traditional Genode system scenarios, the selection and configuration of the
+used device drivers are defined at system-integration time. This approach
+works fine whenever the hardware platform targeted by a given scenario and the
+use case of the scenario is well known in advance. But it does not scale up to
+general-purpose computing where one system image must be usable on diverse
+machines, and the concrete use cases are up to the end user.
 
-commit 6bfd4f427675280a0dc83d33baf6939e411ff246
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Jun 30 13:30:37 2017 +0200
+The new _driver-manager_ subsystem composes existing Genode components within
+a dynamic subsystem that spawns and configures device drivers that are
+fundamental for an interactive system on demand. It provides the following
+feature set:
 
-    gems: driver-manager subsystem for PC platforms
-    
-    This is a drivers subsystem that starts the most fundamental
-    (framebuffer, input, block) device drivers dynamically, depending on the
-    runtime-detected devices. The discovered block devices are reported
-    as a "block_devices" report.
+* It contains the ACPI-discovery component and the platform driver.
+
+* It hosts and automatically configures the USB driver such that USB storage
+  and vendor-specific devices become available to user-specific driver
+  components residing outside the drivers subsystem (e.g., a VirtualBox
+  instance that drives an individual USB stick). The list of present USB
+  devices and the current USB-driver configuration are provided as a
+  'usb_devices' and 'usb_drv.config' report respectively.
+
+* It spawns the AHCI driver and produces a list of present devices as a
+  'block_devices' report.
+
+* It hosts a PS/2 driver as well as an input-filter that incorporates the
+  input-event streams originating from the PS/2 and USB HID drivers. The
+  default configuration generates character events based on a configurable
+  keyboard layout and repeat, and includes scroll-wheel emulation and pointer
+  acceleration for a PS/2 mouse (or, more importantly, the trackpoint of
+  Lenovo laptops),
+
+* It responds to changes of the 'capslock' and 'numlock' states, which are
+  managed by the outside of the drivers subsystem. Both states are consumed
+  by the USB and PS/2 drivers to driver the keyboard-indicator LEDs. The
+  'numlock' state is furthermore used to toggle key remappings performed by
+  the input filter. The 'capslock' state is incorporated into the modifier
+  state as processed by the input-filter's character generator.
+
+The new subsystem comes in the form of a depot package, which depends on all
+requires components. Internally, it employs a dynamic init instance as a tool
+to start and manage driver components on demand. The actual management
+component is a simple program of about 500 lines of code that merely consumes
+reports and produces configurations. It is so simple that it does not even
+perform any dynamic memory allocation.
+
+The new subsystem is present in the _gems_ repository and illustrated by the
+_gems/run/driver_manager.run_ script. It is also used as one cornerstone of
+the forthcoming general-purpose "sculpt" scenario mentioned in the
+introduction.
 
 
 Configuration changes of acpica and platform driver
