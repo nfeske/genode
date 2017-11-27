@@ -309,154 +309,179 @@ LEDs.
 Revised nitpicker GUI server
 ============================
 
-; @nfeske
+Driven by use cases like the "sculpt" scenario mentioned in the introduction,
+the nitpicker GUI server and its helper components received an overhaul.
 
-commit f3988a27d4b9d0bfa56a8d323ff1985134d1f5b4
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Oct 18 16:48:40 2017 +0200
+Besides modernizing the implementation according to our today's best
+practices, we succeeded in removing the focus handling as the last remaining
+builtin policy from the GUI server to an external component, thereby making
+the GUI server much more flexible. This line of work is complemented with
+an improved way of supporting client-provided pointer shapes, and a new
+general component for handling global keys.
 
-    nit_fb: support 'origin' attribute
-    
-    This patch makes the specification of screen coordinates more flexible.
-    First, the 'origin' attribute allows one to refer to either of the four
-    screen corners without knowing the screen size. Second, the 'width'
-    and 'height' values now accept negative values, which are relative to
-    the screen size.
 
-commit 4eebd140b0bc6e49fc7bdfad7b5c35434a68f300
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Oct 27 12:14:48 2017 +0200
+Supplementing user-activity information to the hover report
+-----------------------------------------------------------
 
-    nitpicker: report current key state
-    
-    Fixes #2552
+Nitpicker's existing "hover" report features the information of the
+currently hovered client (e.g., the client's label and domain). In the
+new version, the report also features the information whether or not the
+user has actively moved the pointer during the last half second. This is
+analogously to how the "focus" report features user-activity information
+about recent key press/release activity. When combined the "hover" and "focus"
+reports provide a way to detect the absence of user activity, e.g., to
+implement a lock screen or screen saver. If both reports have no 'active'
+attribute, such a component can schedule a timer. Whenever either of both
+reports shows an 'active' attribute, the timer is reset. The lock screen
+becomes active once the timeout triggers.
 
-commit 27c9e5c6e80301eb48fd84285f141c7a09898d1f
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Oct 27 12:39:22 2017 +0200
 
-    os: generalize xray trigger component
-    
-    This commit replaces the old xray_trigger component by a new component
-    called global_keys_handler. For details, please refer to the issue text
-    and the accompanied README file.
-    
-    Fixes #2554
+Key-state reporting
+-------------------
 
-commit 7b4ef66d910e4410b9b379b7b2f5222fd1a66c3d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Nov 1 14:45:10 2017 +0100
+For debugging purposes or for implementing global key combinations,
+nitpicker now offers "keystate" reports. The report is update each time,
+the user presses or releases a key. It list all currently pressed keys
+along with the key count as observed by nitpicker.
 
-    nitpicker: update focus report after reconfig
-    
-    A new configuration may implicitly change the domain color of the
-    currently focused session. We need to refresh the report to trigger an
-    update of the status bar.
 
-commit d44bdf7aee6db70d016c343b9a6d80b9fc4259ae
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Nov 16 17:07:52 2017 +0100
+Report last clicked-on client
+-----------------------------
 
-    nitpicker: re-organize implementation
-    
-    This patch revises the implementation of nitpicker in the following
-    respects:
-    
-    - Split the implementation into smaller files,
-    - Consistently use the 'Nitpicker' namespace,
-    - Avoid the use of format strings,
-    - Retire old (and hackish) debug mode,
-    - Removal of unused timer connection,
-    - Merging 'Session' into 'Session_component',
-    - Merging 'Mode' into 'User_state',
-    - Adding the notions of 'View_owner' and 'Focus' as interfaces,
-    - Untangle 'User_state' and 'View_stack'
+The new 'clicked' report features the information about the client, on which
+the user actively clicked. It is useful to implement a click-to-focus policy
+outside of nitpicker.
 
-commit dca11334901efa98986607cb65dd63417e27be8f
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun Nov 19 20:11:50 2017 +0100
 
-    nitpicker: report last clicked-on client
-    
-    The new report can be activated via the 'clicked' attribute of the
-    '<report>' configuration node.
+Externalizing nitpicker's focus policy
+--------------------------------------
 
-commit 8cac6c7b81ba1a15e9cae3fb8d8b5d1125c4bc03
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun Nov 19 22:24:58 2017 +0100
+Traditionally, nitpicker had a builtin policy about the input focus, which
+ensured that only the user can change the focus. The input focus is changed
+whenever the user clicks on an unfocused view. If permitted by the policy of
+the domain, the clicked-on client receives the focus. The policy configuration
+allows one to define domains that never receive any focus, domains that
+receive the focus only temporarily while the button is kept pressed (the
+so-called "transient focus"), or domains that can receive the regular input
+focus.
 
-    nitpicker: respond to external focus policy
-    
-    This patch enables nitpicker to use an external focus policy instead of
-    the traditional builtin click-to-focus policy. The external focus policy
-    is obtained from a 'focus' ROM. The focus ROM is expected to have a
-    'label' attribute with the value set to the label of the to-be focused
-    client.
+However, there are situations where this builtin policy stands in the way.
+For example, in a scenario based on virtual consoles, the user wants to
+be able to switch virtual consoles via keyboard shortcuts and expects the
+input focus to match the currently visible console. Another example is the
+change of the input focus via key combinations like alt-tab.
 
-commit 8d1cbdd8c659a707590a5d77c42d0fe7824e00f8
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Nov 20 20:23:41 2017 +0100
+As an alternative to the builtin policy, the new version of nitpicker is
+able to respond to an externally provided "focus" state in the form of
+a ROM session. This state is driven by a dedicated component, like the
+new _nit_focus_ component that implements the traditional click-to-focus
+policy. By supplying the focus as a ROM session to nitpicker, it become
+easy to globally override the focus if needed. One particular example is
+a lock screen that should capture the focus when becoming active, or
+yield the focus to the original owner when becoming inactive.
 
-    nitpicker: equip hover report with 'active' info
-    
-    This patch supplements the existing 'hover' report with the information
-    whether or not the user has recently moved the pointer. This works
-    analogously to how the 'focus' report features the information about
-    recent button/keyboard activity.
-    
-    Together, the 'hover' and 'focus' reports may be combined to observe
-    prolonged user inactivity, e.g. to activate a lock screen.
+The new explicit focus handling can be activated by setting the '<config>'
+attribute 'focus' to the value "rom". Further down the road, we plan to
+make this option the default, with the goal to ultimately remove the
+original builtin policy.
 
-commit 99f08531faa220bc2eed0588747ca522f8efcee1
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun Nov 19 21:35:06 2017 +0100
 
-    nit_focus component that implements click-to-focus
+Generalized global-key handling
+-------------------------------
 
-commit 24b1ccb5ef822251dea6f74d02e77875d0c122aa
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun Nov 19 22:42:44 2017 +0100
+The new _global_keys_handler_ component replaces the former _xray-trigger_
+component. It transforms a stream of nitpicker input events to state reports.
+The states and the ways of how the user input affects the states is
+configurable. Examples for such states are the system-global capslock and
+numlock states, or the nitpicker X-ray mode activated by a global
+secure-attention key. The configuration looks as follows:
 
-    demo.run: showcase the use of 'nit_focus'
+! <config>
+!   <bool name="xray" initial="no"/>
+!
+!   <press   name="KEY_F1" bool="xray" change="on"/>
+!   <release name="KEY_F1" bool="xray" change="off"/>
+!   <press   name="KEY_F2" bool="xray" change="toggle"/>
+!
+!   <report name="xray" delay_ms="125">
+!     <hovered domain="panel"/>
+!     <bool name="xray"/>
+!   </report>
+! </config>
 
-commit 831773c20a9fb585f52a833c87297ac4ef434967
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Thu Nov 23 12:00:48 2017 +0100
+A '<bool>' node declares a boolean state variable with the given name and its
+initial value (default is "no"). There may by any number of such variables.
 
-    vbox_pointer: use RGBA encoding in shape report
-    
-    RGBA is more likely to be supported by new clients than VirtualBox's BGRA encoding.
-    
-    Issue #2585
+The '<press>' and '<release>' nodes define how key events affect the state
+variables. Each of those nodes refers to a specific state variable via the
+'bool' attribute, and the operation as the 'change' attribute. Possible
+'change' attribute values are "on", "off", and "toggle".
 
-commit 9f09fd9991ba289fdbc09923d8961c1a7a29c80f
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri Nov 24 19:53:29 2017 +0100
+The '<report>' node defines a state-dependent report with the name as
+specified in the 'name' attribute. The report-generation rate can be
+artificially limited by the 'delay_ms' attribute. If specified, the report is
+not issued immediately on a state change but after the specified amount of
+milliseconds. The '<report>' node contains a number of conditions. Whenever
+one of those conditions is true, a report of the following form is generated:
 
-    vbox_pointer: provide a 'Report' service for shape reports
-    
-    Issue #2585
+! <xray enabled="yes"/>
 
-commit 5c85000ecbeef8ae996968e11a266a268e5d4a46
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri Nov 24 19:53:30 2017 +0100
+Otherwise, the report's 'enabled' attribute has the value "no". Possible
+conditions are '<bool>' and '<hovered>'. The '<bool>' condition is true if the
+named boolean state variable has the value true. The '<hovered>' condition is
+true if the currently hovered nitpicker client belongs to the domain as
+specified in the 'domain' attribute. The latter information is obtained from a
+ROM module named "hover", which corresponds to nitpicker's hover reports.
 
-    vbox_pointer: make shape support configurable
-    
-    Have the 'Report' session announcement and "hover" and "xray" ROM requests
-    only when needed when 'vbox_pointer' becomes the new 'pointer'.
-    
-    Issue #2585
+To use the global-keys-handler in practice, one needs to configure the
+nitpicker GUI server such that the press/release events of the global keys of
+interest are routed to the global-keys-handler. This can be achieved by
+nitpicker's '<global-key>' configuration nodes. For example:
 
-commit de76781836ecddb9ec5ef36c199a396d68eabeea
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri Nov 24 18:56:25 2017 +0100
+! <global-key name="KEY_F1" label="global_keys_handler -> input" />
+! <global-key name="KEY_F2" label="global_keys_handler -> input" />
 
-    pointer: custom pointer shape support
-    
-    Make the revised 'vbox_pointer' component the new 'pointer' component.
-    
-    Fixes #2585
+
+More flexible geometry definitions of nit_fb instances
+------------------------------------------------------
+
+The _nit_fb_ component translates the nitpicker session interface into the
+low-level input and framebuffer session interfaces such that raw framebuffer
+clients can be hosted as nitpicker applications. The position and size of such
+an application is configurable.
+
+The new 'origin' attribute denotes the coordinate origin of the values
+specified in the 'xpos' and 'ypos' attributes. Supported origins are
+"top_left", "top_right", "bottom_left", and "bottom_right". This attribute
+allows one to align the nitpicker view at any of the four screen boundaries.
+
+The 'width' and 'height' attribute values can now be negative. If so, they are
+relative to the physical screen size. E.g., when using a screen size of
+640x480, the effective width for a 'width' attribute value of "-100" would be
+640 - 100 = 540.
+
+
+Simplified handling of client-provided pointer shapes
+-----------------------------------------------------
+
+The _pointer_ component that accompanies nitpicker by default shows a static
+pointer shape only. In advanced scenarios, for example when multiple instances
+of VirtualBox are present on one screen, it is desired to show the shape
+provided by the currently hovered guest OS. This was accomplished by a
+special _vbox_pointer_ component with access to both, the client-provided
+shapes and nitpicker's hover report. Whereas this component sufficed for the
+relatively static scenarios, the pointer's policy configuration becomes rather
+difficult in dynamic scenarios where the labels of the displayed VMs or
+applications are unknown at system-integration time.
+
+The new version simplifies the shape handling by letting the pointer component
+play the role of a "Report" service that consumes "shape" reports. This way,
+the pointer implicitly knowns the label of the shape-providing client. It
+matches the labels of its report clients against the currently hovered client
+as obtained from nitpicker's hover report. If there is a match, the pointer
+displays the matching client-provided shape. Since the new component is
+generically applicable, e.g., not only for VirtualBox-provided shapes but also
+for Qt5-provided shapes, it has become nitpicker's default pointer component.
 
 
 USB-driver support for RNDIS
