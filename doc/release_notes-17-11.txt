@@ -241,85 +241,69 @@ Date:   Fri Nov 17 14:45:50 2017 +0100
 New ROM-filter abilities
 ========================
 
-; @nfeske
-
-commit b57a0b4390aa0c3d804bcc65ed87c22dc7ea4802
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Nov 9 11:48:32 2017 +0100
-
-    rom_filter: copy input node content to output node
-    
-    Add suppport for copying the content of an 'input' node to the 'output'
-    node.
-    
-    Issue #2558.
-
-commit 1e7c9b45f63e19ea692c5e65765121ef36f31a95
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun Nov 19 23:24:18 2017 +0100
-
-    rom_filter: allow use of input as attribute value
+The ROM-filter components is able to transform XML data from multiple ROM
+modules into a new ROM module. It is prominently used to generate component
+configurations depending on global system state. The current release makes
+this tool more flexible by allowing verbatim copies of input content into
+the output XML node as well as the use of input content as attribute values.
 
 
 New user-input processing capabilities
 ======================================
 
-; @nfeske
+In [https://genode.org/documentation/release-notes/17.02#Input-event_filter - version 17.02],
+we introduced a modular input-processing component called _input-filter_.
+The current release adds the following features to this component:
 
-commit 189c5fa628effcd55a4e29620a9a208123f3a201
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Oct 25 18:00:35 2017 +0200
+:incorporating modifier state from external ROMs:
 
-    input_filter: improve capslock handling
-    
-    Furthermore, the patch reduces the noise in the log produced by
-    false-positive error messages that are actually warnings.
-    
-    Fixes #2548
+  By adding a '<rom name="...">' node into '<modN>' node of a chargen-filter,
+  it is now possible to incorporate the content of the given ROM module into
+  the modifier state. If the ROM module contains a top-level node with the
+  attribute 'enabled' set to "yes", the modifier is enabled. This is useful
+  for handling a system-global capslock state.
 
-commit a6b29530e8bbe6d0368b4670b19b7ed5fef55fe5
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Nov 1 18:07:27 2017 +0100
+:scroll-wheel emulation:
 
-    input_filter: scroll-wheel emulation
-    
-    The new '<button-scroll>' filter generates artificial wheel events from
-    relative motion events when the user holds a magic button.
+  The new '<button-scroll>' filter turns relative motion events into wheel
+  events while a special button (i.e., the middle mouse button) is pressed.
+  The button and rate of generated wheel events can be configured per axis via
+  the sub nodes '<vertical>' and '<horizontal>'. The button of each axis can
+  be specified via the 'button' attribute. By default, "BTN_MIDDLE" is used.
+  The rate of generated wheel events can be defined by the 'speed_percent'
+  attribute. A value of "100" uses relative motion vectors directly as wheel
+  motion vectors. In practice, this is results in overly fast wheel motion. By
+  lowering the value, the rate can be reduced to practical levels. By
+  specifying a negative value, the direction of the generated wheel motion can
+  be inverted.
 
-commit 26d4753a3c08c7e0f527c23848633f80c7ee4035
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Nov 3 15:29:29 2017 +0100
+  The consumed relative motion events are filtered out from the event stream
+  such that pointer movements are inhibited while the wheel emulation is
+  active. All other events are passed along unmodified.
 
-    input_filter: accelerate relative motion events
+:pointer acceleration:
 
-commit 5e8fcf8fc2d5d41b1bcff34756b7eafd9437a147
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Nov 20 20:41:02 2017 +0100
-
-    input_filter: support <include> in <remap> nodes
+  The new '<accelerate>' filter applies acceleration to relative motion
+  values. The 'max' attribute defines the maximum value added to the incoming
+  motion values. The 'sensitivity_percent' attribute scales incoming motion
+  values before applying the (potentially non-linear) acceleration function.
+  The 'curve' attribute defines the degree of non-linearity of the
+  acceleration. The value "0" corresponds to a linear function whereas the
+  maximum value "255" applies a curved function. The default value is "127".
 
 
 Keyboard-LED support for PS/2 and USB HID
 =========================================
 
-; @nfeske
-
-commit a0a7d5d165b00a1074795ff5f39b1b9a8ddbe6e1
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Oct 24 17:17:33 2017 +0200
-
-    ps2_drv: drive mode indicator LEDs
-    
-    The new feature is demonstrated by the input.run script. It uses a
-    dynamic ROM service to toggle the keyboard LEDs at different intervals.
-    
-    Fixes #2546
-
-commit a5f9df2c5f6f47800c68a90dd994479a3ed7fb97
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Nov 2 18:21:51 2017 +0100
-
-    usb: LED suppport
+Both the PS/2 and the USB drivers have gained the new '<config>' attributes
+'capslock_led="no"', 'numlock_led="no"', and 'scrlock_led="no"' (with their
+default values shown). The attributes can have the values "no" (LED is turned
+off), "yes" (LED is turned on), or "rom". In the latter case, the driver reads
+the LED state from a dedicated ROM module called "capslock", "numlock", or
+"scrlock" respectively. The ROM module is expected to have a top-level XML
+node with the attribute 'enabled' set to "yes" or "no". The drivers reflect
+this state information by driving the corresponding keyboard-mode indicator
+LEDs.
 
 
 Revised nitpicker GUI server
