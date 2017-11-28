@@ -299,7 +299,7 @@ Key-state reporting
 -------------------
 
 For debugging purposes or for implementing global key combinations,
-nitpicker now offers "keystate" reports. The report is update each time,
+nitpicker now offers "keystate" reports. The report is updated each time,
 the user presses or releases a key. It list all currently pressed keys
 along with the key count as observed by nitpicker.
 
@@ -478,7 +478,7 @@ In release [http://genode.org/documentation/release-notes/14.02 - 14.02] we
 added a e2fsprogs Noux port. Since the use of the VFS library in the libc Noux
 is not strictly needed anymore for running tools like the e2fsprogs utilities.
 On the contrary, it increases the complexity of a file system managment
-mechanism needlessly. We this release we introduce a port of the 'e2fsck' tool
+mechanism needlessly. With this release we introduce a port of the 'e2fsck' tool
 from e2fsprogs to Genode that does not depend on Noux. It can be used by a
 management component to check a file system prior to starting 'rump_fs' and
 in case of errors to attempt to fix them automatically.
@@ -490,29 +490,45 @@ Runtime environments and programming languages
 Genode components based on the Nim language
 ===========================================
 
-; @emery
+Support for the [https://nim-lang.org/ Nim] programing language was
+introduced in the [http://genode.org/documentation/release-notes/17.05 - 17.05]
+release and during this release period our understanding of Nim, its idiom, and
+its interaction with the Genode framework progressed to a point where
+native components can be reasonably implemented using the language.
 
-commit b20b14de2721c3bb8b6781b2d6e3f210879b64d5
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Wed Sep 6 09:43:48 2017 -0500
+The 'hotkey_edit' component in the world repository toggles XML sections in and
+out of a file managed by 'xml_editor' when triggered by key input events. The
+component is written in Nim, acts as a  "Nitpicker", "Input", "Report", and "ROM"
+client, and follows the Genode paradigm of a state-machine driven by
+asynchronous signalling. The application specific source is also less than
+one hundred lines of code.
 
-    support for Nim {.compile.} pragma for C sources
-    
-    Inject bundled C files into build recipes with the Nim {.compile.}
-    pragma.
-    
-    Fix #2516
+To implement clients to Genode services the respective 'Client' or 'Connection'
+C++ classes are wrapped as Nim objects using the Genode 'Constructible' class to
+manually invoke constructors during object initialization. Wrapping service
+classes and their methods is currently done by hand, but changes to service
+interfaces are so gradual that it is more effective than automated code generation.
+Signal handling is achieved using anonymous procedures and happens when
+the thread of execution winds back to the initial entrypoint. This is just as other
+components linked to the 'libc' library, and contrasted with components linked
+to the 'posix' library. The Nim language has no conventions for a special
+"main" procedure like C or Go, so signals handlers are dispatched by default
+after all top-level statements have been executed.
 
-commit 419e7b99e4dc7fd62b9b3e05e4a6028d9192dc10
-Author: Emery Hemingway <emery@vfemail.net>
-Date:   Thu Sep 28 09:15:24 2017 -0500
+The language has shown in experiments to be flexible enough to implement
+RPC servers, but more experience is required to determine if a garbage-collected
+language can manage to abide by transient RAM resource quotas, as any
+multi-session server must do to reliably serve an indefinite number of clients.
+The standard language runtime also depends on the 'libc' library, which is
+relatively expensive and complicated for typical native components. This dependency
+also prevents implementing VFS plugins in Nim, which must be available as the 
+C runtime is initialized. Removing the dependency is certainly possible, but it
+is an open question of whether it is practical to maintain such radical changes.
 
-    Enforce use of a custom Nim compiler
-    
-    Use a custom Nim compiler at '/usr/local/genode-nim' that can be built
-    with a makefile at 'tool/tool_chain_nim'.
-    
-    Fix #2545
+To experiment with the Nim language a recent release or development version
+of the compiler is required. To this end the Genode toolchain uses a custom
+compiler by default and a script is provided to build the recommended
+version at _tool/tool_chain_nim_.
 
 
 GDB-based debugging of server components
@@ -619,6 +635,27 @@ Date:   Fri Nov 17 00:50:51 2017 -0600
     preventing a depot recipes for both the shared library and component.
     
     Fix #2582
+
+
+Frontend for the Libretro API
+=============================
+
+A component that has been in the word repository for almost a year has
+been refactored and is ready for mention. The 'retro_frontend' is a
+native frontend to games implemented as "Libetro cores".
+[http://libretro.com Libretro] is an API that exposes generic
+audio/video/input callbacks from a dynamic library to a frontend.
+The frontend handles video output, audio output, input and application lifecycle.
+This novel arrangement is intended to minimize the effort in porting games
+to different platforms and to increase future backwards compatibility.
+On Genode these cores are executed frame-by-frame as compelled by the
+frontend rather than by a main loop within the game. Games assets are loaded
+as configured in a general manner at the frontend and multiple input devices
+can be managed and mapped into cores. This in effect moves the platform
+abstraction layer tighter around the game engine and relinquished more
+control and configuration to a native layer provided by the user.
+Documenation on using the frontend is found in the word repository along
+with examples of emulating a few game consoles.
 
 
 Platforms
