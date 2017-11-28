@@ -466,40 +466,22 @@ Date:   Wed Oct 18 14:01:12 2017 +0200
 Refined Rump-kernel-based file-system support
 =============================================
 
-; @cnuke
+We extended the 'rump_fs' file system server with the ability to mount and
+unmount the underlying file system on demand. It will now mount the file system
+on the first established session request and in return will unmount the file
+system whenever the last session is closed. In case all clients are shut down
+before the server is stopped this prevents leaving the file system marked as
+dirty. Even if the file system itself is in a clean state, the dirty bit might
+trigger a false negative result when performing a file system check.
 
-commit 611df2e9732b01820f0ef334297e1eb1d6f6a15c
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Mon Oct 23 11:00:41 2017 +0200
-
-    rump_fs: add support for session (un-)mounting
-    
-    Issue #2558.
-
-commit 52139cb6cdadb7ffebe1dd673dc61aef01f56cf3
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Nov 2 11:51:58 2017 +0100
-
-    rump_fs: try to mount the fs on startup
-    
-    By now the file system gets mounted and unmounted on demand (whenever
-    the first clients comes along and whenever the last client leaves).
-    As a precaution we now also try to mount and unmounted the file system
-    in the init phase to prevent the first client from failing to its own
-    surprise.
-    
-    Issue #2558.
-
-commit 29346f0cc3f97247d61ea33620a0b4183584b3be
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Oct 26 16:09:09 2017 +0200
-
-    libports: initial e2fsck port
-    
-    In contrast to the already available e2fsprogs port, this one does not
-    depend on Noux.
-    
-    Issue #2558.
+In release [http://genode.org/documentation/release-notes/14.02 - 14.02] we
+added a e2fsprogs Noux port. Since the use of the VFS library in the libc Noux
+is not strictly needed anymore for running tools like the e2fsprogs utilities.
+On the contrary, it increases the complexity of a file system managment
+mechanism needlessly. We this release we introduce a port of the 'e2fsck' tool
+from e2fsprogs to Genode that does not depend on Noux. It can be used by a
+management component to check a file system prior to starting 'rump_fs' and
+in case of errors to attempt to fix them automatically.
 
 
 Runtime environments and programming languages
@@ -592,45 +574,28 @@ Date:   Wed Jul 26 14:46:22 2017 +0200
 Resizable libSDL-based applications like avplay
 ===============================================
 
-; @cnuke
+There are quite a few ports of SDL-based software available on Genode that work
+well when executed in isolation, e.g., a game running in fullscreen directly on
+the framebuffer. However, when running in a common desktop scenario, the fixed
+size of the framebuffer used in Genode's SDL video subsystem backend is a
+noticeable limitation. So, in addition to removing the usage of deprecated APIs
+in the SDL back ends, we lifted this limitation as well.
 
-commit 6ce66974e4ee1df69cb0d326427732ceb7851946
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri Nov 17 13:03:22 2017 +0100
+Removing the usage of the deprecated APIs, which rely on a global environment,
+lead to adding a Genode specific initialization function 'sdl_init_genode' that
+has to be called prior to calling 'SDL_Init'. For that purpose we introduce a
+stub library 'sdlmain'. In accordance to the posix library, it handles
+commandline argument parsing, properly initializing SDL and calling the SDL
+programs 'main' function. For interacting with the Genode API, we might have to
+execute Signal_handlers, e.g., whenever a framebuffer mode change signal is
+received. This is compilicated from within a thread that is running libc code,
+which is true for most if not all SDL-based components. Therefor and because
+those components come with their own event loop that polls SDL for events, we
+start the 'main' function in its own thread. The main entrypoint of the
+component does all the signal handling and the dispatcher flag signals in a way
+that SDL can transform them into SDL_Events and inject them into the event loop.
 
-    sdl: remove deprecated API usage
-    
-    In addition framebuffer resizing is now also supported.
-    
-    Fixes #2583.
-
-commit 165784d364a623bc3bbeafb7cd4a461be3ddce58
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Sat Nov 18 23:19:21 2017 +0100
-
-    sdl: forcefully disable double-buffering
-    
-    Issue #2583.
-
-commit 9d6827d26abb32a6b6c9f2763e8a1fdd6991837f
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri Nov 17 13:07:19 2017 +0100
-
-    test/sdl: handle resizing
-    
-    Issue #2583.
-
-commit 1438965bbc4e6c61b12533fb7adbd69ecf5cbb7d
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Nov 16 16:08:23 2017 +0100
-
-    avplay: limit requested video-mode
-    
-    In case the video geometry (WxH) is larger than the current size of
-    the framebuffer, match its size and let libav do the scaling. This
-    enables the playback of 1080p movies on smaller screens.
-    
-    Issue #2583.
+This changes enable the seamless resizing of a running avplay instance.
 
 
 Resizable PDF viewer based on mypdf
