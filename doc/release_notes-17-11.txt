@@ -189,27 +189,13 @@ introduction.
 Configuration changes of acpica and platform driver
 ===================================================
 
-; @alex-ab
-
-commit c8bea156b6f036ae5948d8ba7cab65bd8b0d8247
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Nov 10 15:21:18 2017 +0100
-
-    acpica: request 'Acpi' only if 'acpi_ready="yes"'
-    
-    The synchronization with the ACPI driver is not needed when starting
-    acpica at a later stage. It could already be disabled via the
-    'acpi_ready="yes"' config attribute. However, acpica still
-    unconditionally requests the so-called "Acpi" service, which is an
-    alias for the platform_drv's "Platform" service. This patch disables the
-    use of this alias when the 'acpi_ready' synchronization is disabled.
-
-commit 3dcf2d6c600ecf273dcbeb62d80c5780bea55f1f
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Nov 17 14:45:50 2017 +0100
-
-    platform_drv: separate acpi and system feature
-
+Up to now the acpica application was started in the most scenarios up-front to
+provide exclusive access to all PCI devices during initialization. Afterwards
+the platform driver took over the access and announced the platform service.
+With the upcoming "sculpt" scenario the desire arose to start the acpica
+application at a later stage, when the platform driver is already running.
+We adjusted the acpica and platform driver configuration slightly to
+cover this use-case also.
 
 New ROM-filter abilities
 ========================
