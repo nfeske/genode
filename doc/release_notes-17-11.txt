@@ -72,91 +72,64 @@ Date:   Thu Sep 28 10:43:30 2017 -0500
 NIC-router improvements
 =======================
 
-; @m-stein
+The NIC router has received two minor improvements regarding MAC addresses and
+ARP handling and one new mayor feature in that it now has the ability to act
+as DHCP server or client at domains.
 
-commit a1e32a3ad97cea55b0c463f016f085584fbd8f89
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Mon Aug 21 17:38:16 2017 +0200
+Let's first have a look at the minor changes. The MAC addresses that the NIC
+router allocates for its NIC clients are now of the correct type "local" and
+"individual". And the NIC router now also considers ARP requests for foreign
+IP addresses coming from a domain. If there is no gateway configured for the
+domain, the NIC router itself jumps in as gateway and answers those requests
+with its IP address. Thus, if you have an individual gateway in a subnet
+behind the NIC router, make sure to have the gateway attribute in the
+according <domain> tag set.
 
-    nic_router: use local but individual MAC addresses
-    
-    IP stacks may treat a network interface as "down" when it states a MAC
-    address with the I/G bit (bit 40) set to "Group" (value 0) instead of
-    "Individual" (value 1). This was observed with a TinyCore 8 inside a
-    Virtualbox VM. Thus, the previously choosen 03:03:03:03:03:00 as base
-    for the MAC address allocator is bad. Now we use the 02:02:02:02:02:00
-    instead. This also ensures that the MAC addresses are not marked as
-    "Universal" but as "Local" (bit 41, value 1) which is correct in general
-    as the router allocates MAC addresses only for virtual networks.
-    
-    Ref #2490
+The new DHCP server functionality is activated for a domain by the new
+<dhcp-server> sub-tag of the <domain> tag:
 
-commit 215937ff0f37efcd18def54ed4f0a22a5c29e493
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Mon Sep 25 17:40:35 2017 +0200
+<domain name="vbox" interface="10.0.1.1/24">
+    <dhcp-server ip_first="10.0.1.80"
+                 ip_last="10.0.1.100"
+                 ip_lease_time_sec="3600"
+                 dns_server="10.0.0.2"/>
+    ...
+</domain>
 
-    nic_router: handle ARP requests for foreign IPs
-    
-    If the router has no gateway attribute for a domain (means that the router
-    itself is the gateway), and it gets an ARP request for a foreign IP, it shall
-    answer with its own IP.
-    
-    Ref #2490
+With the attributes ip_first and ip_last the available IPv4 address range is
+defined. The lifetime of an IPv4 address assignment is set in seconds through
+the ip_lease_time_sec attribute. The dns_server attribute is optional. It
+declares which IPv4 address the NIC router shall state in the DNS-server
+option of his DHCP reply packets. The DNS server might also be of a foreign
+subnet.
 
-commit 30a96706cb87dfebd6b4a3ecff210be64a4f5505
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Fri Oct 6 13:00:05 2017 +0200
+As DHCP server, the NIC router provides the following DHCP options to its
+clients:
 
-    nic_router: dhcp server functionality
-    
-    One can configure the NIC router to act as DHCP server at interfaces of a
-    domain by adding the <dhcp> tag to the configuration of the domain like
-    this:
-    
-    <domain name="vbox" interface="10.0.1.1/24">
-        <dhcp-server ip_first="10.0.1.80"
-                     ip_last="10.0.1.100"
-                     ip_lease_time_sec="3600"
-                     dns_server="10.0.0.2"/>
-        ...
-    </domain>
-    
-    The attributes ip_first and ip_last define the available IPv4 address
-    range while ip_lease_time_sec defines the lifetime of an IPv4 address
-    assignment in seconds. The IPv4 address range must be in the subnet
-    defined by the interface attribute of the domain tag and must not cover
-    the IPv4 address in this attribute. The dns_server attribute gives the
-    IPv4 address of the DNS server that might also be in another subnet.
-    The lifetime of an offered assignment is the configured round trip time of
-    the router while the ip_lease_time_sec is applied only if the offer is
-    requested by the client in time.
-    
-    The ports/run/virtualbox_nic_router.run script is an example of how to
-    use the new DHCP server functionality.
-    
-    Ref #2490
+* Message type,
+* server IP (set to the NIC routers IP),
+* subnet mask,
+* IP lease time,
+* router IP (set to the NIC routers IP),
+* DNS server (if configured),
+* and broadcast address.
 
-commit db9d4d3a3ce045b4a56a6fde878416606c4453ba
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Mon Oct 16 11:31:43 2017 +0200
+If you want the NIC router to act as DHCP client at a domain, simply
+leave out the interface attribute in the <domain> tag. Then, the router tries
+to dynamically receive and maintain an IP configuration for that domain.
+Make sure that your DHCP server provides these DHCP option fields to the NIC
+router:
 
-    nic_router: DHCP client functionality
-    
-    If the attribute 'interface' is not set in a 'domain' tag, the router tries to
-    dynamically receive and maintain an IP configuration for that domain by using
-    DHCP in the client role at all interfaces that connect to the domain. In the
-    DHCP discover phase, the router simply chooses the first DHCP offer that
-    arrives. So, no comparison of different DHCP offers is done. In the DHCP
-    request phase, the server is expected to provide an IP address, a gateway, a
-    subnet mask, and an IP lease time to the router. If anything substantial goes
-    wrong during a DHCP exchange, the router discards the outcome of the exchange
-    and goes back to the DHCP discover phase. At any time where there is no valid
-    IP configuration present at a domain, the domain does only act as DHCP client
-    and all other router functionality is disabled for the domain. A domain cannot
-    act as DHCP client and DHCP server at once. So, a 'domain' tag must either
-    have an 'interface' attribute or must not contain a 'dhcp-server' tag.
-    
-    Ref #2534
+* Message type,
+* server IP,
+* subnet mask,
+* IP lease time,
+* and router IP.
+
+Note also, that the NIC router drops all packets not related to its DHCP
+client functionality at a domain that (currently) has no IP configuration.
+As soon as the domain achieves to get a valid IP configuration, the router
+switches to the normal behavior.
 
 
 New driver-manager subsystem
