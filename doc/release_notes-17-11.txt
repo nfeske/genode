@@ -700,130 +700,20 @@ one can re-produce the GRUB2 builds if desired.
 Enabling MMU-based threat mitigations by default
 ================================================
 
-; @alex-ab
+With this release we enabled support to leverage non-executable memory for
+Genode. On hardware and kernels supporting this feature, it now got enabled by
+default.
 
-commit db0589727af61f77228528e3827b85d5b8370b18
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Oct 18 14:58:15 2017 +0200
+On ARM this feature is available to all supported kernels, namely our own
+hw kernel, seL4 and Fiasco.OC.
 
-    seoul: attach executable memory as such
-    
-    Issue #1723
+On x86 the 64bit kernels hw, NOVA and Fiasco.OC support this feature.
 
-commit c4c9e1fe7fbc01ac9233b25455b234d59f60060e
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Oct 18 14:58:36 2017 +0200
-
-    vbox: attach executable memory as such
-    
-    Issue #1723
-
-commit e6dcdcf2779466afe987b3c0b63cee179e9085e2
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Oct 18 16:32:17 2017 +0200
-
-    base: attach executable memory as such
-    
-    - tracing policy
-    
-    Issue #1723
-
-commit dfa8b787beed9fe5323c34a80426f4957e6d3f1a
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Oct 20 11:43:57 2017 +0200
-
-    noux: attach executable memory as such
-    
-    Issue #1723
-
-commit e87b322616c427e08806d67b89589baabe51776c
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Oct 18 14:14:07 2017 +0200
-
-    libc: support executable memory allocations
-    
-    in internal memory allocator used by libc and vbox*
-    
-    Issue #1723
-
-commit d18262da1f51ca933c774809f1a78e1e75ee0ee1
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Oct 18 14:20:49 2017 +0200
-
-    libc: add mempool for rwx memory
-    
-    Issue #1723
-
-commit e3d9f414964d458d126b2f24101d4ba51f643d45
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Oct 13 11:42:56 2017 +0200
-
-    base: provide dst fault address for write fault
-    
-    Issue #1723
-
-commit 03b8e70d3f7f920ad3531e1a4271645b0c9a7d7f
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Oct 12 14:33:04 2017 +0200
-
-    rm_fault: add fault test for exec access violation
-    
-    Issue #1723
-
-commit db329b02b51b608217079a216fd86faf936bd152
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Oct 13 15:26:33 2017 +0200
-
-    base: enable executable memory fault handling
-    
-    Fixes #1723
-
-commit f2c3225ab613f849fc68b3489e03f60fcebe456e
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Oct 13 14:18:29 2017 +0200
-
-    nova: enable nx bit handling for x86_64
-    
-    Issue #1723
-
-commit 8ea584b1d2078753c722911d101cede7da44ff08
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Oct 13 14:26:09 2017 +0200
-
-    foc: enable nx bit handling for x86_64 and arm
-    
-    Issue #1723
-
-commit aa1d5a7dd1b60756a49161002437ed092d7f68a8
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Oct 13 16:23:10 2017 +0200
-
-    hw: enable nx bit handling for x86_64
-    
-    Issue #1723
-
-commit 4dd5e6b266fbb8a312af5db97a82a6a6491882c6
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Oct 17 11:36:10 2017 +0200
-
-    hw: enable nx bit handling for arm
-
-commit 9655ebbefe95066997eabe0a33b55503cedcd6c4
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Oct 17 11:51:13 2017 +0200
-
-    sel4: enable nx bit handling for ARM
-    
-    Issue #1723
-
-commit 26eb0ce7946f62942176b33519a8f49f41016882
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Oct 19 13:26:49 2017 +0200
-
-    nova: use kernel with enabled SMAP feature
-    
-    Issue #1723
-
+seL4 in general misses currenlty support for it on x86. The remaining supported
+x86 32bit kernels - OKL4, Pistachio and Fiasco - don't provide support, since
+they are not runing the MMU with pagetable in the so called PAE
+(physical address extensdion) format. With the introduction of PAE also the
+non-executable memory support feature got added to x86.
 
 Updated seL4 to kernel branch 7.0
 =================================
