@@ -676,24 +676,26 @@ Platforms
 UEFI boot, consistent use of GRUB2 on x86
 =========================================
 
-; @alex-ab
+With the previous release, we already added support for GRUB2 when booted in
+UEFI mode. Still, for non-UEFI boots we used as boot-loaders GRUB-0.97 and
+ISOLINUX from the Syslinux Project.
 
-commit 5f1815e1d9438d815395ba5dd51af74409aa6cca
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Sep 20 22:56:00 2017 +0200
+With the gained experience of GRUB2 we decided to modernize our bootloader
+chain for x86.  With this release we use for all x86 boots solely GRUB2.
+For the ISO creation we now leverage the images as shipped of GRUB2,
+'embedded.img' and 'eltorito.img', together with the 'xorriso' tool. Due to
+this change we were able to remove the ISOLINUX binaries and eltorito files
+of GRUB1.
 
-    tool: use grub2 instead of grub1 for iso boot
-    
-    Fixes #2526
+The final GRUB2 binaries are now integrated as external Genode port, which
+can be installed by invoking:
 
-commit 8b21e0e16d73578bfa6964748e6834517d2d279c
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Nov 14 09:10:37 2017 +0100
+! tool/ports/prepare_port grub2
 
-    bender: fix free memory calculation for Multiboot2
-    
-    Fixes #2487
-
+The grub2 port contains the GRUB2 binaries. Additionally the port contains
+the instruction and the references to the git source code of GRUB2 used to
+generate the bootloader binaries. With the provided information in the port
+one can re-produce the GRUB2 builds if desired.
 
 Enabling MMU-based threat mitigations by default
 ================================================
