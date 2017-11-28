@@ -828,35 +828,15 @@ Date:   Thu Oct 19 13:26:49 2017 +0200
 Updated seL4 to kernel branch 7.0
 =================================
 
-; @alex-ab
+In the last releases we extended our seL4 support and thereby collected a
+bunch of patches to the seL4 kernel, e.g. UEFI boot support. We reported the
+patches to the seL4 developers which integrated most of our changes into the
+seL4 7.0 kernel release.
 
-commit e8200e797733d2ba2ad6922cc90866031a17d3e8
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Sep 1 13:24:43 2017 +0200
-
-    sel4: use kernel branch 7.0 + our mastered commits
-    
-    for uefi, multiboot2, benchmark interface adaptations and ARM define build
-    fixes.
-    
-    Issue #2562
-
-commit 4b9859e162464ea630cd1e3b89b3076b99730d34
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Nov 9 22:20:07 2017 +0100
-
-    sel4: enable support for direct unmap in core
-    
-    Issue #2563
-
-commit e006f8629c5810ad7cc9f5145a23a907ca03f100
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Sat Nov 18 14:17:11 2017 +0100
-
-    sel4: add mbi2 framebuffer support
-    
-    Issue #2555
-
+Additionally to the update we extended the UEFI framebuffer support for the
+seL4 kernel, so that our simple boot framebuffer driver may now utilize the
+graphic device if setup by GRUB2 during UEFI boot. The patches to the kernel
+got submitted to the seL4 maintaines for review and for inclusion.
 
 Execution on bare hardware (base-hw)
 ====================================
