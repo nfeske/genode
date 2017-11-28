@@ -941,13 +941,15 @@ Date:   Sat Nov 18 15:53:02 2017 +0100
 Improved offline validation of Genode configurations
 ====================================================
 
-; @alex-ab
+Genode's configuration is based on XML and gets validated by xmllint during
+each run tool invocation. Up to now we used xmllint mainly to check for
+a valid XML syntax.
 
-commit be753ee863d7ab8246c213b6ad178077c4f770ff
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Sep 5 23:05:43 2017 +0200
+With this release we added for Genode's 'init' component additionally a
+semantically check, whether the XML nodes and attributes are known and
+understood by 'init'. This check is performed now on
+each run tool invocation at integration time. The XML schema file is located in
 
-    tool: add genode xml schema to xmllint check
-    
-    Fixes #2513
+! tool/run/genode.xsd
 
+and gets applied by xmllint.
