@@ -547,20 +547,6 @@ Date:   Mon Nov 13 16:25:45 2017 +0100
     Fixes #2574
 
 
-Capslock-state handling for VirtualBox5
-=======================================
-
-; @nfeske
-
-commit e54ad5c73a36f44e3027ab598c06ff862d07523a
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Nov 7 15:13:10 2017 +0100
-
-    vbox: support capslock state provided by ROM
-    
-    Fixes #2568
-
-
 Applications and libraries
 ##########################
 
