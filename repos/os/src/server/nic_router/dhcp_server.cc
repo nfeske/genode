@@ -132,7 +132,7 @@ bool Dhcp_server::ready() const
 	}
 	try { return _dns_server_from().ip_config().valid; }
 	catch (Pointer<Domain>::Invalid) { }
-	return false;
+	return true;
 }
 
 
