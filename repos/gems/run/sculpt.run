@@ -53,15 +53,17 @@ install_config {
 		<config period_ms="60000"/>
 	</start>
 
+<!--
 	<start name="trace_subject_reporter" >
 		<resource name="RAM" quantum="24M"/>
 		<route>
 			<service name="ROM" label="config">
-				<child name="config_rom" label="trace_subject_reporter.config"/> </service>
+				<child name="config_fs_rom" label="trace_subject_reporter.config"/> </service>
 			<service name="Report"> <child name="report_rom"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>
+	-->
 
 	<start name="report_rom">
 		<binary name="report_rom"/>
@@ -153,24 +155,35 @@ install_config {
 					<rom name="depot_download.config"/>
 				</dir>
 				<dir name="deploy">
-					<rom name="deploy.config" as="config"/>
+					<rom name="manual_deploy.config" as="manual"/>
+					<inline name="query"><query/></inline>
 				</dir>
 				<inline name="trace_subject_reporter.config">} [config_trace_subject_reporter_content] {
 				</inline>
 				<inline name="system">} [config_system_content] {
 				</inline>
 			</content>
-			<policy label="config_rom -> " root="/" />
+			<policy label="config_fs_rom -> " root="/" />
 			<policy label="rw" root="/" writeable="yes" />
 		</config>
 	</start>
 
-	<start name="config_rom">
+	<start name="config_fs_rom">
 		<binary name="fs_rom"/>
 		<resource name="RAM" quantum="10M"/>
 		<provides> <service name="ROM"/> </provides>
 		<route>
 			<service name="File_system"> <child name="config_fs"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="report_fs_rom">
+		<binary name="fs_rom"/>
+		<resource name="RAM" quantum="3M"/>
+		<provides> <service name="ROM"/> </provides>
+		<route>
+			<service name="File_system"> <child name="report_fs"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
@@ -182,10 +195,12 @@ install_config {
 		<config>
 			<content>
 				<inline name="log">### start ###</inline>
+				<dir name="runtime"> <inline name="state"><empty/></inline> </dir>
 			</content>
-			<policy label="fs_report -> "    root="/" writeable="yes" />
-			<policy label="log_terminal -> " root="/" writeable="yes" />
-			<policy label="ro" root="/" />
+			<policy label="fs_report -> "     root="/" writeable="yes"/>
+			<policy label="log_terminal -> "  root="/" writeable="yes"/>
+			<policy label="report_fs_rom -> " root="/"/>
+			<policy label="ro"                root="/"/>
 		</config>
 	</start>
 
@@ -242,15 +257,15 @@ install_config {
 		<route>
 			<service name="LOG"> <child name="log"/> </service>
 			<service name="ROM" label="config">
-				<child name="config_rom" label="drivers/config"/> </service>
-			<service name="ROM" label="input_filter.config">  <child name="config_rom"/> </service>
-			<service name="ROM" label="numlock_remap.config"> <child name="config_rom"/> </service>
-			<service name="ROM" label_suffix=".chargen">      <child name="config_rom"/> </service>
-			<service name="ROM" label_suffix=".remap">        <child name="config_rom"/> </service>
+				<child name="config_fs_rom" label="drivers/config"/> </service>
+			<service name="ROM" label="input_filter.config">  <child name="config_fs_rom"/> </service>
+			<service name="ROM" label="numlock_remap.config"> <child name="config_fs_rom"/> </service>
+			<service name="ROM" label_suffix=".chargen">      <child name="config_fs_rom"/> </service>
+			<service name="ROM" label_suffix=".remap">        <child name="config_fs_rom"/> </service>
 			<service name="ROM" label="capslock"> <child name="report_rom"/> </service>
 			<service name="ROM" label="numlock">  <child name="report_rom"/> </service>
-			<service name="ROM" label="system">   <child name="config_rom"/> </service>
-			<service name="ROM" label_suffix="fb_drv.config"> <child name="config_rom"/> </service>
+			<service name="ROM" label="system">   <child name="config_fs_rom"/> </service>
+			<service name="ROM" label_suffix="fb_drv.config"> <child name="config_fs_rom"/> </service>
 			<service name="Timer"> <child name="timer"/> </service>
 			<service name="Report"> <child name="fs_report"/> </service>
 			<any-service> <parent/> </any-service>
@@ -269,7 +284,7 @@ install_config {
 		<provides><service name="Nitpicker"/></provides>
 		<route>
 			<service name="ROM" label="config">
-				<child name="config_rom" label="nitpicker.config"/> </service>
+				<child name="config_fs_rom" label="nitpicker.config"/> </service>
 			<service name="ROM" label="focus">
 				<child name="nit_focus"/> </service>
 			<service name="Report" label="keystate">
@@ -298,7 +313,7 @@ install_config {
 				<if>
 					<has_value input="leitzentrale_enabled" value="yes" />
 					<then>
-						<attribute name="label" value="leitzentrale -> control_fader -> "/>
+						<attribute name="label" value="leitzentrale -> fader -> "/>
 					</then>
 					<else>
 						<if>
@@ -372,31 +387,34 @@ install_config {
 			<service name="ROM" label="leitzentrale"> <child name="report_rom"/> </service>
 			<service name="ROM" label="reset">        <child name="report_rom"/> </service>
 			<service name="ROM" label="config">
-				<child name="config_rom" label="leitzentrale/config"/> </service>
+				<child name="config_fs_rom" label="leitzentrale/config"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
 
-	<start name="leitzentrale" caps="2000" priority="-2">
+	<start name="leitzentrale" caps="4000" priority="-2">
 		<binary name="init"/>
 		<resource name="RAM" quantum="128M"/>
+		<provides> <service name="Nitpicker"/> </provides>
 		<route>
 			<service name="LOG"> <child name="log"/> </service>
 			<service name="ROM" label="config">
 				<child name="leitzentrale_config"/> </service>
-			<service name="ROM" label_last="vimrc">
-				<child name="config_rom"/> </service>
-			<service name="ROM" label_last="fonts.config">
-				<child name="config_rom"/> </service>
+			<service name="ROM" label_prefix="report -> ">
+				<child name="report_fs_rom"/> </service>
+			<service name="ROM" label_prefix="manager -> report -> ">
+				<child name="report_fs_rom"/> </service>
+			<service name="ROM" label_prefix="config -> ">
+				<child name="config_fs_rom"/> </service>
 			<service name="ROM" label="trace_subjects">
 				<child name="report_rom"/> </service>
 			<service name="Nitpicker"> <child name="nitpicker"/> </service>
 			<service name="Timer"> <child name="timer"/> </service>
-			<service name="File_system" label="control_noux -> config">
+			<service name="File_system" label="config">
 				<child name="config_fs" label="rw"/> </service>
-			<service name="File_system" label="control_noux -> report">
+			<service name="File_system" label="report">
 				<child name="report_fs" label="ro"/> </service>
-			<service name="File_system" label="log_noux -> report">
+			<service name="File_system" label="report">
 				<child name="report_fs" label="ro"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
@@ -412,13 +430,13 @@ install_config {
 		<resource name="RAM" quantum="12G"/>
 		<route>
 			<service name="ROM" label="config">
-				<child name="config_rom" label="runtime/config"/> </service>
+				<child name="config_fs_rom" label="runtime/config"/> </service>
 			<service name="ROM" label_prefix="config -> ">
-				<child name="config_rom"/> </service>
+				<child name="config_fs_rom"/> </service>
 			<service name="ROM" label_suffix="-> vimrc">
-				<child name="config_rom" label="vimrc"/> </service>
+				<child name="config_fs_rom" label="vimrc"/> </service>
 			<service name="ROM" label="system">
-				<child name="config_rom"/> </service>
+				<child name="config_fs_rom"/> </service>
 			<service name="ROM" label="capslock">
 				<child name="report_rom"/> </service>
 			<service name="ROM" label="clicked">
@@ -432,6 +450,8 @@ install_config {
 			<service name="Platform" label_prefix="acpica">
 				<child name="drivers" label="acpica"/> </service>
 			<service name="Platform"> <child name="drivers"/> </service>
+			<service name="Nitpicker" label_prefix="leitzentrale">
+				<child name="leitzentrale"/> </service>
 			<service name="Nitpicker" label="backdrop">
 				<child name="nitpicker" label="backdrop"/> </service>
 			<service name="Nitpicker"> <child name="nitpicker"/> </service>
@@ -508,7 +528,7 @@ close $fd
 # Packages are installed via the 'install' runtime, which takes the
 # information about the packages to install from 'config/installation'.
 # Once installed, packages can be deployed via the 'deploy' runtime.
-# This runtime can be tailored by modifying 'config/deploy/config'.
+# This runtime can be tailored by modifying 'config/deploy/manual'.
 #
 
 proc current_pkg { pkg } { return $pkg/[_current_depot_archive_version pkg $pkg] }
@@ -526,31 +546,15 @@ puts $fd "</installation>"
 close $fd
 
 #
-# Configuration of deploy runtime
+# Manual configuration of deploy runtime
 #
 # This configuration is not provided as a file at run/sculpt/ because some
 # parts need to be filled in at run-script execution time, in particular the
 # current versions of the packages to deploy.
 #
-append depot_deploy_config {
+append manual_deploy_config {
 <config arch="} [depot_spec] {">
-	<static>
-		<parent-provides>
-			<service name="ROM"/>
-			<service name="CPU"/>
-			<service name="PD"/>
-			<service name="RM"/>
-			<service name="LOG"/>
-			<service name="Timer"/>
-			<service name="Nitpicker"/>
-			<service name="File_system"/>
-			<service name="Rtc"/>
-			<service name="Usb"/>
-			<service name="Report"/>
-			<service name="Block"/>
-			<service name="Platform"/>
-		</parent-provides>
-	</static>
+
 	<common_routes>
 		<service name="ROM" label_last="ld.lib.so"> <parent/> </service>
 		<service name="ROM" label_last="init">      <parent/> </service>
@@ -560,10 +564,11 @@ append depot_deploy_config {
 		<service name="Timer"> <parent/> </service>
 	</common_routes>
 
+<!--
 	<start name="focus_rom" pkg="} [depot_user]/pkg/[current_pkg rom_filter] {">
 		<config>
 			<output node="focus">
-				<attribute name="label" value="runtime -> dynamic -> wm -> wm -> "/>
+				<attribute name="label" value="runtime -> wm -> wm -> "/>
 			</output>
 		</config>
 	</start>
@@ -578,7 +583,7 @@ append depot_deploy_config {
 
 	<start name="fonts_fs" pkg="} [depot_user]/pkg/[current_pkg fonts_fs] {">
 		<route>
-			<service name="ROM" label="config"> <parent label="fonts.config"/> </service>
+			<service name="ROM" label="config"> <parent label="config -> fonts.config"/> </service>
 		</route>
 	</start>
 
@@ -587,6 +592,7 @@ append depot_deploy_config {
 			<service name="Nitpicker"> <parent/> </service>
 		</route>
 	</start>
+-->
 
 	<start name="backdrop" pkg="} [depot_user]/pkg/[current_pkg sticks_blue_backdrop] {">
 		<route>
@@ -594,6 +600,7 @@ append depot_deploy_config {
 		</route>
 	</start>
 
+<!--
 	<start name="noux" pkg="} [depot_user]/pkg/[current_pkg noux-system] {">
 		<route>
 			<service name="Nitpicker"> <child name="wm"/> </service>
@@ -604,10 +611,12 @@ append depot_deploy_config {
 			<service name="File_system" label="fonts">
 				<child name="fonts_fs"/> </service>
 			<service name="File_system" label="target">
-				<parent label="rw"/> </service>
-			<service name="ROM" label="vimrc"> <parent/> </service>
+				<child name="default_fs_rw"/> </service>
+			<service name="ROM" label_last="vimrc">
+				<parent label="config -> vimrc"/> </service>
 		</route>
 	</start>
+	-->
 
 <!--
 	<start name="nano3d" pkg="} [depot_user]/pkg/[current_pkg nano3d] {">
@@ -692,8 +701,8 @@ append depot_deploy_config {
 
 </config>}
 
-set fd [open [run_dir]/genode/deploy.config w]
-puts $fd $depot_deploy_config
+set fd [open [run_dir]/genode/manual_deploy.config w]
+puts $fd $manual_deploy_config
 close $fd
 
 
@@ -701,6 +710,8 @@ close $fd
 # Create boot image
 #
 
-append boot_modules { }
+build { app/sculpt_manager }
+
+append boot_modules { sculpt_manager }
 
 build_boot_image $boot_modules
