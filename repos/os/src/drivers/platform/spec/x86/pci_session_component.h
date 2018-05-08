@@ -1073,7 +1073,7 @@ class Platform::Root : public Genode::Root_component<Session_component>
 				Device_config config(Platform::Bridge::root_bridge_bdf);
 				Genode::log("Root bridge: ", config);
 			} else
-				Genode::error("root bridge unknown");
+				Genode::warning("Root bridge: unknown");
 
 			_construct_buses();
 
