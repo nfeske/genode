@@ -8,8 +8,8 @@
 # Note: the USB device(s) to be passed through must be included in the whitelist.
 #
 
-if { [have_include "power_on/qemu"] || ![have_spec nova] } {
-	puts "Run script is only supported on NOVA on real hardware"
+if { [have_include "power_on/qemu"] || ![have_spec nova] || ![have_spec x86_64]} {
+	puts "Run script is only supported on 64-bit NOVA on real hardware"
 	exit 0
 }
 
@@ -164,14 +164,13 @@ append config {
 		<binary name="virtualbox5-nova"/>
 		<resource name="RAM" quantum="448M"/>
 		<config vbox_file="vm_genode_usb_hid.vbox" vm_name="TestVM" xhci="yes">
-			<libc stdout="/dev/log" stderr="/dev/log">
-				<vfs>
-					<dir name="dev"> <log/> </dir>
-					<dir name="dev"> <terminal/> </dir>
-					<rom name="vm_genode_usb_hid.vbox" />
-					<rom name="usb_hid.iso" />
-				</vfs>
-			</libc>
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<dir name="dev"> <terminal/> </dir>
+				<rom name="vm_genode_usb_hid.vbox" />
+				<rom name="usb_hid.iso" />
+			</vfs>
+			<libc stdout="/dev/log" stderr="/dev/log"/>
 		</config>
 		<route>
 			<service name="Report"><child name="report_rom" /></service>
