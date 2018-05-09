@@ -326,4 +326,8 @@ void Terminal::Main::_handle_input()
 }
 
 
-void Component::construct(Genode::Env &env) { static Terminal::Main main(env); }
+void Component::construct(Genode::Env &env)
+{
+	env.exec_static_constructors();
+	static Terminal::Main main(env);
+}
