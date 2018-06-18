@@ -151,9 +151,6 @@ class Pdf_view
 		Genode::Signal_handler<Pdf_view> _nit_mode_handler {
 			_env.ep(), *this, &Pdf_view::_handle_nit_mode };
 
-		Genode::Signal_handler<Pdf_view> _fb_mode_handler {
-			_env.ep(), *this, &Pdf_view::_handle_fb_mode };
-
 		Genode::Signal_handler<Pdf_view> _sync_handler {
 			_env.ep(), *this, &Pdf_view::_refresh };
 
@@ -164,13 +161,6 @@ class Pdf_view
 
 		pixel_t *_fb_base() { return _fb_ds->local_addr<pixel_t>(); }
 
-		void _rebuffer(Mode mode)
-		{
-			_nitpicker.buffer(mode, NO_ALPHA);
-			_fb_mode = _framebuffer.mode();
-			_fb_ds.construct(_env.rm(), _framebuffer.dataspace());
-		}
-
 		void _handle_nit_mode()
 		{
 			using namespace Nitpicker;
@@ -179,8 +169,13 @@ class Pdf_view
 			int max_x = Genode::max(_nit_mode.width(),  _fb_mode.width());
 			int max_y = Genode::max(_nit_mode.height(), _fb_mode.height());
 
-			if (max_x > _fb_mode.width() || max_y > _fb_mode.height())
-				_rebuffer(Mode(max_x, max_y, _nit_mode.format()));
+			if (max_x > _fb_mode.width() || max_y > _fb_mode.height()) {
+				_fb_mode = Mode(max_x, max_y, _nit_mode.format());
+				_nitpicker.buffer(_fb_mode, NO_ALPHA);
+				if (_fb_ds.constructed())
+					_fb_ds.destruct();
+				_fb_ds.construct(_env.rm(), _framebuffer.dataspace());
+			}
 
 			_pdfapp.winw = _pdfapp.scrw = _nit_mode.width();
 			_pdfapp.winh = _pdfapp.scrh = _nit_mode.height();
@@ -192,11 +187,6 @@ class Pdf_view
 			_nitpicker.execute();
 
 			show();
-		}
-
-		void _handle_fb_mode()
-		{
-			_fb_mode = _framebuffer.mode();
 		}
 
 		pdfapp_t _pdfapp { };
@@ -267,14 +257,11 @@ class Pdf_view
 		Pdf_view(Genode::Env &env) : _env(env)
 		{
 			_nitpicker.mode_sigh(_nit_mode_handler);
-			_framebuffer.mode_sigh(_fb_mode_handler);
 			_input.sigh(_input_handler);
-
-			_rebuffer(_nit_mode);
 
 			pdfapp_init(&_pdfapp);
 			_pdfapp.userdata = this;
-			_pdfapp.pageno     = 0;    /* XXX read from config */
+			_pdfapp.pageno   = 0;
 
 			/*
 			 * XXX replace heuristics with a meaningful computation
@@ -282,8 +269,8 @@ class Pdf_view
 			 * The magic values are hand-tweaked manually to accommodating the
 			 * use case of showing slides.
 			 */
-			_pdfapp.resolution = Genode::min(_fb_mode.width()/5,
-			                                 _fb_mode.height()/3.8);
+			_pdfapp.resolution = Genode::min(_nit_mode.width()/5,
+			                                 _nit_mode.height()/3.8);
 
 			{
 				struct dirent **list = NULL;
@@ -310,8 +297,6 @@ class Pdf_view
 			}
 
 			Genode::log(Genode::Cstring(pdfapp_version(&_pdfapp)));
-
-			_handle_nit_mode();
 		}
 
 		void title(char const *msg)
@@ -329,6 +314,9 @@ class Pdf_view
 
 void Pdf_view::show()
 {
+	if (!_fb_ds.constructed())
+		_handle_nit_mode();
+
 	Genode::Area<> const fb_size(_fb_mode.width(), _fb_mode.height());
 	int const x_max = Genode::min((int)fb_size.w(), _pdfapp.image->w);
 	int const y_max = Genode::min((int)fb_size.h(), _pdfapp.image->h);
