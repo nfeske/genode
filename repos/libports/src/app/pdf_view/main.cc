@@ -144,7 +144,7 @@ class Pdf_view
 		Input::Session_client &_input       = *_nitpicker.input();
 
 		Framebuffer::Mode _nit_mode = _nitpicker.mode();
-		Framebuffer::Mode  _fb_mode = _framebuffer.mode();
+		Framebuffer::Mode  _fb_mode {};
 
 		Genode::Constructible<Genode::Attached_dataspace> _fb_ds { };
 
@@ -161,9 +161,10 @@ class Pdf_view
 
 		pixel_t *_fb_base() { return _fb_ds->local_addr<pixel_t>(); }
 
-		void _handle_nit_mode()
+		void _rebuffer()
 		{
 			using namespace Nitpicker;
+
 			_nit_mode = _nitpicker.mode();
 
 			int max_x = Genode::max(_nit_mode.width(),  _fb_mode.width());
@@ -177,16 +178,29 @@ class Pdf_view
 				_fb_ds.construct(_env.rm(), _framebuffer.dataspace());
 			}
 
-			_pdfapp.winw = _pdfapp.scrw = _nit_mode.width();
-			_pdfapp.winh = _pdfapp.scrh = _nit_mode.height();
+			_pdfapp.scrw = _nit_mode.width();
+			 _pdfapp.scrh = _nit_mode.height();
+
+			/*
+			 * XXX replace heuristics with a meaningful computation
+			 *
+			 * The magic values are hand-tweaked manually to accommodating the
+			 * use case of showing slides.
+			 */
+			_pdfapp.resolution = Genode::min(_nit_mode.width()/5,
+			                                 _nit_mode.height()/3.8);
 
 			typedef Nitpicker::Session::Command Command;
 			_nitpicker.enqueue<Command::Geometry>(
 				_view, Rect(Point(), Area(_nit_mode.width(), _nit_mode.height())));
 			_nitpicker.enqueue<Command::To_front>(_view, Nitpicker::Session::View_handle());
 			_nitpicker.execute();
+		}
 
-			show();
+		void _handle_nit_mode()
+		{
+			_rebuffer();
+			pdfapp_onresize(&_pdfapp, _nit_mode.width(), _nit_mode.height());
 		}
 
 		pdfapp_t _pdfapp { };
@@ -263,14 +277,7 @@ class Pdf_view
 			_pdfapp.userdata = this;
 			_pdfapp.pageno   = 0;
 
-			/*
-			 * XXX replace heuristics with a meaningful computation
-			 *
-			 * The magic values are hand-tweaked manually to accommodating the
-			 * use case of showing slides.
-			 */
-			_pdfapp.resolution = Genode::min(_nit_mode.width()/5,
-			                                 _nit_mode.height()/3.8);
+			_rebuffer();
 
 			{
 				struct dirent **list = NULL;
@@ -314,9 +321,6 @@ class Pdf_view
 
 void Pdf_view::show()
 {
-	if (!_fb_ds.constructed())
-		_handle_nit_mode();
-
 	Genode::Area<> const fb_size(_fb_mode.width(), _fb_mode.height());
 	int const x_max = Genode::min((int)fb_size.w(), _pdfapp.image->w);
 	int const y_max = Genode::min((int)fb_size.h(), _pdfapp.image->h);
