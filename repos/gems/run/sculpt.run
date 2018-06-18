@@ -755,6 +755,8 @@ close $fd
 # Create boot image
 #
 
-append boot_modules { slides.pdf }
+build { app/pdf_view }
+
+append boot_modules { pdf_view slides.pdf }
 
 build_boot_image $boot_modules
