@@ -755,8 +755,8 @@ close $fd
 # Create boot image
 #
 
-build { app/pdf_view }
+build { lib/ld app/pdf_view }
 
-append boot_modules { pdf_view slides.pdf }
+append boot_modules { ld.lib.so pdf_view slides.pdf }
 
 build_boot_image $boot_modules
