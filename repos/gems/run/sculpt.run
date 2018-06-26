@@ -701,8 +701,8 @@ close $fd
 # Create boot image
 #
 
-build { init lib/ld }
+build { init lib/ld app/sculpt_manager }
 
-append boot_modules { init ld.lib.so }
+append boot_modules { init ld.lib.so sculpt_manager }
 
 build_boot_image $boot_modules
