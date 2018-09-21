@@ -57,7 +57,7 @@ Sculpt with Visual Composition (VC) is the third of four revisions planned for
 2018 with a successively increased ease of use. It features a graphical user
 interface for performing fundamental tasks like connecting to a wireless
 network, or installing and running software from packages. However, the full
-power of the system is accessible only via a textual interace.
+power of the system is accessible only via a textual interface.
 
 
 Vim skills recommended
@@ -131,7 +131,7 @@ the connected storage devices and the network configuration. The center
 displays a live graph (runtime view) of the running components and their
 relationships. On the right, diagnostic messages are presented.
 
-# Select the in-memory file system as default storate location by clicking
+# Select the in-memory file system as default storage location by clicking
   on the "ram" item of the "Storage" dialog and enabling the "Use" button.
   This instructs Sculpt that installed software is stored in memory without
   accessing any real storage device.
@@ -154,7 +154,7 @@ relationships. On the right, diagnostic messages are presented.
 # Press F12 to toggle between the Leitzentrale and the actual runtime.
   Now, the backdrop should become visible in full glory.
 
-# Try adding additional components by selecting the in the "+" context
+# Try adding additional components by selecting items in the "+" context
   menu of the runtime view. Most components expect the presence of a
   window manager. Hence, you should first select "wm". Please pay attention
   to diagnostic messages given in the runtime dialog on the left. Whenever
@@ -182,11 +182,11 @@ The following example subsystems are available from the "+" menu:
 
 :'nano3d': A simple software-rendering demo, which can be adjusted at runtime
   by modifying its configuration via the textual interface described in
-  Section [Runtime management]. E.g., by adding a custom config node
+  Section [Runtime management]. For example, by adding a custom config node
   directly inside the '<start>' node, the appearance can be changed on the fly:
   ! <config painter="shaded" shape="cube"/>
 
-:'noux': A noux instance with a graphical terminal, similar to the
+:'noux-system': A noux instance with a graphical terminal, similar to the
   inspect window of the Leitzentrale. Note the routing of the various
   file-system sessions when selecting the component in the runtime view.
 
@@ -211,7 +211,7 @@ The following example subsystems are available from the "+" menu:
 :'seoul-tc-browser': The same virtual machine as 'vbox5-tc-browser' but
   executed inside the light-weight Seoul virtual-machine monitor.
 
-:'qt5_textedit': Qt5-based text editor that is explicitly granted access to
+:'config_editor': Qt5-based text editor that is explicitly granted access to
   the config file system.
 
 :'arora': Qt5-based web browser, which does not touch any persistent file
@@ -327,7 +327,7 @@ Whenever an Intel graphics device is present, the Intel framebuffer driver
 is spawned. Otherwise, a generic VESA driver or a driver for a
 boot-time-initialized framebuffer is used.
 
-Several components of the drivers subsystem report their state. E.g., when
+Several components of the drivers subsystem report their state. For example, when
 the Intel framebuffer is used, it reports the list of connectors present.
 Most importantly, the driver manager reports the available block devices.
 
@@ -357,7 +357,7 @@ interactive shell for manual _config_ and _report_ file
 systems access. To spawn this command-line interface, click on the "ram" item from
 the menu and select "Inspect".
 While inspecting file systems, the inspect window replaces the runtime view.
-However, both views can toggled by clicking on the title of the storage dialog
+However, both views can be toggled by clicking on the title of the storage dialog
 for the inspect window, or any other dialog for the runtime view.
 
 [image noux 45%]
@@ -631,7 +631,7 @@ The default deploy configuration found at _/config/deploy_ and the launcher
 at _/config/launcher/vm_ contain all the pieces needed to host a virtual
 machine on top of Sculpt. A virtual machine (VM) is a convenient stop-gap
 solution for running programs that are not yet available natively on Genode.
-It ultimately enables us to use Sculpt as day-to-day OS today.
+It ultimately enables us Genode developers to use Sculpt as day-to-day OS.
 
 By convention, we host the content of each VM in a dedicated
 directory _/vm/<guest-os>/_ at the file system. The VM directory contains
@@ -771,21 +771,19 @@ a free download at [https://genode.org].
 
   ! git clone https://github.com/genodelabs/genode.git
   ! cd genode
-  ! git checkout 18.05
-; XXX replace with git tag
+  ! git checkout -b sculpt_vc <TAG>
+; XXX replace <TAG> with git hash
 
 # Download the support for the NOVA microkernel
 
-  ! ./tool/depot/download genodelabs/bin/x86_64/base-nova/2018-06-12
-; XXX update with current version
+  ! ./tool/depot/download genodelabs/bin/x86_64/base-nova/2018-09-19
 
   The content is downloaded to the _public/_ directory and extracted to
   the _depot/_ directory.
 
 # Download all ingredients for the Sculpt boot image
 
-  ! ./tool/depot/download genodelabs/pkg/x86_64/sculpt/2018-06-12
-; XXX update with current version
+  ! ./tool/depot/download genodelabs/pkg/x86_64/sculpt/2018-09-21
 
 # Create a build directory
 
@@ -934,7 +932,7 @@ the USB stick can later be analyzed on another machine.
 
 The snapshots not only contain all log messages (_/report/log_) but also the
 reports generated by various components of the drivers subsystem and any other
-deployed components. E.g., with 'acpica' present in the deploy configuration,
+deployed components. For example, with 'acpica' present in the deploy configuration,
 the battery state is captured as well.
 
 
