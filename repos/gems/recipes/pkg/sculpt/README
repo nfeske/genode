@@ -771,8 +771,7 @@ a free download at [https://genode.org].
 
   ! git clone https://github.com/genodelabs/genode.git
   ! cd genode
-  ! git checkout -b sculpt_vc <TAG>
-; XXX replace <TAG> with git hash
+  ! git checkout -b sculpt_vc sculpt_vc
 
 # Download the support for the NOVA microkernel
 
