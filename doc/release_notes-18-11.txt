@@ -1,0 +1,601 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 18.11
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+
+
+Raising the bar of quality assurance
+####################################
+
+Automated test infrastructure hosted on top of Genode
+=====================================================
+
+; @m-stein
+
+commit 146f45f3d4b9e97ff399b42a72f9114f9094a465
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed Oct 10 18:08:14 2018 +0200
+
+    Archive recipes for autopilot tests
+
+commit 2d041ac0fc9a465ecbb43d6f5b506c3a369e481b
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Oct 1 16:53:37 2018 +0200
+
+    depot_autopilot: evaluate sets of test packages
+
+commit 35fe4842b077d63e21c0f5339ce1e6e50b645d54
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Nov 19 14:04:55 2018 +0100
+
+    depot_autopilot: show result statistic
+    
+    Print a line like "succeeded: 35 failed: 11 skipped: 2" below the list of test
+    results. Adds further attributes to <previous-results> to communicate also the
+    previous statistics.
+
+
+New tooling for obtaining test-coverage metrics
+===============================================
+
+; @cproc
+
+commit f723557dacbae6c7b003f5436e41c400d6bc46ae
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue Nov 6 19:46:50 2018 +0100
+
+    mk: add 'COVERAGE' option
+    
+    'COVERAGE=yes' in 'target.mk' adds gcov-specific compiler flags and links the
+    program with libgcov.
+    
+    Issue #3048
+
+commit 081502ee983758cbb407e157b6d71c8af4a45edf
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Nov 15 18:04:53 2018 +0100
+
+    libports: add libgcov and gcov tool
+    
+    Issue #3048
+
+commit 9dcdc76b8a152c2d3fb45589fdf1fb9ff9d499c8
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue Nov 20 14:29:59 2018 +0100
+
+    depot.inc: 'append_src_and_api_depot_packages_to_tar' function
+    
+    This function adds the src and api depot packages for the given pkg or src
+    packages to the given tar archive.
+    
+    Issue #3048
+
+commit 22e071ab93e44e19c086252a4be341e24f3d96e3
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue Nov 20 14:30:49 2018 +0100
+
+    depot_autopilot.run: integrate gcov tool
+    
+    Issue #3048
+
+commit 06161ddc042ae087d8f10fe359e525eb8da78196
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Nov 22 18:07:04 2018 +0100
+
+    test-xml_generator: enable code coverage analysis
+    
+    Issue #3048
+
+
+Static code analysis
+====================
+
+; @alex-ab
+
+commit f5fe342df906be9ce00ac63617b5ece7f7e03084
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Oct 25 18:33:16 2018 +0200
+
+    tool: support static clang analyzer in build.mk
+    
+    Issue #3022
+
+commit 889eb647bf8ee646df26bc2cca29fb604785be03
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Nov 6 15:17:36 2018 +0100
+
+    tool: use static analyzer with depot creation tool
+    
+    Convince wrapper to make static analyzer working with tool/depot/* tools.
+    
+    Issue #3022
+
+
+Genode as target for Mirage-OS unikernels
+#########################################
+
+; @ehmry
+
+commit bc539ce892ad3446570f6a4dcb0f91e574987eed
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Wed Nov 7 15:16:30 2018 +0100
+
+    Native Solo5 bindings
+    
+    A shared library implementation of the unikernel middleware.
+    
+    https://github.com/Solo5/solo5
+    
+    Fix #2945
+
+
+Base framework and OS-level infrastructure
+##########################################
+
+Component health monitoring
+===========================
+
+; @nfeske
+
+commit 9101dc7667de808f952f23e90ad881d232613ef9
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Nov 14 16:19:30 2018 +0100
+
+    init: health monitoring of child components
+    
+    Fixes #3039
+
+
+Enhanced window-management flexibility
+======================================
+
+; @nfeske
+
+commit a973d9902bbcbea19bd15d83342b052dbf46eaac
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Sep 26 11:36:36 2018 +0200
+
+    gems: flexible window layouter
+    
+    This commit replaces the former floating_window_layouter with a new
+    window_layouter component that supports the subdivision of screen space
+    into columns and rows, the concept of layers, and the principle ability
+    to store window layout information across reboots. The latter is
+    accomplished by reflecting the component's internal state as a 'rules'
+    report to the outside.
+    
+    Fixes #3031
+
+commit 1a75c5227e22658b8c30b2ab3c639498b85ca545
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Nov 13 11:55:46 2018 +0100
+
+    Rename wm pkg to motif_wm
+    
+    This way, we can subsequently introduce a new 'wm' pkg that contains the
+    window manager only, w/o any hard-wired decorator and layouter.
+    
+    Issue #3024
+
+commit 80394fc9d99427c05e11bae1d29b90ce6c9f187c
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Nov 16 15:41:58 2018 +0100
+
+    sculpt: split window manager into multiple pkgs
+    
+    This commit moves the window layouter and window decorator into
+    dedicated packages that can now be combined with the "wm" server at
+    runtime and restarted/reconfigured/swapped-out independently.
+    
+    To use the window manager, one must start the 'wm', 'window_layouter',
+    and one of the 'motif_decorator' or 'themed_decorator' subsystems.
+    
+    Fixes #3024
+
+commit 14c153adf3bcd3a31cf4243c0c88c0a203e5b24f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Nov 20 17:25:23 2018 +0100
+
+    sculpt: launcher for recall_fs
+    
+    The recall file system is a place where components can remember state.
+    E.g., to allow the window layouter to recall the window layout of the
+    previous session.
+
+commit feddb93db690da229def079f9801f7f68687a860
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Nov 20 17:27:06 2018 +0100
+
+    sculpt: let window layouter recall its prior state
+    
+    Issue #3024
+    Issue #3031
+
+
+Network-stack improvements
+==========================
+
+; @ehmry
+
+commit fcbe060096736a172012ab213b5bcd482f8b3e9d
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Fri Aug 31 11:03:13 2018 +0200
+
+    Remove legacy lwIP plugins
+    
+    Now that the lwIP VFS plugin has become a first class IP stack it is
+    time to remove the lwIP 1.x library and the associated libc plugins.
+    
+    Fix #2958
+
+commit 0bd719a00bf9a68558b89dfac7def68e63beeb51
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Mon Nov 12 12:49:21 2018 +0100
+
+    Update lwIP to 2.1.1
+    
+    Fix #3035
+
+commit 81a4d1c585e998d3faaf3039168ac5fa71967d76
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Fri Nov 23 15:56:51 2018 +0100
+
+    Update lwIP to 2.1.2
+    
+    Fix #3035
+
+
+Ada language runtime
+====================
+
+; @nfeske
+
+commit 89ed78c2ed9d9f927fc32d63775c913ca517adf5
+Author: Johannes Kliemann <jk@jkliemann.de>
+Date:   Thu Nov 15 17:46:33 2018 +0100
+
+    ada: replace local runtime implementation with port
+    
+    Fixes #3044
+
+
+C language runtime
+==================
+
+; @ehmry
+
+commit 415511d0743e1411643af88a86785db58523ac45
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Wed Nov 21 17:17:25 2018 +0100
+
+    Merge pthread into libc library
+    
+    The pthread API is considered a standard feature of libc so better to
+    simply merge it with the libc. Pthreads are in fact already a part of
+    the libc in the form of weak symbols. This merger is also a prerequisite
+    for better integrating pthreads with the libc I/O task.
+    
+    Fix #3054
+
+
+Improved performance of Zynq network driver
+===========================================
+
+; @nfeske
+
+commit 2e4f828ba87efa13a999818f74fd29e155f4a56b
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Sat Sep 29 12:31:49 2018 +0200
+
+    zynq: zero-copy implementation of nic_drv
+    
+    - Packet stream buffers are directly passed to DMA.
+    - Also enables pause frames and checksum offloading.
+    
+    Issue #3053
+
+
+Base API changes
+================
+
+; @nfeske
+
+commit 7d641d5f1fe4e8a83fd078952431bb8ae30b3443
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Oct 1 14:04:50 2018 +0200
+
+    base: add Reconstructible::conditional method
+    
+    The new 'conditional' method simplifies the typical use case for
+    'Constructible' objects where the constructed/destructed state depends
+    on a configuration parameter. The method alleviates the need to
+    re-implement the logic again and again.
+    
+    The patch also removes the 'Reconstructible' constructor arguments
+    because they are unused.
+    
+    Fixes #3006
+
+commit 5446c52c430b840b3834211fe5442883d4ffe01a
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Oct 2 16:27:35 2018 +0200
+
+    base: make Entrypoint placeable on specific cpu
+    
+    Fixes #3008
+
+
+Libraries and applications
+##########################
+
+Initial version of the Genode SDK
+=================================
+
+; @ehmry
+
+commit f7fb748510227259865fd3f78ae673ac6dce7a6b
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Sun Aug 26 22:11:04 2018 +0200
+
+    Genode SDK
+    
+    Makefile for generating a Genode SDK.
+    
+    Fix #2948
+
+
+SSH terminal server
+===================
+
+; @cnuke
+
+commit 9557e648227441611d48bb173b1d483f9fc2f7ff
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Sep 27 16:26:49 2018 +0200
+
+    gems: add interactive SSH Terminal component
+    
+    This component allows access to Terminal sessions via interactive SSH
+    sessions. Please read _repos/gems/src/server/ssh_terminal/README_ for
+    more detailed information.
+    
+    Fixes #3014.
+
+commit 9ab288d8e3cbed2b2a86ee85beab7b478fda8245
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Sep 25 13:13:27 2018 +0200
+
+    libports: update libssh to 0.8.4
+    
+    Issue #3014.
+
+
+Removed networking support from Noux
+====================================
+
+; @ehmry
+
+commit 1370fa7631b3cb1d2f496d38a3b152a8416ae420
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Thu Aug 30 14:56:02 2018 +0200
+
+    Remove Noux networking support
+    
+    Noux networking is not well tested and not in practical use. It also
+    uses a number of deprecated libraries.
+    
+    Ref #2535
+    Fix #2955
+
+
+Random numbers
+==============
+
+; @ehmry
+
+commit a07707f08d3201f7760c79400b54afc44a3b4085
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Sat Nov 10 14:56:27 2018 +0100
+
+    Entropy visualizer for Nitpicker
+
+commit 33ebdeee1f440d63f64830a329ba73024f47c11d
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Sat Nov 10 15:08:51 2018 +0100
+
+    Jitter sponge entropy server
+    
+    A terminal server that reads out entropy generated from CPU jitter
+    amplified using a Keccak sponge construction.
+
+commit 1f028daae3df2ed92e22ec9c08c82dd28c7feb81
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Sat Nov 10 11:55:21 2018 +0100
+
+    Port of the eXtended Keccak Code Package
+    
+    https://github.com/XKCP/XKCP
+    https://keccak.team/keccak.html
+
+
+New ports of protobuf, libconfig, umurmur
+=========================================
+
+; @cnuke
+
+commit 4d1095947687c042fd306b3d0435cb9f2fcc1ed4
+Author: Josef Söntgen <jws@sysret.de>
+Date:   Tue Sep 25 22:19:50 2018 +0200
+
+    Port of protobuf-c 1.3.1
+    
+    Issue #118.
+
+commit 6af2375ec96fc99785815a8ed20b0d78d70d0b09
+Author: Josef Söntgen <jws@sysret.de>
+Date:   Tue Sep 25 22:17:22 2018 +0200
+
+    Port of libconfig-1.7.2
+    
+    Issue #118.
+
+commit 1a29597d576efd09617a6fea6e393a314962307b
+Author: Josef Söntgen <jws@sysret.de>
+Date:   Tue Sep 25 23:17:14 2018 +0200
+
+    Port of umurmur 0.2.17
+    
+    Fixes #118.
+
+
+New depot packages
+==================
+
+; @nfeske
+
+commit 655fbbd984747363f3de4ca4a854c9e0ab7d59ae
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Nov 5 12:53:12 2018 +0100
+
+    base-hw: recipes for ARMv7a platforms
+    
+    * To base-hw/recipes/src add base-hw-arndale, base-hw-imx53_qsb,
+      base-hw-imx53_qsb_tz, base-hw-odroid_xu, base-hw-panda, base-hw-rpi,
+      base-hw-wand_quad
+    * Ensure that the correct base-hw recipe is choosen by the run module
+      'boot_dir/hw'
+
+commit a1ff3cc317d8df14f9a36624db4352e44ac6a5cb
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Tue Nov 6 16:12:59 2018 +0100
+
+    base-foc: recipes for ARMv7a platforms
+    
+    * In base-foc/recipes/src/ replace base-foc with base-foc-pc
+    * To base-foc/recipes/src add base-foc-arndale, base-foc-pbxa9
+    * Ensure that the correct base-foc recipe is choosen by the run module
+      'boot_dir/foc'
+
+commit 21efcf9e458284dc5bdeeb93038b59a9d9b659b5
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Sun Nov 4 17:09:35 2018 +0100
+
+    os/recipes: src/nic_bridge
+
+commit 0c60b312beedd67afb8c8625a42a0003baedb15a
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Sun Nov 4 23:28:08 2018 +0100
+
+    liports/recipes: api/ and src/python
+
+commit bce8ba35160ce676ebf2723f71c0c26bff925511
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Thu Nov 1 14:22:20 2018 +0100
+
+    Genode toolchain depot package
+    
+    Fix #3028
+
+commit 2a45dc173f891a7d24aaaf9e888dc75549e8ddac
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Sat Sep 1 18:42:52 2018 +0200
+
+    TempleOS package for VirtualBox on NOVA.
+    
+    Terry Davis, the creator of TempleOS, passed away this week.
+
+commit c8774a9b6a4d1f78960cc80cda08761b67437b00
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Mon Sep 3 13:01:03 2018 +0200
+
+    Add README, LICENSE to TempleOS, remove Nic connection
+
+commit 2ef4fffac147002c39db11d16f5b9f5f0677159d
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Nov 29 13:33:40 2017 +0100
+
+    chocolate-doom: create deployable pkg
+    
+    Fixes #115.
+
+
+Platforms
+#########
+
+NOVA microhypervisor
+====================
+
+; @alex-ab
+
+commit 3824ad47566fe4331453585ed3db03fa0706cf9f
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Sep 13 16:53:57 2018 +0200
+
+    nova: define kernel memory based on system memory
+    
+    Switch to kernel branch, that determines the available system memory during
+    boot time. The overall kernel memory is still static, but during boot time
+    dynamically the amount can be chosen. Following 3 config option exists:
+    
+    CONFIG_MEMORY_BOOT is the amount of kernel memory allocated in the BSS
+    statically - effectively chosen during link time - see linker script.
+    
+    CONFIG_MEMORY_DYN_MIN && CONFIG_MEMORY_DYN_PER_MILL configures the dynamic
+    part of the kernel memory allocation applied during early kernel boot time.
+    CONFIG_MEMORY_DYN_MIN is the amount of memory which should be allocated at
+    least. CONFIG_MEMORY_DYN_PER_MILL defines the amount of the system memory in
+    per mill which should be allocated at most. The overall maximum kernel memory
+    is restricted to ~1G (64bit), due to the chosen internal virtual memory layout.
+    
+    Fixes #2985
+
+
+Execution on bare hardware (base-hw)
+====================================
+
+; @skalk
+
+commit 8c460b3ea5a8745b3b7b336b4095f9fac13cd763
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Sep 21 13:09:59 2018 +0200
+
+    hw: enable l2-cache on Wandboard Quad (fix #1807)
+
+commit d56a7beadc4371f759f5a9c7780e24abcc6521a5
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Nov 1 16:02:41 2018 +0100
+
+    hw: increase cpu frequency on Wandboard Quad
+    
+    Ref #1807
+
+commit 9561fdc4524f7b03147196f2d3d24f2ab70bf938
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 14 11:30:24 2018 +0200
+
+    hw: enable eager FPU context switch for ARM
+    
+    * Add an ieee754 FPU test
+    * Remove simple fpu test
+    
+    Fix #2822
+
+commit 9561fdc4524f7b03147196f2d3d24f2ab70bf938
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 14 11:30:24 2018 +0200
+
+    hw: enable eager FPU context switch for ARM
+    
+    * Add an ieee754 FPU test
+    * Remove simple fpu test
+    
+    Fix #2822
+
