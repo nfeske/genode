@@ -138,23 +138,95 @@ of the static analyzer tool:
 ! scan-build: Preprocessed versions of these sources were deposited in '/tmp/scan-build-2018-11-28-111203-20081-1/failures'.
 
 
-Genode as target for Mirage-OS unikernels
-#########################################
+Genode as a platform for Mirage-OS unikernels
+#############################################
 
-; @ehmry
+This year we collaborated with [https://mirage.io - MirageOS]
+at [https://bornhack.dk/bornhack-2018/ - Bornhack] and
+the MirageOS hack retreat in Marrakesh to bring unikernel
+applications to Genode as native components. MirageOS is an
+application framework for that provides all necessary
+OS abstractions for networked applications as a library. A MirageOS
+unikernel requires a machine operating system to provide a
+thread of execution, system time, a network interface, and block
+storage. Higher-level OS facilities such as multitasking,
+TCP/IP, and object storage are implemented as static linked
+libraries written in the same language as the application,
+OCaml in the case of MirageOS. Relative to traditional POSIX
+applications this allows for massive code pruning at
+compile-time and improved memory and logic density at runtime.
 
-commit bc539ce892ad3446570f6a4dcb0f91e574987eed
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Wed Nov 7 15:16:30 2018 +0100
+MirageOS was originally implemented with [https://xenproject.org/ - Xen] as the machine OS
+but to port MirageOS to other hypervisors a general sandboxing middleware
+library was created. This library is Solo5, which provides the
+simple abstractions necessary for running a unikernel as
+paravirtualized guest or as sandboxed process of another OS.
+After investigating both approches we choose to implement a
+native Solo5 bindings library. This follows our belief that an
+operating system should be capable of providing process isolation
+equal to and more efficient than virtualization. We share this belief
+with the unikernel community and expect it as an
+[https://dl.acm.org/citation.cfm?id=3267845 - inevitable trend in hosted computing].
+Furthermore, the burden of developing and maintaining a unikernel
+support layer is trivial compared to a virtual machine monitor.
 
-    Native Solo5 bindings
-    
-    A shared library implementation of the unikernel middleware.
-    
-    https://github.com/Solo5/solo5
-    
-    Fix #2945
+To build and deploy MirageOS with Genode requires coordination at
+both sides, for this reason Genode target support was added to the Mirage
+tooling in the [https://github.com/mirage/mirage/releases/tag/3.3.0 - 3.3.0 release].
+The Genode platform layer of Solo5 and Mirage differs most from other targets such as
+[https://muen.sk/articles.html#mirageos-unikernels - Muen] in that is
+is dynamically linked. This allows a Mirage image to remain viable across
+Genode API and ABI changes.
 
+To compile Mirage code into a Genode compatible binary one may follow
+the standard build procedure using the 'mirage' tool just as one
+would for Muen or Unix.
+
+! # See https://mirage.io/docs/ for instructions
+! # on building a MirageOS application.
+!
+! cd mirage-skeleton/tutorial/hello/
+! mirage configure --target genode
+! make depends
+! make build
+
+The output is a Genode program dynamically linked to a Solo5 bindings
+library. This library is built using the Genode build toolchain and
+is available as a [https://depot.genode.org/genodelabs/bin/x86_64/solo5 - depot package].
+Finding a smooth workflow for deploying unikernels is an open topic
+for future releases, but for now we offer a run scenario for creating
+a standalone x86_64 MirageOS boot image with an ethernet driver and a
+graphical console log.
+
+! # See https://genode.org/documentation/developer-resources/build_system
+! # for instructions on preparing the Genode build system.
+!
+! cp mirage-skeleton/tutorial/hello/hello.genode \
+!    genode/build/x86_64/bin/mirage
+! make run/mirage_pretty KERNEL=hw
+!
+! # To prepare a USB image for booting real hardware:
+! sudo cp var/run/mirage_pretty.iso «your USB stick device file»
+
+In the most minimal networked scenario a Mirage instance requires
+only handful of components, time sources, a network driver, and
+an I/O hardware access multiplexer.
+
+[image solo5_tcb] A minimum viable Genode system for hosting Mirage,
+  the trusted computing base is highlighted in red
+
+A simple demo not withstanding, we can justify Genode as a unikernel
+hosting platform by analyzing the complexity of a Genode host system
+by measuring the lines of C++ code used to produce such an image. This yields
+an initial metric for assessing the security of a system as well as its cost to
+develop and maintain. By compiling each component with debugging symbols,
+parsing binaries for file paths injected by the compiler, and collecting a sum of
+the number of lines found in each file we get an estimate of the total line count
+for each component. Building a set of every source file used in the minimal system,
+excuding the unikernel itself, the sum of lines of code does not excede 50,000.
+We assert that this a fraction of the size of any Unix-derived hosting environment.
+
+[image solo5_tcb_sloc]
 
 Base framework and OS-level infrastructure
 ##########################################
@@ -363,34 +435,29 @@ limits, and the rules can simply be swapped out by mere file operations.
 Network-stack improvements
 ==========================
 
-; @ehmry
+The transition from lwIP as a plugin to the libc library to a plugin to
+the VFS library is complete. As a result POSIX applications can no longer
+be linked to the lwIP through the 'libc_lwip' library. Instead they need
+only to link with the `libc` library and be configured at runtime to open
+network connections through the local VFS. The `libc` library now features
+networking support by default with the actual TCP/IP stack implemented in
+dynamically loaded VFS plugins. An example configuration for using lwIP
+with DHCP follows:
 
-commit fcbe060096736a172012ab213b5bcd482f8b3e9d
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Fri Aug 31 11:03:13 2018 +0200
+! <start name="...">
+!   <config>
+!     <libc socket="/sockets"/>
+!       <!-- configure the libc to use a sockets directory -->
+!     <vfs>
+!       <dir name="sockets">
+!         <!-- create a "socket" directory with virtual control files -->
+!         <lwip dhcp="yes"/>
+!       </dir>
+!     </vfs>
+!   </config>
+! </start>
 
-    Remove legacy lwIP plugins
-    
-    Now that the lwIP VFS plugin has become a first class IP stack it is
-    time to remove the lwIP 1.x library and the associated libc plugins.
-    
-    Fix #2958
-
-commit 0bd719a00bf9a68558b89dfac7def68e63beeb51
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Mon Nov 12 12:49:21 2018 +0100
-
-    Update lwIP to 2.1.1
-    
-    Fix #3035
-
-commit 81a4d1c585e998d3faaf3039168ac5fa71967d76
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Fri Nov 23 15:56:51 2018 +0100
-
-    Update lwIP to 2.1.2
-    
-    Fix #3035
+The lwIP library has also been updated to the latest 2.1.2 release.
 
 
 Java language runtime
@@ -430,20 +497,18 @@ following command from the base of Genode's source tree:
 C language runtime
 ==================
 
-; @ehmry
-
-commit 415511d0743e1411643af88a86785db58523ac45
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Wed Nov 21 17:17:25 2018 +0100
-
-    Merge pthread into libc library
-    
-    The pthread API is considered a standard feature of libc so better to
-    simply merge it with the libc. Pthreads are in fact already a part of
-    the libc in the form of weak symbols. This merger is also a prerequisite
-    for better integrating pthreads with the libc I/O task.
-    
-    Fix #3054
+This 'pthread' library has been integrated into the 'libc' library for
+this release. This has no effect on the semantics of pthreads, applications
+simply need not link to this library anymore. This is in contrast to normal
+Unix systems that provide a 'libpthread' library. Our POSIX implementation
+exist in userspace while supporting the blocking I/O patterns commonly used
+in Unix. To do this we run a "kernel" task within the 'libc' library that
+dispatches I/O as application threads are blocked. This tasks operates on a
+secondary stack of the primary thread but is also reentrant from secondary
+threads. Maintaining a common implementation for multi-threaded and
+single-threaded applications has been the most practical approach and
+merging pthreads completely into the libc clears a path to improving
+multithreaded I/O during the next releases.
 
 
 Improved performance of Zynq network driver
@@ -483,18 +548,48 @@ Libraries and applications
 Initial version of the Genode SDK
 =================================
 
-; @ehmry
+To allow Genode components to be built independently of our
+build system we have added a script to generate a Source
+Development Kit that contains headers, pre-built libraries,
+link scripts, and
+[https://www.freedesktop.org/wiki/Software/pkg-config/ - pkg-config]
+metadata. The SDK is still experimental and lacks documentation,
+but has been shown to be useful when combined with some external
+Make-based build systems as with the latest generation of language
+package managers.
 
-commit f7fb748510227259865fd3f78ae673ac6dce7a6b
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Sun Aug 26 22:11:04 2018 +0200
+A simple [https://github.com/libretro/nxengine-libretro/commit/f6ea7cd2e260731a00e20ebe239ccdc6bbf31e50 - example] of using the SDK within a makefile to build a library:
+! ...
+! ifeq ($(platform), genode)
+!   CC       := $(shell pkg-config genode-base --variable=cc)
+!   CXX      := $(shell pkg-config genode-base --variable=cxx)
+!   LD       := $(shell pkg-config genode-base --variable=ld)
+!   AR       := $(shell pkg-config genode-base --variable=ar) -rcs
+!   CFLAGS   += $(shell pkg-config --cflags genode-libc)
+!   CXXFLAGS += $(shell pkg-config --cflags genode-stdcxx)
+!   LDFLAGS  += -shared --version-script=$(CORE_DIR)/libretro/link.T
+!   LDFLAGS  += $(shell pkg-config --libs genode-lib genode-libc genode-stdcxx)
+! endif
+!
+! %.o: %.c
+! 	$(CC) $(CFLAGS) -c $< -o $@
+!
+! %.o: %.cpp
+! 	$(CXX) $(CFLAGS) -c $< -o $@
+!
+! $(TARGET): $(OBJECTS)
+!  $(LD) $(OBJECTS) $(LDFLAGS) -o $@
+! ...
 
-    Genode SDK
-    
-    Makefile for generating a Genode SDK.
-    
-    Fix #2948
+To link a program the link flags may be obtained with 'pkg-config --libs genode-lib',
+for libraries with `pkg-config --libs genode-prg`.
 
+In any case, the tools that invoke pkg-config, Make or otherwise, need a
+'PKG_CONFIG_PATH' environmental variable set to the location of the 
+'pkgconfig' directory in the SDK, such as with the following shell
+command:
+
+! PKG_CONFIG_PATH=/opt/genode-sdk-x86_64-18.08/pkgconfig make
 
 SSH terminal server
 ===================
@@ -554,49 +649,12 @@ and take _repos/gems/run/ssh_terminal.run_ for a ride.
 Removed networking support from Noux
 ====================================
 
-; @ehmry
+Support for networking has been removed from the Noux runtime
+as a side effect of moving IP stacks from libc plugins into
+VFS plugins. In practice Noux has been seldom used for networking
+and our recommendation remains that networked applications should
+link with the libc library and not use the Noux runtime.
 
-commit 1370fa7631b3cb1d2f496d38a3b152a8416ae420
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Thu Aug 30 14:56:02 2018 +0200
-
-    Remove Noux networking support
-    
-    Noux networking is not well tested and not in practical use. It also
-    uses a number of deprecated libraries.
-    
-    Ref #2535
-    Fix #2955
-
-
-Random numbers
-==============
-
-; @ehmry
-
-commit a07707f08d3201f7760c79400b54afc44a3b4085
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Sat Nov 10 14:56:27 2018 +0100
-
-    Entropy visualizer for Nitpicker
-
-commit 33ebdeee1f440d63f64830a329ba73024f47c11d
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Sat Nov 10 15:08:51 2018 +0100
-
-    Jitter sponge entropy server
-    
-    A terminal server that reads out entropy generated from CPU jitter
-    amplified using a Keccak sponge construction.
-
-commit 1f028daae3df2ed92e22ec9c08c82dd28c7feb81
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Sat Nov 10 11:55:21 2018 +0100
-
-    Port of the eXtended Keccak Code Package
-    
-    https://github.com/XKCP/XKCP
-    https://keccak.team/keccak.html
 
 
 New depot packages
