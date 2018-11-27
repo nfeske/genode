@@ -294,15 +294,14 @@ Java language runtime
 Ada language runtime
 ====================
 
-; @nfeske
+Genode's support for the Ada programming language is maintained by
+[https://componolit.com - Componolit]. With the current release, the
+runtime-specific code moved to a
+[https://github.com/Componolit/ada-runtime - distinct repository], which
+is integrated with Genode as a port. It can be installed by executing the
+following command from the base of Genode's source tree:
 
-commit 89ed78c2ed9d9f927fc32d63775c913ca517adf5
-Author: Johannes Kliemann <jk@jkliemann.de>
-Date:   Thu Nov 15 17:46:33 2018 +0100
-
-    ada: replace local runtime implementation with port
-    
-    Fixes #3044
+! ./tool/ports/prepare_port ada-runtime
 
 
 C language runtime
@@ -344,31 +343,15 @@ Date:   Sat Sep 29 12:31:49 2018 +0200
 Base API changes
 ================
 
-; @nfeske
+The framework's base API received two minor improvements.
 
-commit 7d641d5f1fe4e8a83fd078952431bb8ae30b3443
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Oct 1 14:04:50 2018 +0200
+First, the _util/reconstructible.h_ utility has a new method called
+'conditional', which simplifies the typical use case for 'Constructible'
+objects where the constructed/destructed state depends on a configuration
+parameter. The method alleviates the need to re-implement the logic manually.
 
-    base: add Reconstructible::conditional method
-    
-    The new 'conditional' method simplifies the typical use case for
-    'Constructible' objects where the constructed/destructed state depends
-    on a configuration parameter. The method alleviates the need to
-    re-implement the logic again and again.
-    
-    The patch also removes the 'Reconstructible' constructor arguments
-    because they are unused.
-    
-    Fixes #3006
-
-commit 5446c52c430b840b3834211fe5442883d4ffe01a
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Oct 2 16:27:35 2018 +0200
-
-    base: make Entrypoint placeable on specific cpu
-    
-    Fixes #3008
+Second, when creating a secondary entrypoint, the CPU affinity of the
+entrypoint is now specified as an argument.
 
 
 Libraries and applications
