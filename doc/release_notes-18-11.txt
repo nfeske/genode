@@ -18,29 +18,316 @@ Raising the bar of quality assurance
 Automated test infrastructure hosted on top of Genode
 =====================================================
 
-; @m-stein
+When it comes to testing, Genode's run tool provides a convenient way for
+building, configuring, executing and evaluating system scenarious. Throughout
+the years, the base framework was equipped with a broad variety of run scripts
+each dedicated to another aspect of Genode. Most of them support beeing
+integrated into a fully automated test infrastructure. For instance, all the
+tests listed in 'tool/autopilot.list' are automatically evaluated each night
+at Genode Labs for different platforms and kernels. This exposes new features
+to other flavors of base-system behavior (like scheduling) and quickly reveals
+regression bugs.
 
-commit 146f45f3d4b9e97ff399b42a72f9114f9094a465
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Wed Oct 10 18:08:14 2018 +0200
+[image depot_autopilot_before]
 
-    Archive recipes for autopilot tests
+However, this approach has its drawbacks:
 
-commit 2d041ac0fc9a465ecbb43d6f5b506c3a369e481b
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Mon Oct 1 16:53:37 2018 +0200
+* As each test is realized through a run script executed independent from each
+  other, the target platform gets booted over and over again. So, for larger
+  lists of tests like 'tool/autopilot.list', boot times can sum up to a
+  significant magnitude. Moreover, continuous on and off switching of
+  hardware may have a negative effect on their lifetime.
 
-    depot_autopilot: evaluate sets of test packages
+* Most of the mentioned run scripts neither need more than a few minutes to
+  finish nor do they include a lot of dynamics regarding, for instance, the
+  creation and destruction of components. So, the software system as a whole
+  is stressed only to a very limited extent.
 
-commit 35fe4842b077d63e21c0f5339ce1e6e50b645d54
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Mon Nov 19 14:04:55 2018 +0100
+* The description of the test scenarios cannot be used for running tests
+  from within an on-target Genode natively. But especially in the context of
+  the evergrowing use of the Sculpt desktop system, this becomes more and
+  more desirable. The run script mechanism, however, is designed for a
+  Linux-based host platform remote-controling the target.
 
-    depot_autopilot: show result statistic
-    
-    Print a line like "succeeded: 35 failed: 11 skipped: 2" below the list of test
-    results. Adds further attributes to <previous-results> to communicate also the
-    previous statistics.
+This brought us to the idea of creating a new component. One that takes as
+input sets of tests described through Genode means only and evaluates one
+after the other in a sandbox environment to, eventually, provide the user with
+an easy-to-read result list. When it came to choosing the test-description
+format, the already existing Depot Query mechanism was an obvious candidate.
+Depot packages are designed to describe dynamically loadable subtrees for
+Genodes component hierarchy, i.e. exactly for what a test scenario should be
+in the context of the new component (plus some extra information about
+platform requirements and success conditions). Furthermore, for managing
+depots, Genode already provides a comprehensive set of well-tested tools, most
+noteworthy in this context the Depot Query application. This component makes
+querying the contents of packages as easy as writing the package path to a
+Report and awaiting an according blueprint through a ROM dataspace. That said,
+the choice of the backend mechanism was clear and consequently we named the
+new component Depot Autopilot.
+
+
+The Depot Autopilot
+-------------------
+
+As starting point for the development of the Depot Autopilot, the Depot Deploy
+component (introduced with the 17.08 release), served us well. Both components
+have the purpose of loading Genode scenarious from packages and start them
+inside a nicely separated instance of Genodes Init runtime. For this reason, a
+good part of the Depot Autopilot configuration interface might look familiar
+to you, as shall be depicted by this example:
+
+! <config arch="x86_64" children_label_prefix="this is new">
+!
+!   <static>
+!     <parent-provides>
+!       <service name="ROM"/>
+!       <service name="CPU"/>
+!       ...
+!     </parent-provides>
+!   </static>
+!
+!   <common_routes>
+!     <service name="ROM" label_last="init"> <parent/> </service>
+!     <service name="CPU">                   <parent/> </service>
+!     ...
+!   </common_routes>
+!
+!   <start name="test-mmio"     pkg="genodelabs/pkg/test-mmio/2018-10-30"/>
+!   <start name="test-xml_node" pkg="genodelabs/pkg/test-xml_node/2018-10-30"/>
+!   ...
+!
+!   <previous-results ...> <!-- this is new --> </previous-results>
+!
+! </config>
+
+Like in Depot Deploy configurations, there are <start> nodes to declare which
+scenarios to run and from which packages to load them, the 'arch' attribute to
+select the packages architecture variant, and also the <static> and <route>
+nodes to install common parts of configuration. The same goes for the
+'runtime' files in the test packages. They are actually fully compatible with
+the Depot Deploy tool:
+
+! <runtime ram="32M" caps="1000" binary="init">
+!
+!   <requires> <timer/> <nic/> </requires>
+!
+!   <content>
+!     <rom label="ld.lib.so"/>
+!     <rom label="test-example"/>
+!   </content>
+!
+!   <config>
+!     <parent-provides> ... </parent-provides>
+!     <default-route>   ... </default-route>
+!     <start name="test-example" caps="500">
+!       <resource name="RAM" quantum="10M"/>
+!     </start>
+!   </config>
+!
+!   <events> <!-- this is new --> </events>
+!
+! </runtime>
+
+But, there are also new things as you can see. We will explain them soon.
+
+Roughly outlined, the concepts of the Depot Autopilot differs in three points
+from that of the Depot Deploy component:
+
+1) The outcome of loaded scenarios shall be captured and interpreted in order
+   to support failure detection and analysis,
+2) scenarios shall not run in parallel but in a given order to mitigate
+   interfering influences and make results reproducable,
+3) and, last but not least, scenarios must be considered to trigger bugs that
+   render themselves or even the whole system stuck.
+
+The first point is addressed by the new <events> tag in 'runtime' files. It
+allows for listing events that might trigger during a test and the according
+reaction of the Depot Autopilot. Currently, two types of events, the <log>
+event and the <timeout> event, are available covering most of the use-cases
+found in tests of the Genode main repositories. Here's a short example how to
+use them:
+
+! <runtime>
+!   <events>
+!     <timeout meaning="failed" sec="20"/>
+!     <log meaning="succeeded">[init -> test-example] Test succeeded!</log>
+!     <log meaning="failed">Error: </log>
+!   </events>
+!   ...
+! </runtime>
+
+The content of each <log> tag is matched continuously against the output of
+each LOG client of a test. The first tag whose content matches completely
+decides on the tests result through its 'meaning' attribute and causes the
+Depot Autopilot to replace the current test scenario with its successor. In
+order to be able to do the matching, the Depot Autopilot acts as LOG session
+server to all components of a test scenario, given that incoming LOG session
+requests can be correlated to these components. This requires that the Depot
+Autopilot is told the session-label prefix of the runtime Init through the new
+'children_label_prefix' attribute in its configuration:
+
+! <config ... children_label_prefix="test_init_runtime -> ">
+
+As soon as the <log> event matching is done, the test output is incorporated
+into the Autopilots LOG ouput, so, later debugging may benefit from it as
+well.
+
+A <timeout> tag, at the other hand, causes the Autopilot to set a timeout
+according to the 'sec' attribute when starting the test. Should the timeout
+trigger before the test terminated in another way, it's up to the <timeout>
+tag to define the tests result and end the test.
+
+The second point, regarding the scheduling of tests, is an easy one. While for
+the Depot Deploy tool the order of <start> nodes is irrelevant, for the Depot
+Autopilot it defines the order in which tests shall be executed.
+
+The last point asked what to do when a test hangs-up or, even worse,
+compromizes the whole system. Well, the former is already manageable by using
+the above mentioned <timeout> events. The latter, on the other hand, brings
+the <previous-results> tag of the Autopilot configuration into play. With this
+tag, you can equip a Depot Autopilot instance with the results of another
+previously running instance. This puts you in the position of rebooting the
+target platform when a system crash was detected and proceed with the yet
+pending tests without loosing the information gathered during earlier boot
+cycles. This is a short example:
+
+! <config>
+!   <previous-results time_sec="15"
+!                     failed="1"
+!                     succeeded="1"
+!
+!   > test-1  ok       0.563  log "Succeeded"
+!  test-2  failed  20.000  reboot</previous-results>
+!   ...
+! </config>
+
+The so configured new Depot Autopilot instance will put the content string of
+the <previous-results> tag at the top of its result list. The values of the
+attributes of the tag ('succeeded', 'failed', ...), at the other hand, are
+relevant for the result statistics.
+
+Once all tests are evaluated, the Depot Autopilot prints a result overview
+comprising a list of all single test results and some statistical data:
+
+! --- Finished after 1207.154 sec ---
+!
+!   test-init       failed   300.015  timeout 300 sec
+!   test-init_loop  ok        57.228  log "child "test-init_loop" exited wi ..."
+!   test-ldso       ok         1.779  log "[init -> test-ldso] Lib_2_global ..."
+!
+! succeeded: 2 failed: 1 skipped: 0
+
+For a comprehensive description of all the features of the Depot Autopilot you
+may have a look at _<GENODE_DIR>/repos/gems/src/app/depot_autopilot/README_.
+
+
+The run script
+--------------
+
+With the Depot Autopilot component, testing becomes more independent from a
+non-Genode host system that executes run scripts. However, we did not intent
+to port all existing tests at once nor do we know yet if this is desirable.
+And, anyway, in our nightly testing infrastructure, tasks like powering on and
+off the target platform or managing the log archives are still bound to Linux
+and the Run mechanism. Thus, a mediation between the Depot Autopilot and the
+existing test infrastructure is required.
+
+[image depot_autopilot_after]
+
+The solution is the new run script _gems/run/depot_autopilot.run_ . This run
+script describes a scenario that combines a TAR VFS, a Depot Query component,
+the Depot Autopilot, and an Init runtime to a fully automated meta test-unit
+for the Run mechanism. Inside the script, you have a convenient and small
+set of variables for configuration. Normally, you just list the names of the
+test packages to evaluate, and define platform incompatibilities through
+optional 'skip_test_pkg' variables:
+
+! set avail_test_pkgs {
+!   test-lx_block
+!   test-log
+!   test-tcp_bulk_lwip
+!   test-mmio
+!   ... }
+!
+! set skip_test_pkg(test-lx_block)      [expr ![have_spec linux]]
+! set skip_test_pkg(test-tcp_bulk_lwip) [expr ![have_spec x86]]
+
+Together with the '--depot-user' Run parameter, the run script composes an
+archive of a 'depot' folder containing the correct versions of all needed
+packages. As usual, the Run modules do the booting of the target platform and
+the loading of the system image thereby shipping also this depot archive as
+Genode boot module. The archive can then be accessed by the Depot Query tool
+through the VFS server. The Depot Autopilot, on the other side, gets
+configured to successively request the exact same packages from the Depot
+Query tool and evaluate them using the Init runtime named "dynamic".
+
+[image depot_autopilot_arch]
+
+But the run script can also handle system crashes. Through the Depot
+Autopilots log output, it keeps track of every started test and its individual
+timeout. If a timeout goes by without the Depot Autopilot having terminated
+the current test, the run script intervenes. As it also recorded each single
+test result printed by the Depot Autopilot up to this point, it can now reboot
+the system to continue testing. In this follow-up attempt, all stays the same
+except two things. First, the list of tests is reduced by the already
+evaluated tests and the test that caused the reboot, and second, the
+<previous-results> tag of the Depot Autopilot is used to pass on the findings
+of former attempts. This way, the final result list of the Depot Autopilot
+should always be reached and always be complete.
+
+Another feature of the run script is that it provides an alternate mode for
+debugging a single test without having to switch the scenario. Through three
+variables you can deactivate all but one test and apply source code changes
+without having to rebuild packages. For example:
+
+! set single_test_pkg "test-libc_vfs"
+! set single_test_build { server/ram_fs test/libc_vfs }
+! set single_test_modules { ram_fs vfs.lib.so }
+
+This would run only the 'libc_vfs' test and overlay the package contents with
+the 'ram_fs' and 'vfs.lib.so' images freshly build from the local
+repositories.
+
+A more detailed documentation of the run script can be found at
+_<GENODE_DIR>/repos/gems/src/app/depot_autopilot/README_ also and inside the
+run script itself.
+
+
+The test packages
+-----------------
+
+Of course, the Depot Autopilot isn't worth much without any test packages in
+place and all of our tests existed only in the format expected by the Run
+tool. But we had the feeling that a significant amount of them should be
+portable without big difficulties. One possibly limiting factor was that
+drivers should not be an individual part of test runtimes as, so far,
+restarting drivers causes problems in most cases. Therefore, they must be
+provided by the surrounding system. However, holding drivers for all hardware
+available just in case that a test needs them would unnecessarily raise the
+scenario complexity and disturb less demanding but more performance critical
+tests. Thus we decided to let the Depot Autopilot run script provide no more
+than the timer driver as, for instance, most of the unit tests for pure
+framework aspects are satisfied with this. As soon as we want to port tests
+using other hardware, like the network-bench suite, a dedicated Depot
+Autopilot run script would be the way to go. Another noteworthy point is the
+rather basic feature set for doing result evaluation with the Depot Autopilot.
+But it turned out that most tests comply with this limitation too as tricky
+succeess conditions weren't encouraged by the Run mechanism neither. However,
+we found that, indeed, a good amount of tests doesn't fit well into the new
+approach yet as they would require a runtime configuration composed depending
+on the target platform. Of course, one could achieve this by creating a
+distinct package for each possible setup but this would yield an unpleasant
+number of largely redundant files in most cases. A better way to solve this
+in the future would be to make use of the ROM filter component to compose the
+configurations at runtime.
+
+All in all, we still managed to port 75 tests from the repositories 'base',
+'os', 'libports', and 'ports' to the Depot Autopilot during the last months.
+To avoid redundancy, we removed the corresponding run scripts at the same
+time. Each package that represents a test was named with the prefix "test-"
+so you can quickly receive an overview of all available tests by doing:
+
+! find <GENODE_DIR>/repos -type d -wholename *recipes/pkg/test-*
 
 
 New tooling for obtaining test-coverage metrics
