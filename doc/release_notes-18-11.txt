@@ -566,72 +566,36 @@ Date:   Sat Nov 10 11:55:21 2018 +0100
 New depot packages
 ==================
 
-; @nfeske
+Our work on the Genode-based test-automation framework prompted us to a
+package for each individual test. As a nice byproduct, we introduced depot
+recipes of all components the tests depend on, and a few more. Thereby, the
+following new depot content has become available:
 
-commit 655fbbd984747363f3de4ca4a854c9e0ab7d59ae
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Mon Nov 5 12:53:12 2018 +0100
+Source archives for the base-hw microkernel for various platforms:
+* src/base-hw-arndale
+* src/base-hw-imx53_qsb
+* src/base-hw-imx53_qsb_tz
+* src/base-hw-odroid_xu
+* src/base-hw-panda
+* src/base-hw-rpi
+* src/base-hw-wand_quad
 
-    base-hw: recipes for ARMv7a platforms
-    
-    * To base-hw/recipes/src add base-hw-arndale, base-hw-imx53_qsb,
-      base-hw-imx53_qsb_tz, base-hw-odroid_xu, base-hw-panda, base-hw-rpi,
-      base-hw-wand_quad
-    * Ensure that the correct base-hw recipe is choosen by the run module
-      'boot_dir/hw'
+Source archives for the Fiasco.OC microkernel for a few platforms:
+* src/base-foc-pc
+* src/base-foc-arndale
+* src/base-foc-pbxa9
 
-commit a1ff3cc317d8df14f9a36624db4352e44ac6a5cb
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Tue Nov 6 16:12:59 2018 +0100
+Source archives of components used by the test scenarios:
+* src/nic_bridge
+* src/python
 
-    base-foc: recipes for ARMv7a platforms
-    
-    * In base-foc/recipes/src/ replace base-foc with base-foc-pc
-    * To base-foc/recipes/src add base-foc-arndale, base-foc-pbxa9
-    * Ensure that the correct base-foc recipe is choosen by the run module
-      'boot_dir/foc'
-
-commit 21efcf9e458284dc5bdeeb93038b59a9d9b659b5
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Sun Nov 4 17:09:35 2018 +0100
-
-    os/recipes: src/nic_bridge
-
-commit 0c60b312beedd67afb8c8625a42a0003baedb15a
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Sun Nov 4 23:28:08 2018 +0100
-
-    liports/recipes: api/ and src/python
-
-commit bce8ba35160ce676ebf2723f71c0c26bff925511
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Thu Nov 1 14:22:20 2018 +0100
-
-    Genode toolchain depot package
-    
-    Fix #3028
-
-commit 2a45dc173f891a7d24aaaf9e888dc75549e8ddac
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Sat Sep 1 18:42:52 2018 +0200
-
-    TempleOS package for VirtualBox on NOVA.
-    
-    Terry Davis, the creator of TempleOS, passed away this week.
-
-commit c8774a9b6a4d1f78960cc80cda08761b67437b00
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Mon Sep 3 13:01:03 2018 +0200
-
-    Add README, LICENSE to TempleOS, remove Nic connection
-
-commit 2ef4fffac147002c39db11d16f5b9f5f0677159d
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Nov 29 13:33:40 2017 +0100
-
-    chocolate-doom: create deployable pkg
-    
-    Fixes #115.
+Source archives and package runtimes needed for hosting the gcov tool and
+the GCC tool chain:
+* src/gmp, src/mpc, src/mpfr
+* src/binutils_x86, src/gcc_x86
+* src/gnumake, src/sed, src/tar, src/which
+* pkg/gcov
+* pkg/noux-build-x86
 
 
 Platforms
