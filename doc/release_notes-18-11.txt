@@ -143,15 +143,49 @@ Base framework and OS-level infrastructure
 Component health monitoring
 ===========================
 
-; @nfeske
+Scenarios where components are known to sometimes fail call for a mechanism
+that continuously checks the health of components and reports anomalies. To
+accommodate such use cases, we introduced a low-level health-monitoring
+mechanism into the foundation of the framework and made this mechanism
+available via init's configuration concept.
 
-commit 9101dc7667de808f952f23e90ad881d232613ef9
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Nov 14 16:19:30 2018 +0100
+At the lowest level, the parent interface received two new RPC functions. The
+'heartbeat_sigh' function allows a child to register a signal handler for
+heartbeat signals. The 'heartbeat_response' allows a child to confirm its
+health to the parent. With this basic interface, a parent becomes able to
+periodically ask for a life sign from each of its children.
 
-    init: health monitoring of child components
-    
-    Fixes #3039
+; XXX [image heartbeat]
+
+Each component installs a heartbeat signal handler during its initialization.
+This happens under the hood and is thereby transparent to application code.
+The default heartbeat handler invokes the 'heartbeat_response' function at
+the parent interface and thereby confirms that the component is still able to
+respond to external events.
+
+Based on this low-level mechanism, we enhanced the init component with the
+ability to monitor components hosted on top of init. A global (for this init
+instance) heartbeat rate can be configured via a '<heartbeat rate_ms="1000"/>'
+node at the top level of init's configuration. If configured, init opens a
+dedicated timer session for performing health checks periodically. Each
+component that hosts a '<heartbeat>' node inside its '<start>' node is
+monitored. In each period, init requests heartbeat responses from all
+monitored children and maintains a count of outstanding heartbeats for each
+component. The counter is incremented in each period and reset whenever the
+child responds to init's heartbeat request. Whenever the number of outstanding
+heartbeats of a child becomes higher than 1, the child may be in trouble. Init
+reports this information in its state reports via the new attribute
+'skipped_heartbeats="N"' where N denotes the number of periods since the child
+became unresponsive.
+
+Of course, the mechanism won't deliver 100% accuracy. There may be situations
+like long-running calculations where long times of unresponsiveness are
+expected from a healthy component. Vice versa, in a multi-threaded
+application, the crash of a secondary thread may go undetected if the primary
+(checked) thread stays responsive. However, in the majority of cases where a
+component crashes (page fault, stack overflow), gets stuck in a busy loop,
+produces a deadlock, or throws an unhandled exception (abort), the mechanism
+nicely reflects the troublesome situation to the outside.
 
 
 Enhanced window-management flexibility
@@ -251,6 +285,10 @@ Date:   Fri Nov 23 15:56:51 2018 +0100
     Update lwIP to 2.1.2
     
     Fix #3035
+
+
+Java language runtime
+=====================
 
 
 Ada language runtime
