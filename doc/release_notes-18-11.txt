@@ -191,67 +191,154 @@ nicely reflects the troublesome situation to the outside.
 Enhanced window-management flexibility
 ======================================
 
-; @nfeske
+Genode's
+[https://genode.org/documentation/release-notes/14.08#New_GUI_architecture - custom GUI architecture]
+consists of multiple components with strictly distinguished roles. The central
+broker between those components is a low-complexity window-manager (wm)
+component, which is complemented by a so-called decorator defines how windows
+look, and a layouter defines how they behave. Since the layouter and decorator
+are sandboxed components without access to the application window's content
+nor the user input into the applications, those components are not critical
+for the security of GUI applications.
 
-commit a973d9902bbcbea19bd15d83342b052dbf46eaac
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Sep 26 11:36:36 2018 +0200
 
-    gems: flexible window layouter
-    
-    This commit replaces the former floating_window_layouter with a new
-    window_layouter component that supports the subdivision of screen space
-    into columns and rows, the concept of layers, and the principle ability
-    to store window layout information across reboots. The latter is
-    accomplished by reflecting the component's internal state as a 'rules'
-    report to the outside.
-    
-    Fixes #3031
+New window layouter
+~~~~~~~~~~~~~~~~~~~
 
-commit 1a75c5227e22658b8c30b2ab3c639498b85ca545
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Nov 13 11:55:46 2018 +0100
+The window layouter complements the window manager with the policy of how
+windows are positioned on screen and how windows behave when the user
+interacts with window elements like the maximize button or the window title.
+The current release replaces the former "floating_window_layouter" with a new
+"window_layouter" component that supports the subdivision of screen space into
+columns and rows, the concept of layers, and the principle ability to store
+window layout information across reboots.
 
-    Rename wm pkg to motif_wm
-    
-    This way, we can subsequently introduce a new 'wm' pkg that contains the
-    window manager only, w/o any hard-wired decorator and layouter.
-    
-    Issue #3024
 
-commit 80394fc9d99427c05e11bae1d29b90ce6c9f187c
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Nov 16 15:41:58 2018 +0100
+Layout rules
+------------
 
-    sculpt: split window manager into multiple pkgs
-    
-    This commit moves the window layouter and window decorator into
-    dedicated packages that can now be combined with the "wm" server at
-    runtime and restarted/reconfigured/swapped-out independently.
-    
-    To use the window manager, one must start the 'wm', 'window_layouter',
-    and one of the 'motif_decorator' or 'themed_decorator' subsystems.
-    
-    Fixes #3024
+The window layouter positions windows according to rules defined by the
+component's configuration. The rules consist of two parts, the definition
+of the screen's layout and the assignment of client windows to the defined
+parts of the screen's layout.
 
-commit 14c153adf3bcd3a31cf4243c0c88c0a203e5b24f
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Nov 20 17:25:23 2018 +0100
+! <config>
+!   <rules>
+!     <screen>
+!       ...definition of screen layout...
+!     </screen>
+!     <assign label_prefix="..." target="..."/>
+!     ,,,
+!   </rules>
+!   ...
+! </config>
 
-    sculpt: launcher for recall_fs
-    
-    The recall file system is a place where components can remember state.
-    E.g., to allow the window layouter to recall the window layout of the
-    previous session.
+The '<screen>' node can host any number of '<column>' nodes, which partition
+the screen horizontally into columns. By default, each column has the same
+size. By specifying an optional 'weight' attribute, column sizes can be
+weighted relative to one another. The default weight is '1'. Alternatively,
+the 'width' of a column can be explicitly specified in pixels.
+Each column can host any number of '<row>' nodes, which subdivide the column
+vertically. Analogously to columns, rows can be dimensioned via an optional
+'weight' attribute or an explicit 'height' in pixels. A '<row>' can, in turn,
+contain '<column>' nodes, thereby further subdividing the screen.
+Each '<column>' or '<row>' can be used as window-placement target when
+equipped with a 'name' attribute. Each name must occur only once within
+the '<screen>'. In the following, a named column or row is referred to as
+_target_. Each target can host an optional 'layer' attribute. If not
+specified, the layer 9999 is assumed. A target with a lower layer overlaps
+targets with higher layers.
 
-commit feddb93db690da229def079f9801f7f68687a860
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Nov 20 17:27:06 2018 +0100
+The assignment of windows to targets is defined via '<assign>' nodes. Each
+'<assign>' node must be equipped with a 'label', 'label_prefix', or
+'label_suffix' attribute, which is used to match window labels. For a given
+window, the first matching '<assign>' node takes effect.
 
-    sculpt: let window layouter recall its prior state
-    
-    Issue #3024
-    Issue #3031
+Each '<assign>' node must have a 'target' attribute that refers to the name
+of a column or row. By default, the window is sized to fit the target area.
+However, it is possible to position the window relative to the target area by
+specifying the 'xpos', 'ypos', 'width', and 'height' attributes together with
+the 'maximized="no"' attribute.
+
+If multiple windows are assigned to the same target area, the order of their
+'<assign>' rules defines their stacking order. The window with earliest
+'<assign>' rule is displayed in front.
+
+
+Dynamic layouts
+---------------
+
+The window layouter is able to respond to rule changes at runtime.
+
+By specifying the '<config>' attribute 'rules="rom"', the window layouter
+tries to obtain the layout rules from a distinct ROM module. Should the ROM
+module not contain valid rules, the '<rules>' sub node of the '<config>' comes
+into effect.
+
+Any window-layout change such as the movement of a floating window is
+realized as a change of the window-layout rules. To support interactive
+adjustments of the window layout, the layouter responds to certain user
+interactions by generating new rules by itself in the form of a "rules"
+report. The generation of such rules can be enabled via the '<report>' sub
+node of the configuration:
+
+! <config>
+!   <report rules="yes"/>
+!   ...
+! </config>
+
+By feeding back the rules generated by the window layouter into the window
+layouter itself via a 'report_rom' service, the window layout becomes
+adjustable interactively. As the rules entail the complete state of the
+present window layout, it is possible to save/restore the layout state.
+
+
+Dynamic rule-generation mechanism
+---------------------------------
+
+Whenever a new window appears that solely matches a wildcard '<assign>' rule
+(one that uses a 'label_prefix' or 'label_suffix'), the layouter generates a
+new '<assign>' rule with the window's label as 'label' attribute. The
+explicitly labeled '<assign>' rules appear before any wildcard '<assign>'
+rules.
+
+If the user brings a window to front, the window layouter will change the order
+of the explicit '<assign>' rules such that the window's '<assign>' rule comes
+first. When moving or resizing a window, the 'xpos', 'ypos', 'width', and
+'height' attribute of the window's assign rule are updated. When maximizing
+or unmaximizing a window, the 'maximized' attribute of its '<assign>' rule is
+toggled.
+
+
+Modularized window system in Sculpt OS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sculpt OS used to come with a package called "wm", which comprised a
+ready-to-use composition of the window-system components, including the
+layouter, a decorator, and the configuration of these components.
+Even though, this package was convenient for start, we desire more
+flexibility. For example, a user may with to replace the decorator
+at runtime or tweak the configuration of the individual components at
+runtime. For this reason, we split up the wm package. For the convenient
+use in run scripts, we preserved the former wm package as "motif_wm".
+
+With the move of the window layouter and window decorators into
+dedicated packages, those components can now be combined with the "wm"
+server at runtime and restarted/reconfigured/swapped-out independently.
+To use the window manager in Sculpt, one must start the "wm",
+"window_layouter", and one of the "motif_decorator" or "themed_decorator"
+subsystems. It is possible to replace one decorator by the other at
+runtime.
+
+The window layouter package requires a so-called "recall_fs" component,
+which is a file system used for *remembering the window layouter's state*.
+Sculpt comes with ready-to-use "recall_fs" launcher, which hands out
+the directory _/recall_ of the used file system. When the window layouter
+is started, a file _/recall/window_layouter/rules_ reflects the current
+state of the layouter. It serves two purposes. First, it preserves
+the window layout across reboots. Second, it can be edited by the user
+or other components. Thereby, the layout policy can be tweaked without
+limits, and the rules can simply be swapped out by mere file operations.
 
 
 Network-stack improvements
