@@ -355,27 +355,56 @@ Date:   Sun Aug 26 22:11:04 2018 +0200
 SSH terminal server
 ===================
 
-; @cnuke
+Up to now we mostly focused on covering the direct interaction of a user with
+the system and besides a minimal TCP terminal there was no component to
+accommodate remote access. Instead of extending this component to add vital
+features like TLS or user authentication, we turned to using an existing
+protocol. For this use-case the SSH protocol is still a popular choice as
+clients and server programs are virtually available for all OSes.
 
-commit 9557e648227441611d48bb173b1d483f9fc2f7ff
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Sep 27 16:26:49 2018 +0200
+So with this release we introduce a component that makes Genode's Terminal
+session accessible via SSH. It is based on the server implemetation of libssh,
+which was updated to version 0.8.4. On the Genode side of things it acts as a
+Terminal session server to which Terminal clients can connect. From the outside
+users may access a specific Terminal session by logging in via SSH given they
+provide the proper login credentials. For now it only implements the SSH
+channel 'shell' and 'term' requests, i.e., it can be used for interactive
+sessions but not for scp/rsync or other operations that rely on the 'exec'
+request. Since the component merely makes Terminal sessions available, the
+SSH connection needs to be forcefully closed by issuing the well-known '~.'
+sequence rather than using '^D' (EOF) as the underlying Terminal session might
+not be able to deal with that.
 
-    gems: add interactive SSH Terminal component
-    
-    This component allows access to Terminal sessions via interactive SSH
-    sessions. Please read _repos/gems/src/server/ssh_terminal/README_ for
-    more detailed information.
-    
-    Fixes #3014.
+The following exemplary snippet shows how the component can by configured:
 
-commit 9ab288d8e3cbed2b2a86ee85beab7b478fda8245
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue Sep 25 13:13:27 2018 +0200
+!<config port="2022" ed25519_key="/etc/ed25519_host_key
+!        allow_password="yes" allow_publickey="yes"/>
+!
+!  <policy label="noux-system" user="root" password="toor"/>
+!  <policy label="noux-user"   user="user" pub_key="/etc/user.pub"/>
+!
+!  <vfs>
+!    <dir name="dev">
+!      <log/> <rtc/> <jitterentropy name="random"/>
+!    </dir>
+!    <dir name="socket"> <lxip dhcp="yes"/> </dir>
+!    <dir name="etc"> <fs/> </dir>
+!  </vfs>
+!  <libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" socket="/socket"/>
+!</config>
 
-    libports: update libssh to 0.8.4
-    
-    Issue #3014.
+The component is configured to listen on port '2022' for incoming SSH
+connections and allows for logging in by using either a password or public-key.
+The '<policy>' configuration is used to link the Terminal session to the SSH
+login. In this case, the Terminal session of the client with the label
+'noux-system' may be accessed via the 'root' login. The '<vfs>' configures the
+file system of the component. Besides access to the needed services, like the
+real-time clock, random device and the TCP/IP stack, it use a file system session
+mounted at '/etc' for housing the files needed by the component. In particular,
+these are the SSH server's host-key and the public-key for the 'user' login.
+
+For more information, please read _repos/gems/src/server/ssh_terminal/README_
+and take _repos/gems/run/ssh_terminal.run_ for a ride.
 
 
 Removed networking support from Noux
@@ -424,36 +453,6 @@ Date:   Sat Nov 10 11:55:21 2018 +0100
     
     https://github.com/XKCP/XKCP
     https://keccak.team/keccak.html
-
-
-New ports of protobuf, libconfig, umurmur
-=========================================
-
-; @cnuke
-
-commit 4d1095947687c042fd306b3d0435cb9f2fcc1ed4
-Author: Josef Söntgen <jws@sysret.de>
-Date:   Tue Sep 25 22:19:50 2018 +0200
-
-    Port of protobuf-c 1.3.1
-    
-    Issue #118.
-
-commit 6af2375ec96fc99785815a8ed20b0d78d70d0b09
-Author: Josef Söntgen <jws@sysret.de>
-Date:   Tue Sep 25 22:17:22 2018 +0200
-
-    Port of libconfig-1.7.2
-    
-    Issue #118.
-
-commit 1a29597d576efd09617a6fea6e393a314962307b
-Author: Josef Söntgen <jws@sysret.de>
-Date:   Tue Sep 25 23:17:14 2018 +0200
-
-    Port of umurmur 0.2.17
-    
-    Fixes #118.
 
 
 New depot packages
