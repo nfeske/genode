@@ -632,41 +632,17 @@ Date:   Thu Sep 13 16:53:57 2018 +0200
 Execution on bare hardware (base-hw)
 ====================================
 
-; @skalk
+Regarding our own kernel development this release comprises enhancements to
+increase performance on the supported ARM platforms. Most significantly is the
+default enabling of the FPU on all boards Genode runs on top of. All components
+build for ARMv6 and ARMv7a are now compiled to make use of it. Therefore, the
+runtime behaviour of certain scenarios can change significantly on ARM when
+using the new release.
 
-commit 8c460b3ea5a8745b3b7b336b4095f9fac13cd763
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri Sep 21 13:09:59 2018 +0200
+Moreover, after recognizing poor memory-access latency on several Cortex-A9
+plaforms, a regression in the enabling of the L2 cache got discovered and fixed.
+Especially, the i.MX6 based Wandboard Quad cache, clocking and power settings
+got tweaked well to achieve reasonable CPU and memory performance.
 
-    hw: enable l2-cache on Wandboard Quad (fix #1807)
-
-commit d56a7beadc4371f759f5a9c7780e24abcc6521a5
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Thu Nov 1 16:02:41 2018 +0100
-
-    hw: increase cpu frequency on Wandboard Quad
-    
-    Ref #1807
-
-commit 9561fdc4524f7b03147196f2d3d24f2ab70bf938
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon May 14 11:30:24 2018 +0200
-
-    hw: enable eager FPU context switch for ARM
-    
-    * Add an ieee754 FPU test
-    * Remove simple fpu test
-    
-    Fix #2822
-
-commit 9561fdc4524f7b03147196f2d3d24f2ab70bf938
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon May 14 11:30:24 2018 +0200
-
-    hw: enable eager FPU context switch for ARM
-    
-    * Add an ieee754 FPU test
-    * Remove simple fpu test
-    
-    Fix #2822
-
+This performance-wise line of work will be continued with regard to the next
+release.
