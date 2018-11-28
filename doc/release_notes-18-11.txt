@@ -47,7 +47,7 @@ New tooling for obtaining test-coverage metrics
 ===============================================
 
 The [https://gcc.gnu.org/onlinedocs/gcc/Gcov.html - gcov] tool can analyze how
-often each source code line of a test program got executed.
+often each source-code line of a test program got executed.
 
 On POSIX-like systems the usual steps to use this tool are as follows:
 
@@ -59,71 +59,76 @@ On POSIX-like systems the usual steps to use this tool are as follows:
 * When the test program is running, it collects coverage data and writes it
   into a gcov "data" file for each object file when the program exits.
 
-* The 'gcov' program uses the source, note and data files to generate annotated
-  source code files with the number of times each line was executed.
+* The gcov program uses the source, note, and data files to generate annotated
+  source-code files with the number of times each line was executed.
 
 We ported the gcov tool to Genode to use it with our native (non-libc) Genode
-tests and the 'depot_autopilot' run script and integrated it in the following
+tests and the 'depot_autopilot' run script. It is integrated in the following
 way:
 
-* 'COVERAGE = yes' in the 'target.mk' file of the test program adds the
-  gcov-specific compiler flags and links the program with the gcov library.
+* When adding 'COVERAGE = yes' to the _target.mk_ file of the test program,
+  the build system adds the gcov-specific compiler flags and links the
+  program with the gcov library.
 
-* The generated gcov note files get a symlink in the 'build/.../bin/gcov_data'
-  directory, which is added to the binary depot package of the test program, so
-  the note files are available in the depot in the 'depot_autopilot' file
-  system.
+* The generated gcov note files get a symlink in the _build/.../bin/gcov_data_
+  directory, which is added to the binary depot package of the test program.
+  This way,
+  the note files become available in the binary archives of the depot as
+  used by the "depot_autopilot" system scenario described in
+  Section [Automated test infrastructure hosted on top of Genode].
 
-* When the test program starts, it calls `env.exec_static_constructors()` and
-  each instrumented object file registers itself at the gcov library from a
+* When the test program starts, it calls 'env.exec_static_constructors()'.
+  Each instrumented object file registers itself at the gcov library from a
   static constructor (auto-generated with the gcov compiler flags).
 
 * The gcov library needs the Genode environment to write the collected data to
-  a file system, so the test program also calls the `gcov_init()` function with
+  a file system, so the test program also calls the 'gcov_init()' function with
   a reference to the environment.
 
-* When the test program is finished, it calls `genode_exit()`, which calls an
+* When the test program is finished, it calls 'genode_exit()', which calls an
   exit handler registered by the gcov library. The gcov library then writes the
-  coverage data files to a RAM file system with a path which matches the path
+  coverage data files to a RAM file system with a path that matches the path
   to the note files in the depot in the same file system.
 
-* When all tests are finished, the 'depot_autopilot' runs the 'gcov' program,
+* When all tests are finished, the depot_autopilot scenario runs the gcov program,
   which scans the file system for the collected gcov data files and writes the
   final analysis for each file to the log. If the name of the test package is
-  included in the 'avail_test_src_pkgs' list of the 'depot_autopilot' run
-  script, the source and api packages of the test are added to the
-  'depot_autopilot' depot and the source code is printed together with the
+  included in the 'avail_test_src_pkgs' list of the _depot_autopilot.run_
+  script, the source and API archives of the test are added to the
+  depot and the source code is printed together with the
   counts and line numbers, otherwise only the counts and line numbers with the
   text '/*EOF*/' on each line are printed.
 
 So far, we enabled the code coverage analysis feature for the 'xml_generator'
-test and it can be seen in action by running the 'depot_autopilot' run script.
+test and it can be seen in action by running the _depot_autopilot.run_ script.
 
 
 Static code analysis
 ====================
 
-The static analyzer tool of https://clang-analyzer.llvm.org can
-analyze source code in C and C++ projects to find bugs during
+The static analyzer tool of [https://clang-analyzer.llvm.org] can
+analyze source code in C and C++ projects to find bugs at
 compile time.
 
-With this tool enabled Genode users can check and ensure the quality of
+With this tool enabled, Genode users can check and ensure the quality of
 Genode components. The tool can be invoked during make invocations and
-during creation of Genode packages.
+during the creation of Genode packages.
 
-For the make invocation a STATIC_ANALYZE variable on the commandline will
-cause the tool to run next to the actual build step.
+For the invocation of _make_ within a Genode build directory, the new
+STATIC_ANALYZE variable on the command line will
+prompt the static analyzer to run next to the actual build step.
 
 ! STATIC_ANALYZE=1 make -C build/x86_64 KERNEL=... run/...
 
-For the creation of Genode packages the wrapper tool static_analyze is
-required, which must be invoked before any tool/depot/* tools to take effect,
+For analyzing Genode packages, the new wrapper tool
+_tool/depot/static_analyze_ becomes handy.
+It can be combined with the existing _tool/depot/*_ tools to take effect,
 e.g.:
 
 ! tool/depot/static_analyze tool/depot/create <user>/pkg/...
 
-The results of the static analyzer tool is generated in form of html pages and
-can be checked afterwards. The following example output showcases the output
+The results of the static-analyzer tool is generated in form of html pages and
+can be inspected afterwards. The following example output showcases the output
 of the static analyzer tool:
 
 !
@@ -135,17 +140,18 @@ of the static analyzer tool:
 ! LINK     init
 ! scan-build: 0 bugs found.
 ! scan-build: The analyzer encountered problems on some source files.
-! scan-build: Preprocessed versions of these sources were deposited in '/tmp/scan-build-2018-11-28-111203-20081-1/failures'.
+! scan-build: Preprocessed versions of these sources were deposited in
+!             '/tmp/scan-build-2018-11-28-111203-20081-1/failures'.
 
 
 Genode as a platform for Mirage-OS unikernels
 #############################################
 
-This year we collaborated with [https://mirage.io - MirageOS]
+This year, we collaborated with [https://mirage.io - MirageOS]
 at [https://bornhack.dk/bornhack-2018/ - Bornhack] and
 the MirageOS hack retreat in Marrakesh to bring unikernel
 applications to Genode as native components. MirageOS is an
-application framework for that provides all necessary
+application framework that provides all necessary
 OS abstractions for networked applications as a library. A MirageOS
 unikernel requires a machine operating system to provide a
 thread of execution, system time, a network interface, and block
@@ -157,11 +163,11 @@ applications this allows for massive code pruning at
 compile-time and improved memory and logic density at runtime.
 
 MirageOS was originally implemented with [https://xenproject.org/ - Xen] as the machine OS
-but to port MirageOS to other hypervisors a general sandboxing middleware
+but to port MirageOS to other hypervisors, a general sandboxing middleware
 library was created. This library is Solo5, which provides the
 simple abstractions necessary for running a unikernel as
 paravirtualized guest or as sandboxed process of another OS.
-After investigating both approches we choose to implement a
+After investigating both approaches, we choose to implement a
 native Solo5 bindings library. This follows our belief that an
 operating system should be capable of providing process isolation
 equal to and more efficient than virtualization. We share this belief
@@ -171,15 +177,15 @@ Furthermore, the burden of developing and maintaining a unikernel
 support layer is trivial compared to a virtual machine monitor.
 
 To build and deploy MirageOS with Genode requires coordination at
-both sides, for this reason Genode target support was added to the Mirage
+both sides. For this reason, Genode target support was added to the Mirage
 tooling in the [https://github.com/mirage/mirage/releases/tag/3.3.0 - 3.3.0 release].
 The Genode platform layer of Solo5 and Mirage differs most from other targets such as
 [https://muen.sk/articles.html#mirageos-unikernels - Muen] in that is
 is dynamically linked. This allows a Mirage image to remain viable across
 Genode API and ABI changes.
 
-To compile Mirage code into a Genode compatible binary one may follow
-the standard build procedure using the 'mirage' tool just as one
+To compile Mirage code into a Genode compatible binary, one may follow
+the standard build procedure using the _mirage_ tool just as one
 would for Muen or Unix.
 
 ! # See https://mirage.io/docs/ for instructions
@@ -191,10 +197,10 @@ would for Muen or Unix.
 ! make build
 
 The output is a Genode program dynamically linked to a Solo5 bindings
-library. This library is built using the Genode build toolchain and
+library. This library is built using the Genode build tool chain and
 is available as a [https://depot.genode.org/genodelabs/bin/x86_64/solo5 - depot package].
 Finding a smooth workflow for deploying unikernels is an open topic
-for future releases, but for now we offer a run scenario for creating
+for future releases. But for now, we offer a run scenario for creating
 a standalone x86_64 MirageOS boot image with an ethernet driver and a
 graphical console log.
 
@@ -208,9 +214,9 @@ graphical console log.
 ! # To prepare a USB image for booting real hardware:
 ! sudo cp var/run/mirage_pretty.iso «your USB stick device file»
 
-In the most minimal networked scenario a Mirage instance requires
+In the most minimal networked scenario, a Mirage instance requires
 only handful of components, time sources, a network driver, and
-an I/O hardware access multiplexer.
+an I/O hardware-access multiplexer.
 
 [image solo5_tcb] A minimum viable Genode system for hosting Mirage,
   the trusted computing base is highlighted in red
@@ -221,12 +227,13 @@ by measuring the lines of C++ code used to produce such an image. This yields
 an initial metric for assessing the security of a system as well as its cost to
 develop and maintain. By compiling each component with debugging symbols,
 parsing binaries for file paths injected by the compiler, and collecting a sum of
-the number of lines found in each file we get an estimate of the total line count
+the number of lines found in each file, we get an estimate of the total line count
 for each component. Building a set of every source file used in the minimal system,
-excuding the unikernel itself, the sum of lines of code does not excede 50,000.
+excluding the unikernel itself, the sum of lines of code does not exceed 50,000.
 We assert that this a fraction of the size of any Unix-derived hosting environment.
 
 [image solo5_tcb_sloc]
+
 
 Base framework and OS-level infrastructure
 ##########################################
@@ -242,7 +249,7 @@ available via init's configuration concept.
 
 At the lowest level, the parent interface received two new RPC functions. The
 'heartbeat_sigh' function allows a child to register a signal handler for
-heartbeat signals. The 'heartbeat_response' allows a child to confirm its
+heartbeat signals. The 'heartbeat_response' function allows a child to confirm its
 health to the parent. With this basic interface, a parent becomes able to
 periodically ask for a life sign from each of its children.
 
@@ -254,10 +261,11 @@ The default heartbeat handler invokes the 'heartbeat_response' function at
 the parent interface and thereby confirms that the component is still able to
 respond to external events.
 
-Based on this low-level mechanism, we enhanced the init component with the
+With this low-level mechanism in place, we enhanced the init component with the
 ability to monitor components hosted on top of init. A global (for this init
 instance) heartbeat rate can be configured via a '<heartbeat rate_ms="1000"/>'
-node at the top level of init's configuration. If configured, init opens a
+node at the top level of init's configuration. The heartbeat rate can be
+specified in milliseconds. If configured, init uses a
 dedicated timer session for performing health checks periodically. Each
 component that hosts a '<heartbeat>' node inside its '<start>' node is
 monitored. In each period, init requests heartbeat responses from all
@@ -265,7 +273,7 @@ monitored children and maintains a count of outstanding heartbeats for each
 component. The counter is incremented in each period and reset whenever the
 child responds to init's heartbeat request. Whenever the number of outstanding
 heartbeats of a child becomes higher than 1, the child may be in trouble. Init
-reports this information in its state reports via the new attribute
+reports this information in its state report via the new attribute
 'skipped_heartbeats="N"' where N denotes the number of periods since the child
 became unresponsive.
 
@@ -286,18 +294,18 @@ Genode's
 [https://genode.org/documentation/release-notes/14.08#New_GUI_architecture - custom GUI architecture]
 consists of multiple components with strictly distinguished roles. The central
 broker between those components is a low-complexity window-manager (wm)
-component, which is complemented by a so-called decorator defines how windows
-look, and a layouter defines how they behave. Since the layouter and decorator
+component, which is complemented by a so-called decorator that defines how windows
+look, and a layouter that defines how they behave. Since the layouter and decorator
 are sandboxed components without access to the application window's content
-nor the user input into the applications, those components are not critical
-for the security of GUI applications.
+nor the user input into the applications, those components are largely uncritical
+for the information security of GUI applications.
 
 
 New window layouter
 ~~~~~~~~~~~~~~~~~~~
 
 The window layouter complements the window manager with the policy of how
-windows are positioned on screen and how windows behave when the user
+windows are positioned on screen and how they behave when the user
 interacts with window elements like the maximize button or the window title.
 The current release replaces the former "floating_window_layouter" with a new
 "window_layouter" component that supports the subdivision of screen space into
@@ -407,8 +415,8 @@ Modularized window system in Sculpt OS
 Sculpt OS used to come with a package called "wm", which comprised a
 ready-to-use composition of the window-system components, including the
 layouter, a decorator, and the configuration of these components.
-Even though, this package was convenient for start, we desire more
-flexibility. For example, a user may with to replace the decorator
+Even though this package was convenient for a start, we desire more
+flexibility. For example, a user may wish to replace the decorator
 at runtime or tweak the configuration of the individual components at
 runtime. For this reason, we split up the wm package. For the convenient
 use in run scripts, we preserved the former wm package as "motif_wm".
@@ -416,30 +424,31 @@ use in run scripts, we preserved the former wm package as "motif_wm".
 With the move of the window layouter and window decorators into
 dedicated packages, those components can now be combined with the "wm"
 server at runtime and restarted/reconfigured/swapped-out independently.
-To use the window manager in Sculpt, one must start the "wm",
+To use the window manager in Sculpt, one must launch the "wm",
 "window_layouter", and one of the "motif_decorator" or "themed_decorator"
-subsystems. It is possible to replace one decorator by the other at
+packages. It is possible to replace one decorator by the other at
 runtime.
 
-The window layouter package requires a so-called "recall_fs" component,
+The window layouter package depends on a so-called "recall_fs" component,
 which is a file system used for *remembering the window layouter's state*.
 Sculpt comes with ready-to-use "recall_fs" launcher, which hands out
 the directory _/recall_ of the used file system. When the window layouter
 is started, a file _/recall/window_layouter/rules_ reflects the current
 state of the layouter. It serves two purposes. First, it preserves
 the window layout across reboots. Second, it can be edited by the user
-or other components. Thereby, the layout policy can be tweaked without
-limits, and the rules can simply be swapped out by mere file operations.
+or (potentially) by other components. Thereby, the layout policy can be
+tweaked without limits, and the rules can simply be swapped out by mere file
+operations.
 
 
 Network-stack improvements
 ==========================
 
 The transition from lwIP as a plugin to the libc library to a plugin to
-the VFS library is complete. As a result POSIX applications can no longer
+the VFS library is complete. As a result, POSIX applications can no longer
 be linked to the lwIP through the 'libc_lwip' library. Instead they need
-only to link with the `libc` library and be configured at runtime to open
-network connections through the local VFS. The `libc` library now features
+only to link with the 'libc' library and be configured at runtime to open
+network connections through the local VFS. The 'libc' library now features
 networking support by default with the actual TCP/IP stack implemented in
 dynamically loaded VFS plugins. An example configuration for using lwIP
 with DHCP follows:
@@ -463,14 +472,12 @@ The lwIP library has also been updated to the latest 2.1.2 release.
 Java language runtime
 =====================
 
-Java language support
-=====================
-
-OpenJDK support has been added to Genode with release 18.05. At the time we were
+OpenJDK support has been added to Genode with release 18.05. At that time, we were
 only able to offer support for Java's interpreter mode, because issues on ARM
-platforms arouse (please refer to the release notes of Genode 18.05). In this
-mode byte code is not compiled but interpreted which, of course, introduces a
-serious performance penalty. Since 18.05 we worked on enabling Java's
+platforms arouse (please refer to the release notes of
+[https://genode.org/documentation/release-notes/18.05#Java_language_support - Genode 18.05]).
+In this mode, byte code is not compiled but interpreted which, of course, introduces a
+serious performance penalty. Since 18.05, we worked on enabling Java's
 just-in-time compiler (JIT), it translates byte code to actual machine code. We
 were able to add support for both, ARM and x86 platforms, but stopped short to
 arm the compiler as default modus with this release because there still exist
@@ -478,7 +485,7 @@ stability issues.
 
 Please note: OpenJDK has been moved from Genode's base system to the
 [https://github.com/genodelabs/genode-world Genode-word] repository and is now
-also available as a Genode package incorporating a runtime.
+also available as a Genode package.
 
 
 Ada language runtime
@@ -497,16 +504,16 @@ following command from the base of Genode's source tree:
 C language runtime
 ==================
 
-This 'pthread' library has been integrated into the 'libc' library for
-this release. This has no effect on the semantics of pthreads, applications
-simply need not link to this library anymore. This is in contrast to normal
-Unix systems that provide a 'libpthread' library. Our POSIX implementation
+The pthread library has been integrated into the libc library for
+this release. This has no effect on the semantics of pthreads. Applications
+simply do not need to link to this library anymore. This is in contrast to normal
+Unix systems that provide a libpthread library. Our POSIX implementation
 exist in userspace while supporting the blocking I/O patterns commonly used
-in Unix. To do this we run a "kernel" task within the 'libc' library that
-dispatches I/O as application threads are blocked. This tasks operates on a
-secondary stack of the primary thread but is also reentrant from secondary
+in Unix. To do this, we run a "kernel" task within the libc library that
+dispatches I/O as application threads are blocked. This task operates on a
+secondary stack of the primary thread but is also re-entrant from secondary
 threads. Maintaining a common implementation for multi-threaded and
-single-threaded applications has been the most practical approach and
+single-threaded applications has been the most practical approach, and
 merging pthreads completely into the libc clears a path to improving
 multithreaded I/O during the next releases.
 
@@ -548,17 +555,18 @@ Libraries and applications
 Initial version of the Genode SDK
 =================================
 
-To allow Genode components to be built independently of our
-build system we have added a script to generate a Source
-Development Kit that contains headers, pre-built libraries,
-link scripts, and
+To allow Genode components to be built independently from our
+build system, we have added a script to generate a Source
+Development Kit (SDK) that contains headers, pre-built libraries,
+linker scripts, and
 [https://www.freedesktop.org/wiki/Software/pkg-config/ - pkg-config]
 metadata. The SDK is still experimental and lacks documentation,
 but has been shown to be useful when combined with some external
 Make-based build systems as with the latest generation of language
 package managers.
 
-A simple [https://github.com/libretro/nxengine-libretro/commit/f6ea7cd2e260731a00e20ebe239ccdc6bbf31e50 - example] of using the SDK within a makefile to build a library:
+A simple [https://github.com/libretro/nxengine-libretro/commit/f6ea7cd2e260731a00e20ebe239ccdc6bbf31e50 - example]
+of using the SDK within a makefile to build a library:
 ! ...
 ! ifeq ($(platform), genode)
 !   CC       := $(shell pkg-config genode-base --variable=cc)
@@ -581,37 +589,38 @@ A simple [https://github.com/libretro/nxengine-libretro/commit/f6ea7cd2e260731a0
 !  $(LD) $(OBJECTS) $(LDFLAGS) -o $@
 ! ...
 
-To link a program the link flags may be obtained with 'pkg-config --libs genode-lib',
-for libraries with `pkg-config --libs genode-prg`.
+To link a program, the link flags may be obtained with 'pkg-config --libs genode-lib',
+for libraries with 'pkg-config --libs genode-prg'.
 
 In any case, the tools that invoke pkg-config, Make or otherwise, need a
-'PKG_CONFIG_PATH' environmental variable set to the location of the 
+'PKG_CONFIG_PATH' environmental variable set to the location of the
 'pkgconfig' directory in the SDK, such as with the following shell
 command:
 
 ! PKG_CONFIG_PATH=/opt/genode-sdk-x86_64-18.08/pkgconfig make
 
+
 SSH terminal server
 ===================
 
-Up to now we mostly focused on covering the direct interaction of a user with
-the system and besides a minimal TCP terminal there was no component to
+Up to now, we mostly focused on covering the direct interaction of a user with
+the system and besides a minimal TCP terminal, there was no component to
 accommodate remote access. Instead of extending this component to add vital
 features like TLS or user authentication, we turned to using an existing
-protocol. For this use-case the SSH protocol is still a popular choice as
+protocol. For this use case the SSH protocol is the most popular choice as
 clients and server programs are virtually available for all OSes.
 
-So with this release we introduce a component that makes Genode's Terminal
-session accessible via SSH. It is based on the server implemetation of libssh,
-which was updated to version 0.8.4. On the Genode side of things it acts as a
-Terminal session server to which Terminal clients can connect. From the outside
-users may access a specific Terminal session by logging in via SSH given they
-provide the proper login credentials. For now it only implements the SSH
+So with this release, we introduce a component that makes Genode's terminal
+session accessible via SSH. It is based on the server implementation of libssh,
+which was updated to version 0.8.4. On the Genode side of things, it acts as a
+terminal-session server, to which Terminal clients can connect. From the outside,
+users may access a specific terminal session by logging in via SSH given they
+provide the proper login credentials. For now, it only implements the SSH
 channel 'shell' and 'term' requests, i.e., it can be used for interactive
 sessions but not for scp/rsync or other operations that rely on the 'exec'
-request. Since the component merely makes Terminal sessions available, the
+request. Since the component merely makes terminal sessions available, the
 SSH connection needs to be forcefully closed by issuing the well-known '~.'
-sequence rather than using '^D' (EOF) as the underlying Terminal session might
+sequence rather than using '^D' (EOF) as the underlying terminal session might
 not be able to deal with that.
 
 The following exemplary snippet shows how the component can by configured:
@@ -633,14 +642,14 @@ The following exemplary snippet shows how the component can by configured:
 !</config>
 
 The component is configured to listen on port '2022' for incoming SSH
-connections and allows for logging in by using either a password or public-key.
-The '<policy>' configuration is used to link the Terminal session to the SSH
-login. In this case, the Terminal session of the client with the label
+connections and allows for logging in by using either a password or public key.
+The '<policy>' configuration is used to link the terminal session to the SSH
+login. In this case, the terminal session of the client with the label
 'noux-system' may be accessed via the 'root' login. The '<vfs>' configures the
 file system of the component. Besides access to the needed services, like the
 real-time clock, random device and the TCP/IP stack, it use a file system session
 mounted at '/etc' for housing the files needed by the component. In particular,
-these are the SSH server's host-key and the public-key for the 'user' login.
+these are the SSH server's host key and the public key for the 'user' login.
 
 For more information, please read _repos/gems/src/server/ssh_terminal/README_
 and take _repos/gems/run/ssh_terminal.run_ for a ride.
@@ -651,10 +660,9 @@ Removed networking support from Noux
 
 Support for networking has been removed from the Noux runtime
 as a side effect of moving IP stacks from libc plugins into
-VFS plugins. In practice Noux has been seldom used for networking
+VFS plugins. In practice, Noux has been seldom used for networking
 and our recommendation remains that networked applications should
 link with the libc library and not use the Noux runtime.
-
 
 
 New depot packages
@@ -698,17 +706,17 @@ Platforms
 NOVA microhypervisor
 ====================
 
-Up to now the NOVA kernel reserved a statically configured part of the system
-memory as kernel memory. The configured memory had to been chosen during link
-time. However, with the event of Sculpt the actual target load nor the target
-machine and its available system memory is not known beforehand, which makes
-it hard to choose a well suited kernel memory amount fitting all.
+Up to now, the NOVA kernel reserved a statically configured part of the system
+memory as kernel memory. The configured memory had to been chosen at link
+time. However, in the event of Sculpt, the actual target load nor the target
+machine and its available system memory is known beforehand, which makes
+it hard to choose a well suited kernel-memory amount fitting all.
 
-We can't lift this structural issue, but could mitigated it to some degree.
-The kernel now looks up the overall available system memory during boot time
-and allocates depending on three configuration options during boot time the
-kernel memory. So, the overall kernel memory is still static, but depending
-on the target machine adjusted.
+We can't lift this structural issue, but could mitigate it to some degree.
+The kernel now looks up the overall available system memory at boot time
+and allocates the kernel memory depending on three build-time configuration
+options. So, the overall kernel memory is still static, but dimensioned
+depending on the target machine.
 
 The three configuration options can be adjusted in the Makefile of the kernel.
 CONFIG_MEMORY_BOOT is the amount of kernel memory allocated in the BSS
@@ -717,17 +725,18 @@ CONFIG_MEMORY_DYN_MIN && CONFIG_MEMORY_DYN_PER_MILL configures the dynamic
 part of the kernel memory allocation applied during early kernel boot time.
 CONFIG_MEMORY_DYN_MIN is the amount of memory which should be allocated at
 least. CONFIG_MEMORY_DYN_PER_MILL defines the amount of the system memory in
-per mill which should be allocated at most. The overall maximum kernel memory
+per mill, which should be allocated at most. The overall maximum kernel memory
 is restricted to ~1G for 64bit, due to the chosen internal virtual memory
 layout.
+
 
 Execution on bare hardware (base-hw)
 ====================================
 
-Regarding our own kernel development this release comprises enhancements to
-increase performance on the supported ARM platforms. Most significantly is the
-default enabling of the FPU on all boards Genode runs on top of. All components
-build for ARMv6 and ARMv7a are now compiled to make use of it. Therefore, the
+Regarding our own kernel development, the current release
+increases the performance on the supported ARM platforms. Most significantly,
+the FPU is enabled by default on all boards. All components
+built for ARMv6 and ARMv7a are now compiled to make use of it. Therefore, the
 runtime behaviour of certain scenarios can change significantly on ARM when
 using the new release.
 
