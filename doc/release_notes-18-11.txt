@@ -391,6 +391,23 @@ Date:   Fri Nov 23 15:56:51 2018 +0100
 Java language runtime
 =====================
 
+Java language support
+=====================
+
+OpenJDK support has been added to Genode with release 18.05. At the time we were
+only able to offer support for Java's interpreter mode, because issues on ARM
+platforms arouse (please refer to the release notes of Genode 18.05). In this
+mode byte code is not compiled but interpreted which, of course, introduces a
+serious performance penalty. Since 18.05 we worked on enabling Java's
+just-in-time compiler (JIT), it translates byte code to actual machine code. We
+were able to add support for both, ARM and x86 platforms, but stopped short to
+arm the compiler as default modus with this release because there still exist
+stability issues.
+
+Please note: OpenJDK has been moved from Genode's base system to the
+[https://github.com/genodelabs/genode-world Genode-word] repository and is now
+also available as a Genode package incorporating a runtime.
+
 
 Ada language runtime
 ====================
