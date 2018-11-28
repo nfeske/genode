@@ -46,53 +46,58 @@ Date:   Mon Nov 19 14:04:55 2018 +0100
 New tooling for obtaining test-coverage metrics
 ===============================================
 
-; @cproc
+The [https://gcc.gnu.org/onlinedocs/gcc/Gcov.html - gcov] tool can analyze how
+often each source code line of a test program got executed.
 
-commit f723557dacbae6c7b003f5436e41c400d6bc46ae
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue Nov 6 19:46:50 2018 +0100
+On POSIX-like systems the usual steps to use this tool are as follows:
 
-    mk: add 'COVERAGE' option
-    
-    'COVERAGE=yes' in 'target.mk' adds gcov-specific compiler flags and links the
-    program with libgcov.
-    
-    Issue #3048
+* When building a test program, special compiler flags add instrumentation code
+  to the program and generate a gcov "note" file with each object file. These
+  note files are needed later on for the final analysis. The test program is
+  also linked with the gcov library.
 
-commit 081502ee983758cbb407e157b6d71c8af4a45edf
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Thu Nov 15 18:04:53 2018 +0100
+* When the test program is running, it collects coverage data and writes it
+  into a gcov "data" file for each object file when the program exits.
 
-    libports: add libgcov and gcov tool
-    
-    Issue #3048
+* The 'gcov' program uses the source, note and data files to generate annotated
+  source code files with the number of times each line was executed.
 
-commit 9dcdc76b8a152c2d3fb45589fdf1fb9ff9d499c8
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue Nov 20 14:29:59 2018 +0100
+We ported the gcov tool to Genode to use it with our native (non-libc) Genode
+tests and the 'depot_autopilot' run script and integrated it in the following
+way:
 
-    depot.inc: 'append_src_and_api_depot_packages_to_tar' function
-    
-    This function adds the src and api depot packages for the given pkg or src
-    packages to the given tar archive.
-    
-    Issue #3048
+* 'COVERAGE = yes' in the 'target.mk' file of the test program adds the
+  gcov-specific compiler flags and links the program with the gcov library.
 
-commit 22e071ab93e44e19c086252a4be341e24f3d96e3
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue Nov 20 14:30:49 2018 +0100
+* The generated gcov note files get a symlink in the 'build/.../bin/gcov_data'
+  directory, which is added to the binary depot package of the test program, so
+  the note files are available in the depot in the 'depot_autopilot' file
+  system.
 
-    depot_autopilot.run: integrate gcov tool
-    
-    Issue #3048
+* When the test program starts, it calls `env.exec_static_constructors()` and
+  each instrumented object file registers itself at the gcov library from a
+  static constructor (auto-generated with the gcov compiler flags).
 
-commit 06161ddc042ae087d8f10fe359e525eb8da78196
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Thu Nov 22 18:07:04 2018 +0100
+* The gcov library needs the Genode environment to write the collected data to
+  a file system, so the test program also calls the `gcov_init()` function with
+  a reference to the environment.
 
-    test-xml_generator: enable code coverage analysis
-    
-    Issue #3048
+* When the test program is finished, it calls `genode_exit()`, which calls an
+  exit handler registered by the gcov library. The gcov library then writes the
+  coverage data files to a RAM file system with a path which matches the path
+  to the note files in the depot in the same file system.
+
+* When all tests are finished, the 'depot_autopilot' runs the 'gcov' program,
+  which scans the file system for the collected gcov data files and writes the
+  final analysis for each file to the log. If the name of the test package is
+  included in the 'avail_test_src_pkgs' list of the 'depot_autopilot' run
+  script, the source and api packages of the test are added to the
+  'depot_autopilot' depot and the source code is printed together with the
+  counts and line numbers, otherwise only the counts and line numbers with the
+  text '/*EOF*/' on each line are printed.
+
+So far, we enabled the code coverage analysis feature for the 'xml_generator'
+test and it can be seen in action by running the 'depot_autopilot' run script.
 
 
 Static code analysis
