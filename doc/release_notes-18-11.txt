@@ -169,7 +169,7 @@ heartbeat signals. The 'heartbeat_response' allows a child to confirm its
 health to the parent. With this basic interface, a parent becomes able to
 periodically ask for a life sign from each of its children.
 
-; XXX [image heartbeat]
+[image heartbeat]
 
 Each component installs a heartbeat signal handler during its initialization.
 This happens under the hood and is thereby transparent to application code.
