@@ -604,30 +604,28 @@ Platforms
 NOVA microhypervisor
 ====================
 
-; @alex-ab
+Up to now the NOVA kernel reserved a statically configured part of the system
+memory as kernel memory. The configured memory had to been chosen during link
+time. However, with the event of Sculpt the actual target load nor the target
+machine and its available system memory is not known beforehand, which makes
+it hard to choose a well suited kernel memory amount fitting all.
 
-commit 3824ad47566fe4331453585ed3db03fa0706cf9f
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Sep 13 16:53:57 2018 +0200
+We can't lift this structural issue, but could mitigated it to some degree.
+The kernel now looks up the overall available system memory during boot time
+and allocates depending on three configuration options during boot time the
+kernel memory. So, the overall kernel memory is still static, but depending
+on the target machine adjusted.
 
-    nova: define kernel memory based on system memory
-    
-    Switch to kernel branch, that determines the available system memory during
-    boot time. The overall kernel memory is still static, but during boot time
-    dynamically the amount can be chosen. Following 3 config option exists:
-    
-    CONFIG_MEMORY_BOOT is the amount of kernel memory allocated in the BSS
-    statically - effectively chosen during link time - see linker script.
-    
-    CONFIG_MEMORY_DYN_MIN && CONFIG_MEMORY_DYN_PER_MILL configures the dynamic
-    part of the kernel memory allocation applied during early kernel boot time.
-    CONFIG_MEMORY_DYN_MIN is the amount of memory which should be allocated at
-    least. CONFIG_MEMORY_DYN_PER_MILL defines the amount of the system memory in
-    per mill which should be allocated at most. The overall maximum kernel memory
-    is restricted to ~1G (64bit), due to the chosen internal virtual memory layout.
-    
-    Fixes #2985
-
+The three configuration options can be adjusted in the Makefile of the kernel.
+CONFIG_MEMORY_BOOT is the amount of kernel memory allocated in the BSS
+statically, effectively chosen during link time.
+CONFIG_MEMORY_DYN_MIN && CONFIG_MEMORY_DYN_PER_MILL configures the dynamic
+part of the kernel memory allocation applied during early kernel boot time.
+CONFIG_MEMORY_DYN_MIN is the amount of memory which should be allocated at
+least. CONFIG_MEMORY_DYN_PER_MILL defines the amount of the system memory in
+per mill which should be allocated at most. The overall maximum kernel memory
+is restricted to ~1G for 64bit, due to the chosen internal virtual memory
+layout.
 
 Execution on bare hardware (base-hw)
 ====================================
