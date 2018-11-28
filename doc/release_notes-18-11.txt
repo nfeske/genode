@@ -98,25 +98,39 @@ Date:   Thu Nov 22 18:07:04 2018 +0100
 Static code analysis
 ====================
 
-; @alex-ab
+The static analyzer tool of https://clang-analyzer.llvm.org can
+analyze source code in C and C++ projects to find bugs during
+compile time.
 
-commit f5fe342df906be9ce00ac63617b5ece7f7e03084
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Oct 25 18:33:16 2018 +0200
+With this tool enabled Genode users can check and ensure the quality of
+Genode components. The tool can be invoked during make invocations and
+during creation of Genode packages.
 
-    tool: support static clang analyzer in build.mk
-    
-    Issue #3022
+For the make invocation a STATIC_ANALYZE variable on the commandline will
+cause the tool to run next to the actual build step.
 
-commit 889eb647bf8ee646df26bc2cca29fb604785be03
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Nov 6 15:17:36 2018 +0100
+! STATIC_ANALYZE=1 make -C build/x86_64 KERNEL=... run/...
 
-    tool: use static analyzer with depot creation tool
-    
-    Convince wrapper to make static analyzer working with tool/depot/* tools.
-    
-    Issue #3022
+For the creation of Genode packages the wrapper tool static_analyze is
+required, which must be invoked before any tool/depot/* tools to take effect,
+e.g.:
+
+! tool/depot/static_analyze tool/depot/create <user>/pkg/...
+
+The results of the static analyzer tool is generated in form of html pages and
+can be checked afterwards. The following example output showcases the output
+of the static analyzer tool:
+
+!
+! make: Entering directory '../genode/build/x86_64'
+! checking library dependencies...
+! scan-build: Using '/usr/lib/llvm-6.0/bin/clang' for static analysis
+! ...
+!
+! LINK     init
+! scan-build: 0 bugs found.
+! scan-build: The analyzer encountered problems on some source files.
+! scan-build: Preprocessed versions of these sources were deposited in '/tmp/scan-build-2018-11-28-111203-20081-1/failures'.
 
 
 Genode as target for Mirage-OS unikernels
