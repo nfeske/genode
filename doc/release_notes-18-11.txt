@@ -813,18 +813,29 @@ multithreaded I/O during the next releases.
 Improved performance of Zynq network driver
 ===========================================
 
-; @nfeske
+Since the network driver for the Xilinx Zynq-7000 platform was burdened with
+performance issues, it underwent a review to identify and mitigate conceptual
+bottlenecks. Although the Gigabit Ethernet MAC (GEM) controller allows
+DMA-accelerated transmission and reception of network packets, the driver still
+needed to copy each packet from the packet-stream interface to the DMA memory
+region. As the latter was additionally attached as uncached memory, the driver
+showed a very poor performance (i.e. throughput).
 
-commit 2e4f828ba87efa13a999818f74fd29e155f4a56b
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Sat Sep 29 12:31:49 2018 +0200
+Fortunately, the design of the packet-stream interface enabled a zero-copy
+implementation of the Zynq network driver. Instead of copying each packet from
+the bulk buffer of the packet-stream interface to a dedicated DMA memory
+region, the allocated packet buffers are now directly handed over to the GEM
+for DMA-accelerated packet transmission and reception. In particular, the
+driver will allocate up to 1024 packet buffers, depending on the bulk buffer
+size provided by its Nic client.
 
-    zynq: zero-copy implementation of nic_drv
-    
-    - Packet stream buffers are directly passed to DMA.
-    - Also enables pause frames and checksum offloading.
-    
-    Issue #3053
+In addition to the zero-copy implementation, checksum offloading has been
+enabled. For outbound packets, the GEM automatically fills in the IP, UDP and
+TCP checksum header fields. Inbound packets will be dropped if their checksum
+fields are incorrect. Note, that IP checksum offloading is not implemented by
+qemu.
+
+Furthermore, MAC 802.3 pause frames have been enabled.
 
 
 Base API changes
