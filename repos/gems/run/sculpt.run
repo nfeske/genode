@@ -7,6 +7,8 @@ if {[have_spec nova]} {
 	proc kernel_output { } { return "novga serial logmem" }
 }
 
+proc image_disk_size { } { return 32 }
+
 create_boot_directory
 
 import_from_depot [depot_user]/src/[base_src] \
