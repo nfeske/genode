@@ -47,7 +47,7 @@
 			</config>
 		</start>
 
-		<start name="socket_fs_server">
+		<start name="socket_fs_server" caps="200">
 			<binary name="vfs"/>
 			<resource name="RAM" quantum="32M"/>
 			<provides> <service name="File_system"/> </provides>
@@ -57,7 +57,7 @@
 			</config>
 		</start>
 
-		<start name="socket_fs_client">
+		<start name="socket_fs_client" caps="200">
 			<binary name="vfs"/>
 			<resource name="RAM" quantum="32M"/>
 			<provides> <service name="File_system"/> </provides>
