@@ -17,17 +17,22 @@
 #include <timer_session/connection.h>
 
 /* libc includes */
+#include <libc/component.h>
 #include <stdio.h>
 
 /* a variable to be modified with GDB */
 int test_var = 1;
 
 /* a thread to test GDB thread switching support */
-class Test_thread : public Genode::Thread_deprecated<2*4096>
+class Test_thread : public Genode::Thread
 {
+	private:
+
+		Timer::Connection _timer;
+
 	public:
 
-		Test_thread() : Thread_deprecated("test") { }
+		Test_thread(Genode::Env &env) : Thread(env, "test", 2*4096), _timer(env) { }
 
 		void step_func()
 		{
@@ -40,8 +45,7 @@ class Test_thread : public Genode::Thread_deprecated<2*4096>
 			 * make sure that the main thread is sleeping in
 			 * Genode::sleep_forever() when the segfault happens
 			 */
-			static Timer::Connection timer;
-			timer.msleep(500);
+			_timer.msleep(500);
 
 			*(int *)0 = 42;
 		}
@@ -88,16 +92,14 @@ int func1()
 }
 
 
-int main(void)
+void Libc::Component::construct(Libc::Env &env)
 {
-	Test_thread test_thread;
+	static Test_thread test_thread { env };
 
 	func1();
 
 	test_thread.start();
 
 	test_thread.join();
-
-	return 0;
 }
 
