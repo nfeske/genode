@@ -47,11 +47,10 @@ class Libc::Vfs_plugin : public Libc::Plugin
 		                 int libc_fd, unsigned flags)
 		{
 			try {
-				Genode::String<Vfs::MAX_PATH_LEN> path;
-				struct stat out_stat;
+				typedef Genode::String<Vfs::MAX_PATH_LEN> Path;
+				Path const path = node.attribute_value(attr, Path());
 
-				node.attribute(attr).value(&path);
-
+				struct stat out_stat { };
 				if (stat(path.string(), &out_stat) != 0)
 					return;
 
@@ -158,21 +157,20 @@ class Libc::Vfs_plugin : public Libc::Plugin
 		{
 			using Genode::Xml_node;
 
-			if (_root_dir.num_dirent("/"))
+			if (!_root_dir.num_dirent("/"))
 				env.config([&] (Xml_node const &top) {
-					try {
-						Xml_node const node = top.sub_node("libc");
 
-						try {
-							Genode::String<Vfs::MAX_PATH_LEN> path;
-							node.attribute("cwd").value(&path);
-							chdir(path.string());
-						} catch (Xml_node::Nonexistent_attribute) { }
+					top.with_sub_node("libc", [&] (Xml_node node) {
+
+						typedef Genode::String<Vfs::MAX_PATH_LEN> Path;
+
+						if (node.has_attribute("cwd"))
+							chdir(node.attribute_value("cwd", Path()).string());
 
 						_open_stdio(node, "stdin",  0, O_RDONLY);
 						_open_stdio(node, "stdout", 1, O_WRONLY);
 						_open_stdio(node, "stderr", 2, O_WRONLY);
-					} catch (Xml_node::Nonexistent_sub_node) { }
+					});
 				});
 		}
 

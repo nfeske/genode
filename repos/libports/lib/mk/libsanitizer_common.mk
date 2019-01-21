@@ -30,3 +30,5 @@ vpath %.cc $(SANITIZER_DIR)/sanitizer_common
 SHARED_LIB = yes
 
 CC_CXX_WARN_STRICT =
+
+REQUIRES = removal_of_use_of_printf
