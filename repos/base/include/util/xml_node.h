@@ -625,8 +625,16 @@ class Genode::Xml_node
 		 * \return     true on success
 		 */
 		template <typename T>
-		bool value(T *out) const {
-			return ascii_to(content_addr(), *out) == content_size(); }
+		bool value(T &out) const {
+			return ascii_to(content_addr(), out) == content_size(); }
+
+		/**
+		 * Read content as typed value from XML node
+		 *
+		 * \deprecated  use 'value(T &out)' instead
+		 */
+		template <typename T> bool value(T *out) const { return value(*out); }
+		__attribute__((deprecated));
 
 		/**
 		 * Return begin of node including the start tag
