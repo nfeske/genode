@@ -152,7 +152,7 @@ class Genode::Xml_attribute
 		 *           conversion failed
 		 */
 		template <typename T>
-		bool value(T *out) const
+		bool value(T &out) const
 		{
 			/*
 			 * The '_value' token starts with a quote, which we
@@ -160,8 +160,16 @@ class Genode::Xml_attribute
 			 * the length, we have to consider both the starting
 			 * and the trailing quote character.
 			 */
-			return ascii_to(_value.start() + 1, *out) == _value.len() - 2;
+			return ascii_to(_value.start() + 1, out) == _value.len() - 2;
 		}
+
+		/**
+		 * Return attribute value as typed value
+		 *
+		 * \deprecated  use 'value(T &out)' instead
+		 */
+		template <typename T>
+		bool value(T *out) const { return value(*out); }
 
 		/**
 		 * Return attribute value as Genode::String
@@ -634,7 +642,6 @@ class Genode::Xml_node
 		 * \deprecated  use 'value(T &out)' instead
 		 */
 		template <typename T> bool value(T *out) const { return value(*out); }
-		__attribute__((deprecated));
 
 		/**
 		 * Return begin of node including the start tag
