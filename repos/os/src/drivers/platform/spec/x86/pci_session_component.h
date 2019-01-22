@@ -512,8 +512,8 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 
 			/* pci devices */
 			_policy.for_each_sub_node("pci", [&] (Genode::Xml_node node) {
+
 				enum { INVALID_CLASS = 0x1000000U };
-				unsigned class_sub_prog = INVALID_CLASS;
 
 				using Genode::Xml_attribute;
 
@@ -531,10 +531,7 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 						              "attribute '", alias, "'");
 						throw Genode::Service_denied();
 					}
-				}
 
-				/* if we read a class attribute all is fine */
-				if (class_sub_prog < INVALID_CLASS) {
 					/* sanity check that 'class' is the only attribute */
 					try {
 						node.attribute(1);
