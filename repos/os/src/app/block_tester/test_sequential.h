@@ -198,7 +198,7 @@ struct Test::Sequential : Test_base
 
 		_start  = _node.attribute_value("start",  0u);
 		_size   = _node.attribute_value("size",   Genode::Number_of_bytes());
-		_length = _node.attribute_value("length", 0UL);
+		_length = _node.attribute_value("length", Genode::Number_of_bytes());
 
 		if (_size > sizeof(_scratch_buffer)) {
 			Genode::error("request size exceeds scratch buffer size");

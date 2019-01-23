@@ -257,8 +257,8 @@ struct Test::Random : Test_base
 
 		_block->info(&_block_count, &_block_size, &_block_ops);
 
-		_size   = _node.attribute_value("size",   Number_of_bytes());;
-		_length = _node.attribute_value("length", (uint64_t)0);
+		_size   = _node.attribute_value("size",   Number_of_bytes());
+		_length = _node.attribute_value("length", Number_of_bytes());
 
 		if (_size > sizeof(_scratch_buffer)) {
 			Genode::error("request size exceeds scratch buffer size");
