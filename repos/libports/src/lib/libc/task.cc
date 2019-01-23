@@ -972,6 +972,7 @@ void Component::construct(Genode::Env &env)
 	Libc::init_mem_alloc(env);
 	Libc::init_dl(env);
 	Libc::sysctl_init(env);
+	Libc::init_pthread_support(env);
 
 	kernel = unmanaged_singleton<Libc::Kernel>(env, heap);
 
