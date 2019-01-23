@@ -11,12 +11,10 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__UTIL__BUFFERED_OUTPUT_H_
-#define _INCLUDE__UTIL__BUFFERED_OUTPUT_H_
-
+#ifndef _INCLUDE__BASE__BUFFERED_OUTPUT_H_
+#define _INCLUDE__BASE__BUFFERED_OUTPUT_H_
 
 #include <base/output.h>
-
 
 namespace Genode { template <size_t, typename> class Buffered_output; }
 
@@ -67,4 +65,4 @@ class Genode::Buffered_output : public Output
 		}
 };
 
-#endif /* _INCLUDE__UTIL__BUFFERED__OUTPUT_H_ */
+#endif /* _INCLUDE__BASE__BUFFERED_OUTPUT_H_ */
