@@ -152,7 +152,7 @@ struct Test::Replay : Test_base
 
 				typedef Genode::String<8> Type;
 
-				Block::sector_t const nr    = request.attribute_value("lba",   0UL);
+				Block::sector_t const nr    = request.attribute_value("lba",   (Block::sector_t)0u);
 				Genode::size_t  const count = request.attribute_value("count", 0UL);
 				Type            const type  = request.attribute_value("type",  Type());
 
