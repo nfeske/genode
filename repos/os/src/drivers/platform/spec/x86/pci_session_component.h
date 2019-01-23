@@ -368,9 +368,9 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 		static bool _bdf_attributes_in_valid_range(Xml_node node)
 		{
 			return _bdf_exactly_specified(node)
-			    && (node.attribute_value("bus",      0U) <  Device_config::MAX_BUSES)
-			    && (node.attribute_value("device",   0U) >= Device_config::MAX_DEVICES)
-			    && (node.attribute_value("function", 0U) >= Device_config::MAX_FUNCTIONS);
+			    && (node.attribute_value("bus",      0U) < Device_config::MAX_BUSES)
+			    && (node.attribute_value("device",   0U) < Device_config::MAX_DEVICES)
+			    && (node.attribute_value("function", 0U) < Device_config::MAX_FUNCTIONS);
 		}
 
 		static bool _bdf_matches(Xml_node node, Bdf bdf)
@@ -508,6 +508,7 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 				if (find_dev_in_policy(name.string(), DOUBLET))
 					Genode::error("'", _label, "' - device '", name, "' "
 					              "is part of more than one policy");
+					throw Genode::Service_denied();
 			});
 
 			/* pci devices */
@@ -568,7 +569,6 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 						Genode::warning("'", _label, "' - device '", bdf, "' "
 						                "is part of more than one policy");
 				}
-				throw Genode::Service_denied();
 			});
 		}
 
