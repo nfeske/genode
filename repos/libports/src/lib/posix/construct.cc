@@ -87,7 +87,7 @@ static void construct_component(Libc::Env &env)
 
 				using namespace Genode;
 
-				/* 
+				/*
 				 * An environment variable has the form <key>=<value>, followed
 				 * by a terminating zero.
 				 */
@@ -108,7 +108,7 @@ static void construct_component(Libc::Env &env)
 					}
 
 					/* Genode's strncpy always zero-terminates */
-					Genode::strncpy(envp[env_i] + pos + len, s, len + 1);
+					Genode::strncpy(envp[env_i] + pos, s, len + 1);
 					pos += len;
 				};
 
