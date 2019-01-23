@@ -1,9 +1,9 @@
 LICENSE   := PNG
 DOWNLOADS := libpng.archive
-VERSION   := 1.4.1
+VERSION   := 1.6.36
 
-URL(libpng) := http://prdownloads.sourceforge.net/libpng/libpng-$(VERSION).tar.gz
-SHA(libpng) := 0c25e1095805a626d2b1e44aafaed35b43b02d43510f8a84dce3c8b7da0d2417
+URL(libpng) := http://prdownloads.sourceforge.net/libpng/libpng-$(VERSION).tar.xz
+SHA(libpng) := eceb924c1fa6b79172fdfd008d335f0e59172a86a66481e09d4089df872aa319
 DIR(libpng) := src/lib/libpng
 
 DIRS := include/libpng
