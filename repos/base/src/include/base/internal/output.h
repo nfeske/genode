@@ -14,7 +14,6 @@
 #ifndef _INCLUDE__BASE__INTERNAL__OUTPUT_H_
 #define _INCLUDE__BASE__INTERNAL__OUTPUT_H_
 
-
 #include <base/output.h>
 
 
