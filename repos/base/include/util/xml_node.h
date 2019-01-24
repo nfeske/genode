@@ -987,9 +987,9 @@ class Genode::Xml_node
 			output.out_string(_addr, size()); }
 
 		/**
-		 * Return true if the this node is completely identical to 'another'
+		 * Return true if this node differs from 'another'
 		 */
-		bool identical(Xml_node const &another) const
+		bool differs_from(Xml_node const &another) const
 		{
 			return size() != another.size() ||
 			       memcmp(_addr, another._addr, size()) != 0;
