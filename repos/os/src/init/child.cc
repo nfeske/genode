@@ -57,7 +57,7 @@ Init::Child::apply_config(Xml_node start_node)
 	/*
 	 * Import new start node if new version differs
 	 */
-	if (!start_node.identical(_start_node->xml())) {
+	if (start_node.differs_from(_start_node->xml())) {
 
 		/*
 		 * Check for a change of the version attribute, force restart
@@ -88,7 +88,7 @@ Init::Child::apply_config(Xml_node start_node)
 			Xml_node const old_config = _start_node->xml().sub_node(tag);
 			Xml_node const new_config = start_node.sub_node(tag);
 
-			if (!new_config.identical(old_config))
+			if (new_config.differs_from(old_config))
 				config_update = CONFIG_CHANGED;
 		}
 
