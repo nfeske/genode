@@ -505,10 +505,11 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 				Name const name = device_node.attribute_value("name", Name());
 
 				enum { DOUBLET = false };
-				if (find_dev_in_policy(name.string(), DOUBLET))
+				if (find_dev_in_policy(name.string(), DOUBLET)) {
 					Genode::error("'", _label, "' - device '", name, "' "
 					              "is part of more than one policy");
 					throw Genode::Service_denied();
+				}
 			});
 
 			/* pci devices */
