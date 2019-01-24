@@ -708,6 +708,8 @@ class Genode::Xml_node
 		 *
 		 * Note that the content is not null-terminated. It points directly
 		 * into a sub range of the unmodified 'Xml_node' data.
+		 *
+		 * If the node has no content, the functor 'fn' is not called.
 		 */
 		template <typename FN>
 		void with_raw_content(FN const &fn) const

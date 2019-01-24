@@ -263,12 +263,12 @@ struct Formatted_xml_node
 
 		/* print node information */
 		print(output, Indentation(_indent),
-		      "XML node: name = \"", _node.type(), "\", ");
+		      "XML node: name = \"", _node.type(), "\"");
 		if (_node.num_sub_nodes() == 0) {
 			_node.with_raw_content([&] (char const *start, size_t length) {
-				print(output, "leaf content = \"", Cstring(start, length), "\""); });
+				print(output, ", leaf content = \"", Cstring(start, length), "\""); });
 		} else {
-			print(output, "number of subnodes = ", _node.num_sub_nodes());
+			print(output, ", number of subnodes = ", _node.num_sub_nodes());
 		}
 
 		print(output, "\n");
