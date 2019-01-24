@@ -599,7 +599,7 @@ void Child::apply_config(Xml_node start_node)
 	if (_skip)
 		return;
 
-	if (start_node.identical(_start_xml->xml()))
+	if (!start_node.differs_from(_start_xml->xml()))
 		return;
 
 	Archive::Path const old_pkg_path = _config_pkg_path();
@@ -661,7 +661,7 @@ void Child::apply_launcher(Launcher_name const &name,
 	if (_launcher_name() != name)
 		return;
 
-	if (_launcher_xml.constructed() && launcher.identical(_launcher_xml->xml()))
+	if (_launcher_xml.constructed() && !launcher.differs_from(_launcher_xml->xml()))
 		return;
 
 	_launcher_xml.construct(_alloc, launcher);
