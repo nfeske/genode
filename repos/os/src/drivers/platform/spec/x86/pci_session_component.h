@@ -388,8 +388,11 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 			try {
 				_policy.for_each_sub_node("pci", [&] (Xml_node node) {
 
-					if (_bdf_exactly_specified(node))
-						throw _bdf_matches(node, bdf);
+					if (_bdf_exactly_specified(node)) {
+						if (_bdf_matches(node, bdf))
+							throw true;
+						/* check also for class entry */
+					}
 
 					if (!node.has_attribute("class"))
 						return;
