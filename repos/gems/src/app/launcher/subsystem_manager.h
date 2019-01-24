@@ -211,10 +211,12 @@ class Launcher::Subsystem_manager
 						Attached_rom_dataspace rom(_env, name.string());
 						configure_with_xml(rom.xml());
 
-					} else {
+					} else if (subsystem.has_sub_node("config")) {
 						configure_with_xml(subsystem.sub_node("config"));
+					} else {
+						configure_with_xml(Xml_node("<config/>"));
 					}
-				} catch (...) { }
+				} catch (...) { warning("failed to configure child ", label); }
 
 				_children.insert(child);
 
