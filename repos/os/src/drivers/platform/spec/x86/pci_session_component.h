@@ -963,7 +963,7 @@ class Platform::Root : public Genode::Root_component<Session_component>
 				}
 
 				unsigned const gsi        = node.attribute_value("gsi",        0U),
-				               bridge_bdf = node.attribute_value("bridge_bd,", 0U),
+				               bridge_bdf = node.attribute_value("bridge_bdf", 0U),
 				               device     = node.attribute_value("device",     0U),
 				               device_pin = node.attribute_value("device_pin", 0U);
 
