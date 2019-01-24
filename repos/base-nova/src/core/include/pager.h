@@ -46,10 +46,10 @@ namespace Genode {
 
 		public:
 
-			Exception_handlers(Pager_object *);
+			Exception_handlers(Pager_object &);
 
 			template <uint8_t EV>
-			void register_handler(Pager_object *, Nova::Mtd,
+			void register_handler(Pager_object &, Nova::Mtd,
 			                      void (__attribute__((regparm(1)))*)(addr_t) = nullptr);
 	};
 
@@ -128,8 +128,8 @@ namespace Genode {
 
 			addr_t _pd_target;
 
-			void _copy_state_from_utcb(Nova::Utcb * utcb);
-			void _copy_state_to_utcb(Nova::Utcb * utcb);
+			void _copy_state_from_utcb(Nova::Utcb const &utcb);
+			void _copy_state_to_utcb(Nova::Utcb &utcb) const;
 
 			uint8_t _unsynchronized_client_recall(bool get_state_and_block);
 
@@ -439,13 +439,13 @@ namespace Genode {
 			/**
 			 * Associate Pager_object with the entry point
 			 */
-			Pager_capability manage(Pager_object *) {
+			Pager_capability manage(Pager_object &) {
 				return Pager_capability(); }
 
 			/**
 			 * Dissolve Pager_object from entry point
 			 */
-			void dissolve(Pager_object *obj);
+			void dissolve(Pager_object &obj);
 	};
 
 
