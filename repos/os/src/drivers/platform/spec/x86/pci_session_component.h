@@ -566,9 +566,11 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 					Bdf const bdf = _bdf_from_xml(node);
 
 					enum { DOUBLET = false };
-					if (find_dev_in_policy(bdf, DOUBLET))
-						Genode::warning("'", _label, "' - device '", bdf, "' "
+					if (find_dev_in_policy(bdf, DOUBLET)) {
+						Genode::error("'", _label, "' - device '", bdf, "' "
 						                "is part of more than one policy");
+						throw Genode::Service_denied();
+					}
 				}
 			});
 		}
