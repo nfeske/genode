@@ -74,7 +74,7 @@ class Genode::Region_map_component : public Rpc_object<Region_map>,
 struct Genode::Rm_client : Pager_object
 {
 	Rm_client(Cpu_session_capability, Thread_capability,
-	          Region_map_component *, unsigned long,
+	          Region_map_component &, unsigned long,
 	          Affinity::Location, Cpu_session::Name const&,
 	          Session_label const&)
 	{ }
