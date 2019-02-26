@@ -1,0 +1,961 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 19.02
+              ===============================================
+
+                               Genode Labs
+
+
+
+;intro
+
+; -> @nfeske
+
+
+Sculpt OS as a community experience (CE)
+########################################
+
+; -> @nfeske
+
+commit 7f0c3d380feed0b2f3c270cb88f239d3135daa06
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Feb 19 16:31:00 2019 +0100
+
+    sculpt: show '+' button only when partition 'used'
+    
+    This prevents the situation where the user has booted the system, has
+    not yet selected a storage target to "use" for Sculpt, yet clicks on the
+    '+' menu. Such clicks show no immediate response because Sculpt cannot
+    know where to deploy the selected package. But since the user is not
+    guided towards resolving this prerequisite, it's better to not present
+    the menu in the first place. The '+' appears as soon as a storage target
+    is selected for "use".
+
+commit f26ac05d0bf672cfd509667a0baa20e3cada1116
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Feb 19 18:13:13 2019 +0100
+
+    sculpt: version 19.02
+
+commit 1f8c141f50441c384ee9aefbd3e92cb235239c06
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Feb 19 17:33:15 2019 +0100
+
+    depot/sculpt: support for index files
+    
+    The input for the pkg index is located at gems/run/sculpt/index.
+    
+    The sculpt.run script uses this input for generating the depot index
+    file at depot/<user>/index/<version>.
+    
+    The tool/depot/publish tool support arguments of the form
+    <user>/index/<version> where <version> corresponds to the Sculpt
+    version.
+    
+    Issue #3172
+
+commit 4dbd81dfa994b81a536295a2ea55c241f78cb9a3
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Feb 20 09:51:55 2019 +0100
+
+    depot_download: support downloading index files
+    
+    With this commit, the 'installation' input of the depot-download
+    subsystem accepts <index> nodes in addition to <archive> nodes. Each
+    index node refers to one index file specified via the 'path' attribute.
+    
+    This commit also improves the tracking of failure states. Once an
+    installation job failed (due to a download of verification error),
+    it won't get re-scheduled. In the past, such failure states were not kept
+    across subsequent import iterations, which could result in infinite
+    re-attempts when an installation contained archives from multiple users.
+    The the progress of the download process is now reflected by the
+    "progress" attribute on the download manager's state report, which
+    allows the final report to contain the list of installed/failed archives
+    along with the overall progress/completed state. The detection of the
+    latter is important for the sculpt manager for reattempting the
+    deployment of the completed packages.
+    
+    The patch enhances the depot_download.run script to stress the new
+    abilities. In particular, the scenario downloads a mix of index files
+    (one present, one missing) and archives, from two different depot users
+    (genodelabs and nfeske).
+    
+    Issue #3172
+
+commit 926fc0020b0fccb7cbddb53379e3b01c4f461e73
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Feb 22 10:50:06 2019 +0100
+
+    sculpt: show message when network is needed
+    
+    Whenever Sculpt needs to download depot content but no network
+    connectivity is provided, a message is displayed in the "Diagnostics"
+    part of menu.
+
+commit 8b7fa4272da50f64f89a91ce53b8bbaef0bacb86
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Feb 22 14:57:39 2019 +0100
+
+    sculpt: use radio button for APs and launchers
+
+commit f69c952e8ed4c68bed6321c77fbd16b0115ce1ee
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Feb 22 16:23:25 2019 +0100
+
+    sculpt: append "..." to non-immediate buttons
+    
+    Append "..." to button labels whenever the button does not perform an
+    immediate action but merely toggles user-interface elements. This
+    tells the user that the button can be pressed without risk.
+
+commit c3157a7cd273c4dd206dcc1529671054c20757c4
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Feb 22 16:55:44 2019 +0100
+
+    sculpt: let depot/public_rw depend on update state
+    
+    By running those components only when needed, the graph stays simpler in
+    the normal state.
+
+commit 0336f49ea306936fb47d25b168f9057f0ea8c16f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Feb 22 17:21:38 2019 +0100
+
+    sculpt: omit the sculpt helpers from the graph
+    
+    The runtime view, launcher query, and depot query increase the
+    complexity of the graph without providing a tangible value to the user.
+    This patch omits those components from the runtime view to make the
+    graph less confusing.
+
+commit 534ea4698eb6f3f17e05201549086810e40c7e3e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Feb 22 23:20:58 2019 +0100
+
+    sculpt: cache runtime-config info for GUI
+    
+    Instead of parsing the runtime's configuration each time when generating
+    the graph dialog (e.g., when changing the hover state), extract the
+    relevant information only on configuration changes.
+
+commit 7a90cbaf1d1ad400de79cd5af171d90970a6cb17
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sat Feb 23 16:57:38 2019 +0100
+
+    sculpt: display parent roles in graph
+
+commit 0b0ad40c7c5e07cc91669d1a900c5ef5047ea3db
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sat Feb 23 19:09:15 2019 +0100
+
+    sculpt: show TCB dependencies of selection
+    
+    This patch enhances the runtime view such that not only immediate
+    dependencies but also all transitive dependencies of the selected
+    component are displayed. This way, the graph nicely reveals the
+    trusted computing base of the selection.
+
+commit 6d6e4eda3b4d79ef78e56b61457ca73b2cbc2499
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sat Feb 23 20:24:16 2019 +0100
+
+    sculpt: don't constrain '+' menu to avail space
+    
+    Sculpt used to restrict the size of leitzentrale windows to the screen
+    area that is not obstructed by the menu and log. This is useful for the
+    runtime view and the inspect window. However, the menu should be allowed
+    to use the entire screen because it overlays the other content.
+    
+    Before this patch, the menu wouldn't be displayed completely on small
+    resolutions (e.g., 1024x768 when using the VESA driver) because the log
+    at the bottom of the screen imposed the size constraint on the menu.
+    With the patch, the menu is able to overlay the log window.
+
+commit 10cc3bcb92e0f523f9856a6191707a066a6bded2
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Feb 24 04:14:31 2019 +0100
+
+    sculpt: browse depot index files in '+' menu
+    
+    This commit turns the '+' menu into a tool for the following tasks:
+    
+    - Selecting and downloading of depot index files
+    - Browsing of the hierarchical depot index files
+    - Installation of packages found in the index files
+    - Interactive routing configuration of a selected package
+    - Deployment of configured component
+
+commit b9c089b5e65cecd5c4d57c7c7e7f5a5e2e3efb2f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Feb 25 18:59:07 2019 +0100
+
+    sculpt: update default launchers
+    
+    This commit removes most of the default launchers, which are now
+    superseded by the interactive component addition feature of the '+'
+    menu.
+    
+    We keep the chroot components because we cannot easily create chroot
+    instances interactively yet.
+    
+    The usb_devices_rom is still needed because its configuration is meant
+    to be edited at runtime.
+    
+    It also adds a 'themed_wm' launcher to make the initial sculpt
+    experience easier. For knowledgeable users, the index contains all
+    ingredients needed to build a multi-component window manager manually.
+
+commit e4ed4cbe38bb4ee43bff02cd19d1d566118cb9f2
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Feb 25 18:52:09 2019 +0100
+
+    Update <provides> info in pkg runtimes
+    
+    This information is now used by Sculpt's '+' menu for the interactive
+    routing.
+
+
+Showcase of a Java-based network appliance
+##########################################
+
+; -> @ssumpf
+
+
+Genodians.org as a showcase of a Genode-based web appliance
+###########################################################
+
+; -> @nfeske
+
+
+Base framework and OS-level infrastructure
+##########################################
+
+Removal of deprecated APIs
+==========================
+
+; -> @nfeske
+
+commit af146e7dcde200674a452681bb876b1c1f2dc591
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jan 18 11:40:23 2019 +0100
+
+    Remove base/timed_semaphore.h from API
+    
+    The former 'Genode::Timed_semaphore' mechanism is moved to the private
+    part of the two remaining users, namely dde_rump and the libc. Note
+    there are now two private copies of 'timed_semaphore.h'. This should be
+    regarded as an interim step until the use of this mechanism is removed
+    from both users.
+    
+    This patch also cleans up the mechanism from legacy Genode API calls and
+    global side effects (alarm-thread singleton). The test/timed_semaphore
+    is now located at the libports repository as it now tests a mechanism of
+    the libc. The former timed_semaphore library is no more.
+    
+    Fixes #3121
+
+commit aa66b5d62f59e89d483021a0466598d961b9b4b6
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 30 17:53:16 2019 +0100
+
+    base: remove dependency from deprecated APIs
+    
+    This patch adjusts the implementation of the base library and core such
+    that the code no longer relies on deprecated APIs except for very few
+    cases, mainly to keep those deprecated APIs in tact for now.
+    
+    The most prominent changes are:
+    
+    - Removing the use of base/printf.h
+    
+    - Removing of the log backend for printf. The 'Console' with the
+      format-string parser is still there along with 'snprintf.h' because
+      the latter is still used at a few places, most prominently the
+      'Connection' classes.
+    
+    - Removing the notion of a RAM session, which does not exist in
+      Genode anymore. Still the types were preserved (by typedefs to
+      PD session) to keep up compatibility. But this transition should
+      come to an end now.
+    
+    - Slight rennovation of core's tracing service, e.g., the use of an
+      Attached_dataspace as the Argument_buffer.
+    
+    - Reducing the reliance on global accessors like deprecated_env() or
+      core_env(). Still there is a longish way to go to eliminate all such
+      calls. A useful pattern (or at least a stop-gap solution) is to
+      pass the 'Env' to the individual compilation units via init functions.
+    
+    - Avoiding the use of the old 'Child_policy::resolve_session_request'
+      interface that returned a 'Service' instead of a 'Route'.
+    
+    Issue #1987
+
+commit caf671bc27701839ac0920d48aaadee23f7b7cf5
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 30 17:27:46 2019 +0100
+
+    base/os: remove deprecated APIs
+    
+    This commit removes APIs that were previously marked as deprecated. This
+    change has the following implications:
+    
+    - The use of the global 'env()' accessor is not possible anymore.
+    - Boolean accessor methods are no longer prefixed with 'is_'. E.g.,
+      instead of 'is_valid()', use 'valid()'.
+    - The last traces of 'Ram_session' are gone now. The 'Env::ram()'
+      accessor returns the 'Ram_allocator' interface, which is a subset of
+      the 'Pd_session' interface.
+    - All connection constructors need the 'Env' as argument.
+    - The 'Reporter' constructor needs an 'Env' argument now because the
+      reporter creates a report connection.
+    - The old overload 'Child_policy::resolve_session_request' that returned
+      a 'Service' does not exist anymore.
+    - The base/printf.h header has been removed, use base/log.h instead.
+    - The old notion of 'Signal_dispatcher' is gone. Use 'Signal_handler'.
+    - Transitional headers like os/server.h, cap_session/,
+      volatile_object.h, os/attached*_dataspace.h, signal_rpc_dispatcher.h
+      have been removed.
+    - The distinction between 'Thread_state' and 'Thread_state_base' does
+      not exist anymore.
+    - The header cpu_thread/capability.h along with the type definition of
+      'Cpu_thread_capability' has been removed. Use the type
+      'Thread_capability' define in cpu_session/cpu_session.h instead.
+    - Several XML utilities (i.e., at os/include/decorator) could be removed
+      because their functionality is nowadays covered by util/xml_node.h.
+    - The 'os/ram_session_guard.h' has been removed.
+      Use 'Constrained_ram_allocator' provided by base/ram_allocator.h instead.
+    
+    Issue #1987
+
+
+Source-tree reorganization
+==========================
+
+; -> @nfeske
+
+commit bf62d6b8962c0f02c455f26b44e8591de18ae1a5
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 3 18:01:49 2019 +0100
+
+    Move timer from os to base repository
+    
+    Since the timer and timeout handling is part of the base library (the
+    dynamic linker), it belongs to the base repository.
+    
+    Besides moving the timer and its related infrastructure (alarm, timeout
+    libs, tests) to the base repository, this patch also moves the timer
+    from the 'drivers' subdirectory directly to 'src' and disamibuates the
+    timer's build locations for the various kernels. Otherwise the different
+    timer implementations could interfere with each other when using one
+    build directory with multiple kernels.
+    
+    Note that this patch changes the include paths for the former os/timer,
+    os/alarm.h, os/duration.h, and os/timed_semaphore.h to base/.
+    
+    Issue #3101
+
+commit 81fb10daaa91787ef33d1b6aa0c6b7b3e6593514
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Jan 6 21:17:07 2019 +0100
+
+    Consistently name block components
+    
+    This patch replaces abbreviations like "blk", "cli", and "srv" by their
+    full forms "block", "client", and "server".
+    
+    Fixes #1258
+
+
+Improved API safety
+===================
+
+XML-parsing API
+---------------
+
+; -> @nfeske
+
+commit 5f1f67153b40a11d45f9e80de9e9ad70dc3e333e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jan 21 10:33:23 2019 +0100
+
+    Xml_node: safe alternatives to unsafe accessors
+    
+    Issue #3125
+
+
+Simplified session-policy handling
+----------------------------------
+
+; -> @nfeske
+
+commit d3759811b656097af181ddc5ae1ab020325bafe5
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jan 22 18:57:22 2019 +0100
+
+    os/session_policy: warn if no policy exists
+    
+    The situation where a 'Session_policy' is constructed for a label with
+    no matching policy is in almost all cases a configuration problem.
+    A diagnostic message eases pin-pointing such mistaks. By adding the
+    message to the 'Session_policy', servers don't need to manually handle
+    the exception to provide diagnostic information. This simplifies the
+    server code in many components.
+
+
+Removed pointers from Genode::Fifo interface
+--------------------------------------------
+
+commit 38ab456c78ee126ad26fe03930431cc0d0bfc42f
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Tue Jan 29 19:29:03 2019 +0100
+
+    Remove pointers from Genode::Fifo interface
+    
+    Replace methods of Genode::Fifo returning pointers with methods which
+    call lambdas with references.
+    
+    Ref #3135
+
+
+New server-side block-request stream API
+----------------------------------------
+
+; -> @nfeske
+
+commit 3858e1df510e508e0a1d3e7f2a018aaf95a6b859
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Dec 12 22:27:04 2018 +0100
+
+    os: support for deferred packet-stream signals
+    
+    This patch enhances the packet-stream API with the principle ability to
+    side-step the built-in implicity data-flow signals and manage the
+    signals manually. This allows for a more efficient batching of packet
+    processing.
+    
+    Issue #3092
+
+commit f9523c32d5052aa034f063361b450e18c21ff446
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Jan 15 10:56:13 2019 +0100
+
+    os: accessor for addr and size of packet stream
+
+commit 00fa48a88649089005284e9a5bbdc662a7397d0e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Dec 17 12:44:57 2018 +0100
+
+    os: new Block::Request_stream API
+    
+    Issue #3092
+
+
+GUI stack
+=========
+
+; -> @nfeske
+
+commit 2565928495c44bdd7b1fdf1e910b0e317e99c736
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Dec 24 15:13:08 2018 +0100
+
+    fb_sdl: support the resizing of the SDL window
+    
+    Fixes #3095
+
+commit a3bbef5f21882133140d52e3790564b49b2f6a82
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Dec 26 14:34:21 2018 +0100
+
+    themed_decorator: optionally disable decorations
+    
+    This patch adds the boolean policy attribute "decoration", which
+    controls whether window decorations are presented or not. It is enabled
+    by default. By setting the attribute to "no", matching windows appear
+    without any border, which is desireable for Sculpt's component graph.
+    
+    Issue #3096
+
+commit 2d95c4dc1cf0d61189a669b9eeb700d0b56a6375
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Dec 26 22:12:14 2018 +0100
+
+    themed_decorator: new 'motion' policy attribute
+    
+    This commit adds the optional 'motion=<number>' attribute to the
+    decorator's <policy> nodes. The default value is 0. If a value higher
+    than 0 is specified, window-geometry changes are applied as an animation
+    where the <number> denotes the number of animation steps.
+    
+    Issue #3096
+
+commit 9efb9570593e0f8eacc9cf87583002f0959107ca
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Dec 27 19:11:20 2018 +0100
+
+    window_layouter: propagate pressed window controls
+    
+    This patch supplements the dragging state of window controls to the
+    window layout so that decorators become able to visually reflect this
+    state, i.e., pressing the title bar while moving a window.
+    
+    Issue #3097
+
+commit 49e003647136172039fcfc24381c2f13f8f43cf7
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 2 15:07:52 2019 +0100
+
+    window layouter: avoid superfluous layout updates
+
+commit 7c79bfc9034cbc2c42ce0f7406e6577cc84c1db0
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Dec 27 18:19:35 2018 +0100
+
+    motif decorator: visual feedback to mouse clicks
+    
+    Issue #3097
+
+commit 8eb45bc14236c61b6803cde85533f8ceeb525580
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Feb 18 16:02:29 2019 +0100
+
+    wm: shape report interception mechanism
+    
+    This patch simplifies the propagation of pointer shapes from
+    window-manager clients to the pointer. The "shape" report is routed to
+    the wm server, which, in turn, reports it to the pointer. This way, the
+    pointer can easily correlate the label of the application's "shape"
+    report with the label of the application's Nitpicker session. The
+    formerly used manual rewriting of the "shape" label is not needed
+    anymore.
+    
+    Since the wm server provides a "Report" service now, its <provides>
+    declaration must cover "Report" in addition to "Nitpicker" to avoid
+    runtime error messages. Vice versa, the wm is now expected to request
+    "shape" reports, which should be routed to the pointer (using the
+    'label_last' routing attribute).
+    
+    Fixes #3165
+
+commit 22327b43ae852f7f820775705f83fcf8bae40d18
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Fri Feb 8 01:26:21 2019 +0100
+
+    Refactor terminal for intrinsic Unicode support
+    
+    Refactor the graphical terminal server to internally represent
+    characters as 16-bit codepoints and handle the duplex terminal stream as
+    UTF-8.
+    
+    - Make the Codepoint class printable to the Output interface
+    - Decode data received at the Terminal session from UTF-8 to a 16-bit
+      character
+    - Pass 16-bit characters through terminal decoder and char-cell arrays
+    - Send Unicode through terminal session in a burst of UTF-8 bytes
+    
+    Fix #3148
+
+Programming languages
+#####################
+
+Ada and SPARK
+=============
+
+; -> @senier
+
+commit 14cd115c82bf09cf10f3c2b97e2d950b4d1615cc
+Author: Alexander Senier <senier@componolit.com>
+Date:   Thu Jan 3 13:22:48 2019 +0100
+
+    Support GNAT.IO in Ada programs
+
+commit 3b41e02ea518263509180b0c9c2b3f0e5d542f87
+Author: Alexander Senier <senier@componolit.com>
+Date:   Sun Feb 3 23:57:27 2019 +0100
+
+    Create make dependencies using ali2dep
+
+commit 5ccae43552485e29dfc75f9557434955ba625867
+Author: Alexander Senier <senier@componolit.com>
+Date:   Tue Jan 29 18:01:47 2019 +0100
+
+    Rename Ada runtime to SPARK runtime
+    
+    The minimal-footprint Ada runtime for implementing library-like
+    functionality in SPARK is now called "spark" runtime.
+    
+    The full Ada runtime for entire components written in Ada and using the
+    libc as glue to the underlying system will move to the world repository
+    as "ada" runtime.
+    
+    Issue #3144
+
+commit ff9dc178d9c26bd4dd36a51ef9fbf068f67b702b
+Author: Alexander Senier <senier@componolit.com>
+Date:   Wed Jan 30 09:01:07 2019 +0100
+
+    Port aunit unit test library
+
+
+Java
+====
+
+; -> @ssumpf
+
+commit e675075ee377219409e6253be968d3d66cd93d48
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed Feb 20 11:39:20 2019 +0100
+
+    jdk: C1 compiler for x86_64 and arm
+    
+    JIT compiler version of OpenJDK 9
+    
+    issue #136
+
+commit 2f73680071ea2bcac668de793246ea6a19026fd6
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri Feb 22 14:06:57 2019 +0100
+
+    jdk: use depot for 'java.run'
+    
+    Build JVM using packets.
+    
+    issue #136
+
+commit 65e7ccc662b36dfca6a2caba6a42050c1ab544a1
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Feb 21 11:43:09 2019 +0100
+
+    jdk: boot to Java demo
+    
+    issue #136
+
+
+Nim
+===
+
+; -> @ehmry
+
+commit 8cb8082206f224f694f4353b4a81799760a3d4bd
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Tue Nov 20 14:06:33 2018 +0100
+
+    Remove Nim support from toolchain
+    
+    Nim components are best build externally using the Nimble tools and a
+    Genode SDK.
+    
+    See https://github.com/ehmry/nim-genode
+    
+    Fix #2949
+
+
+OCaml
+=====
+
+; -> @ehmry
+
+commit 6628d0312691327de8484341511b26bb00b13e1e
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Fri Jan 18 15:14:02 2019 +0100
+
+    Port of OCaml bytecode runtime
+    
+    A minimal runtime for executing portable OCaml bytecode.
+    A bytecode standard library is not yet provided.
+
+
+Libraries and applications
+##########################
+
+New utility for taking screenshots
+==================================
+
+; -> @ehmry
+
+commit 71afee4799361337f11e550437c250e97d84d322
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Wed Jan 23 17:19:20 2019 +0100
+
+    Flif_capture screenshot tool
+    
+    A tool for capturing screenshots from a Framebuffer session.
+
+commit 71afee4799361337f11e550437c250e97d84d322
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Wed Jan 23 17:19:20 2019 +0100
+
+    Flif_capture screenshot tool
+    
+    A tool for capturing screenshots from a Framebuffer session.
+
+
+Growing use of the genode-world repository
+==========================================
+
+; -> @nfeske
+
+commit 6e1d2c6dc1e33572cf1276b0adb5f43b4d72c3a6
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Fri Feb 22 16:29:49 2019 +0100
+
+    Package OpenTyrian
+
+commit 36cce707285c2b3aef78e66e8c451562bb85c24f
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Fri Feb 22 16:30:46 2019 +0100
+
+    Package julia_fractal
+
+commit 48aed0ea46b126ad47609cd6a0b436398c1d14a7
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 3 15:36:23 2019 +0100
+
+    Move Dosbox to genode-world
+    
+    Fixes #3099
+
+commit a15b825418ebe3c408caa606ec9e2df640c94a1f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 3 16:21:50 2019 +0100
+
+    Move libsdl and companion libs to genode-world
+    
+    Fixes #3100
+
+commit a6de6457d2e3e8fd72df1e5aaf12ef1f41f5007d
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Tue Feb 19 17:20:57 2019 +0100
+
+    Convert SDL to a Nitpicker client library
+    
+    Fixes #138
+
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 3 15:53:06 2019 +0100
+
+    Port of libsdl, mixer, image, net, ttf
+    
+    Imported from genode repository
+    
+    Issue genodelabs/genode#3100
+
+commit 39085f08fc2d0f76ca55eb4948af723322c9c7df
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jan 4 09:24:33 2019 +0100
+
+    Move libav, avplay, and qt_avplay to genode-world
+    
+    Fixes #3103
+
+commit f11346034851fe5cb4c0df311117b5bfcc671f62
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri Jan 4 13:34:44 2019 +0100
+
+    Move FUSE to world
+    
+    Fixes #3104.
+
+
+Updated or removed 3rd-party software
+=====================================
+
+; -> @nfeske
+
+commit c58ad11f2fa64e5d0debc1c25bd78c525aa3ba3e
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Oct 16 22:22:19 2018 +0200
+
+    libports: update OpenSSL to 1.0.2q
+    
+    And enable SSL_CONF_* in libssl, needed by lighttpd's mod_openssl.
+    
+    Issue #3069.
+
+commit c43723abddd3f4282f8751626e044e14d61e4209
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Dec 4 12:17:06 2018 +0100
+
+    ports: update lighttpd to 1.4.52
+    
+    In addition enable TLS.
+    
+    Fixes #3069.
+
+commit 13268ec4016f43b811dd6455536e70d9b6e51831
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Wed Jan 23 20:39:01 2019 +0100
+
+    Update libpng to version 1.6.36
+    
+    Fix #3131
+
+commit 968e220fd228f2ef49e270f962f1a1aecb6a1b81
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Thu Jan 31 11:28:14 2019 +0100
+
+    Update jbig2dec to version 0.15
+    
+    Ref #3131
+
+commit 6bb145bdd89f66bf83e389bddfe5f8c282426003
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Feb 11 14:38:15 2019 +0100
+
+    Remove virtualbox 4 vmm
+    
+    Fixes #3141
+
+
+New ports of 3rd-party software
+===============================
+
+; -> @ehmry
+
+commit 14098623decfb77b04bb592b5b562b9da1f5ddd2
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Wed Dec 26 21:35:28 2018 +0100
+
+    Port of Snappy-1.1.7
+    
+    A fast compressor/decompressor
+    https://github.com/google/snappy
+
+commit a09355d77d4f13a907ee3caa56f6406298cfbe34
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Thu Jan 10 06:58:43 2019 +0100
+
+    Port of libsodium 1.0.16
+    
+    https://libsodium.org/
+
+commit c0424192269fd67c792aa6c20589d8d16475e6df
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Thu Jan 10 06:58:52 2019 +0100
+
+    Port of the c-toxcore Tox library
+    
+    Port of the C reference implementation of the Tox chat protocol.
+    Includes a native DHT bootstrap node, see run/tox_dht_bootstrap.
+    
+    https://tox.chat/
+
+
+Platforms
+#########
+
+Board support for i.XM6 Quad Sabrelite and Nitrogen6 SoloX
+==========================================================
+
+; -> @chelmuth
+
+commit c65860ee5342d437103f14db47f8af768e2aaaac
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Jan 14 15:39:46 2019 +0100
+
+    enable i.MX6 Quad Sabrelite board for hw and foc
+
+commit b765cef359181050ea7542b1c1cd324746af5afd
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jan 15 15:44:16 2019 +0100
+
+    replace Wandboard by i.MX6 reference board
+    
+    Instead of using the Wandboard Quad, the reference hardware from NXP
+    i.MX6 Quad Sabrelite will be used by Fiasco.OC, sel4 and hw by default.
+
+commit 541e6449d85143b33a36a5b521601b110e08b20d
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Oct 19 10:39:11 2017 +0200
+
+    hw: add board support for Nitrogen6 SoloX
+
+
+Tooling and build system
+########################
+
+; -> @nfeske
+
+commit d9feaa1875c80914a602620bb7096156689b496e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Feb 14 15:31:30 2019 +0100
+
+    Add -Wsuggest-override to default strict warnings
+    
+    Issue #3159
+
+commit 466ad9b13526ff9c33e3b546123c6ce6d956e9fd
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Tue Feb 19 14:24:52 2019 +0100
+
+    Replace static "genodelabs" depot user with "[depot_user]" call
+    
+    Use "depot_user" TCL procedure may be used in run scripts for tests not
+    related to downloading specific packages.
+    
+    Fix #3170
+
+commit f52987116290ebe672d4320e6287167db66b4d50
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Tue Jan 22 12:58:39 2019 +0100
+
+    Add [depot_user] to run tool builtins
+    
+    Now that the depot_user procedure has found use in the depot_autopilot
+    it has become a convention.
+    
+    Fix #3127
+
+commit f0842a27c5de48b97729383456fb6c9dbb57f12a
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed Dec 19 15:07:46 2018 +0100
+
+    depot_autopilot: provide repeat mode
+    
+    Adds an config attribute to the Depot Autopilot component:
+    
+    :<config repeat>:
+    
+      Can be one of
+    
+        "false"         - process the given test list only once,
+        "until_forever" - endlessly repeat processing the given test list,
+        "until_failed"  - repeat processing the given test list until it fails.
+    
+    Adds an environment variable to the Depot Autopilot Run script:
+    
+    :TEST_REPEAT:
+    
+      Same as the <config repeat> attribute of the Depot Autopilot.
+    
+    This is useful when having to debug very sporadic errors during one test
+    or a series of tests.
+
+commit 5e9102f031692609039670c7c65b1b2d6f9726c0
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Feb 1 18:43:28 2019 +0100
+
+    Run script to execute a single test w/o the depot
+
+commit 5569d2ddc275ea21a1b0513f24e4531abfa12a6a
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Dec 6 00:52:22 2018 +0100
+
+    mk: add 'SANITIZE_UNDEFINED' option
+    
+    'SANITIZE_UNDEFINED = yes' in 'target.mk' adds the '-fsanitize=undefined'
+    compiler flag and links the program with libubsan and libsanitizer_common.
+    
+    Issue #3072
+
+commit 9c8e76b1904f50e42056c79d89613f2c7c232995
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Dec 6 05:19:19 2018 +0100
+
+    base: 'sanitizer' test
+    
+    Issue #3072
+
