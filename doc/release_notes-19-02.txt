@@ -565,9 +565,9 @@ Ada and SPARK
 =============
 
 The integration of SPARK/Ada programs was improved greatly and the Ada runtime
-(previously called 'ada') was renamed to 'spark'. This emphasizes its main
-purpose: trusted components that can be formally verified. A more feature-rich
-runtime will be added to genode-world later.
+was renamed to 'spark'. This emphasizes its main purpose: trusted components
+that can be formally verified. A more feature-rich runtime based on 'libc' was
+added to genode-world under the name 'ada'.
 
 Build system integration
 ------------------------
@@ -629,6 +629,16 @@ text I/O facility which we map to a terminal session on Genode. Only output is
 supported at the moment. You need to provide the Ada runtime with a pointer to
 a terminal session to use 'GNAT.IO'. See 'repos/libports/src/test/gnatio/' for
 an example how to do this.
+
+Unit testing
+------------
+
+To facilitate test-driven development of Ada components, the
+[https://www.adacore.com/documentation/aunit-cookbook - AUnit] unit testing
+framework was ported to Genode. It is located in the genode-world repository,
+see 'src/test/aunit' for a usage example. Note, that the full Ada runtime
+('ada') is required as the framework requires features not present in the SPARK
+runtime.
 
 Java
 ====
