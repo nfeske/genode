@@ -45,6 +45,11 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
+	<start name="top" priority="-1">
+		<resource name="RAM" quantum="2M"/>
+		<config period_ms="5000"/>
+	</start>
+
 	<start name="report_rom">
 		<binary name="report_rom"/>
 		<resource name="RAM" quantum="2M"/>
@@ -626,6 +631,7 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 # Create boot image
 #
 
-append boot_modules { }
+build { app/top app/menu_view app/sculpt_manager }
+append boot_modules { top menu_view sculpt_manager }
 
 build_boot_image $boot_modules
