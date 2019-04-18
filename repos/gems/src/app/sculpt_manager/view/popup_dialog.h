@@ -267,7 +267,7 @@ struct Sculpt::Popup_dialog
 			gen_named_node(xml, "float", "left", [&] () {
 				xml.attribute("west", "yes");
 				xml.node("hbox", [&] () {
-					gen_named_node(xml, "button", "back", [&] () {
+					xml.node("button", [&] () {
 						xml.attribute("selected", "yes");
 						xml.attribute("style", "back");
 						_item.gen_button_attr(xml, name);
@@ -293,7 +293,7 @@ struct Sculpt::Popup_dialog
 				xml.attribute("west", "yes");
 
 				xml.node("hbox", [&] () {
-					gen_named_node(xml, "button", "button", [&] () {
+					xml.node("button", [&] () {
 
 						if (selected)
 							xml.attribute("selected", "yes");
@@ -322,7 +322,7 @@ struct Sculpt::Popup_dialog
 				xml.attribute("west", "yes");
 
 				xml.node("hbox", [&] () {
-					gen_named_node(xml, "button", "button", [&] () {
+					xml.node("button", [&] () {
 
 						if (selected)
 							xml.attribute("selected", "yes");
