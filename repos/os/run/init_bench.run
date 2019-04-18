@@ -1,0 +1,89 @@
+if {[have_spec linux]} {
+	set max_fds [exec bash -c "ulimit -n"]
+	if {$max_fds < 4096} {
+		puts stderr "\nMaximum number of file descriptors is too low for this run script."
+		puts stderr "You may use the following command to increase the limit:\n"
+		puts stderr "  ulimit -n 4096\n"
+		exit 1
+	}
+}
+
+build "core init app/dummy test/init_bench"
+
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/init \
+                  [depot_user]/src/report_rom \
+                  [depot_user]/src/dummy
+
+install_config {
+	<config prio_levels="2">
+		<parent-provides>
+			<service name="IRQ"/>
+			<service name="IO_MEM"/>
+			<service name="IO_PORT"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+			<service name="ROM"/>
+		</parent-provides>
+
+		<default-route> <any-service> <parent/> </any-service> </default-route>
+		<default caps="100"/>
+
+		<start name="timer">
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="Timer"/> </provides>
+		</start>
+
+		<start name="report_rom" priority="-1">
+			<resource name="RAM" quantum="2M"/>
+			<provides> <service name="ROM"/> <service name="Report"/> </provides>
+			<config verbose="no">
+				<policy label="test-init_bench -> init_state"
+				       report="dynamic -> state"/>
+				<policy label="dynamic -> config"
+				       report="test-init_bench -> init_config"/>
+			</config>
+		</start>
+
+		<start name="test-init_bench" priority="-1">
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="LOG"/> </provides>
+			<config>
+				<startup children="1"  seconds="5"/>
+				<startup children="10" seconds="5" inflated_routes="20"/>
+				<startup children="50" seconds="15"/>
+			</config>
+			<route>
+				<service name="ROM" label="init_state">
+					<child name="report_rom"/> </service>
+				<service name="Report"> <child name="report_rom"/> </service>
+				<service name="Timer">  <child name="timer"/>      </service>
+				<any-service> <parent/> </any-service>
+			</route>
+		</start>
+
+		<start name="dynamic" caps="8000" priority="-1">
+			<binary name="init"/>
+			<resource name="RAM" quantum="1G"/>
+			<route>
+				<service name="ROM" label="config">
+					<child name="report_rom"/> </service>
+				<service name="LOG">    <child name="test-init_bench"/> </service>
+				<service name="Report"> <child name="report_rom"/>      </service>
+				<service name="Timer">  <child name="timer"/>           </service>
+				<any-service> <parent/> </any-service>
+			</route>
+		</start>
+	</config>
+}
+
+build_boot_image "test-init_bench"
+
+append qemu_args "-nographic "
+
+run_genode_until {.*child .* exited with exit value 0.*\n} 360
+
