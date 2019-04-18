@@ -45,10 +45,12 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
+<!--
 	<start name="top" priority="-1">
 		<resource name="RAM" quantum="2M"/>
 		<config period_ms="5000"/>
 	</start>
+	-->
 
 	<start name="report_rom">
 		<binary name="report_rom"/>
@@ -376,6 +378,7 @@ install_config {
 		<resource name="RAM" quantum="164M"/>
 		<provides> <service name="Nitpicker"/> </provides>
 		<route>
+			<service name="LOG" label_last="popup"> <parent/> </service>
 			<service name="LOG"> <child name="log"/> </service>
 			<service name="ROM" label="config">
 				<child name="leitzentrale_config"/> </service>
