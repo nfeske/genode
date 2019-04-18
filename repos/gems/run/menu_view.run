@@ -74,150 +74,177 @@ install_config {
 		<provides> <service name="ROM"/> </provides>
 		<config verbose="yes">
 			<rom name="dialog">
+<inline description="step 0">
+<dialog>
+	<frame>
+		<vbox>
+			<hbox name="back">
+				<float name="left" west="yes">
+					<hbox>
+						<button selected="yes" style="back" name="back">
+							<hbox/>
+						</button>
+						<label name="label" font="title/regular" text=" Depot"/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="cnuke">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="cnuke">
+							<hbox/>
+						</button>
+						<label name="name" text=" cnuke ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="nfeske">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="nfeske">
+							<hbox/>
+						</button>
+						<label name="name" text=" nfeske ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="genodelabs">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="genodelabs">
+							<hbox/>
+						</button>
+						<label name="name" text=" genodelabs ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="alex-ab">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="alex-ab">
+							<hbox/>
+						</button>
+						<label name="name" text=" alex-ab ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="ehmry">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="ehmry">
+							<hbox/>
+						</button>
+						<label name="name" text=" ehmry ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+		</vbox>
+	</frame>
+</dialog>
+</inline>
+<sleep milliseconds="1000" />
 
-				<inline description="dependency graph">
-					<dialog>
-						<depgraph>
-							<frame name="storage"> <label text="Storage"/>     </frame>
-							<frame name="gui">     <label text="GUI"/>         </frame>
-							<frame name="usbdev">  <label text="USB Devices"/> </frame>
-
-							<button name="s.ahci1" dep="storage"> <label text="ahci1"/> </button>
-							<button name="s.usb1"  dep="storage"> <label text="usb1"/>  </button>
-							<button name="s.usb2"  dep="storage"> <label text="usb2"/>  </button>
-							<button name="s.usb3"  dep="storage"> <label text="usb3"/>  </button>
-
-							<frame  name="s.usb2.part"     dep="s.usb2">      <label text="Partition"/> </frame>
-							<button name="s.usb2.1"        dep="s.usb2.part"> <label text="1"/>         </button>
-							<frame  name="s.usb2.1.ext2fs" dep="s.usb2.1">    <label text="Ext2 FS"/>   </frame>
-							<button name="s.usb2.2"        dep="s.usb2.part"> <label text="2"/>         </button>
-
-							<frame name="s.usb2.1.ext2fs.subfs" dep="s.usb2.1.ext2fs"> <label text="Sub FS"/> </frame>
-
-							<button name="g.pointer"    dep="gui"> <label text="pointer"/>    </button>
-							<button name="g.overlay"    dep="gui"> <label text="overlay"/>    </button>
-							<button name="g.primary"    dep="gui"> <label text="primary"/>    </button>
-							<button name="g.background" dep="gui"> <label text="background"/> </button>
-
-							<button name="g.pointer.new"    dep="g.pointer">    <label text="+"/> </button>
-							<button name="g.overlay.new"    dep="g.overlay">    <label text="+"/> </button>
-							<button name="g.background.new" dep="g.background"> <label text="+"/> </button>
-
-							<button name="u.1-2" dep="usbdev"> <label text="1-2"/> </button>
-							<button name="u.1-3" dep="usbdev"> <label text="1-3"/> </button>
-
-							<frame name="vbox" dep="s.usb2.1.ext2fs.subfs">
-								<label text="VBox5"/>
-							</frame>
-
-							<dep node="vbox" on="g.primary"/>
-							<dep node="vbox" on="s.ahci1"/>
-							<dep node="vbox" on="u.1-3"/>
-
-							<frame name="fs_view" dep="s.usb2.1.ext2fs.subfs">
-								<label text="FS View"/>
-							</frame>
-
-							<dep node="fs_view" from="g.primary"/>
-
-						</depgraph>
-					</dialog>
-				</inline>
-
-				<sleep milliseconds="1000" />
-
-				<inline description="dependency graph">
-					<dialog>
-						<depgraph>
-							<frame name="storage"> <label text="Storage"/>     </frame>
-							<frame name="gui">     <label text="GUI"/>         </frame>
-							<frame name="usbdev">  <label text="USB"/> </frame>
-
-							<button name="s.ahci1" dep="storage"> <label text="ahci1"/> </button>
-							<button name="s.usb1"  dep="storage"> <label text="usb1"/>  </button>
-							<button name="s.usb2"  dep="storage"> <label text="usb2"/>  </button>
-							<button name="s.usb3"  dep="storage"> <label text="usb3"/>  </button>
-
-							<frame  name="s.usb2.part" dep="s.usb2">      <label text="Partition"/> </frame>
-							<button name="s.usb2.2"    dep="s.usb2.part"> <label text="2"/>         </button>
-
-							<button name="g.pointer"    dep="gui"> <label text="pointer"/>    </button>
-							<button name="g.overlay"    dep="gui"> <label text="overlay"/>    </button>
-							<button name="g.primary"    dep="gui"> <label text="primary"/>    </button>
-							<button name="g.background" dep="gui"> <label text="background"/> </button>
-
-							<button name="u.1-2" dep="usbdev"> <label text="1-2"/> </button>
-							<button name="u.1-3" dep="usbdev"> <label text="1-3"/> </button>
-
-						</depgraph>
-					</dialog>
-				</inline>
-
-				<sleep milliseconds="1000" />
-
-				<inline description="example menu">
-					<dialog>
-						<frame>
-							<hbox>
-								<vbox name="x">
-									<button name="virtualbox">
-										<label text="VirtualBox"/>
-									</button>
-									<button name="toolchain" hovered="yes">
-										<label text="Tool chain"
-										       font="monospace/regular"/>
-									</button>
-									<button name="log" hovered="yes" selected="yes">
-										<label text="Log window"
-										       font="title/regular"/>
-									</button>
-									<button name="config" selected="yes">
-										<label text="Configuration Configuration Configuration"
-										       font="annotation/regular"/>
-									</button>
-									<hbox>
-										<button name="x1"> <label text="x1"/> </button>
-										<button name="x2"> <label text="x2"/> </button>
-										<button name="x3"> <label text="x3"/> </button>
-									</hbox>
-									<frame>
-										<label text="A single line" font="annotation/regular"/>
-									</frame>
-								</vbox>
-								<float north="yes">
-									<vbox>
-										<button name="virtualbox">
-											<label text="VirtualBox"/>
-										</button>
-										<button name="toolchain" hovered="yes">
-											<label text="Tool chain"
-											       font="monospace/regular"/>
-										</button>
-									</vbox>
-								</float>
-							</hbox>
-						</frame>
-					</dialog>
-				</inline>
-
-				<sleep milliseconds="1000" />
-
-				<inline description="example menu">
-					<dialog>
-						<frame>
-							<vbox>
-								<button name="virtualbox" hovered="yes">
-									<label text="VirtualBox"/>
-								</button>
-								<button name="config" selected="yes" hovered="yes">
-									<label text="Configuration"/>
-								</button>
-							</vbox>
-						</frame>
-					</dialog>
-				</inline>
-
-				<sleep milliseconds="1000" />
+<inline description="step 1">
+<dialog>
+	<frame>
+		<vbox>
+			<hbox name="back">
+				<float name="left" west="yes">
+					<hbox>
+						<button selected="yes" style="back" name="back">
+							<hbox/>
+						</button>
+						<label name="label" font="title/regular" text=" Depot"/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+		</vbox>
+	</frame>
+</dialog>
+</inline>
+<sleep milliseconds="39" />
+<inline description="step 5">
+<dialog>
+	<frame>
+		<vbox>
+			<hbox name="back">
+				<float name="left" west="yes">
+					<hbox>
+						<button selected="yes" style="back" name="back">
+							<hbox/>
+						</button>
+						<label name="label" font="title/regular" text=" Depot"/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="cnuke">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="cnuke">
+							<hbox/>
+						</button>
+						<label name="name" text=" cnuke ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="nfeske">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="nfeske">
+							<hbox/>
+						</button>
+						<label name="name" text=" nfeske ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="genodelabs">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="genodelabs">
+							<hbox/>
+						</button>
+						<label name="name" text=" genodelabs ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="alex-ab">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="alex-ab">
+							<hbox/>
+						</button>
+						<label name="name" text=" alex-ab ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+			<hbox name="ehmry">
+				<float name="left" west="yes">
+					<hbox>
+						<button style="radio" name="ehmry">
+							<hbox/>
+						</button>
+						<label name="name" text=" ehmry ..."/>
+					</hbox>
+				</float>
+				<hbox name="right"/>
+			</hbox>
+		</vbox>
+	</frame>
+</dialog>
+</inline>
+<sleep milliseconds="30000" />
 
 			</rom>
 		</config>

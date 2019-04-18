@@ -88,7 +88,7 @@ class Menu_view::Widget : List_model<Widget>::Element
 			return node.attribute_value("name", Name(node.type()));
 		}
 
-		static Animated_rect::Steps motion_steps() { return { 60 }; };
+		static Animated_rect::Steps motion_steps() { return { 120 }; };
 
 	private:
 

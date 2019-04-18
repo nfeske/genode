@@ -235,6 +235,8 @@ void Menu_view::Main::_handle_dialog_update()
 
 	Xml_node dialog = _dialog_rom.xml();
 
+	log("dialog (", _timer.elapsed_ms(), "):\n", dialog);
+
 	if (dialog.has_type("empty"))
 		return;
 
