@@ -523,6 +523,35 @@ Date:   Tue May 14 16:14:15 2019 +0200
     Ref #3316
 
 
+New revision of the Genode Foundations book
+###########################################
+
+The "Genode Foundations" book received its annual update, which is actually
+rather a refinement than a revision. The noteworthy additions and changes are:
+
+: <div class="visualClear"><!-- --></div>
+: <p>
+:  <div style="clear: both; float: left; margin-right:20px;">
+:   <a class="internal-link" href="https://genode.org">
+:    <img class="image-inline" src="https://genode.org/documentation/genode-foundations-title.png">
+:   </a>
+:  </div>
+: </p>
+
+* Component health monitoring
+* Static code analysis
+* Documentation of --depot-user and --depot-auto-update
+* Minor adjustments in the under-the-hood chapter
+* Changes of the build system
+* Updated tool requirements
+* Updated API reference
+
+: <div class="visualClear"><!-- --></div>
+
+To examine the changes in detail, please refer to the book's
+[https://github.com/nfeske/genode-manual/commits/master - revision history].
+
+
 Base framework and OS-level infrastructure
 ##########################################
 
@@ -1485,18 +1514,34 @@ Date:   Sun May 12 03:13:02 2019 +0200
 
 
 Automated depot management
---------------------------
+==========================
 
-; @nfeske
+When using the 'import_from_depot' mechanism of the run tool, one frequently
+encounters a situation where the depot lacks a particular archive.
+Whenever the run tool detects such a situation, it prompts the user to
+manually curate the depot content via the _tool/depot/create_ tool.
+The need for such manual steps negatively interferes with the development
+workflow. The right manual steps are sometimes not straight-forward to find,
+in particular after switching between Git branches.
 
-commit a3411c8e9669967c8c0831ba3805b8be12dcd786
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Apr 1 17:28:12 2019 +0200
+To relieve the developer from this uncreative manual labor, we extended the
+run tool with the option '--depot-auto-update' for managing the depot
+automatically according to the needs of the executed run script. To enable
+this option, use the following line in the build configuration:
 
-    run: add --depot-auto-update feature
-    
-    If enabled, this option triggers the automated management of depot
-    content according to the needs of a run script.
-    
-    Fixes #3270
+! RUN_OPT += --depot-auto-update
+
+If enabled, the run tool automatically invokes the right
+depot-management commands to populate the depot with the required archives,
+and to ensure the consistency of the depot content with the current version of
+the source tree. The feature comes at the price of a delay when executing the
+run script because the consistency check involves the extraction of all used
+source archives from the source tree. In regular run scripts, this delay
+is barely noticeable. Only when working with a run script of a large system,
+it may be better to leave the depot auto update disabled.
+
+Please note that the use of the automated depot update may result in version
+updates of the corresponding depot recipes in the source tree (recipe hash
+files). It is a good practice to review and commit those hash files once the
+local changes in the source tree have reached a good shape.
 
