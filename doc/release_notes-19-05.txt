@@ -1,0 +1,1502 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 19.05
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+
+
+Kernel-agnostic virtual-machine monitors
+########################################
+
+; @alex-ab
+
+commit 5fa91a1bcc151b98cf9daf9da07f924cc987ab05
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Oct 9 11:50:50 2018 +0200
+
+    base: add x86 vm_state
+    
+    Issue #3111
+
+commit f927684eb84b7b28d5bb5842951f8d67bde99c06
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Sep 26 13:18:07 2018 +0200
+
+    os: add vmm_x86 interface test
+    
+    Issue #3111
+
+commit ae31b761f4cd6814aa36686a7780ca7bbf35761d
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jan 11 13:16:01 2019 +0100
+
+    hw: move vmm.run to vmm_arm.run
+    
+    Issue #3111
+
+commit 3a1bbfad280fb9fd45cd8d8e3cdfcdd866db7b07
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Sep 26 14:10:34 2018 +0200
+
+    nova: implement vm_session interface
+    
+    Issue #3111
+
+commit b75307b070fd9a4c4ad332ada48ae05ae802b0c1
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Sep 26 14:48:25 2018 +0200
+
+    foc/x86: implement vm_session interface
+    
+    Issue #3111
+
+commit ef130a3bf9776ad35ea7ddc466a455604ecfab4e
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Sep 26 11:00:01 2018 +0200
+
+    sel4/x86: implement vm_session interface
+    
+    Issue #3111
+    
+    - enable vt-x in kernel configuration
+    
+    Kernel patches:
+    
+    - add unrestricted guest support
+    - avoid kernel boot failure when vt-x is not available
+    - avoid nullpointer in kernel when vcpu is not fully setup
+    - avoid vcpu scheduling bug which causes starvation on same/below prio level
+    - save efer register correctly from guest
+
+commit d459432c450a67347f945b378f40ed95a9b60ec0
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jan 11 15:40:49 2019 +0100
+
+    init: scale priority of vm_session
+    
+    Issue #3111
+
+commit d2229ab381174fdefc6061e013c1a4eb1f44c3cb
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jan 11 15:41:29 2019 +0100
+
+    vm_session: evaluate priority
+    
+    Issue #3111
+
+
+commit cc64c437583fbde03299cec543e27ca4b3aa6457
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Apr 11 14:28:36 2019 +0200
+
+    vm_session: adjustments to work with seoul vmm
+    
+    for foc, nova, sel4
+    
+    Issue #3111
+
+commit b3f288c035795425aa89e3d30bb4c6dc02915e73
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sun May 5 14:33:34 2019 +0200
+
+    seoul: avoid corrupted cr0 and GP on debug wrmsr
+    
+    - fix bug in instruction emulator on clts - mark cr0 as changed
+    - don't cause GP on debug control wrmsr
+    
+    Issue #3111
+
+commit 92510af9d4b3f7ff3130a1132cba729419a37287
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sun May 5 14:32:46 2019 +0200
+
+    foc: working VM session support for AMD
+    
+    - kernel: propagate cr0 to VMM on exit in nested paging case
+    - kernel: disable forceful VM exit on task switch
+    - vm_session: adjust to kernel changes
+    
+    Issue #3111
+
+commit 70e0514a026cfddb9402e4e296a7af30e178e3c7
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue May 7 20:12:31 2019 +0200
+
+    seoul: handle late timeouts
+    
+    either
+    - due to poor signal performance of base platform
+    - due to being to less prioritized
+    - due to schedule overload
+    - due to using time sources of different physical CPUs
+    
+    Issue #3111
+
+commit 418734e5264c164984a529318d5cfb40c3ae83cb
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed May 15 13:23:36 2019 +0200
+
+    vm_session: consume spurious wakeups on nova
+    
+    Issue #3111
+
+commit 12850278a6049e6b6f27fb81992155b934fff869
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon May 6 10:34:47 2019 +0200
+
+    vbox5: use vm_session interface
+    
+    Issue #3111
+
+commit 5f0065755c2ab8febbb2d7fb5b370accdad0fd35
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon May 20 15:36:47 2019 +0200
+
+    vm_session: add fpu state for x86
+    
+    Issue #3111
+
+commit b2520ed1feabb800f5a71a3743f562321123f280
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue May 21 09:25:17 2019 +0200
+
+    vbox5: fpu support via new vm_session
+    
+    Issue #3111
+
+
+Broadened CPU architecture support and updated tool chain
+#########################################################
+
+; @nfeske
+
+Tool chain based on GCC-8.3.0 and binutils 2.32
+===============================================
+
+; tool chain -> C++17, riscv, aarch64
+
+commit 96b608187f83e05f450c54e012cc3c08505a8f51
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri Mar 22 14:34:05 2019 +0100
+
+    tool_chain: update binutils to version 2.32
+    
+    Issue #3307
+
+commit 0ec81fcfae23d62f7104c5899b43e4947edf22b1
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Tue Mar 19 14:01:17 2019 +0100
+
+    tool_chain: update GCC to version 8.3.0
+    
+    Issue #3307
+
+commit 30b17bfb63f2fbe17fd3d83a8da9cc665dd37eb3
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Apr 29 16:53:44 2019 +0200
+
+    tool_chain: update GDB to version 8.2.1
+    
+    Issue #3307
+
+commit 12b9378815a3d644a1daae74fb186c7fc8e9a049
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon May 6 18:18:21 2019 +0200
+
+    riscv: tool chain 19.05
+    
+    issue #3273
+
+commit a75cb41f2aa3d52b972db85767b407c89fcee7e5
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Mar 26 11:46:37 2019 +0100
+
+    tool_chain: add aarch64 compiler target
+    
+    Ref #3260
+
+commit 2a954419b8f4c320fa4b64fa85ed0bb39f77fc9b
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri May 17 18:47:41 2019 +0200
+
+    tool_chain: integrate 'ali2dep' tool
+    
+    Fixes #3361
+
+commit dc51dbfbbac603d5812610537131f02210e54409
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Mar 25 19:15:37 2019 +0100
+
+    gcov: update to version 8.3.0
+    
+    Issue #3307
+
+commit 377eae37b34ddc6a58a557f6aaa0b786b0d4660d
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Thu Apr 4 20:00:28 2019 +0200
+
+    sanitizer: update to version 8.3.0
+    
+    Issue #3307
+
+commit 37c7eed455e7876aa2e100ff7ece869d8feba6d0
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri May 17 19:11:33 2019 +0200
+
+    stdcxx: update to version 8.3.0
+    
+    Issue #3307
+
+commit 5ba4205a6357079ed3d94409dfdf74eb869ee4bf
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri May 17 14:16:59 2019 +0200
+
+    ada-runtime: adjustments for Genode tool chain 19.05
+    
+    Issue #3307
+
+commit 8ead0f6a1dee38f7d0c91a54ebca46b01d0aa693
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon May 6 18:03:35 2019 +0200
+
+    Enable C++17 by default
+    
+    Issue #3307
+
+commit fd4defd479965079808a61b2eaa034677156a151
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Mar 29 10:40:29 2019 +0100
+
+    base: add initial support for ARM 64-bit
+    
+    Ref #3260
+
+commit 4a2d2b5f5cc3890ac566739cf116ccb478f5fc14
+Author: Johannes Kliemann <kliemann@componolit.com>
+Date:   Wed May 22 12:33:15 2019 +0200
+
+    ada-runtime: update to GCC 8.3.0
+    
+    ref #3362
+    fixes #3371
+
+commit cc78ce1a843e91f6f172021726b0474f9d90b032
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Fri May 17 13:41:07 2019 +0200
+
+    Treat 'implicit fallthrough' errors as warnings
+    
+    After fixing the warnings, the compiler option should be removed.
+    
+    Issue #3307
+
+
+Updated dynamic linker and C runtime
+====================================
+
+; dynamic linker
+; libc updated -> RISC-V, AARCH64
+
+commit 467b96abf422d889a79a4c651b4c55f62b118156
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed May 8 15:01:21 2019 +0200
+
+    ldso: lazy binding support for RISC-V
+    
+    * added assembler invocation path for jump slot relocations
+    * fix GOT initialization (jmp_slot pointer goes to GOT[0] not GOT[2] on
+      RISC-V)
+    
+    Fixes #3339
+
+commit 8e13211c0978b0ae126918e419ee4634c88a09eb
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Apr 4 11:36:43 2019 +0200
+
+    base: dynamic linking support of crt0.s on ARM 64-bit
+    
+    * added global offset table relative loading for global symbols
+    * removed 'initial_sp' and 'initial_x0' because they are currently not
+      used on this platform. If required they are easy to resurrect.
+    
+    issue #3260
+
+commit 55e68760bd353d1b7821db7e8d3d16036fd32aad
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Apr 4 12:13:08 2019 +0200
+
+    ldso: dynamic linking support for ARM 64-bit
+    
+    * added relocation support
+    * added assembler invocation path for jump slot relocations
+    
+    fixes issue #3260
+
+
+commit a54a6bea417ad3e96f034fadb67a3a3563e64d27
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Tue Nov 13 14:02:37 2018 +0100
+
+    Port of OpenLibm
+    
+    Replace the FreeBSD libm with OpenLibm, which is easier to port.
+    OpenLibm is used by Mirage's freestanding Ocaml runtime (sin POSIX).
+    
+    https://openlibm.org/
+    
+    Ref #3289
+
+commit 573eaea72a18e81682962d8336ff20c78c2b9398
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Fri Apr 26 12:47:33 2019 +0200
+
+    Libc: update port to Freebsd 12
+    
+    Fix #3289
+
+
+Unified build directories for ARM
+=================================
+
+commit 911f4ada0a42fbc75d1c1854d449492bf3f7b09b
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Apr 23 11:07:51 2019 +0200
+
+    os: make platform_drv package ready for ARM
+    
+    * Make target binaries independent of board SPECS
+    * Name binaries of one architecture unambigously
+    * Extend include path to match board specifics
+    * Adapt run-scripts to use the right binary
+    
+    Ref #2190
+    Ref #3180
+
+commit 7c1e3c84baab2d0f2e642d84eef8a53808a4ad76
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Apr 17 14:13:20 2019 +0200
+
+    os: name gpio_drv unambigously (ref #2190)
+
+commit b6d14d9960f21d9201ddb4ed6dba27395b35587e
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Apr 12 11:46:07 2019 +0200
+
+    dde_ipxe: name ipxe nic_drv unambigously
+    
+    Ref #2190
+
+commit dcc28b65cb1ea6e94f952abad3b895b3cdee6410
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Apr 24 15:09:49 2019 +0200
+
+    run: use driver_nic-* pkg where possible (fix #3180)
+
+commit 312499a1efb3dc9fbddba3ae3e2bec904c9fa9af
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Apr 12 20:01:30 2019 +0200
+
+    os: name lan9118 nic driver explicitly
+    
+    * it is not dependent on pbxa9 anymore, but configureable
+    * rename it to lan9118_nic_drv
+    
+    Ref #2190
+
+commit 5bc498c8127c36913c1dae8bc2aaf59481b47707
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Apr 15 15:24:54 2019 +0200
+
+    dde_linux: name FEC nic_drv unambigously
+    
+    Ref #2190
+
+commit bf5a631a14e3989bb43a1fc940d84a25d381e554
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Apr 29 15:24:37 2019 +0200
+
+    dde_linux: name usb_drv unambigously
+    
+    * Make package buildable for ARM too
+    * Move usb library to src targets for explicitly named targets
+    * adapt remaining run-scripts to use the correctly named usb drivers
+    
+    Ref #2190
+
+commit 8d1cfce15e4821e928a58cfbe1c3b38669e02dae
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri May 3 13:51:49 2019 +0200
+
+    os: name fb_drv unambigously (ref #2190)
+
+commit 35e73b1a2d6c805540ad6fe226b585a0c7ce9b3e
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri May 3 14:58:17 2019 +0200
+
+    os: name imx53 input_drv unambigously (ref #2190)
+
+commit 4e6b571a36a085988cebe94a952647927be3a2bd
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri May 3 16:23:51 2019 +0200
+
+    os: rename uart_drv unambigously (ref #2190)
+
+commit d18d2d0d9b16aabd52e663abc390ea9b2fd331b8
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri May 3 22:49:19 2019 +0200
+
+    os: name sd_card_drv unambigously (ref #2190)
+
+commit 2e68fae2ece88367b22175c45e36a0bc15e5a053
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri May 3 23:35:45 2019 +0200
+
+    os: name ahci_drv unambigously (ref #2190)
+
+commit d9143f805e2a7ea6e9d0ef2abbade04a63d206e5
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Sat May 4 00:28:02 2019 +0200
+
+    os: name rtc_drv unambigously (ref #2190)
+
+commit 1e986fade85164601b9fe3574854b9d915a5d228
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Sat May 4 00:41:44 2019 +0200
+
+    os: name pbxa9 ps2_drv explicitely (ref #2190)
+
+commit 46f9b7a9573252542067fafeba1d8c9618995608
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Apr 11 16:24:33 2019 +0200
+
+    tool: deprecate board-specific build directories
+    
+    * Introduces BOARD variable to determine actual board
+    * Removes formerly deprecated kernel-specific build directories
+    
+    The following boards are available:
+    
+    arm_v6: rpi
+    arm_v7: arndale, imx53_qsb, imx53_qsb_tz, imx6q_sabrelite, imx7d_sabre,
+            nit6_solox, odroid_x2, odroid_xu, panda, pbxa9, usb_armory,
+            wand_quad, zynq_qemu
+    x86_64: pc, linux, muen
+    x86_32: pc, linux
+    riscv:  spike
+    
+    Ref #3316
+
+commit 8a8b96b6ae292e33ce4b0c82a7ccc1812862fbd7
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu May 9 14:04:03 2019 +0200
+
+    kernel: differentiate board-specific components
+    
+    Components like kernel, core, and bootstrap that are built for a
+    specific board need to reside inside the same architectural dependent
+    build directory. For instance there are sel4, foc, and hw kernel builds
+    for imx6q_sabrelite and imx7d_sabre, which have to reside inside the same
+    arm_v7 build directory.
+    This commit names those components explicitely, and adapts the run-tool to it.
+    
+    Fix #3316
+
+commit f13af09de25f058ba5c21305e791eb559aebe357
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue May 14 16:14:15 2019 +0200
+
+    os: name tz_vmm unambigously (ref #2190)
+    
+    Moreover, express current requirement to hw API, which was missing until now.
+    
+    Originally, in the board-specific build directory of imx53_qsb the
+    "KERNEL" variable was preset with "hw". Therefore, it was not perceived
+    that this dependency is required.
+    
+    Ref #3316
+
+
+Base framework and OS-level infrastructure
+##########################################
+
+Modernized block-storage interfaces
+===================================
+
+; @nfeske
+
+commit 2208220c12347ca68fe52498077e6a95a9945096
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 3 16:05:10 2019 +0200
+
+    block session: remove Block::Session::Operations
+    
+    This patch modernizes the 'Block::Session::info' interface. Instead of
+    using out parameters, the 'init' RPC function returns a compound 'Info'
+    object now. The rather complicated 'Operations' struct is replaced by
+    a 'writeable' attribute in the 'Info' object.
+    
+    Fixes #3275
+
+commit bbe3ee8dc5852c7f95f1b7d1e84654199d778a51
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Apr 4 18:25:54 2019 +0200
+
+    block_session: server-defined payload alignment
+    
+    This patch replaces the formerly fixed 2 KiB data alignment within the
+    packet-stream buffer by a server-defined alignment. This has two
+    benefits.
+    
+    First, when using block servers that provide small block sizes like 512
+    bytes, we avoid fragmenting the packet-stream buffer, which occurs when
+    aligning 512-byte requests at 2 KiB boundaries. This reduces meta data
+    costs for the packet-stream allocator and also allows fitting more
+    requests into the buffer.
+    
+    Second, block drivers with alignment constraints dictated by the
+    hardware can now pass those constraints to the client, thereby easing
+    the use of zero-copy DMA directly into the packet stream.
+    
+    The alignment is determined by the Block::Session_client at construction
+    time and applied by the Block::Session_client::alloc_packet method.
+    Block-session clients should always use this method, not the 'alloc_packet'
+    method of the packet stream (tx source) directly. The latter merely
+    applies a default alignment of 2 KiB.
+    
+    At the server side, the alignment is automatically checked by
+    block/component.h (old API) and block/request_stream.h (new API).
+    
+    Issue #3274
+
+commit 34fd5f626a5e57ff87295d7b689497d062d22206
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Apr 5 09:12:27 2019 +0200
+
+    test/block_request_stream: private Request_stream
+    
+    Avoid public inheritance to make the code simpler to understand.
+    
+    Issue #3279
+
+commit 51f51c18afcd698ad866225ca97085ccc75c1940
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Apr 5 09:16:28 2019 +0200
+
+    block/request_stream: rename wakeup_client
+    
+    This patch renames 'wakeup_client' to 'wakeup_client_if_needed' to
+    clarify that the method triggers signals only when needed, not on every
+    call.
+    
+    The name 'wakeup_client' is prone to misguide users to call the function
+    conditionally as an optimization, thereby complicating the code, but to
+    no effect.
+    
+    Fixes #3279
+
+commit a39474a245c545ac0fb858a6daa5773d1d13a186
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Apr 9 16:24:12 2019 +0200
+
+    block-request stream: split Operation from Request
+    
+    This patch splits the 'Request' definition into smaller types that are
+    suitable for the client-side API too.
+    
+    The new 'Operation' type comprises the block operation's type (opcode)
+    and the operation's arguments (block number, block count).
+    The former 'Request::operation_defined' is now 'Operation::valid'.
+    The 'Request' aggregates an 'Operation', which changes its object
+    layout.
+    
+    Note that this commit relaxes the bit-precise definition of 'Request' to
+    facilitate the use of 'unsigned long' where appropriate, in particular
+    for the request tag (which should correspond to an 'Id_space::Id'). The
+    originally bit-precise definition was pursued to allow the sharing of
+    the 'Request' type between SPARK and C++ code. However, it turns out
+    that defining a native type in each language and a (set of) converting
+    constructors is a more natural approach.
+    
+    Issue #3283
+
+commit e058adc4fec329cc733afc78de9f27b6f38253e7
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Apr 9 13:58:49 2019 +0200
+
+    block_session: add client-defined request tag
+    
+    The new request tag allows a block-session client to uniquely correlate
+    acknowledgements with outstanding requests. Until now, this was possible
+    for read and write operations by taking the value of the request's
+    packet-stream offset. However, SYNC and TRIM requests do not carry any
+    packet-stream payload and thereby lack meaningful offset values. By
+    introducing the notion of a 'tag', we can support multiple outstanding
+    requests of any type and don't need to overload the meaning of the
+    'offset' value.
+    
+    Issue #3274
+
+commit 593e97112185e3804d0a59241e77bf16c3632b72
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Apr 9 10:52:01 2019 +0200
+
+    block_session: SYNC and TRIM as async operations
+    
+    This patch removes the blocking Block::Session::sync RPC function and
+    adds the asynchronous operations SYNC and TRIM to the block session's
+    packet-stream interface.
+    
+    Even though the patch adjusts all block components to the interface
+    change, the components keep the former blocking handling of sync
+    internally for now because of the design of the 'Block::Driver'
+    interface. This old interface is not worth changing. We should instead
+    migrate the block servers step by step to the new
+    'Block::Request_stream' API.
+    
+    Fixes #3274
+
+commit c433f870002738e1a01604d82eb7a182c46f119e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 10 22:16:31 2019 +0200
+
+    os: batching of packet-stream source operations
+    
+    This patch adds support for manually triggering the wakeup of the packet
+    sink by the source. This way, a packet source becomes able to marshal
+    batches of submissions or unmarshal batches of acknowledgements before
+    yielding the control over to the sink.
+    
+    Issue #3283
+
+commit 6c0dd9fe3bfb5b8f01c7a43efa9cafe7819fc716
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Apr 9 17:43:30 2019 +0200
+
+    block_session: use types from block/request.h
+    
+    Issue #3283
+
+commit e5f27b44b54c6311d940d9906880d828ba9281ea
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 10 20:11:18 2019 +0200
+
+    block_session: turn 'Connection' into template
+    
+    As a preparatory step for introducing the new block-client API, we have
+    to turn the 'Block::Connection' into a class template. The template
+    argument will be used to tie an application-defined job type to the
+    block connection.
+    
+    Issue #3283
+
+commit 976f67eee63b4925f001608151343f14a2b83f00
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Apr 11 21:37:53 2019 +0200
+
+    os: make 'Block::Operation' printable
+    
+    Issue #3283
+
+commit 784206c85ccfb89915a9cd0fa60c78c3a6aa6c12
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 10 15:07:16 2019 +0200
+
+    block_session: new client-side API
+    
+    This patch equips the 'Block::Connection' with a framework API for the
+    implementation of robust block-session clients that perform block I/O in
+    an asynchronous fashion.
+    
+    An application-defined 'JOB' type, inherited from 'Connection::Job',
+    encapsulates the application's context information associated with a
+    block operation.
+    
+    The lifecycle of the jobs is implemented by the 'Connection' and driven
+    by the application's invokation of 'Connection::update_jobs'. The
+    'update_jobs' mechanism takes three hook functions as arguments, which
+    implement the applications-defined policy for producing and consuming
+    data, and for the completion of jobs.
+    
+    Issue #3283
+
+commit 17fda73ca1fd617a350991aad29b0bc8bf4caa34
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Apr 11 21:36:28 2019 +0200
+
+    block_tester: update to new block-client API
+    
+    - Added 'io_buffer' attribute, default is 4M
+    - Added 'batch' attribute, specifying the number of jobs used
+      in parallel, default is 1 (sequential)
+    - Removed 'synchronous' attribute (use batch of 1 instead)
+    - Added 'copy' attribute (default "yes")
+    - Print number of signals ("triggered")
+    
+    Issue #3283
+
+
+Unified types for time values
+=============================
+
+; @m-stein
+
+commit 181c78d482812cc6665b4abbdfb33d87c4f7e7b1
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Tue Apr 9 15:46:36 2019 +0200
+
+    timeout: use uint64_t for all plain time values
+    
+    This enforces the use of unsigned 64-bit values for time in the duration type,
+    the timeout framework, the timer session, the userland timer-drivers, and the
+    alarm framework on all platforms. The commit also adapts the code that uses
+    these tools accross all basic repositories (base, base-*, os. gems, libports,
+    ports, dde_*) to use unsigned 64-bit values for time as well as far as this
+    does not imply profound modifications.
+    
+    Fixes #3208
+
+commit 0b9916cae221007ed59f628d2de20abe09880d19
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed Apr 17 12:16:42 2019 +0200
+
+    Timer::Connection: simplify curr_time
+    
+    With the new fact that plain time values are always 64 bit unsigned, the
+    timestamp type is never bigger than the plain time type. Therefore, a code path
+    in the curr_time interpolation that treated this condition is not neccessary
+    anymore.
+    
+    Ref #3208
+
+
+Support for chained EBR partitions
+==================================
+
+; @cnuke
+
+commit cb2ebd0bf7e940f43d835d7517a3556f59580c0f
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Sun Mar 10 14:36:07 2019 +0100
+
+    part_block: fix handling of chained EBR's
+    
+    Fixes #3223.
+
+
+IP forwarding with port redirection
+===================================
+
+; @m-stein
+
+commit bcc049ceebfe4b22d965afa1445d669dc1d81ee9
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Mar 18 17:31:59 2019 +0100
+
+    nic_router: manipulate port-forwarding port
+    
+    The new configuration attributes <tcp-forward to_port="123" /> and
+    <udp-forward to_port="123" /> enable manipulating the destination port of
+    port-forwarded packets.
+    
+    Fixes #3237
+
+
+NIC-bridge support for ethernet multicast
+=========================================
+
+; @ehmry
+
+commit 7448223418223da6dbfa3ec0761e87fe77435fbc
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Thu Apr 11 21:33:57 2019 +0200
+
+    Ethernet multicast support at nic_bridge
+    
+    Fix #3282
+
+
+Libraries, languages, and applications
+######################################
+
+SPARK-based cryptography library
+================================
+
+; @componolit (?)
+
+commit 4c8d787918d90f633357fba6d531b31f405799d7
+Author: Alexander Senier <senier@componolit.com>
+Date:   Mon Feb 25 11:03:48 2019 +0100
+
+    Port libsparkcrypto
+
+commit a2743dcaeba024d201a0b85a81d89a068f941639
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Dec 20 16:49:14 2018 +0100
+
+    Library for the AES-CBC en/decryption of 4K blocks
+    
+    The 'aes_cbc_4k' library is simple wrapper around libsparkcrypto to
+    serve as a backend for storage encryption. It operates on data chunks of
+    4 KiB and uses AES-CBC while incorporating the block number and the
+    private key as salt values.
+
+
+Improved resilience of sequence tool
+====================================
+
+; @cnuke
+
+commit dd6bd0f880d6b0f2a3f925f5aed59d96cfef2f95
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue May 7 13:25:06 2019 +0200
+
+    sequence: add keep-going feature
+    
+    When enabling the 'keep_going' config attribute, the component will
+    carry on in case a child exited with an error. In addition, if the
+    'restart' attribute is set it will start executing the children from
+    the beginning.
+
+
+NIC-bus server for private LANs
+===============================
+
+; @ehmry
+
+commit 498854c085e81175da9f6e6f3d83613bf813935f
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Mon Apr 15 11:27:02 2019 +0200
+
+    Nic_bus server
+    
+    A minimal Nic service that switches ethernet packets between Nic
+    sessions. Packets are only switched between MAC addresses of directly
+    connected sessions, attaching a device driver and switching to
+    additional MACs on further ethernet segments is not supported. That is
+    to say that is component is neither a hub nor a switch.
+    
+    This server is intended for creating private LANs between components and
+    supports arbitrary level 3 protocols (IPv4 and IPv6).
+
+
+Distributed Genode
+==================
+
+; @valivalpas
+
+commit c87b2f2eb9616d55a3ae4a019049856d51a8b15e
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Fri Nov 2 15:08:14 2018 +0100
+
+    udp_log: send LOG as UDP packets
+
+commit 5627797e77a7895ab091e96d40f62668bdc31179
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Mon Nov 5 11:55:35 2018 +0100
+
+    log_udp: receive LOG messages via UDP
+
+commit c137c595c80f2473cd64bb05e2df9ea863480df8
+Author: Edgard Schmidt <schmidt@edik.ch>
+Date:   Thu Oct 11 15:53:20 2018 +0200
+
+    remote_rom: improvements and refactoring
+    
+    Avoid a runtime warning message since our backend does not provide
+    such constructor functions yet. If a backend requires them, it should
+    initiate their execution by itself within the backend init functions.
+    
+    In coherence with the size_guard idea, the remote_rom packets are are
+    separated into a simple layer packet and a data packet. While basically
+    only managing common control informations, the layer packet may carry
+    any payload. The data packet, instead, manages the transmission of the
+    actual ROM payload and can be attached to the layer packet. This
+    simplifies the management of the notification packets UPDATE and SIGNAL
+    since they do not contain fields like 'offset' or 'payload_size'
+    anymore.
+    
+    Now, a single thread manages all incoming RPC calls, signals and (thus)
+    network packets. This will hopefully make further synchronization
+    enhancements a lot easier.
+    
+    Further changes:
+    * Following data packets are identified as such by their offset instead
+      of their packet type field. This simplifies the protocol.
+    * reduced redundancy in the packet building code
+    * rewrap lines with >79 columns
+    * fix compiler warnings
+    * split backend code
+    * Remove a few unnecessary include and using directives.
+    * In order to avoid global variables across modules, 'verbose' is a
+      member variable now. Later, its value may be set via constructor.
+    * The nested Rx class is merged with Backend_base. This way, we avoid
+      unnecessary maintenance as long as we don't have a clear design for
+      ROM multiplexing which may require the management of multiple IP
+      addresses etc.
+    * The HANDLER template argument is removed since client and server
+      inherit from Backend_base anyway. The receive method is virtual now.
+    * The signals packet_avail and ready_to_ack are directly passed to the
+      same signal handler now.
+    * Remove unnecessarily public/protected visibility from some members.
+    * Remove and add unnecessary and, due to inclusion order, secretly
+      missing include directives, respectively.
+
+commit 8ed98b8459cd88a8b949605d2f3cd6ca399157af
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Fri Nov 9 09:48:05 2018 +0100
+
+    remote_rom: use UDP and implement go-back-N ARQ
+
+commit 92ef8619c7cee024f887f800d5e83498e20b6c5f
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Fri Nov 30 14:40:23 2018 +0100
+
+    remote_rom: implement ARP requests
+
+commit 557ffbac809741ee05c3c6e02ef2907696472eef
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Tue Apr 30 13:42:29 2019 +0200
+
+    remote_rom: Genode API compatibility
+
+
+Seoul virtual-machine monitor
+=============================
+
+; @alex-ab
+
+commit 1705aab290faf2b986da4df58fd3e763e9f96dfd
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon Mar 18 14:58:05 2019 +0100
+
+    seoul: PS2 mouse wheel support
+    
+    fixes #3234
+
+commit 3b36673e0305fb7e67d36f41fcfb0a33e3ca0e97
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Mar 4 10:05:11 2019 +0100
+
+    seoul: use nitpicker session
+    
+    Issue #3196
+
+commit 8840ca96a904fb20fb7664ade38ca5d6536d24a0
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Nov 12 20:31:41 2018 +0100
+
+    seoul: use vm_session interface
+    
+    and remove any dependency on the NOVA kernel interface
+    
+    Issue #3111
+
+
+VirtualBox
+==========
+
+; @alex-ab
+
+commit 3b365422121e21c2697ba01e9a32f1ac82b5bddf
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Mar 4 13:53:40 2019 +0100
+
+    vbox5: use nitpicker session
+    
+    Issue #3196
+
+commit 00953e39f446cc9cd5a217e84ee570cd107f2913
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sat Mar 11 18:15:04 2017 +0100
+
+    vbox: allocate REM memory dense
+    
+    Fixes #2116
+
+
+Solo5
+=====
+
+; @ehmry
+
+commit 3e848dff10c92b3425cbd38cf2d2fd7b00a8b10a
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Wed Apr 10 13:51:32 2019 +0200
+
+    solo5: update bindings
+    
+    Update the Solo5 upstream to accomadate changes to the Block session and
+    stack protection support in the base library.
+    
+    Ref #3275
+    Ref #3283
+
+
+Use of Nim decoupled from Genode build system
+=============================================
+
+; @ehmry
+
+commit 62a4d1de0e675ede83f86d4c83c6338eff49a5c8
+Author: Emery Hemingway <ehmry@posteo.net>
+Date:   Thu Apr 18 20:34:44 2019 +0200
+
+    Remove Nim tests
+    
+    Nim is now built independently of the Genode repository using an SDK and
+    Nimble.
+    
+    Fix #3300
+
+
+OpenJDK improvements
+====================
+
+; @ssumpf
+
+; reference Boot2Java article
+; mention Spring framework
+
+commit 6680c328ff0247b8961226d378e0f5f224817a3e
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Mar 19 16:16:00 2019 +0100
+
+    jdk: missing network infrastructure for clients
+    
+    fixes #150
+
+
+Device drivers
+##############
+
+Improved Zynq board support
+===========================
+
+; @valivalpas
+
+commit 9097c80269a1417876e3ae545d23332802864845
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Mon May 6 16:54:23 2019 +0200
+
+    zynq: improve nic driver error handling
+    
+    also be more verbose about detected errors
+    
+    fixes #3320
+
+commit 0451d3bbeda2b9a200f9e515be2c67b98a853491
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Thu May 2 17:23:40 2019 +0200
+
+    Simple cache performance test
+    
+    ref #3321
+
+commit a4d3745a9a589662bc06052bfab46ab93a0725a0
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Fri Aug 3 15:37:22 2018 +0200
+
+    zynq boards: fix board defs
+
+commit f84567e460977c3865322f9896f23369f11ee266
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Tue Nov 13 13:55:22 2018 +0100
+
+    zynq_boards: move RAM size to board defs
+
+commit 6402247003aa1e6899c6a16930a05d85a0fb77c8
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Mon May 6 17:02:15 2019 +0200
+
+    zynq_boards: enable L2 cache
+
+commit a9f90eb1d55d5c8058d1bdeb7fc09a8170d3a1f3
+Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
+Date:   Tue Apr 30 13:43:08 2019 +0200
+
+    zynq_boards: fix bootstrap-hw.mk
+
+
+Updated Intel network drivers
+=============================
+
+; @chelmuth
+
+commit 1cc3472e1dec472faf4f91ae1789183026ccff6c
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Sun Mar 3 14:49:11 2019 +0100
+
+    dde_ipxe: enable Intel i211 network card
+    
+    Fixes #3201
+
+commit 4f0b17a4dc61626592933d6ad72aed58d5f1ef10
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Thu May 2 15:18:12 2019 +0200
+
+    dde_ipxe: update Intel NIC driver to latest upstream
+    
+    This patch is motivated by sporadic hangs during link down/up on i219
+    NICs handling and the fix implemented upstream in
+    
+      https://git.ipxe.org/ipxe.git/commit/546dd51de8459d4d09958891f426fa2c73ff090d
+    
+    Issue #1220
+
+
+New drivers-nic depot packages
+==============================
+
+; @skalk
+
+commit 5b5e8a9bd43078e340eed85925591a093cb7ef96
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Apr 24 16:03:16 2019 +0200
+
+    depot: add recipe for drivers_nic-linux
+    
+    Ref #3180
+
+commit ff031d792c3a3d4b574b1ac76cc445d4701aa29f
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Apr 23 11:10:12 2019 +0200
+
+    depot: add recipe for driver_nic-rpi
+    
+    Ref #3180
+
+commit 82693ba5b557b87acd56683477e4b619713bb38b
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Apr 17 11:33:44 2019 +0200
+
+    depot: add recipe for drivers_nic-imx53_qsb
+    
+    Ref #3180
+
+commit 8dd618d67f202f8db124255d2a4aaec8219815ed
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Apr 17 11:40:42 2019 +0200
+
+    depot: add recipe for drivers_nic-imx6q_sabrelite
+    
+    Ref #3180
+
+commit 5182224c2b683319e1e9ac756e947907fa9f335f
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Apr 15 15:22:04 2019 +0200
+
+    depot: add recipe for drivers_nic-zynq
+    
+    Ref #3180
+
+commit 5d4064fed413e2efc59d8ed34fd2b81cfec4f254
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Apr 12 20:07:22 2019 +0200
+
+    depot: add recipe for drivers_nic-pbxa9
+    
+    Ref #3180
+
+commit ae3a6fe27093db3bd0c828941944e215bc331385
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue May 7 13:39:15 2019 +0200
+
+    depot: add recipe for drivers_nic-muen pkg
+
+
+Extended drivers-interactive depot packages
+===========================================
+
+; @skalk
+
+commit a623a66019c795d6b9762989e045664ed711fb18
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri May 3 15:26:44 2019 +0200
+
+    depot: add recipe for drivers_interactive-imx53_qsb
+    
+    Ref #2190
+
+commit e6f83d4df23b90067de1a4fa4701ff5fbdcca23b
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri May 3 15:47:48 2019 +0200
+
+    depot: add recipe for drivers_interactive-rpi
+    
+    Ref #2190
+
+commit be053ed257de33f1e9355b7c7c1ada31cbc8b4f8
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue May 7 13:45:57 2019 +0200
+
+    depot: add recipe for drivers_interactive-muen
+
+
+Platforms
+#########
+
+; @skalk
+
+commit f42c21f16bb14da937ba6aa3c4658ef0cbebab90
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Apr 17 12:51:39 2019 +0200
+
+    platform_info: add kernel information (fix #3295)
+
+
+Execution on bare hardware (base-hw)
+====================================
+
+; @skalk
+
+commit 2ecf1d887b44c8d5874cf97cd1dbe78886030a73
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Feb 20 15:26:56 2019 +0100
+
+    hw: schedule on demand (Fix #3157)
+
+commit 80fa23da5e95b83fec241958e6086e903052bea0
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Feb 21 17:23:10 2019 +0100
+
+    hw: increase timing accuracy of kernel (fix #3081)
+    
+    * Introduce 64-bit tick counter
+    * Let the timer always count when possible, also if it already fired
+    * Simplify the kernel syscall API to have one current time call,
+      which returns the elapsed microseconds since boot
+
+commit 330692350eafffd44e2338d09869980f9286e03c
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Mar 11 11:42:36 2019 +0100
+
+    hw: introduce non-blocking signal checking
+    
+    * Introduces pending_signal syscall to check for new signals for the
+      calling thread without blocking
+    * Implements pending_signal in the base-library specific for hw to use the
+      new syscall
+    
+    Fix #3217
+
+commit e9b3569f441523ef2aadff909ac21baa40eadc18
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Mar 13 15:43:56 2019 +0100
+
+    hw: remove overall cache maintainance from core
+    
+    This functionality is only needed in bootstrap now that kernel and
+    userland share the same address-space.
+    
+    Fix #2699
+
+commit b04a70177b0ec20371a915805a34db242fc273be
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Thu Nov 13 13:41:15 2014 +0100
+
+    base & arm: simplify and optimize cmpxchg
+    
+    The old inline assembly provided two output operands that were afterwards
+    combined for a return value. However, the second output operand isn't
+    necessary when using the "Acquiring a Lock" example-code of the ARM manual
+    "Barrier Litmus Tests and Cookbook". This saves two logical operations
+    per acquisition try. Additionally better documentation is now provided.
+    
+    Fixes #1292
+
+commit 3725e91603cf322fecc234278ded7ac2be85836e
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Mar 13 14:58:23 2019 +0100
+
+    hw: implement power-saving kernel lock for ARM smp
+    
+    Thanks to former work of Martin Stein this commit finally incorporates a
+    non-spinning kernel lock on multi-core ARM platforms.
+    
+    Fix #1313
+
+commit baf815d09986a15d72224a418503919c36d7a986
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Mar 22 14:23:07 2019 +0100
+
+    hw: add support for i.MX7 Dual SABRE board
+    
+    Fix #3251
+
+commit 1ac3c845faadfb50700a024baa625ac14d11aaab
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu May 16 13:42:46 2019 +0200
+
+    hw: unify board definitions of bootstrap/core
+    
+    Ref #3326
+
+commit 70ff19dc5455f45ca30c8031e8eba9343418a066
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu May 23 18:09:42 2019 +0200
+
+    hw: eager FPU switching for x86_64
+    
+    Since gcc 8.3.0 generates SSE instructions into kernel code, the
+    kernel itself may raise FPU exceptions and/or corrupt user level FPU
+    contexts thereby. Both things are not feasible, and therefore, lazy FPU
+    switching becomes a no go for base-hw because we cannot avoid FPU
+    instructions because of the entanglement of base-hw, base, and the tool
+    chain (libgcc_eh.a).
+    
+    issue #3365
+
+
+Updated Muen separation kernel
+==============================
+
+; @codelabs
+
+commit 92df79b4de635152e20a80e4787338a702de0d67
+Author: Adrian-Ken Rueegsegger <ken@codelabs.ch>
+Date:   Mon May 6 15:02:17 2019 +0200
+
+    Update Muen port
+    
+    - Drop unnecessary patch
+    - Improved build speed/parallelization
+    - Increased log channel size
+    - Fix path in base-hw/Muen documentation
+
+
+NOVA microhypervisor
+====================
+
+; @alex-ab
+
+commit 26796c8f7ad9f245a3ddda3ebf03a9dbbf905f14
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Apr 9 10:17:35 2019 +0200
+
+    nova: update kernel branch
+    
+    - sorting of initializer by Christian Prochaska - issue #3253
+    - leak of FPU register state reported by Julian Stecklina - thanks !
+    - fix page table synchronization bug - by Julian Stecklina
+    - add a second dynamic buddy if the memory requirements could not be fulfilled
+      by the first dynamic buddy
+    - disable vtlb peek if EPT/NPT is enabled
+
+
+seL4 microkernel
+================
+
+; @skalk
+
+commit 3d727a403fb39c72a76ac896df6e9c056a424178
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Jan 21 13:55:15 2019 +0100
+
+    sel4: update tools to currently used version 9.0.x
+    
+    Until now, Genode referenced a fork of the outdated elfloader-tool
+    to enable bootstrapping of sel4 on ARM platforms. Because the
+    elfloader is inherently dependent on the used platforms newer
+    ARM versions supported by the kernel could not be loaded by the
+    outdated elfloader. This commit uses a fresh fork of the nowadays
+    used sel4_tools repository.
+    
+    Ref #3251
+
+commit 4c492a3be760928950ddf8b94ccc3e3c8b266b61
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Jan 21 14:21:19 2019 +0100
+
+    imx7d_sabre: add board for sel4 and foc
+    
+    Ref #3251
+
+commit 95b9e0a0e2dde44f35048ab63789d28cf362ad2d
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Apr 16 10:26:56 2019 +0200
+
+    sel4: fix configuration for imx7d sabre
+    
+    Ref #3292
+
+commit 4bcd9169c0098b10ae295e46e048a8df3df0136f
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Apr 16 13:21:31 2019 +0200
+
+    sel4: add timer for imx7d_sabre
+    
+    Fix #3292
+
+
+Fiasco.OC microkernel
+=====================
+
+; @skalk
+
+commit 356526d61058d52bc1f66a8e0aac426dc9c3c411
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Apr 2 11:39:26 2019 +0200
+
+    foc: increase USER_BASE_CAP
+    
+    due to THREAD_AREA_SLOT increase by
+    
+    foc/x86: implement vm_session interface
+    
+    Add additional static assertion check to detect misconfiguration earlier.
+
+commit 71c36e79e30a0b7e4b83e5855ed720825ce31df4
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Mar 29 11:08:06 2019 +0100
+
+    foc: add support for Raspberry Pi 3
+    
+    Ref #3260
+
+
+Tooling and build system
+########################
+
+Improved handling of missing ports
+==================================
+
+; @m-stein
+
+; refer to genodians article
+
+commit d9ef1ce099f9530da83218658cf07c2ce7fbe4fc
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Sun May 12 03:13:02 2019 +0200
+
+    tool/depot: improve handling of missing ports
+    
+    * The extract tool determines and reports all missing ports at once.
+    * The extract tool automatically prepares all missing ports if PREPARE_PORTS=1.
+    * The missing_ports tool prints a list of missing ports for given archives.
+    
+    Fixes #3353
+
+
+Automated depot management
+--------------------------
+
+; @nfeske
+
+commit a3411c8e9669967c8c0831ba3805b8be12dcd786
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Apr 1 17:28:12 2019 +0200
+
+    run: add --depot-auto-update feature
+    
+    If enabled, this option triggers the automated management of depot
+    content according to the needs of a run script.
+    
+    Fixes #3270
+
