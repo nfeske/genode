@@ -175,352 +175,198 @@ Date:   Tue May 21 09:25:17 2019 +0200
 Broadened CPU architecture support and updated tool chain
 #########################################################
 
-; @nfeske
+With the major update of Genode's tool chain and library infrastructure in
+tandem, the framework gains a consistent architecture support across
+x86-32, x86-64, ARM-32, RISC-V, and the new added AARCH64. This includes
+the tool chain (Section [Tool chain based on GCC-8.3.0 and binutils 2.32]),
+the base framework, the dynamic linker,
+and the C runtime (Section [Updated dynamic linker and C runtime]).
+
+Together with this update, we took the chance to wrap up our long-time move
+away from board-specific build directories to one generic build directory
+shared by multiple kernels and boards for a given CPU architecture
+(Section [Unified build directories for ARM]).
+
 
 Tool chain based on GCC-8.3.0 and binutils 2.32
 ===============================================
 
-; tool chain -> C++17, riscv, aarch64
+Genode uses a tailored tool chain based on GCC and binutils that is used
+across all supported kernels and architectures.
+Since the previous tool-chain update in version
+[https://genode.org/documentation/release-notes/17.05#Tool_chain - 17.05],
+we relied GCC-6.3. After two years, it was time for an update, motivated
+by three major reasons.
+First, the C++17 standard is common-place now. We Genode developers anticipate
+the improvements that come with it.
+Second, RISC-V and AARCH64 are now supported by mainline GCC. Up till now,
+we had to maintain a custom patch set for Genode's RISC-V support. AARCH64
+was not supported yet.
+Third, our increasing engagement with SPARK depends on recent improvements
+of the Ada compiler that is part of GCC.
 
-commit 96b608187f83e05f450c54e012cc3c08505a8f51
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri Mar 22 14:34:05 2019 +0100
+With Genode 19.05, the tool chain is now based on binutils version 2.32, GCC
+version 8.3.0, GDB version 8.2.1, gcov version 8.3.0, standard C++ library
+version 8.3.0.
 
-    tool_chain: update binutils to version 2.32
-    
-    Issue #3307
+The tool chain supports x86 (32 and 64 bit), ARM, AARCH64, and RISC-V.
 
-commit 0ec81fcfae23d62f7104c5899b43e4947edf22b1
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Tue Mar 19 14:01:17 2019 +0100
+For C++ code, the C++17 standard is enabled by default.
 
-    tool_chain: update GCC to version 8.3.0
-    
-    Issue #3307
+The update of the tool chain presented a perfect opportunity to replace the
+former use of gnatmake with a much more natural integration of Ada in Genode's
+build system, using a custom ali2dep dependency-extraction tool developed
+by [https://github.com/Componolit/ali2dep - Componolit].
 
-commit 30b17bfb63f2fbe17fd3d83a8da9cc665dd37eb3
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon Apr 29 16:53:44 2019 +0200
+In contrast to the previous versions, we switched to versioned installation
+directory for the new tool chain. By default, it is now installed to
+_/usr/local/genode/tool/19.05/_. This eases the use of different
+tool-chain versions for different development branches.
 
-    tool_chain: update GDB to version 8.2.1
-    
-    Issue #3307
+:Tool-chain installation:
 
-commit 12b9378815a3d644a1daae74fb186c7fc8e9a049
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Mon May 6 18:18:21 2019 +0200
+  [https://genode.org/download/tool-chain]
 
-    riscv: tool chain 19.05
-    
-    issue #3273
+Caveats
+-------
 
-commit a75cb41f2aa3d52b972db85767b407c89fcee7e5
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Mar 26 11:46:37 2019 +0100
+The tool-chain update required a number of adaptations throughout the
+source tree, and may affect Genode users too:
 
-    tool_chain: add aarch64 compiler target
-    
-    Ref #3260
-
-commit 2a954419b8f4c320fa4b64fa85ed0bb39f77fc9b
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri May 17 18:47:41 2019 +0200
-
-    tool_chain: integrate 'ali2dep' tool
-    
-    Fixes #3361
-
-commit dc51dbfbbac603d5812610537131f02210e54409
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon Mar 25 19:15:37 2019 +0100
-
-    gcov: update to version 8.3.0
-    
-    Issue #3307
-
-commit 377eae37b34ddc6a58a557f6aaa0b786b0d4660d
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Thu Apr 4 20:00:28 2019 +0200
-
-    sanitizer: update to version 8.3.0
-    
-    Issue #3307
-
-commit 37c7eed455e7876aa2e100ff7ece869d8feba6d0
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri May 17 19:11:33 2019 +0200
-
-    stdcxx: update to version 8.3.0
-    
-    Issue #3307
-
-commit 5ba4205a6357079ed3d94409dfdf74eb869ee4bf
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri May 17 14:16:59 2019 +0200
-
-    ada-runtime: adjustments for Genode tool chain 19.05
-    
-    Issue #3307
-
-commit 8ead0f6a1dee38f7d0c91a54ebca46b01d0aa693
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon May 6 18:03:35 2019 +0200
-
-    Enable C++17 by default
-    
-    Issue #3307
-
-commit fd4defd479965079808a61b2eaa034677156a151
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri Mar 29 10:40:29 2019 +0100
-
-    base: add initial support for ARM 64-bit
-    
-    Ref #3260
-
-commit 4a2d2b5f5cc3890ac566739cf116ccb478f5fc14
-Author: Johannes Kliemann <kliemann@componolit.com>
-Date:   Wed May 22 12:33:15 2019 +0200
-
-    ada-runtime: update to GCC 8.3.0
-    
-    ref #3362
-    fixes #3371
-
-commit cc78ce1a843e91f6f172021726b0474f9d90b032
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Fri May 17 13:41:07 2019 +0200
-
-    Treat 'implicit fallthrough' errors as warnings
-    
-    After fixing the warnings, the compiler option should be removed.
-    
-    Issue #3307
+* The silent fall-though within switch statements most now be replaced
+  by an explicit annotation of the form
+  ! [[fallthrough]]
+* The 'register' keyword is no longer valid with C++17. Hence, it must
+  be removed from the code.
+* Types marked as 'Noncopyable' can no longer have an implicit default
+  constructor. A default constructor must be provided manually.
 
 
 Updated dynamic linker and C runtime
 ====================================
 
-; dynamic linker
-; libc updated -> RISC-V, AARCH64
-
-commit 467b96abf422d889a79a4c651b4c55f62b118156
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Wed May 8 15:01:21 2019 +0200
-
-    ldso: lazy binding support for RISC-V
-    
-    * added assembler invocation path for jump slot relocations
-    * fix GOT initialization (jmp_slot pointer goes to GOT[0] not GOT[2] on
-      RISC-V)
-    
-    Fixes #3339
-
-commit 8e13211c0978b0ae126918e419ee4634c88a09eb
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Apr 4 11:36:43 2019 +0200
-
-    base: dynamic linking support of crt0.s on ARM 64-bit
-    
-    * added global offset table relative loading for global symbols
-    * removed 'initial_sp' and 'initial_x0' because they are currently not
-      used on this platform. If required they are easy to resurrect.
-    
-    issue #3260
-
-commit 55e68760bd353d1b7821db7e8d3d16036fd32aad
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu Apr 4 12:13:08 2019 +0200
-
-    ldso: dynamic linking support for ARM 64-bit
-    
-    * added relocation support
-    * added assembler invocation path for jump slot relocations
-    
-    fixes issue #3260
+The tool-chain update is accompanied with a major update of the dynamic linker
+and the C runtime to cover both the AARCH64 and RISC-V architectures in
+addition to the traditional x86 and ARM architectures.
 
 
-commit a54a6bea417ad3e96f034fadb67a3a3563e64d27
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Tue Nov 13 14:02:37 2018 +0100
+Updated C runtime to FreeBSD 12 libc
+------------------------------------
 
-    Port of OpenLibm
-    
-    Replace the FreeBSD libm with OpenLibm, which is easier to port.
-    OpenLibm is used by Mirage's freestanding Ocaml runtime (sin POSIX).
-    
-    https://openlibm.org/
-    
-    Ref #3289
+FreeBSD 12 supports AARCH64 and RISC-V. Hence, by updating our C runtime,
+Genode's libc support extends to those architectures now.
 
-commit 573eaea72a18e81682962d8336ff20c78c2b9398
-Author: Emery Hemingway <ehmry@posteo.net>
-Date:   Fri Apr 26 12:47:33 2019 +0200
 
-    Libc: update port to Freebsd 12
-    
-    Fix #3289
+Lazy-binding support for RISC-V
+-------------------------------
+
+Until now, Genode's dynamic linker supported only the eager binding of
+symbols at loading time on the RISC-V architecture. With the current version,
+we could overcome this limitation in favor of lazy binding as used on all
+other CPU architectures.
 
 
 Unified build directories for ARM
 =================================
 
-commit 911f4ada0a42fbc75d1c1854d449492bf3f7b09b
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Apr 23 11:07:51 2019 +0200
+In version
+[https://genode.org/documentation/release-notes/17.02#Genode_Application_Binary_Interface - 17.02],
+we introduced unified build directories x86, which allow us to build and
+run Genode scenarios on various kernels while using only one build directory.
+This concept leverages Genode's cross-kernel-binary compatibility to make
+the switch from one kernel to another - like developing on base-linux and
+deploying on base-nova - a seamless experience.
 
-    os: make platform_drv package ready for ARM
-    
-    * Make target binaries independent of board SPECS
-    * Name binaries of one architecture unambigously
-    * Extend include path to match board specifics
-    * Adapt run-scripts to use the right binary
-    
-    Ref #2190
-    Ref #3180
+On ARM, this concept was held back by a third dimension. The
+system-integration step does not only depend of the CPU architecture and
+the kernel but also on the used board. Our traditional approach was the
+use of one build directory per board. Granted, within such a build directory,
+one can easily switch between different kernels - like Fiasco.OC and seL4.
+But on ARM, we find an extreme proliferation of different board
+configurations, which share the same CPU architecture but demand different
+integration steps. This ensues large redundancies among different build
+directories. Switching from one board to another - even if must binaries
+happen to be exactly the same - requires an additional rebuilding effort.
 
-commit 7c1e3c84baab2d0f2e642d84eef8a53808a4ad76
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Wed Apr 17 14:13:20 2019 +0200
+With version 19.05, we took the chance to generalize the unified build
+directory concept to the support of multiple boards per build directory,
+greatly reducing the friction when switching kernels and boards for a given
+architecture revision (like ARMv7a). This change has the following
+implications:
 
-    os: name gpio_drv unambigously (ref #2190)
+* Drivers no longer depend on the SPEC values as configured for a build
+  directory.
 
-commit b6d14d9960f21d9201ddb4ed6dba27395b35587e
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri Apr 12 11:46:07 2019 +0200
+* All *binaries* are now *named unambiguously*. For example, the USB drivers
+  for the Panda (OMAP) and Arndale (Exynos) boards where formerly called
+  'usb_drv' but were different programs. They just never happened to
+  appear in the same build directory. In the new version, they are named
+  'panda_usb_drv' and 'arndale_usb_drv' respectively and can thereby
+  happily co-exist within the same 'armv7a' build directory.
 
-    dde_ipxe: name ipxe nic_drv unambigously
-    
-    Ref #2190
+  Note that this binary renaming will likely effect existing run scripts.
 
-commit dcc28b65cb1ea6e94f952abad3b895b3cdee6410
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Wed Apr 24 15:09:49 2019 +0200
+* Include paths no longer hide the board details, which makes the included
+  code much more easy to follow.
 
-    run: use driver_nic-* pkg where possible (fix #3180)
+* Run scripts need to pick the right binary, depending on the used board.
+  Since the board is no longer tied to a build directory, the selection
+  of the used board has become a build-time variable 'BOARD' following
+  the successful pattern of how we specify the targeted 'KERNEL'.
 
-commit 312499a1efb3dc9fbddba3ae3e2bec904c9fa9af
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri Apr 12 20:01:30 2019 +0200
+To avoid the pollution of run scripts with difficult conditions, we wrap
+drivers needed for a particular board and use case into so-called
+_drivers_ packages. Such a package can be instantiated within a generic
+scenario using a nested init instance. The details about the drivers and
+how they access the hardware remain nicely hidden inside this building block.
 
-    os: name lan9118 nic driver explicitly
-    
-    * it is not dependent on pbxa9 anymore, but configureable
-    * rename it to lan9118_nic_drv
-    
-    Ref #2190
+Currently, there exist _drivers_ packages for two distinct use cases:
 
-commit 5bc498c8127c36913c1dae8bc2aaf59481b47707
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon Apr 15 15:24:54 2019 +0200
+:drivers-interactive pkgs: contain all drivers needed for simple
+  interactive scenarios, including graphical output and user input.
 
-    dde_linux: name FEC nic_drv unambigously
-    
-    Ref #2190
+:drivers-net pkgs: contain the drivers needed for communication over the
+  network.
 
-commit bf5a631a14e3989bb43a1fc940d84a25d381e554
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon Apr 29 15:24:37 2019 +0200
+Whenever a run script fits one of these use cases, it can rely on the
+corresponding ready-to-use drivers packages via:
 
-    dde_linux: name usb_drv unambigously
-    
-    * Make package buildable for ARM too
-    * Move usb library to src targets for explicitly named targets
-    * adapt remaining run-scripts to use the correctly named usb drivers
-    
-    Ref #2190
+! import_from_depot [depot_user]/src/[base_src] \
+!                   [depot_user]/pkg/[drivers_nic_pkg] \
+!                   ...
 
-commit 8d1cfce15e4821e928a58cfbe1c3b38669e02dae
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri May 3 13:51:49 2019 +0200
+With the drivers package incorporated, the drivers subsystem can be
+instantiated as follows (note the absence of any board or kernel-specific
+details):
 
-    os: name fb_drv unambigously (ref #2190)
+! <start name="drivers" caps="1000">
+!   <resource name="RAM" quantum="32M" constrain_phys="yes"/>
+!   <binary name="init"/>
+!   <route>
+!     <service name="ROM" label="config">
+!       <parent label="drivers.config"/> </service>
+!     <service name="Timer"> <child name="timer"/> </service>
+!     <any-service> <parent/> </any-service>
+!   </route>
+!   <provides> <service name="Nic"/> </provides>
+! </start>
 
-commit 35e73b1a2d6c805540ad6fe226b585a0c7ce9b3e
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri May 3 14:58:17 2019 +0200
 
-    os: name imx53 input_drv unambigously (ref #2190)
+Using the 'BOARD' build variable
+--------------------------------
 
-commit 4e6b571a36a085988cebe94a952647927be3a2bd
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri May 3 16:23:51 2019 +0200
+The new 'BOARD' variable selects the board to use. It can be specified
+either as a 'make' command line argument (or environment variable), or
+defined in the build-directory configuration (_etc/build.conf_).
+The following boards are available:
 
-    os: rename uart_drv unambigously (ref #2190)
-
-commit d18d2d0d9b16aabd52e663abc390ea9b2fd331b8
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri May 3 22:49:19 2019 +0200
-
-    os: name sd_card_drv unambigously (ref #2190)
-
-commit 2e68fae2ece88367b22175c45e36a0bc15e5a053
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri May 3 23:35:45 2019 +0200
-
-    os: name ahci_drv unambigously (ref #2190)
-
-commit d9143f805e2a7ea6e9d0ef2abbade04a63d206e5
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Sat May 4 00:28:02 2019 +0200
-
-    os: name rtc_drv unambigously (ref #2190)
-
-commit 1e986fade85164601b9fe3574854b9d915a5d228
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Sat May 4 00:41:44 2019 +0200
-
-    os: name pbxa9 ps2_drv explicitely (ref #2190)
-
-commit 46f9b7a9573252542067fafeba1d8c9618995608
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Thu Apr 11 16:24:33 2019 +0200
-
-    tool: deprecate board-specific build directories
-    
-    * Introduces BOARD variable to determine actual board
-    * Removes formerly deprecated kernel-specific build directories
-    
-    The following boards are available:
-    
-    arm_v6: rpi
-    arm_v7: arndale, imx53_qsb, imx53_qsb_tz, imx6q_sabrelite, imx7d_sabre,
-            nit6_solox, odroid_x2, odroid_xu, panda, pbxa9, usb_armory,
-            wand_quad, zynq_qemu
-    x86_64: pc, linux, muen
-    x86_32: pc, linux
-    riscv:  spike
-    
-    Ref #3316
-
-commit 8a8b96b6ae292e33ce4b0c82a7ccc1812862fbd7
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Thu May 9 14:04:03 2019 +0200
-
-    kernel: differentiate board-specific components
-    
-    Components like kernel, core, and bootstrap that are built for a
-    specific board need to reside inside the same architectural dependent
-    build directory. For instance there are sel4, foc, and hw kernel builds
-    for imx6q_sabrelite and imx7d_sabre, which have to reside inside the same
-    arm_v7 build directory.
-    This commit names those components explicitely, and adapts the run-tool to it.
-    
-    Fix #3316
-
-commit f13af09de25f058ba5c21305e791eb559aebe357
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue May 14 16:14:15 2019 +0200
-
-    os: name tz_vmm unambigously (ref #2190)
-    
-    Moreover, express current requirement to hw API, which was missing until now.
-    
-    Originally, in the board-specific build directory of imx53_qsb the
-    "KERNEL" variable was preset with "hw". Therefore, it was not perceived
-    that this dependency is required.
-    
-    Ref #3316
+:arm_v6: rpi
+:arm_v7: arndale, imx53_qsb, imx53_qsb_tz, imx6q_sabrelite, imx7d_sabre,
+  nit6_solox, odroid_x2, odroid_xu, panda, pbxa9, usb_armory,
+  wand_quad, zynq_qemu
+:x86_64: pc, linux, muen
+:x86_32: pc, linux
+:riscv:  spike
 
 
 New revision of the Genode Foundations book
