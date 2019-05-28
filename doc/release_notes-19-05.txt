@@ -766,80 +766,29 @@ Distributed Genode
 
 ; @valivalpas
 
-commit c87b2f2eb9616d55a3ae4a019049856d51a8b15e
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Fri Nov 2 15:08:14 2018 +0100
+In 16.08, we initially released the remote_rom components that act as
+communication proxies. A communication proxy transparently relays a particular
+service to another Genode system. As the name suggests, the remote_rom relays
+ROM sessions.
 
-    udp_log: send LOG as UDP packets
+Originally implemented as a proof of concept using bare IP packets, broadcast
+MACs and static configuration of IP addresses, we added several improvements
+to allow a more general use. First, we adopted the size_guard idea for packet
+construction and processing from the nic_router. We further picked up the
+single-threaded implementation style that was already established in other Nic
+components. Thanks to Edgard Schmidt for this contribution. Second, we
+implemented ARP requests to eliminate broadcasting. Third, we moved from bare
+IP packets to UDP/IP and implemented a go-back-N ARQ strategy in order to
+reliably transmit larger ROM dataspaces.
 
-commit 5627797e77a7895ab091e96d40f62668bdc31179
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Mon Nov 5 11:55:35 2018 +0100
-
-    log_udp: receive LOG messages via UDP
-
-commit c137c595c80f2473cd64bb05e2df9ea863480df8
-Author: Edgard Schmidt <schmidt@edik.ch>
-Date:   Thu Oct 11 15:53:20 2018 +0200
-
-    remote_rom: improvements and refactoring
-    
-    Avoid a runtime warning message since our backend does not provide
-    such constructor functions yet. If a backend requires them, it should
-    initiate their execution by itself within the backend init functions.
-    
-    In coherence with the size_guard idea, the remote_rom packets are are
-    separated into a simple layer packet and a data packet. While basically
-    only managing common control informations, the layer packet may carry
-    any payload. The data packet, instead, manages the transmission of the
-    actual ROM payload and can be attached to the layer packet. This
-    simplifies the management of the notification packets UPDATE and SIGNAL
-    since they do not contain fields like 'offset' or 'payload_size'
-    anymore.
-    
-    Now, a single thread manages all incoming RPC calls, signals and (thus)
-    network packets. This will hopefully make further synchronization
-    enhancements a lot easier.
-    
-    Further changes:
-    * Following data packets are identified as such by their offset instead
-      of their packet type field. This simplifies the protocol.
-    * reduced redundancy in the packet building code
-    * rewrap lines with >79 columns
-    * fix compiler warnings
-    * split backend code
-    * Remove a few unnecessary include and using directives.
-    * In order to avoid global variables across modules, 'verbose' is a
-      member variable now. Later, its value may be set via constructor.
-    * The nested Rx class is merged with Backend_base. This way, we avoid
-      unnecessary maintenance as long as we don't have a clear design for
-      ROM multiplexing which may require the management of multiple IP
-      addresses etc.
-    * The HANDLER template argument is removed since client and server
-      inherit from Backend_base anyway. The receive method is virtual now.
-    * The signals packet_avail and ready_to_ack are directly passed to the
-      same signal handler now.
-    * Remove unnecessarily public/protected visibility from some members.
-    * Remove and add unnecessary and, due to inclusion order, secretly
-      missing include directives, respectively.
-
-commit 8ed98b8459cd88a8b949605d2f3cd6ca399157af
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Fri Nov 9 09:48:05 2018 +0100
-
-    remote_rom: use UDP and implement go-back-N ARQ
-
-commit 92ef8619c7cee024f887f800d5e83498e20b6c5f
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Fri Nov 30 14:40:23 2018 +0100
-
-    remote_rom: implement ARP requests
-
-commit 557ffbac809741ee05c3c6e02ef2907696472eef
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Tue Apr 30 13:42:29 2019 +0200
-
-    remote_rom: Genode API compatibility
+As the remote_rom proved valuable for distributing functionality across
+multiple Genode devices, we also applied this concept to the LOG session in
+order to transmit LOG output from a headless Genode device to a Sculpt system
+for instance. The udp_log component provides a LOG service and sends the LOG
+messages as UDP packets to another machine. The log_udp reverses this process by
+receiving these UDP packets and forwarding the messages to a LOG service. An
+example can be found in the world repository at _run/udp_log.run_ and
+_run/log_udp.run_.
 
 
 Seoul virtual-machine monitor
@@ -956,47 +905,29 @@ Improved Zynq board support
 
 ; @valivalpas
 
-commit 9097c80269a1417876e3ae545d23332802864845
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Mon May 6 16:54:23 2019 +0200
+The initial support of the Xilinx Zynq-7000 SoC was added to our custom kernel
+in 15.11. Since then, the support of this hardware has been incrementally
+extended. The definitions of memory maps, frequencies and RAM sizes for
+different Zynq-based boards is found in the world repository.
 
-    zynq: improve nic driver error handling
-    
-    also be more verbose about detected errors
-    
-    fixes #3320
+One of the major additions in this release is the initialization of the L2
+cache. In this context, we also added a simple cache benchmark at
+_repos/os/run/cache.run_ that measures the access times for memory regions of
+different size and thereby reveals the number of cache levels and their sizes.
 
-commit 0451d3bbeda2b9a200f9e515be2c67b98a853491
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Thu May 2 17:23:40 2019 +0200
+With the latest improvements of the network driver in 18.11, a zero-copy
+approach was introduced as an effort to eliminate bottlenecks in the driver's
+performance.  However, this modification also introduced a kernel dependency of
+the driver in order to flush packet-buffer memory from the cache before handing
+it over to the DMA-controller.  With this release, we moved back to using
+uncached dataspaces in order to eliminate the cache flushes and the kernel
+dependency. Interestingly, we could not recognize a significant impact on the
+driver's performance, which confirms the presumption that flushing the cache
+nullifies the gain from using cached dataspaces.
 
-    Simple cache performance test
-    
-    ref #3321
-
-commit a4d3745a9a589662bc06052bfab46ab93a0725a0
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Fri Aug 3 15:37:22 2018 +0200
-
-    zynq boards: fix board defs
-
-commit f84567e460977c3865322f9896f23369f11ee266
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Tue Nov 13 13:55:22 2018 +0100
-
-    zynq_boards: move RAM size to board defs
-
-commit 6402247003aa1e6899c6a16930a05d85a0fb77c8
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Mon May 6 17:02:15 2019 +0200
-
-    zynq_boards: enable L2 cache
-
-commit a9f90eb1d55d5c8058d1bdeb7fc09a8170d3a1f3
-Author: Johannes Schlatow <schlatow@ida.ing.tu-bs.de>
-Date:   Tue Apr 30 13:43:08 2019 +0200
-
-    zynq_boards: fix bootstrap-hw.mk
+In order to enable the continuous operation of the network driver, we extended
+the driver-internal error handling that is necessary to recover the network
+driver in certain situations.
 
 
 Updated Intel network drivers
