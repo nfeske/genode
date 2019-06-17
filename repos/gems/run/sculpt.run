@@ -632,6 +632,8 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 # Create boot image
 #
 
-append boot_modules { }
+build { app/themed_decorator }
+
+append boot_modules { themed_decorator }
 
 build_boot_image $boot_modules
