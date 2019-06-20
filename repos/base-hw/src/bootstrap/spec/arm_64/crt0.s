@@ -57,7 +57,6 @@
 
 	ldr x0, =_crt0_start_stack
 	mov sp, x0
-	1: b 1b
 	bl init
 
 	.p2align 4
