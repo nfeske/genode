@@ -84,7 +84,7 @@ install_config {
 		<binary name="report_rom"/>
 		<resource name="RAM" quantum="1M"/>
 		<provides> <service name="Report"/> <service name="ROM"/> </provides>
-		<config verbose="yes">
+		<config verbose="no">
 			<policy label="depot_deploy -> blueprint" report="depot_query -> blueprint"/>
 			<policy label="depot_query -> query"      report="depot_deploy -> query"/>
 			<policy label="dynamic -> config"         report="depot_deploy -> init.config"/>
@@ -209,7 +209,6 @@ install_config {
 				<config shape="cube"/>
 			</start>
 
-<!--
 			<start name="fonts_fs" pkg="} [depot_user]/pkg/[current_pkg fonts_fs] {">
 				<route>
 					<service name="ROM" label="config"> <parent label="fonts.config"/> </service>
@@ -223,7 +222,6 @@ install_config {
 					<service name="File_system"> <parent/> </service>
 				</route>
 			</start>
-			-->
 
 			<!-- vbox, nic_router, acpica -->
 
