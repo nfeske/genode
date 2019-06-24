@@ -19,8 +19,8 @@
 
 #define ASSERT_NEVER_CALLED \
 	do { \
-		Genode::error("Unexpected call of '", __FUNCTION__, "' " \
-		              "(", __FILE__, ":", __LINE__, ")"); \
+		Genode::raw("Unexpected call of '", __FUNCTION__, "' " \
+		            "(", __FILE__, ":", __LINE__, ")"); \
 		for (;;); throw 0UL; \
 	} while (false)
 
