@@ -6,4 +6,6 @@ backdrop.config:
 content: sticks_blue.png
 
 sticks_blue.png:
-	wget --quiet https://genode.org/files/turmvilla/sticks_blue.png
+	cp ~/sticks_blue.png $@
+	#wget --quiet https://genode.org/files/turmvilla/sticks_blue.png
+
