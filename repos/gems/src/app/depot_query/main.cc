@@ -211,7 +211,14 @@ class Depot_query::Stat_cache
 			auto miss_fn = [&] (Cache::Missing_element &missing_element)
 			{
 				Result const stat_result { _dir.file_exists(path) };
-				missing_element.construct(stat_result);
+
+				/*
+				 * Don't cache negative results because files may appear
+				 * during installation. Later queries may find files absent
+				 * from earlier queries.
+				 */
+				if (stat_result.file_exists)
+					missing_element.construct(stat_result);
 			};
 
 			Key const key { .value = { .path = path } };
@@ -298,7 +305,8 @@ class Depot_query::Cached_rom_query : public Rom_query
 				Archive::Path const path =
 					_rom_query.find_rom_in_pkg(pkg_path, rom_label, recursion_limit);
 
-				missing_element.construct(path);
+				if (path.valid())
+					missing_element.construct(path);
 			};
 
 			Key const key { .value = { .pkg = pkg_path, .rom = rom_label } };
