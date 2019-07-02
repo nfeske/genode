@@ -427,7 +427,7 @@ install_config {
 		</route>
 	</start>
 
-	<start name="clipboard">
+	<start name="clipboard" priority="-2">
 		<resource name="RAM" quantum="2M"/>
 		<provides>
 			<service name="ROM"/> <service name="Report"/>
