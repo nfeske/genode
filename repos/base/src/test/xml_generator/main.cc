@@ -169,7 +169,7 @@ void Component::construct(Genode::Env &env)
 	log("--- XML generator test started ---");
 
 	env.exec_static_constructors();
-	gcov_init(env);
+//	gcov_init(env);
 
 	static char dst[1000];
 
@@ -240,6 +240,27 @@ void Component::construct(Genode::Env &env)
 			error("decoded content does not match expect content");
 			return;
 		}
+	}
+
+	/*
+	 * Test xml.append() as last operation before node closure breaks
+	 * indentation
+	 */
+	{
+		memset(dst, 0, sizeof(dst));
+
+		Xml_generator xml(dst, sizeof(dst), "level0", [&] () {
+			xml.node("level1", [&] () {
+				xml.node("level2", [] () {});
+				xml.append(" <!-- comment -->");
+			});
+			xml.node("level1", [&] () {
+				xml.node("level2", [] () {});
+				xml.append(" <!-- comment -->\n");
+			});
+		});
+
+		log("append before node closure:\n\n", Cstring(dst));
 	}
 
 	log("--- XML generator test finished ---");

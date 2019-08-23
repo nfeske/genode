@@ -54,6 +54,17 @@
 			[init -> test-xml_generator] 	&lt;/level1>
 			[init -> test-xml_generator] &lt;/config>
 			[init -> test-xml_generator] 
+			[init -> test-xml_generator] append before node closure:
+			[init -> test-xml_generator] 
+			[init -> test-xml_generator] &lt;level0>
+			[init -> test-xml_generator] 	&lt;level1>
+			[init -> test-xml_generator] 		&lt;level2/> &lt;!-- comment -->
+			[init -> test-xml_generator] 	&lt;/level1>
+			[init -> test-xml_generator] 	&lt;level1>
+			[init -> test-xml_generator] 		&lt;level2/> &lt;!-- comment -->
+			[init -> test-xml_generator] 	&lt;/level1>
+			[init -> test-xml_generator] &lt;/level0>
+			[init -> test-xml_generator] 
 			[init -> test-xml_generator] --- XML generator test finished ---*
 			[init] child "test-xml_generator" exited with exit value 0
 		</log>
