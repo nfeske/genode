@@ -15,6 +15,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/nitpicker \
                   [depot_user]/src/nit_focus \
                   [depot_user]/src/demo \
+                  [depot_user]/src/dynamic_rom \
                   [depot_user]/src/init
 
 build { app/status_bar test/nitpicker }
@@ -57,12 +58,26 @@ install_config {
 	<start name="report_rom">
 		<resource name="RAM" quantum="1M"/>
 		<provides> <service name="Report"/> <service name="ROM"/> </provides>
-		<config verbose="no">
+		<config verbose="yes">
 			<policy label="status_bar -> focus"          report="nitpicker -> focus"/>
 			<policy label="nitpicker_config -> xray"     report="global_keys_handler -> xray"/>
 			<policy label="global_keys_handler -> hover" report="nitpicker -> hover"/>
 			<policy label="nit_focus -> clicked"         report="nitpicker -> clicked"/>
 			<policy label="nitpicker -> focus"           report="nit_focus -> focus"/>
+		</config>
+	</start>
+
+	<!-- toggle focus between testnit and scout every few seconds -->
+	<start name="dynamic_rom">
+		<resource name="RAM" quantum="4M"/>
+		<provides> <service name="ROM"/> </provides>
+		<config verbose="no">
+			<rom name="focus">
+				<inline> <focus label="testnit -> testnit"/> </inline>
+				<sleep milliseconds="5000" />
+				<inline> <focus label="scout -> "/> </inline>
+				<sleep milliseconds="5000" />
+			</rom>
 		</config>
 	</start>
 
@@ -155,7 +170,7 @@ install_config {
 			<service name="ROM" label="nitpicker.config">
 				<child name="nitpicker_config"/> </service>
 			<service name="ROM" label="focus">
-				<child name="report_rom"/> </service>
+				<child name="dynamic_rom"/> </service>
 			<service name="Report">
 				<child name="report_rom"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
@@ -185,9 +200,14 @@ install_config {
 		</route>
 	</start>
 
+	<start name="testnit" caps="100">
+		<resource name="RAM" quantum="4M" />
+	</start>
+
 	<start name="scout" caps="10000">
 		<resource name="RAM" quantum="64M" />
 	</start>
+
 </config>}
 
 #
@@ -213,7 +233,8 @@ puts $launchpad_config_fd {<config>
 </config>}
 close $launchpad_config_fd
 
-build_boot_image { status_bar testnit launchpad.config }
+build { server/nitpicker }
+build_boot_image { nitpicker status_bar testnit launchpad.config }
 
 if {[get_cmd_switch --autopilot]} {
 	run_genode_until {\[init -> scout\] png is.*\n} 40
