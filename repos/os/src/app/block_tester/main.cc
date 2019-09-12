@@ -194,8 +194,10 @@ struct Test::Test_base : private Genode::Fifo<Test_base>::Element
 			if (_verbose)
 				log("job ", job.id, ": writing ", length, " bytes at ", offset);
 
-			if (_copy)
-				_memcpy(dst, _scratch_buffer.base, length);
+			for (unsigned i = 0; i < length; i++)
+				dst[i] = offset + i;
+//			if (_copy)
+//				_memcpy(dst, _scratch_buffer.base, length);
 		}
 
 		/**
