@@ -1,0 +1,168 @@
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/init \
+                  [depot_user]/src/nitpicker \
+                  [depot_user]/src/acpi_drv \
+                  [depot_user]/src/report_rom \
+                  [depot_user]/src/platform_drv \
+                  [depot_user]/src/vesa_drv \
+                  [depot_user]/src/ps2_drv
+
+install_config {
+<config prio_levels="2">
+	<parent-provides>
+		<service name="CPU"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="ROM"/>
+	</parent-provides>
+	<default caps="100"/>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="acpi_drv"  caps="400" >
+		<binary name="acpi_drv"/>
+		<resource name="RAM" quantum="4M"/>
+		<route>
+			<service name="IO_MEM"> <parent/> </service>
+			<service name="LOG">    <parent/> </service>
+			<service name="PD">     <parent/> </service>
+			<service name="RM">     <parent/> </service>
+			<service name="CPU">    <parent/> </service>
+			<service name="ROM">    <parent/> </service>
+			<service name="Report"> <child name="acpi_report_rom"/> </service>
+			<service name="ROM" label="platform_info"> <parent/> </service>
+		</route>
+	</start>
+	<start name="acpi_report_rom" >
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="ROM" />
+			<service name="Report" />
+		</provides>
+		<config>
+			<policy label="smbios_decoder -> smbios_table" report="acpi_drv -> smbios_table"/>
+			<policy label="platform_drv -> acpi"           report="acpi_drv -> acpi"/>
+		</config>
+		<route>
+			<service name="LOG"> <parent/> </service>
+			<service name="PD">     <parent/> </service>
+			<service name="CPU">    <parent/> </service>
+			<service name="ROM">    <parent/> </service>
+		</route>
+	</start>
+	<start name="platform_drv"  caps="800">
+		<binary name="platform_drv"/>
+		<resource name="RAM" quantum="4M" constrain_phys="yes"/>
+		<provides>
+			<service name="Platform"/>
+			<service name="Acpi"/>
+		</provides>
+		<route>
+			<service name="ROM" label="acpi"> <child name="acpi_report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route><config>
+			<policy label_prefix="ps2_drv">  <device name="PS2"/> </policy>
+			<policy label_prefix="nic_drv">  <pci class="ETHERNET"/> </policy>
+			<policy label_prefix="fb_drv">   <pci class="VGA"/> </policy>
+			<policy label_prefix="wifi_drv"> <pci class="WIFI"/> </policy>
+			<policy label_prefix="usb_drv">  <pci class="USB"/> </policy>
+			<policy label_prefix="ahci_drv"> <pci class="AHCI"/> </policy>
+			<policy label_prefix="nvme_drv"> <pci class="NVME"/> </policy>
+			<policy label_prefix="audio_drv"> <pci class="AUDIO"/> <pci class="HDAUDIO"/> </policy>
+			<policy label_prefix="intel_gpu_drv">
+				<pci class="VGA"/>
+				<pci bus="0" device="0" function="0"/>
+				<pci class="ISABRIDGE"/>
+			</policy>
+		</config>
+	</start>
+	<start name="fb_drv">
+		<binary name="vesa_fb_drv"/>
+		<resource name="RAM" quantum="10M"/>
+		<provides>
+			<service name="Framebuffer"/>
+		</provides>
+		<route><any-service> <parent /> <any-child/> </any-service> </route>
+	</start>
+	<start name="ps2_drv">
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="Input"/> </provides>
+	</start> 
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="nitpicker">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Nitpicker"/></provides>
+		<config focus="rom">
+			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
+			<domain name="default" layer="2" content="client" label="no" focus="click" hover="always" />
+			<policy label_prefix="pointer" domain="pointer"/>
+			<default-policy                domain="default"/>
+		</config>
+		<route><any-service><parent/><any-child/></any-service></route>
+	</start>
+	<start name="pointer">
+		<resource name="RAM" quantum="1M"/>
+	</start>
+	<start name="intel_gpu_drv" caps="1000">
+		<resource name="RAM" quantum="40M"/>
+		<provides> <service name="Gpu"/> </provides>
+		<route>
+			<any-service> <parent /> <any-child/> </any-service>
+		</route>
+	</start>
+	<start name="application" caps="300">
+		<binary name="sdl_opengl-lesson36"/>
+		<resource name="RAM" quantum="1G"/>
+		<config ld_verbose="true">
+			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" />
+			<vfs>
+				<dir name="dev">
+					<log/>
+					<inline name="rtc">2018-01-01 00:01</inline>
+				</dir>
+			</vfs>
+		</config>
+		<route>
+			<service name="ROM" label="egl_drv.lib.so">
+				<parent label="egl_i965.lib.so"/>
+			</service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+#
+# Pin the nitpicker focus to the application by providing a static focus ROM
+#
+set fd [open [run_dir]/genode/focus w]
+puts $fd "<focus label=\"application -> \"/>"
+close $fd
+
+build {
+	drivers/gpu/intel
+	lib/mesa/i965
+	test/sdl_opengl/lesson36
+}
+
+build_boot_image {
+	sdl_opengl-lesson36
+	egl_i965.lib.so drm.lib.so intel_gpu_drv egl.lib.so mesa.lib.so
+	expat.lib.so libc.lib.so libm.lib.so vfs.lib.so glapi.lib.so
+	stdcxx.lib.so sdl.lib.so
+}
+
+append qemu_args " -m 768"
+
+run_genode_until forever
