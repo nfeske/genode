@@ -77,6 +77,13 @@ install_config {
 				<tar name="coreutils.tar" />
 				<tar name="vim.tar" />
 				<tar name="bash.tar" />
+				<dir name="bin">
+					<inline name="script.sh">#!/bin/vim -o2
+#
+# Some file passed to Vim
+#
+					</inline>
+				</dir>
 
 				<dir name="home"> <ram/> </dir>
 				<dir name="share"> <dir name="vim"> <rom name="vimrc"/> </dir> </dir>
