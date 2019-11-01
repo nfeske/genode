@@ -92,6 +92,7 @@ install_config {
 					<zero/> <null/> <terminal/>
 					<inline name="rtc">2018-01-01 00:01</inline>
 				</dir>
+				<inline name=".bash_profile">ls -laR /</inline>
 			</vfs>
 
 			<policy label_prefix="vfs_rom" root="/"/>
@@ -117,6 +118,7 @@ install_config {
 			      stderr="/dev/terminal" rtc="/dev/rtc"/>
 			<vfs> <fs/> </vfs>
 			<arg value="bash"/>
+			<arg value="--login"/>
 			<env key="TERM" value="screen"/>
 			<env key="PATH" value="/bin" />
 		</config>
