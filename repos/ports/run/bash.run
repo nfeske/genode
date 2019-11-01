@@ -130,8 +130,8 @@ install_config {
 	</start>
 </config>}
 
-build { lib/ld test/fork test/execve }
+build { server/vfs lib/ld test/fork test/execve }
 
-build_boot_image { ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
+build_boot_image { vfs ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
 
 run_genode_until forever
