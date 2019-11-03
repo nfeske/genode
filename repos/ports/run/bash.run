@@ -90,9 +90,10 @@ install_config {
 				<dir name="tmp"> <ram/> </dir>
 				<dir name="dev">
 					<zero/> <null/> <terminal/>
+					<dir name="pipe"> <pipe/> </dir>
 					<inline name="rtc">2018-01-01 00:01</inline>
 				</dir>
-				<inline name=".bash_profile">ls -laR /</inline>
+				<inline name=".bash_profile">echo a | cat</inline>
 			</vfs>
 
 			<policy label_prefix="vfs_rom" root="/"/>
@@ -113,9 +114,9 @@ install_config {
 
 	<start name="/bin/bash" caps="1000">
 		<resource name="RAM" quantum="30M" />
-		<config>
+		<config ld_verbose="yes">
 			<libc stdin="/dev/terminal" stdout="/dev/terminal"
-			      stderr="/dev/terminal" rtc="/dev/rtc"/>
+			      stderr="/dev/terminal" rtc="/dev/rtc" pipe="/dev/pipe"/>
 			<vfs> <fs/> </vfs>
 			<arg value="bash"/>
 			<arg value="--login"/>
@@ -132,8 +133,8 @@ install_config {
 	</start>
 </config>}
 
-build { server/vfs lib/ld test/fork test/execve }
+build { server/vfs lib/ld test/fork test/execve lib/vfs/pipe }
 
-build_boot_image { vfs ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
+build_boot_image { vfs_pipe.lib.so vfs ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
 
 run_genode_until forever
