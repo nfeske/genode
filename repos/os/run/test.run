@@ -383,5 +383,6 @@ if {$failure_timeout == 0} {
 
 append qemu_args " -nographic "
 
+run_genode_until forever
 run_genode_until $expected_pattern $failure_timeout
 
