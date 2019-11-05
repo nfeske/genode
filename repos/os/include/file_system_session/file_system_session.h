@@ -260,6 +260,19 @@ class File_system::Packet_descriptor : public Genode::Packet_descriptor
 		 */
 		void succeeded(bool b) { _success = b ? 1 : 0; }
 		void length(size_t length) { _length = length; }
+
+		void print(Genode::Output &out) const
+		{
+			using Genode::print;
+			switch (_op) {
+			case READ:  print(out, "READ (position=", _position, " length=", _length, ")"); break;
+			case WRITE: print(out, "WRITE (position=", _position, " length=", _length, ")"); break;
+			case WRITE_TIMESTAMP: print(out, "WRITE_TIMESTAMP"); break;
+			case CONTENT_CHANGED: print(out, "CONTENT_CHANGED"); break;
+			case READ_READY: print(out, "READ_READY"); break;
+			case SYNC: print(out, "SYNC"); break;
+			}
+		}
 };
 
 
