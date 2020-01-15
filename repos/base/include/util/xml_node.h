@@ -886,6 +886,7 @@ class Genode::Xml_node
 					return false;
 
 				after = node._tags.end.next_token();
+				after = skip_non_tag_characters(after);
 			}
 		}
 
