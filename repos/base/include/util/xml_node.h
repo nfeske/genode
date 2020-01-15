@@ -852,8 +852,7 @@ class Genode::Xml_node
 			try {
 				return _node_at(after_node.start());
 			}
-			catch (Invalid_syntax) {
-				throw Nonexistent_sub_node(); }
+			catch (Invalid_syntax) { throw Nonexistent_sub_node(); }
 		}
 
 		/**
@@ -1072,6 +1071,9 @@ class Genode::Xml_node
 		 */
 		bool has_sub_node(char const *type) const
 		{
+			if (_tags.num_sub_nodes == 0)
+				return false;
+
 			if (!_valid_node_at(_content_base()))
 				return false;
 
