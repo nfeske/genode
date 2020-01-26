@@ -31,8 +31,6 @@ struct Sculpt::Gui
 {
 	Env &_env;
 
-	Expanding_reporter _config { _env, "config", "gui_config" };
-
 	float _font_size_px = 14;
 
 	typedef String<32> Label;
@@ -41,15 +39,15 @@ struct Sculpt::Gui
 
 	unsigned menu_width = 0;
 
-	void _gen_menu_view_start_content(Xml_generator &, Label const &, Point,
-	                                  unsigned) const;
+	Area _screen_size { };
+
+	void _gen_menu_view_start_content(Xml_generator &, Label const &, Point, Area) const;
 
 	void _generate_config(Xml_generator &) const;
 
-	void generate_config()
-	{
-		_config.generate([&] (Xml_generator &xml) { _generate_config(xml); });
-	}
+	unsigned panel_height() const { return _font_size_px*3; }
+
+	void gen_runtime_start_nodes(Xml_generator &xml) const;
 
 	float font_size() const { return _font_size_px; }
 
@@ -58,6 +56,8 @@ struct Sculpt::Gui
 		_font_size_px = px;
 		menu_width = max(px*21, 320.0);
 	}
+
+	void screen_size(Area screen_size) { _screen_size = screen_size; }
 
 	Gui(Env &env) : _env(env) { }
 };

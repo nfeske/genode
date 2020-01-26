@@ -3,6 +3,7 @@ create_boot_directory
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_interactive_pkg] \
                   [depot_user]/pkg/fonts_fs \
+                  [depot_user]/pkg/backdrop \
                   [depot_user]/src/dynamic_rom \
                   [depot_user]/src/report_rom \
                   [depot_user]/src/fs_rom \
@@ -82,10 +83,7 @@ install_config {
 			        report="nitpicker -> hover"/>
 			<policy label="leitzentrale -> manager -> displays"
 			        report="nitpicker -> displays"/>
-			<policy label="leitzentrale -> manager -> runtime_view_hover"
-			        report="runtime -> runtime_view -> hover"/>
-			<policy label="runtime -> runtime_view -> dialog"
-			        report="leitzentrale -> manager -> runtime_view_dialog"/>
+			<policy label="clipboard" report="clipboard"/>
 		</config>
 	</start>
 
@@ -191,6 +189,10 @@ install_config {
 		<provides> <service name="ROM"/> </provides>
 		<config>
 			<rom name="usb_active_config">
+				<inline description="USB storage absent">
+					<config/>
+				</inline>
+				<sleep milliseconds="500000" />
 				<inline description="USB storage present">
 					<config>
 						<raw> <policy label_suffix="usb-1-2" class="storage"/> </raw>
@@ -219,10 +221,15 @@ install_config {
 		<provides> <service name="Block"/> </provides>
 	</start>
 
-	<start name="leitzentrale" caps="4000">
+	<start name="leitzentrale" caps="2300">
 		<binary name="init"/>
-		<resource name="RAM" quantum="140M"/>
-		<provides> <service name="Nitpicker"/> </provides>
+		<resource name="RAM" quantum="112M"/>
+		<provides>
+			<service name="Nitpicker"/>
+			<service name="File_system"/>
+			<service name="Report"/>
+			<service name="ROM"/>
+		</provides>
 		<route>
 			<service name="ROM" label="config">
 				<child name="leitzentrale_config"/> </service>
@@ -234,8 +241,6 @@ install_config {
 				<child name="config_fs" label="rw"/> </service>
 			<service name="File_system" label="report">
 				<child name="report_fs" label="rw"/> </service>
-			<service name="Report" label="manager -> runtime_view_dialog">
-				<child name="report_rom"/> </service>
 			<service name="Report"> <child name="fs_report"/> </service>
 			<service name="ROM" label_last="drivers/block_devices">
 				<parent label="block_devices"/> </service>
@@ -253,8 +258,6 @@ install_config {
 				<child name="report_rom"/> </service>
 			<service name="ROM" label="manager -> displays">
 				<child name="report_rom"/> </service>
-			<service name="ROM" label="manager -> runtime_view_hover">
-				<child name="report_rom"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
@@ -267,14 +270,16 @@ install_config {
 				<child name="config_rom" label="managed/runtime"/> </service>
 			<service name="ROM" label_prefix="config -> ">
 				<child name="config_rom"/> </service>
-			<service name="ROM" label="runtime_view -> dialog">
-				<child name="report_rom"/> </service>
-			<service name="Report" label="runtime_view -> hover">
-				<child name="report_rom"/> </service>
+			<service name="ROM" label_prefix="leitzentrale ->">
+				<child name="leitzentrale"/> </service>
+			<service name="ROM" label="inspect terminal -> clipboard">
+				<child name="report_rom" label="clipboard"/> </service>
 			<service name="File_system" label="config">
 				<child name="config_fs" label="rw"/> </service>
 			<service name="File_system" label="report">
 				<child name="report_fs" label="ro"/> </service>
+			<service name="File_system" label="leitzentrale -> fonts">
+				<child name="leitzentrale" label="fonts"/> </service>
 			<service name="Block" label_last="ahci-1"> <child name="ahci-1"/> </service>
 			<service name="Block" label_last="ahci-2"> <child name="ahci-2"/> </service>
 			<service name="Block"> <child name="drivers"/> </service>
@@ -282,6 +287,8 @@ install_config {
 				<child name="leitzentrale"/> </service>
 			<service name="Nitpicker"> <child name="nitpicker"/> </service>
 			<service name="Timer"> <child name="timer"/> </service>
+			<service name="Report" label_prefix="leitzentrale ->">
+				<child name="leitzentrale"/> </service>
 			<service name="Report"> <child name="fs_report"/> </service>
 			<service name="Report"> <child name="fs_report"/> </service>
 			<any-service> <parent/> </any-service>
@@ -329,9 +336,9 @@ install_rom_module usb_active_config {
 	<raw> <policy label_suffix="usb-1-2" class="storage"/> </raw>
 </config>}
 
-build { server/lx_block app/menu_view app/sculpt_manager }
+build { app/backdrop server/lx_block app/menu_view app/sculpt_manager }
 
-build_boot_image { lx_block menu_view sculpt_manager ahci-1.img }
+build_boot_image { backdrop menu_view_styles.tar lx_block menu_view sculpt_manager ahci-1.img }
 
 if {[have_spec linux]} {
 	set max_fds [exec bash -c "ulimit -n"]

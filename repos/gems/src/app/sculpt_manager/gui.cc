@@ -24,7 +24,7 @@
 void Sculpt::Gui::_gen_menu_view_start_content(Xml_generator &xml,
                                                Label const &label,
                                                Point pos,
-                                               unsigned width) const
+                                               Area min_size) const
 {
 	xml.attribute("version", version.value);
 
@@ -35,21 +35,19 @@ void Sculpt::Gui::_gen_menu_view_start_content(Xml_generator &xml,
 	xml.node("config", [&] () {
 		xml.attribute("xpos", pos.x());
 		xml.attribute("ypos", pos.y());
-		if (width)
-			xml.attribute("width", width);
+
+		if (min_size.w()) xml.attribute("width",  min_size.w());
+		if (min_size.h()) xml.attribute("height", min_size.h());
+
 		xml.node("libc", [&] () { xml.attribute("stderr", "/dev/log"); });
 		xml.node("report", [&] () { xml.attribute("hover", "yes"); });
 		xml.node("vfs", [&] () {
 			gen_named_node(xml, "tar", "menu_view_styles.tar");
-			gen_named_node(xml, "dir", "styles", [&] () {
-				gen_named_node(xml, "dir", "frame", [&] () {
-					gen_named_node(xml, "dir", "logo", [&] () {
-						gen_named_node(xml, "rom", "background.png", [&] () {
-							xml.attribute("label", "genode_logo.png"); }); }); }); });
 
 			gen_named_node(xml, "dir", "fonts", [&] () {
 				xml.node("fs", [&] () {
 					xml.attribute("label", "fonts"); }); });
+
 			gen_named_node(xml, "dir", "dev", [&] () {
 				xml.node("log",  [&] () { }); });
 		});
@@ -64,51 +62,54 @@ void Sculpt::Gui::_gen_menu_view_start_content(Xml_generator &xml,
 		gen_parent_rom_route(xml, "libpng.lib.so");
 		gen_parent_rom_route(xml, "zlib.lib.so");
 		gen_parent_rom_route(xml, "menu_view_styles.tar");
-		gen_parent_rom_route(xml, "genode_logo.png");
-		gen_parent_route<Cpu_session>         (xml);
-		gen_parent_route<Pd_session>          (xml);
-		gen_parent_route<Log_session>         (xml);
-		gen_parent_route<Timer::Session>      (xml);
-		gen_parent_route<Nitpicker::Session>  (xml);
+		gen_parent_route<Cpu_session>    (xml);
+		gen_parent_route<Pd_session>     (xml);
+		gen_parent_route<Log_session>    (xml);
+		gen_parent_route<Timer::Session> (xml);
+
+		using Label = String<128>;
+
+		gen_service_node<Nitpicker::Session>(xml, [&] () {
+			xml.node("parent", [&] () {
+				xml.attribute("label", Label("leitzentrale -> ", label)); }); });
 
 		gen_service_node<Rom_session>(xml, [&] () {
 			xml.attribute("label", "dialog");
-			xml.node("parent", [&] () { }); });
+			xml.node("parent", [&] () {
+				xml.attribute("label", Label("leitzentrale -> ", label, " -> dialog"));
+			});
+		});
 
 		gen_service_node<Report::Session>(xml, [&] () {
 			xml.attribute("label", "hover");
-			xml.node("parent", [&] () { }); });
+			xml.node("parent", [&] () {
+				xml.attribute("label", Label("leitzentrale -> ", label, " -> hover"));
+			});
+		});
 
 		gen_service_node<::File_system::Session>(xml, [&] () {
 			xml.attribute("label", "fonts");
 			xml.node("parent", [&] () {
-				xml.attribute("label", "fonts"); }); });
+				xml.attribute("label", "leitzentrale -> fonts"); }); });
 	});
 }
 
 
-void Sculpt::Gui::_generate_config(Xml_generator &xml) const
+void Sculpt::Gui::gen_runtime_start_nodes(Xml_generator &xml) const
 {
-	xml.node("parent-provides", [&] () {
-		gen_parent_service<Rom_session>(xml);
-		gen_parent_service<Cpu_session>(xml);
-		gen_parent_service<Pd_session>(xml);
-		gen_parent_service<Log_session>(xml);
-		gen_parent_service<Timer::Session>(xml);
-		gen_parent_service<Report::Session>(xml);
-		gen_parent_service<Nitpicker::Session>(xml);
-		gen_parent_service<::File_system::Session>(xml);
-	});
-
-	xml.node("resource", [&] () {
-		xml.attribute("name", "RAM");
-		xml.attribute("preserve", "1M");
-	 });
+	xml.node("start", [&] () {
+		_gen_menu_view_start_content(xml, "panel_view", Point(0, 0),
+		                             Area(_screen_size.w(), panel_height())); });
 
 	xml.node("start", [&] () {
-		_gen_menu_view_start_content(xml, "menu", Point(0, 0), menu_width); });
+		_gen_menu_view_start_content(xml, "menu_view", Point(0, 0),
+		                             Area(menu_width, 0)); });
 
 	xml.node("start", [&] () {
-		_gen_menu_view_start_content(xml, "popup", Point(0, 0), 0); });
+		_gen_menu_view_start_content(xml, "popup_view", Point(0, 0), Area(0, 0)); });
+
+	xml.node("start", [&] () {
+		_gen_menu_view_start_content(xml, "network_view", Point(0, 0),
+		                             Area(menu_width, 0)); });
 }
 

@@ -44,7 +44,7 @@ struct Sculpt::Graph
 
 	Depot_deploy::Children const &_deploy_children;
 
-	Expanding_reporter _graph_dialog_reporter { _env, "dialog", "runtime_view_dialog" };
+	Expanding_reporter _graph_dialog_reporter { _env, "dialog", "runtime_dialog" };
 
 	Attached_rom_dataspace _hover_rom { _env, "runtime_view_hover" };
 
@@ -134,6 +134,9 @@ struct Sculpt::Graph
 
 					/* omit sculpt's helpers from the graph */
 					bool const blacklisted = (name == "runtime_view"
+					                       || name == "popup_view"
+					                       || name == "menu_view"
+					                       || name == "panel_view"
 					                       || name == "launcher_query"
 					                       || name == "update"
 					                       || name == "fs_tool"

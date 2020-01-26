@@ -29,6 +29,7 @@
 #include <model/file_operation_queue.h>
 #include <view/download_status.h>
 #include <view/popup_dialog.h>
+#include <view/panel_dialog.h>
 #include <gui.h>
 #include <nitpicker.h>
 #include <keyboard_focus.h>
@@ -45,9 +46,11 @@ struct Sculpt::Main : Input_event_handler,
                       Runtime_config_generator,
                       Storage::Target_user,
                       Graph::Action,
+                      Panel_dialog::Action,
                       Popup_dialog::Action,
                       Popup_dialog::Construction_info,
-                      Depot_query
+                      Depot_query,
+                      Panel_dialog::State
 {
 	Env &_env;
 
@@ -165,7 +168,7 @@ struct Sculpt::Main : Input_event_handler,
 	}
 
 
-	Network _network { _env, _heap, *this, *this, _runtime_state, _pci_info };
+	Network _network { _env, _heap, *this, _runtime_state, _pci_info };
 
 
 	/************
@@ -345,11 +348,27 @@ struct Sculpt::Main : Input_event_handler,
 
 	Hovered::Dialog _hovered_dialog { Hovered::NONE };
 
+	Panel_dialog::Tab _selected_tab = Panel_dialog::Tab::COMPONENTS;
+
+	bool _log_visible     = false;
+	bool _network_visible = false;
+
+	/**
+	 * Panel_dialog::State interface
+	 */
+	bool log_visible() const override { return _log_visible; }
+
+	bool network_visible() const override { return _network_visible; }
+
+	bool inspect_tab_visible() const override { return _storage.any_file_system_inspected(); }
+
+	Panel_dialog::Tab selected_tab() const override { return _selected_tab; }
+
+
 	template <typename FN>
 	void _apply_to_hovered_dialog(Hovered::Dialog dialog, FN const &fn)
 	{
 		if (dialog == Hovered::STORAGE) fn(_storage.dialog);
-		if (dialog == Hovered::NETWORK) fn(_network.dialog);
 	}
 
 	void _handle_hover();
@@ -362,11 +381,6 @@ struct Sculpt::Main : Input_event_handler,
 		_menu_dialog_reporter.generate([&] (Xml_generator &xml) {
 
 			xml.node("vbox", [&] () {
-				gen_named_node(xml, "frame", "logo", [&] () {
-					xml.node("float", [&] () {
-						xml.node("frame", [&] () {
-							xml.attribute("style", "logo"); }); }); });
-
 				if (_manually_managed_runtime)
 					return;
 
@@ -374,7 +388,6 @@ struct Sculpt::Main : Input_event_handler,
 				                                  || !_storage.any_file_system_inspected();
 
 				_storage.dialog.generate(xml, storage_dialog_expanded);
-				_network.dialog.generate(xml);
 
 				gen_named_node(xml, "frame", "runtime", [&] () {
 					xml.node("vbox", [&] () {
@@ -512,8 +525,16 @@ struct Sculpt::Main : Input_event_handler,
 				need_generate_dialog = true;
 			}
 
-			if (_hovered_dialog == Hovered::STORAGE) _storage.dialog.click(_storage);
-			if (_hovered_dialog == Hovered::NETWORK) _network.dialog.click(_network);
+			if (_hovered_dialog == Hovered::STORAGE) {
+				bool const orig_inspected = _storage.any_file_system_inspected();
+
+				_storage.dialog.click(_storage);
+
+				/* update visibility of 'inspect' tab */
+				if (orig_inspected != _storage.any_file_system_inspected())
+					_panel_dialog.generate();
+			}
+
 			if (_hovered_dialog == Hovered::RUNTIME) _network.dialog.click(_network);
 
 			/* remove popup dialog when clicking somewhere outside */
@@ -531,8 +552,10 @@ struct Sculpt::Main : Input_event_handler,
 				_handle_window_layout();
 			}
 
-			if (_graph.hovered())        _graph.click(*this);
-			if (_popup_dialog.hovered()) _popup_dialog.click(*this);
+			if      (_graph.hovered())          _graph.click(*this);
+			else if (_popup_dialog.hovered())   _popup_dialog.click(*this);
+			else if (_panel_dialog.hovered())   _panel_dialog.click(*this);
+			else if (_network.dialog.hovered()) _network.dialog.click(_network);
 		}
 
 		if (ev.key_release(Input::BTN_LEFT)) {
@@ -574,6 +597,39 @@ struct Sculpt::Main : Input_event_handler,
 		_popup.toggle();
 		_graph._gen_graph_dialog();
 		_handle_window_layout();
+	}
+
+	void _refresh_panel_and_window_layout()
+	{
+		_panel_dialog.generate();
+		_handle_window_layout();
+	}
+
+	/*
+	 * Panel::Action interface
+	 */
+	void select_tab(Panel_dialog::Tab tab) override
+	{
+		_selected_tab = tab;
+		_refresh_panel_and_window_layout();
+	}
+
+	/*
+	 * Panel::Action interface
+	 */
+	void toggle_log_visibility() override
+	{
+		_log_visible = !_log_visible;
+		_refresh_panel_and_window_layout();
+	}
+
+	/*
+	 * Panel::Action interface
+	 */
+	void toggle_network_visibility() override
+	{
+		_network_visible = !_network_visible;
+		_refresh_panel_and_window_layout();
 	}
 
 	void _close_popup_dialog()
@@ -656,6 +712,8 @@ struct Sculpt::Main : Input_event_handler,
 		_runtime_state.with_construction([&] (Component const &c) { fn.with(c); });
 	}
 
+	Panel_dialog _panel_dialog { _env, _heap, *this };
+
 	Popup_dialog _popup_dialog { _env, _heap, _launchers,
 	                             _network._nic_state, _network._nic_target,
 	                             _runtime_state, _cached_runtime_config,
@@ -704,7 +762,7 @@ struct Sculpt::Main : Input_event_handler,
 		 */
 		static Nitpicker::Root gui_nitpicker(_env, _heap, *this);
 
-		_gui.generate_config();
+		generate_runtime_config();
 	}
 
 	void _handle_window_layout();
@@ -812,50 +870,46 @@ void Sculpt::Main::_handle_window_layout()
 	_decorator_margins.update();
 	Decorator_margins const margins(_decorator_margins.xml());
 
-	unsigned const log_min_w = 400, log_min_h = 200;
+	unsigned const log_min_w = 400;
 
 	if (!_nitpicker.constructed())
 		return;
 
 	Framebuffer::Mode const mode = _nitpicker->mode();
 
+	/* area reserved for the panel */
+	Rect const panel(Point(0, 0), Area(mode.width(), _gui.panel_height()));
+
 	/* area preserved for the menu */
-	Rect const menu(Point(0, 0), Area(_gui.menu_width, mode.height()));
+	Rect const menu(Point(0, panel.h()), Area(_gui.menu_width, mode.height()));
 
 	/* available space on the right of the menu */
-	Rect avail(Point(_gui.menu_width, 0),
+	Rect avail(Point(0, panel.h()),
 	           Point(mode.width() - 1, mode.height() - 1));
 
-	/*
-	 * When the screen width is at least twice the log width, place the
-	 * log at the right side of the screen. Otherwise, with resolutions
-	 * as low as 1024x768, place it to the bottom to allow the inspect
-	 * window to use the available screen width to the maximum extend.
-	 */
-	bool const log_at_right =
-		(avail.w() > 2*(log_min_w + margins.left + margins.right));
+	Point const log_offset = _log_visible
+	                       ? Point(0, 0)
+	                       : Point(log_min_w + margins.left + margins.right, 0);
 
-	/* the upper-left point depends on whether the log is at the right or bottom */
-	Point const log_p1 =
-		log_at_right ? Point(avail.x2() - log_min_w - margins.right + 1,
-		                     margins.top)
-		             : Point(_gui.menu_width + margins.left,
-		                     avail.y2() - log_min_h - margins.bottom + 1);
-
-	/* the lower-right point (p2) of the log is always the same */
-	Point const log_p2(mode.width()  - margins.right  - 1,
+	Point const log_p1(avail.x2() - log_min_w - margins.right + 1 + log_offset.x(),
+	                   avail.y1() + margins.top);
+	Point const log_p2(mode.width()  - margins.right  - 1 + log_offset.x(),
 	                   mode.height() - margins.bottom - 1);
 
 	/* position of the inspect window */
-	Point const inspect_p1(avail.x1() + margins.right, margins.top);
-
-	Point const inspect_p2 =
-		log_at_right ? Point(log_p1.x() - margins.right - margins.left - 1, log_p2.y())
-		             : Point(log_p2.x(), log_p1.y() - margins.bottom - margins.top - 1);
+	Point const inspect_p1(avail.x1() + margins.left, avail.y1() + margins.top);
+	Point const inspect_p2(avail.x2() - margins.right - 1,
+	                       avail.y2() - margins.bottom - 1);
 
 	typedef String<128> Label;
-	Label const inspect_label     ("runtime -> leitzentrale -> inspect");
-	Label const runtime_view_label("runtime -> leitzentrale -> runtime_view");
+	Label const
+		inspect_label     ("runtime -> leitzentrale -> inspect"),
+		runtime_view_label("runtime -> leitzentrale -> runtime_view"),
+		panel_view_label  ("runtime -> leitzentrale -> panel_view"),
+		menu_view_label   ("runtime -> leitzentrale -> menu_view"),
+		popup_view_label  ("runtime -> leitzentrale -> popup_view"),
+		network_view_label("runtime -> leitzentrale -> network_view"),
+		logo_label        ("logo");
 
 	_window_list.update();
 	_window_layout.generate([&] (Xml_generator &xml) {
@@ -889,8 +943,23 @@ void Sculpt::Main::_handle_window_layout()
 			return Area(min(inspect_w, size.w()), min(inspect_h, size.h()));
 		};
 
-		_with_window(window_list, Label("gui -> menu -> "), [&] (Xml_node win) {
-			gen_window(win, menu); });
+		_with_window(window_list, panel_view_label, [&] (Xml_node win) {
+			gen_window(win, panel); });
+
+		_with_window(window_list, Label("log"), [&] (Xml_node win) {
+			gen_window(win, Rect(log_p1, log_p2)); });
+
+		_with_window(window_list, network_view_label, [&] (Xml_node win) {
+			Area  const size = win_size(win);
+			Point const pos  = _network_visible
+			                 ? Point(log_p1.x() - size.w(), avail.y1())
+			                 : Point(mode.width(), avail.y1());
+			gen_window(win, Rect(pos, size));
+		});
+
+		_with_window(window_list, menu_view_label, [&] (Xml_node win) {
+			if (_selected_tab == Panel_dialog::Tab::FILES)
+				gen_window(win, menu); });
 
 		/*
 		 * Calculate centered runtime view within the available main (inspect)
@@ -903,7 +972,7 @@ void Sculpt::Main::_handle_window_layout()
 		});
 
 		if (_popup.state == Popup::VISIBLE) {
-			_with_window(window_list, Label("gui -> popup -> "), [&] (Xml_node win) {
+			_with_window(window_list, popup_view_label, [&] (Xml_node win) {
 				Area const size = win_size(win);
 
 				int const anchor_y_center = (_popup.anchor.y1() + _popup.anchor.y2())/2;
@@ -915,8 +984,8 @@ void Sculpt::Main::_handle_window_layout()
 			});
 		}
 
-		if (_last_clicked == Hovered::STORAGE)
-			_with_window(window_list, inspect_label, [&] (Xml_node win) {
+		_with_window(window_list, inspect_label, [&] (Xml_node win) {
+			if (_selected_tab == Panel_dialog::Tab::INSPECT)
 				gen_window(win, Rect(inspect_p1, inspect_p2)); });
 
 		/*
@@ -924,10 +993,14 @@ void Sculpt::Main::_handle_window_layout()
 		 * the overlapping of the log area. (use the menu view's 'win_size').
 		 */
 		_with_window(window_list, runtime_view_label, [&] (Xml_node win) {
-			gen_window(win, Rect(runtime_view_pos, win_size(win))); });
+			if (_selected_tab == Panel_dialog::Tab::COMPONENTS)
+				gen_window(win, Rect(runtime_view_pos, win_size(win))); });
 
-		_with_window(window_list, Label("log"), [&] (Xml_node win) {
-			gen_window(win, Rect(log_p1, log_p2)); });
+		_with_window(window_list, logo_label, [&] (Xml_node win) {
+			Area  const size = win_size(win);
+			Point const pos(mode.width() - size.w(), mode.height() - size.h());
+			gen_window(win, Rect(pos, size));
+		});
 	});
 
 	/* define window-manager focus */
@@ -956,6 +1029,7 @@ void Sculpt::Main::_handle_nitpicker_mode()
 		float const text_size = (float)mode.height() / 60.0;
 
 		_gui.font_size(text_size);
+		_gui.screen_size(Area(mode.width(), mode.height()));
 
 		_fonts_config.generate([&] (Xml_generator &xml) {
 			xml.attribute("copy",  true);
@@ -1002,7 +1076,7 @@ void Sculpt::Main::_handle_nitpicker_mode()
 	}
 
 	_gui.version.value++;
-	_gui.generate_config();
+	generate_runtime_config();
 }
 
 
@@ -1312,6 +1386,8 @@ void Sculpt::Main::_generate_runtime_config(Xml_generator &xml) const
 
 	xml.node("start", [&] () {
 		gen_runtime_view_start_content(xml, _runtime_view_state, _gui.font_size()); });
+
+	_gui.gen_runtime_start_nodes(xml);
 
 	_storage.gen_runtime_start_nodes(xml);
 
