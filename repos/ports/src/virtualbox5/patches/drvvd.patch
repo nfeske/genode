@@ -1,0 +1,11 @@
+--- a/src/app/virtualbox/src/VBox/Devices/Storage/DrvVD.cpp
++++ b/src/app/virtualbox/src/VBox/Devices/Storage/DrvVD.cpp
+@@ -4611,7 +4611,7 @@
+ #endif /* VBOX_PERIODIC_FLUSH */
+ 
+ #ifdef VBOX_IGNORE_FLUSH
+-            rc = CFGMR3QueryBoolDef(pCfg, "IgnoreFlush", &pThis->fIgnoreFlush, true);
++            rc = CFGMR3QueryBoolDef(pCfg, "IgnoreFlush", &pThis->fIgnoreFlush, false);
+             if (RT_FAILURE(rc))
+                 return PDMDRV_SET_ERROR(pDrvIns, rc, N_("Failed to query \"IgnoreFlush\" from the config"));
+ 
