@@ -230,15 +230,15 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 		Job_queue<128>       _job_queue { };
 		Registry<Block::Job> _job_registry { };
 
+		unsigned _wake_up_index { 0 };
+
 		void _wakeup_clients()
 		{
-			static unsigned start_index = 0;
-
 			bool     first      = true;
 			unsigned next_index = 0;
 			for (unsigned i = 0; i < MAX_SESSIONS; i++) {
 
-				unsigned index = (start_index + i) % MAX_SESSIONS;
+				unsigned index = (_wake_up_index + i) % MAX_SESSIONS;
 
 				if (!_sessions[index]) continue;
 
@@ -263,7 +263,7 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 				_sessions[index]->handle_requests();
 			}
 
-			start_index = next_index;
+			_wake_up_index = next_index;
 		}
 
 		void _handle_io()
