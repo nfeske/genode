@@ -214,8 +214,12 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 		Heap     _heap     { _env.ram(), _env.rm() };
 		Reporter _reporter { _env, "partitions" };
 
+		Number_of_bytes const _io_buffer_size =
+			_config.xml().attribute_value("io_buffer",
+			                              Number_of_bytes(4*1024*1024));
+
 		Allocator_avl           _block_alloc { &_heap };
-		Block_connection        _block    { _env, &_block_alloc };
+		Block_connection        _block    { _env, &_block_alloc, _io_buffer_size };
 		Io_signal_handler<Main> _io_sigh  { _env.ep(), *this, &Main::_handle_io };
 		Mbr_partition_table     _mbr      { _env, _block, _heap, _reporter };
 		Gpt                     _gpt      { _env, _block, _heap, _reporter };
@@ -228,10 +232,17 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 
 		void _wakeup_clients()
 		{
-			for (unsigned i = 0; i <  MAX_SESSIONS; i++) {
-				if (!_sessions[i]) continue;
+			static unsigned start_index = 0;
 
-				if (_sessions[i]->syncing) {
+			bool     first      = true;
+			unsigned next_index = 0;
+			for (unsigned i = 0; i < MAX_SESSIONS; i++) {
+
+				unsigned index = (start_index + i) % MAX_SESSIONS;
+
+				if (!_sessions[index]) continue;
+
+				if (_sessions[index]->syncing) {
 					bool in_flight = false;
 
 					_job_registry.for_each([&] (Job &job) {
@@ -239,11 +250,20 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 							in_flight = true;
 					});
 
-					if (in_flight == false) _sessions[i]->syncing = false;
+					if (in_flight == false) _sessions[index]->syncing = false;
+					else continue;
 				}
 
-				_sessions[i]->handle_requests();
+				if (first) {
+					/* to be more fair, start at index + 1 next time */
+					next_index  = (index + 1) % MAX_SESSIONS;
+					first       = false;
+				}
+
+				_sessions[index]->handle_requests();
 			}
+
+			start_index = next_index;
 		}
 
 		void _handle_io()
