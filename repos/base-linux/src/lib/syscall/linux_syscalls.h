@@ -1,6 +1,7 @@
 /*
  * \brief  Linux system-call bindings
  * \author Norman Feske
+ * \author Stefan Thöni
  * \date   2008-10-22
  *
  * This file is meant to be internally used by the framework. It is not public
@@ -20,6 +21,7 @@
 
 /*
  * Copyright (C) 2008-2017 Genode Labs GmbH
+ * Copyright (C) 2019 gapfruit AG
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -37,6 +39,7 @@
 #include <base/snprintf.h>
 #include <base/log.h>
 
+
 /*
  * Resolve ambiguity between 'Genode::size_t' and the host's header's 'size_t'.
  */
@@ -51,6 +54,8 @@
 #include <sys/syscall.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
+#include <sys/epoll.h>
 #include <sys/mman.h>
 
 
@@ -173,6 +178,24 @@ inline int lx_getpeername(int sockfd, struct sockaddr *name, socklen_t *namelen)
 
 #endif /* SYS_socketcall */
 
+
+inline int lx_epoll_create()
+{
+	return lx_syscall(SYS_epoll_create, 1);
+}
+
+
+inline int lx_epoll_ctl(int epfd, int op, int fd, epoll_event *event)
+{
+	return lx_syscall(SYS_epoll_ctl, epfd, op, fd, event);
+}
+
+
+inline int lx_epoll_wait(int epfd, struct epoll_event *events,
+                         int maxevents, int timeout)
+{
+	return lx_syscall(SYS_epoll_wait, epfd, events, maxevents, timeout);
+}
 
 /*******************************************
  ** Functions used by the process library **

@@ -23,7 +23,7 @@
 /* local includes */
 #include "platform.h"
 #include "core_env.h"
-#include "server_socket_pair.h"
+#include <resource_path.h>
 
 /* Linux includes */
 #include <core_linux_syscalls.h>
@@ -146,30 +146,6 @@ void Platform::wait_for_exit()
 		}
 	}
 	lx_exit_group(0);
-}
-
-
-/*****************************
- ** Support for IPC library **
- *****************************/
-
-namespace Genode {
-
-	Socket_pair server_socket_pair()
-	{
-		return create_server_socket_pair(Thread::myself()->native_thread().tid);
-	}
-
-	void destroy_server_socket_pair(Socket_pair socket_pair)
-	{
-		/*
-		 * As entrypoints in core are never destructed, this function is only
-		 * called on IPC-client destruction. In this case, it's a no-op in core
-		 * as well as in Genode processes.
-		 */
-		if (socket_pair.server_sd != -1 || socket_pair.client_sd != -1)
-			error(__func__, " called for IPC server which should never happen");
-	}
 }
 
 
