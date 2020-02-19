@@ -20,6 +20,7 @@
 #include <block_session/client.h>
 #include <util/misc_math.h>
 #include <util/mmio.h>
+#include <util/utf8.h>
 
 #include "partition_table.h"
 #include "fsprobe.h"
@@ -53,29 +54,28 @@ class Block::Gpt : public Block::Partition_table
 			struct Clock_seq_hi_and_reserved : Register<8, 8> { };
 			struct Clock_seq_low             : Register<9, 8> { };
 
-			struct Node : Register<10, 64>
-			{
-				struct Data : Bitfield<0, 48> { };
-			};
+			struct Node : Register_array<10, 8, 6, 8> { };
 
 			Uuid() = delete;
 			Uuid(addr_t base) : Mmio(base) { };
 
 			unsigned time_low() const { return read<Time_low>(); }
 
-			char const *to_string()
+			template<typename T> struct Uuid_hex : Genode::Hex {
+				Uuid_hex<T>(T value) : Genode::Hex(value, OMIT_PREFIX, PAD) { } };
+
+			void print(Output &out) const
 			{
-				static char buffer[37 + 1];
+				Genode::print(out, Uuid_hex(read<Time_low>()),
+				              "-", Uuid_hex(read<Time_mid>()),
+				              "-", Uuid_hex(read<Time_hi_and_version>()),
+				              "-", Uuid_hex(read<Clock_seq_hi_and_reserved>()),
+				                   Uuid_hex(read<Clock_seq_low>()),
+				              "-");
 
-				snprintf(buffer, sizeof(buffer),
-				                 "%08X-%04X-%04X-%02X%02X-%06lx",
-				                 read<Time_low>(), read<Time_mid>(), read<Time_hi_and_version>(),
-				                 read<Clock_seq_hi_and_reserved>(), read<Clock_seq_low>(),
-				                 addr_t(read<Node::Data>()));
-
-				return buffer;
+				for (unsigned i = 0; i < 6; i++)
+					Genode::print(out, Uuid_hex(read<Node>(i)));
 			}
-
 			static constexpr size_t size() { return 16; }
 		};
 
@@ -91,17 +91,19 @@ class Block::Gpt : public Block::Partition_table
 			struct Hdr_size : Register<12, 32> { }; /* size of GPT header */
 			struct Hdr_crc  : Register<16, 32> { }; /* CRC32 of GPT header */
 			struct Reserved : Register<20,32> { };  /* must be zero */
-			struct Hdr_lba  : Register<24, 64> { enum { LBA = 1 }; }; /* LBA that contains this header */
+			struct Hdr_lba  : Register<24, 64> {
+				enum { LBA = 1 }; };                  /* LBA that contains this header */
+
 			struct Backup_hdr_lba : Register<32, 64> { }; /* LBA of backup GPT header */
 			struct Part_lba_start : Register<40, 64> { }; /* first LBA usable for partitions */
 			struct Part_lba_end   : Register<48, 64> { }; /* last LBA usable for partitions */
 
-			Uuid guid() { return Uuid(base() + 56); }          /* GUID to identify the disk */
+			Uuid guid() { return Uuid(base() + 56); } /* GUID to identify the disk */
 
-			struct Gpe_lba : Register<72, 64> { };    /* first LBA of GPE array */
-			struct Entries : Register<80, 32> { };    /* number of entries in GPE array */
+			struct Gpe_lba    : Register<72, 64> { }; /* first LBA of GPE array */
+			struct Entries    : Register<80, 32> { }; /* number of entries in GPE array */
 			struct Entry_size : Register<84, 32> { }; /* size of each GPE */
-			struct Gpe_crc : Register<88, 32> { };    /* CRC32 of GPE array */
+			struct Gpe_crc    : Register<88, 32> { }; /* CRC32 of GPE array */
 
 			Gpt_hdr() = delete;
 			Gpt_hdr(addr_t base) : Mmio(base) { };
@@ -131,19 +133,19 @@ class Block::Gpt : public Block::Partition_table
 				if (!verbose) return;
 
 				log("GPT ", check_primary ? "primary" : "backup", " header:");
-				log(" rev: ", read<Revision>());
-				log(" size: ", read<Hdr_size>());
-				log(" crc: ", Hex(read<Hdr_crc>(), Hex::OMIT_PREFIX));
-				log(" reserved: ", read<Reserved>());
-				log(" hdr lba: ", read<Hdr_lba>());
-				log(" bak lba: ", read<Backup_hdr_lba>());
+				log(" rev: ",            read<Revision>());
+				log(" size: ",           read<Hdr_size>());
+				log(" crc: ",        Hex(read<Hdr_crc>(), Hex::OMIT_PREFIX));
+				log(" reserved: ",       read<Reserved>());
+				log(" hdr lba: ",        read<Hdr_lba>());
+				log(" bak lba: ",        read<Backup_hdr_lba>());
 				log(" part start lba: ", read<Part_lba_start>());
-				log(" part end lba: ", read<Part_lba_end>());
-				log(" guid: ", guid().to_string());
-				log(" gpe lba: ", read<Gpe_lba>());
-				log(" entries: ", read<Entries>());
-				log(" entry size: ", read<Entry_size>());
-				log(" gpe crc: ", Hex(read<Gpe_crc>(), Hex::OMIT_PREFIX));
+				log(" part end lba: ",   read<Part_lba_end>());
+				log(" guid: ",           guid());
+				log(" gpe lba: ",        read<Gpe_lba>());
+				log(" entries: ",        read<Entries>());
+				log(" entry size: ",     read<Entry_size>());
+				log(" gpe crc: ",    Hex(read<Gpe_crc>(), Hex::OMIT_PREFIX));
 			}
 
 			bool valid(Partition_table::Sector_data &data, bool check_primary = true)
@@ -221,34 +223,19 @@ class Block::Gpt : public Block::Partition_table
 			}
 
 			/**
-			 * Extract all valid ASCII characters in the name entry
+			 * Extract UTF-8 for name entry
 			 */
-			char const *name()
+			void print(Output &out) const
 			{
-				static char buffer[NAME_LEN + 1];
+				for (unsigned i = 0; i < NAME_LEN; i++) {
+					uint32_t utf16 = read<Name>(i);
 
-				char *p = buffer;
-				size_t i = 0;
+					if (utf16 == 0) break;
 
-				for (size_t u = 0; u < NAME_LEN && read<Name>(u) != 0; u++) {
-					uint16_t utfchar = read<Name>(i++);
-
-					if ((utfchar & 0xf800) == 0xd800) {
-						uint16_t c = read<Name>(i);
-						if ((utfchar & 0x400) != 0 || (c & 0xfc00) != 0xdc00)
-							utfchar = 0xfffd;
-						else
-							i++;
-					}
-
-					*p++ = (utfchar < 0x80) ? utfchar : '.';
+					Codepoint code { utf16 };
+					code.print(out);
 				}
-
-				*p++ = 0;
-
-				return buffer;
 			}
-
 		};
 
 
@@ -356,8 +343,8 @@ class Block::Gpt : public Block::Partition_table
 				_part_list[i].construct(start, length);
 
 				log("Partition ", i + 1, ": LBA ", start, " (", length,
-				    " blocks) type: '", e.type().to_string(),
-				    "' name: '", e.name(), "'");
+				    " blocks) type: '", e.type(),
+				    "' name: '", e, "'");
 			}
 
 			/* Report the partitions */
@@ -386,13 +373,18 @@ class Block::Gpt : public Block::Partition_table
 
 						enum { BYTES = 4096, };
 						Sector fs(data, e.lba_start(), BYTES / block.info().block_size);
+
 						Fs::Type fs_type = Fs::probe(fs.addr<uint8_t*>(), BYTES);
+
+						String<40>                  guid { e.guid() };
+						String<40>                  type { e.type() };
+						String<Gpt_entry::NAME_LEN> name { e };
 
 						xml.node("partition", [&] () {
 							xml.attribute("number", i + 1);
-							xml.attribute("name", e.name());
-							xml.attribute("type", e.type().to_string());
-							xml.attribute("guid", e.guid().to_string());
+							xml.attribute("name", name);
+							xml.attribute("type", type);
+							xml.attribute("guid", guid);;
 							xml.attribute("start", e.lba_start());
 							xml.attribute("length", e.lba_end() - e.lba_start() + 1);
 							xml.attribute("block_size", block.info().block_size);
@@ -409,7 +401,6 @@ class Block::Gpt : public Block::Partition_table
 					}
 				});
 			}
-
 		}
 
 	public:

@@ -43,6 +43,7 @@ struct Block::Partition
 struct Block::Job : public Block_connection::Job
 {
 	Registry<Job>::Element registry_element;
+
 	addr_t  const index;                /* job index */
 	long    const number;               /* parition number */
 	Request       request;
@@ -51,13 +52,15 @@ struct Block::Job : public Block_connection::Job
 	off_t         offset { 0 };         /* current offset in payload for partial jobs */
 
 	Job(Block_connection &connection,
-	    Operation operation,
-	    Registry<Job> &registry,
-	    addr_t const index, addr_t const number,
-	    Request request, addr_t addr)
+	    Operation         operation,
+	    Registry<Job>    &registry,
+	    addr_t const      index,
+	    addr_t const      number,
+	    Request           request,
+	    addr_t            addr)
 	: Block_connection::Job(connection, operation),
 	  registry_element(registry, *this),
-	  index(index), number(number),  request(request), addr(addr) { }
+	  index(index), number(number), request(request), addr(addr) { }
 };
 
 
@@ -93,10 +96,17 @@ struct Block::Partition_table : Interface
 
 			public:
 
-				Sector(Sector_data &data, block_number_t block_number, block_count_t count)
+				Sector(Sector_data   &data,
+				       block_number_t block_number,
+				       block_count_t  count)
 				 : _data(data)
 				{
-					Operation const operation { .type = Operation::Type::READ, .block_number = block_number, .count = count };
+					Operation const operation {
+						.type         = Operation::Type::READ,
+						.block_number = block_number,
+						.count        = count
+					};
+
 					Block_connection::Job job { data.block, operation };
 					_data.block.update_jobs(*this);
 
@@ -145,16 +155,20 @@ struct Block::Partition_table : Interface
 		Env              &env;
 		Block_connection &block;
 		Reporter         &reporter;
-		Io_signal_handler<Partition_table> io_sigh { env.ep(), *this, &Partition_table::handle_io };
 		Sector_data       data;
+
+		Io_signal_handler<Partition_table> io_sigh {
+			env.ep(), *this, &Partition_table::handle_io };
 
 		void handle_io()
 		{
 			if (data.current) { data.current->handle_io(); }
 		}
 
-
-		Partition_table(Env &env, Block_connection &block, Allocator &alloc, Reporter & r)
+		Partition_table(Env              &env,
+		                Block_connection &block,
+		                Allocator        &alloc,
+		                Reporter         &r)
 		: env(env), block(block), reporter(r), data(env, block, alloc)
 		{ }
 

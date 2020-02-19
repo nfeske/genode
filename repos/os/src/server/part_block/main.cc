@@ -28,12 +28,13 @@
 namespace Block {
 	class  Session_component;
 	struct Session_handler;
-	template <unsigned ITEMS> struct Job_queue;
 	struct Dispatch;
 	class  Main;
 
+	template <unsigned ITEMS> struct Job_queue;
+
 	typedef Constructible<Job> Job_object;
-	using Response = Request_stream::Response;
+	using   Response = Request_stream::Response;
 };
 
 
@@ -49,11 +50,6 @@ struct Block::Job_queue
 		return index;
 	}
 
-	Job_object &job(addr_t index)
-	{
-		return _jobs[index];
-	}
-
 	void free(addr_t index)
 	{
 		if (_jobs[index].constructed())
@@ -61,21 +57,27 @@ struct Block::Job_queue
 
 		_alloc.free(index);
 	}
+
+	template<typename FN>
+	void with_job(addr_t index, FN const &fn)
+	{
+		fn(_jobs[index]);
+	}
 };
 
 
 struct Block::Dispatch : Interface
 {
 	virtual Response submit(long number, Request const &request, addr_t addr) = 0;
-	virtual void update() = 0;
-	virtual void acknowledge_completed(bool all = true, long number = -1) = 0;
+	virtual void     update() = 0;
+	virtual void     acknowledge_completed(bool all = true, long number = -1) = 0;
 	virtual Response sync(long number, Request const &request) = 0;
 };
 
 
 struct Block::Session_handler : Interface
 {
-	Env &env;
+	Env                   &env;
 	Attached_ram_dataspace ds;
 
 	Signal_handler<Session_handler> request_handler
@@ -196,7 +198,6 @@ class Block::Session_component : public Rpc_object<Block::Session>,
 			/* poke */
 			wakeup_client_if_needed();
 		}
-
 };
 
 
@@ -246,8 +247,11 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 					bool in_flight = false;
 
 					_job_registry.for_each([&] (Job &job) {
-						if (i == job.number)
-							in_flight = true;
+						if (in_flight || i == job.number) {
+							Operation &op = job.request.operation;
+							in_flight |= (op.type == Operation::Type::WRITE ||
+							              op.type == Operation::Type::SYNC);
+						}
 					});
 
 					if (in_flight == false) _sessions[index]->syncing = false;
@@ -367,7 +371,8 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 				.writeable   = writeable,
 			};
 
-			_sessions[num] = new (_heap) Session_component(_env, num, tx_buf_size, info, *this);
+			_sessions[num] = new (_heap) Session_component(_env, num, tx_buf_size,
+			                                               info, *this);
 			return _sessions[num]->cap();
 		}
 
@@ -432,12 +437,13 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 				index  = _job_queue.alloc();
 			} catch (...) { return Response::RETRY; }
 
-			Job_object &job = _job_queue.job(index);
+			_job_queue.with_job(index, [&](Job_object &job) {
 
-			Operation op     = request.operation;
-			op.block_number += partition.lba;
+				Operation op     = request.operation;
+				op.block_number += partition.lba;
 
-			job.construct(_block, op, _job_registry, index, number, request, addr);
+				job.construct(_block, op, _job_registry, index, number, request, addr);
+			});
 
 			return Response::ACCEPTED;
 		}
@@ -449,10 +455,10 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 				index = _job_queue.alloc();
 			} catch (...) { return Response::RETRY; }
 
-			Job_object &job = _job_queue.job(index);
-			Operation op;
-			op.type = Operation::Type::SYNC;
-			job.construct(_block, op, _job_registry, index, number, request, 0);
+			_job_queue.with_job(index, [&](Job_object &job) {
+				job.construct(_block, request.operation, _job_registry,
+				              index, number, request, 0);
+			});
 
 			return Response::ACCEPTED;
 		}
