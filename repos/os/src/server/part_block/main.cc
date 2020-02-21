@@ -237,7 +237,7 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 		{
 			bool     first      = true;
 			unsigned next_index = 0;
-			for (unsigned i = 0; i < MAX_SESSIONS; i++) {
+			for (long i = 0; i < MAX_SESSIONS; i++) {
 
 				unsigned index = (_wake_up_index + i) % MAX_SESSIONS;
 
