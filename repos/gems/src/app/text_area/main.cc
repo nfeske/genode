@@ -479,9 +479,13 @@ struct Text_area::Main : Sandbox::Local_service_base::Wakeup,
 			bool const saved_version_changed =
 				(_saved_version.value != orig_saved_version.value);
 
-			if (saved_version_changed || saved_report_out_of_date)
+			if (saved_version_changed || saved_report_out_of_date) {
+
 				if (!_initial_config)
 					_save_to_file(_path());
+				else
+					_generate_saved_report();
+			}
 		}
 
 		_initial_config = false;
