@@ -666,6 +666,7 @@ void Dialog::insert_at_cursor_position(Codepoint c)
 {
 	if (_printable(c)) {
 		_insert_printable(c);
+		_modification_count++;
 		return;
 	}
 
