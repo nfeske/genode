@@ -51,7 +51,7 @@ struct Text_area::Main : Sandbox::Local_service_base::Wakeup,
 	Registry<Child_state> _children { };
 
 	Child_state _menu_view_child_state { _children, "menu_view",
-	                                     Ram_quota { 1*1024*1024 },
+	                                     Ram_quota { 4*1024*1024 },
 	                                     Cap_quota { 200 } };
 	/**
 	 * Sandbox::State_handler
