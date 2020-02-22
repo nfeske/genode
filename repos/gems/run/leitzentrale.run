@@ -341,9 +341,9 @@ install_rom_module usb_active_config {
 	<raw> <policy label_suffix="usb-1-2" class="storage"/> </raw>
 </config>}
 
-build { server/lx_block app/menu_view app/sculpt_manager }
+build { app/text_area server/lx_block app/menu_view app/sculpt_manager }
 
-build_boot_image { lx_block menu_view sculpt_manager ahci-1.img }
+build_boot_image { text_area lx_block menu_view sculpt_manager ahci-1.img }
 
 if {[have_spec linux]} {
 	set max_fds [exec bash -c "ulimit -n"]
