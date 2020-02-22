@@ -118,7 +118,10 @@ struct Text_area::Dialog : private Dynamic_rom_session::Xml_producer
 				end  .destruct();
 			}
 
-			bool defined() const { return start.constructed() && end.constructed(); }
+			bool defined() const
+			{
+				return start.constructed() && end.constructed() && (*start != *end);
+			}
 
 			template <typename FN>
 			void for_each_selected_line(FN const &) const;
