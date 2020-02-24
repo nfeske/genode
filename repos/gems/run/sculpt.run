@@ -727,6 +727,6 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 
 build { core lib/ld app/text_area app/sculpt_manager app/menu_view }
 
-append boot_modules { core ld.lib.so text_area sculpt_manager menu_view menu_view_styles.tar slides.pdf }
+append boot_modules { core libc.lib.so ld.lib.so text_area sculpt_manager menu_view menu_view_styles.tar slides.pdf }
 
 build_boot_image $boot_modules
