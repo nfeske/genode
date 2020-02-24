@@ -389,12 +389,12 @@ class Sculpt::Runtime_config
 		template <typename FN>
 		void for_each_service(FN const &fn) const
 		{
+			_parent_services.for_each(fn);
+
 			fn(_used_fs_service);
 
 			_components.for_each([&] (Component const &component) {
 				component.for_each_service(fn); });
-
-			_parent_services.for_each(fn);
 		}
 };
 
