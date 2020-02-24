@@ -74,6 +74,8 @@ void Thread::_init_platform_thread(size_t weight, Type type)
 {
 	using namespace Nova;
 
+	log("created new Thread name=", name(), " this=", this);
+
 	/*
 	 * Allocate capability selectors for the thread's execution context,
 	 * running semaphore and exception handler portals.

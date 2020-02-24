@@ -156,10 +156,18 @@ void Thread::free_secondary_stack(void* stack_addr)
 	_free_stack(Stack_allocator::base_to_stack(base));
 }
 
+#include <base/sleep.h>
 
-Native_thread &Thread::native_thread() {
+Native_thread &Thread::native_thread()
+{
+	if (_stack)
+		return _stack->native_thread();
 
-	return _stack->native_thread(); }
+	error("Thread::_stack is unexpectedly a nullptr!");
+	error("this=", this);
+
+	sleep_forever();
+}
 
 
 void *Thread::stack_top() const { return (void *)_stack->top(); }
