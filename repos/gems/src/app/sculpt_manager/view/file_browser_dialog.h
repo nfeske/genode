@@ -254,7 +254,7 @@ struct Sculpt::File_browser_dialog : Noncopyable, Dialog
 
 		bool const selected = (_state.browsed_fs == name);
 
-		if (_state.text_area.constructed() && !selected)
+		if (_state.text_area.constructed() && _state.modified && !selected)
 			return;
 
 		gen_named_node(xml, "frame", name, [&] () {
