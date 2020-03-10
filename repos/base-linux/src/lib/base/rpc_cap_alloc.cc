@@ -40,10 +40,9 @@ Native_capability Rpc_entrypoint::_alloc_rpc_cap(Pd_session& pd, Native_capabili
 		env_deprecated()->parent()->upgrade(Parent::Env::pd(),
 		                                    String<100>("ram_quota=", ram_upgrade, ", "
 		                                                "cap_quota=", cap_upgrade).string());
-		raw("Rpc_entrypoint _alloc_rpc_cap C");
 	}
 
-	return _alloc_rpc_cap_socketpair(*_native_context);
+	return alloc_rpc_cap_socketpair(*_native_context);
 }
 
 
@@ -52,5 +51,5 @@ void Rpc_entrypoint::_free_rpc_cap(Pd_session& pd, Native_capability cap)
 	/* first we return the cap to core to allow accounting */
 	pd.free_rpc_cap(cap);
 
-	_free_rpc_cap_socketpair(*_native_context, cap);
+	free_rpc_cap_socketpair(*_native_context, cap);
 }

@@ -17,30 +17,29 @@
 
 #include <base/rpc_server.h>
 
-namespace Genode {
 
-	class Rpc_entrypoint::Native_context
-	{
-		private:
-			int _cancel_client_sd = 0;
-			int _cancel_server_sd = 0;
-			int _epoll_fd = 0;
+class Genode::Rpc_entrypoint::Native_context
+{
+	private:
 
-		public:
-			Native_context();
+		int _cancel_client_sd = 0;
+		int _cancel_server_sd = 0;
+		int _epoll_fd = 0;
 
-			void clear();
+	public:
+		Native_context();
 
-			void add(int fd);
+		void clear();
 
-			void remove(int fd);
+		void add(int fd);
 
-			int poll();
+		void remove(int fd);
 
-			void write_cancel();
+		int poll();
 
-			bool clear_cancel(int fd);
-	};
-}
+		void write_cancel();
+
+		bool clear_cancel(int fd);
+};
 
 #endif /* _INCLUDE__BASE__INTERNAL__NATIVE_CONTEXT_H_ */

@@ -29,7 +29,8 @@
 using namespace Genode;
 
 
-Native_capability Genode::_alloc_rpc_cap_socketpair(Rpc_entrypoint::Native_context& native_context)
+Native_capability
+Genode::alloc_rpc_cap_socketpair(Rpc_entrypoint::Native_context& native_context)
 {
 	enum { LOCAL_SOCKET = 0, REMOTE_SOCKET = 1 };
 	int sd[2];
@@ -51,7 +52,8 @@ Native_capability Genode::_alloc_rpc_cap_socketpair(Rpc_entrypoint::Native_conte
 }
 
 
-void Genode::_free_rpc_cap_socketpair(Rpc_entrypoint::Native_context& native_context, Native_capability cap)
+void Genode::free_rpc_cap_socketpair(Rpc_entrypoint::Native_context &native_context,
+                                     Native_capability cap)
 {
 	Capability_space::Ipc_cap_data cap_data =
 		Capability_space::ipc_cap_data(cap);

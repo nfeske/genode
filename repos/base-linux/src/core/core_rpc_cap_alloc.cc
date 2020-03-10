@@ -25,14 +25,13 @@
 using namespace Genode;
 
 
-Native_capability Rpc_entrypoint::_alloc_rpc_cap(Pd_session&, Native_capability,
-                                                 addr_t)
+Native_capability Rpc_entrypoint::_alloc_rpc_cap(Pd_session&, Native_capability, addr_t)
 {
-	return _alloc_rpc_cap_socketpair(*_native_context);
+	return alloc_rpc_cap_socketpair(*_native_context);
 }
 
 
 void Rpc_entrypoint::_free_rpc_cap(Pd_session&, Native_capability cap)
 {
-	_free_rpc_cap_socketpair(*_native_context, cap);
+	free_rpc_cap_socketpair(*_native_context, cap);
 }

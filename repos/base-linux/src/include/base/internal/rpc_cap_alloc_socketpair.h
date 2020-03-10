@@ -19,11 +19,11 @@
 #include <base/internal/capability_space_tpl.h>
 #include <base/internal/native_context.h>
 
-namespace Genode
-{
-	Native_capability _alloc_rpc_cap_socketpair(Rpc_entrypoint::Native_context& context);
+namespace Genode {
 
-	void _free_rpc_cap_socketpair(Rpc_entrypoint::Native_context& context, Native_capability cap);
+	Native_capability alloc_rpc_cap_socketpair(Rpc_entrypoint::Native_context &);
+
+	void free_rpc_cap_socketpair(Rpc_entrypoint::Native_context &, Native_capability);
 }
 
 #endif /* _INCLUDE__BASE__INTERNAL__RPC_CAP_ALLOC_SOCKETPAIR_ */
