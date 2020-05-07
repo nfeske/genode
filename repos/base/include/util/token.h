@@ -234,7 +234,7 @@ class Genode::Token
 			case WHITESPACE:
 				{
 					unsigned i = 0;
-					for (; is_whitespace(_start[i]) && i < max_len; i++);
+					for (; i < max_len && is_whitespace(_start[i]); i++);
 					return i;
 				}
 
