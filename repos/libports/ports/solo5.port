@@ -1,11 +1,11 @@
 LICENSE   := ISC
-VERSION   := HEAD
+VERSION   := 0.6.5
 DOWNLOADS := solo5.archive
 
-REV   := 7dca1a677f548ea0bc911a209f34ceb55d8f10fd
-URL(solo5) := https://genode.org/files/solo5-$(REV).tar.gz
-SHA(solo5) := 87a8e8e047bc6fffe0384f1cbb2bfde1e4c88c545287899be29444ec9a4d6b95
+URL(solo5) := https://github.com/Solo5/solo5/releases/download/v$(VERSION)/solo5-v$(VERSION).tar.gz
+SHA(solo5) := 9e8288364c8ff320a6405182dd32967d9dabe120c9292b1ddbe0576c68f61520
 DIR(solo5) := src/lib/solo5
 
 DIRS := include/solo5
-DIR_CONTENT(include/solo5) = src/lib/solo5/include/solo5/solo5.h
+DIR_CONTENT(include/solo5) = src/lib/solo5/include/solo5/solo5.h \
+                             src/lib/solo5/include/solo5/mft_abi.h

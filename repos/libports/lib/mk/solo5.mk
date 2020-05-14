@@ -2,7 +2,8 @@ REQUIRES += 64bit
 
 SHARED_LIB = yes
 
-CC_OPT += -D__SOLO5_BINDINGS__ -Drestrict=__restrict__
+CC_OPT += -D__SOLO5_BINDINGS__ -Drestrict=__restrict__ \
+          -D_Static_assert=static_assert
 
 # GCC 8 complains about a mismatch of the 'log()' function declaration.
 # Since the solo5 'log()' function is unrelated to the builtin function,
