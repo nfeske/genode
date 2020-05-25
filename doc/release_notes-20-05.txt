@@ -17,22 +17,14 @@
 Capability-based security using seccomp on Linux
 ################################################
 
-;@throwException ?
+My goal for the Genode Community Summer 2019 was to enable seccomp for base-linux to achieve an intermediate level of security for a Genode system running on Linux. To get any security benefit from seccomp, it turned out the RPC mechanisms of base-linux needed to be significantly reworked to prevent processes from forging any capabilities.
 
-commit 7bf47b19826e5d45277a4306fba28d3fd98e88f6
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Mar 31 13:41:50 2020 +0200
+The new capability-based security on Linux maps each capability to a pair of socket descriptors, one of which can be transferred along socket connections using kernel mechanisms. Each invocation of a capability uses the received socket descriptor to address the server which in turn uses the epoll framework of the Linux kernel to get notification of incoming messages and the server side socket descriptor to securely determine the invoked RPC object. Capabilities which are passed back to the server rather than invoked can be securely identified by their inode number. This way, no client can forge any capability.
 
-    base-linux: boost max open fds to the hard rlimit
-    
-    This patch increases the default limit of the maximum number of open
-    file descriptors to the hard limit of the system. This is needed for
-    complex scenarios, which require more FDs than the default of 1024
-    at core.
-    
-    Related to issue #3581
-    
-    Fixes #3721
+With the hard part finally finished thanks to a concerted effort by Norman Feske, I could turn back to seccomp. This Linux kernel mechanism restricts the ability of a process to use syscalls. Thanks to the small interface used by Genode processes, the whitelist approach worked nicely, restricting all Genode processes to just 25 syscalls on x86, none of which can access any file on the host system. Instead all access to the host system must go through Genode RPC mechanisms to one of the hybrid components which are not yet subject to seccomp. Although some global information of the host system may still be accessed, the possibilities of escaping a sandboxed Genode process are vastly reduced.
+
+Note that these changes are transparent to any user of base-linux in all but one way: The Genode system might run out of socket descriptors in large scenarios. If this happens, you need to increase the hard open file descriptor limit. See man limits.conf for further information.
+
 
 commit 132569d12b5a695ecf2902207ba12181af97d0ec
 Author: Norman Feske <norman.feske@genode-labs.com>
