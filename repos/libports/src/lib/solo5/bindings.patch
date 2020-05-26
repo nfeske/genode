@@ -1,0 +1,143 @@
+--- src/lib/solo5/bindings/genode/bindings.cc
++++ src/lib/solo5/bindings/genode/bindings.cc
+@@ -44,8 +44,6 @@ extern struct mft1_note __solo5_mft1_note;
+ }
+ 
+ // Compile the MFT utilities as C++
+-#define memset Genode::memset
+-#define strncmp Genode::strcmp
+ #include "../../tenders/common/mft.c"
+ 
+ namespace Solo5
+@@ -111,32 +109,32 @@ struct Solo5::Device
+ {
+ 	virtual
+ 	solo5_result_t
+-	net_info(solo5_net_info &info) {
++	net_info(solo5_net_info &) {
+ 		return SOLO5_R_EINVAL; }
+ 
+ 	virtual
+ 	solo5_result_t
+-	net_write(const uint8_t *buf, size_t size) {
++	net_write(const uint8_t *, size_t) {
+ 		return SOLO5_R_EINVAL; }
+ 
+ 	virtual
+ 	solo5_result_t
+-	net_read(uint8_t *buf, size_t size, size_t &read_size) {
++	net_read(uint8_t *, size_t, size_t &) {
+ 		return SOLO5_R_EINVAL; }
+ 
+ 	virtual
+ 	solo5_result_t
+-	block_info(solo5_block_info &info) {
++	block_info(solo5_block_info &) {
+ 		return SOLO5_R_EINVAL; }
+ 
+ 	virtual
+ 	solo5_result_t
+-	block_write(solo5_off_t offset, const uint8_t *buf, size_t size) {
++	block_write(solo5_off_t, const uint8_t *, size_t) {
+ 		return SOLO5_R_EINVAL; }
+ 
+ 	virtual
+ 	solo5_result_t
+-	block_read(solo5_off_t offset, uint8_t *buf, size_t size) {
++	block_read(solo5_off_t, uint8_t *, size_t) {
+ 		return SOLO5_R_EINVAL; }
+ };
+ 
+@@ -610,11 +608,44 @@ solo5_block_read(solo5_handle_t handle, solo5_off_t offset,
+ 
+ 
+ solo5_result_t
+-solo5_set_tls_base(uintptr_t base)
++solo5_set_tls_base(uintptr_t)
+ {
+     return SOLO5_R_EUNSPEC;
+ }
+ 
++
++void *memcpy(void *restrict dest, const void *restrict src, size_t n)
++{
++	return Genode::memcpy(dest, src, n);
++}
++
++
++void *memset(void *dest, int c, size_t n)
++{
++	return Genode::memset(dest, c, n);
++}
++
++
++int strncmp(const char *l, const char *r, size_t n)
++{
++	return Genode::strcmp(l, r, n);
++}
++
++
++void _assert_fail(const char *file, const char *line, const char *e)
++{
++	Genode::error("Solo5: ABORT: ", file, ":", line, ": Assertion `", e, "' failed");
++	Platform::instance->exit(SOLO5_EXIT_ABORT, nullptr);
++}
++
++
++void _abort(const char *file, const char *line, const char *s, void *regs_hint)
++{
++	Genode::error("Solo5: ABORT: ", file, ":", line, ": ", s);
++	Platform::instance->exit(SOLO5_EXIT_ABORT, regs_hint);
++}
++
++
+ } // extern "C"
+ 
+ 
+@@ -632,7 +663,7 @@ void Component::construct(Genode::Env &env)
+ 	mft_get_builtin_mft1(&__solo5_mft1_note, &mft, &mft_size);
+ 
+ 	if (mft_validate(mft, mft_size) != 0) {
+-		Genode::error("Solo5: ", res, " Built-in manifest validation failed. Aborting.");
++		Genode::error("Solo5: Built-in manifest validation failed. Aborting.");
+ 		env.parent().exit(~0);
+ 		return;
+ 	}
+--- src/lib/solo5/bindings/genode/stubs.c
++++ src/lib/solo5/bindings/genode/stubs.c
+@@ -1,23 +0,0 @@
+-#include "../bindings.h"
+-
+-void solo5_console_write(const char *buf, size_t size) { }
+-void solo5_exit(int status) { for(;;); }
+-void solo5_abort(void) { for(;;); }
+-
+-solo5_time_t solo5_clock_monotonic(void) { return ~0; }
+-solo5_time_t solo5_clock_wall(void) { return ~0; }
+-void solo5_yield(solo5_time_t deadline, solo5_handle_set_t *ready_set) { return; }
+-
+-solo5_result_t solo5_net_acquire(const char *name, solo5_handle_t *handle, struct solo5_net_info *info) { return SOLO5_R_EUNSPEC; }
+-solo5_result_t solo5_net_write(solo5_handle_t handle, const uint8_t *buf, size_t size) { return SOLO5_R_EUNSPEC; }
+-solo5_result_t solo5_net_read(solo5_handle_t handle, uint8_t *buf, size_t size, size_t *read_size) { return SOLO5_R_EUNSPEC; }
+-
+-solo5_result_t solo5_block_acquire(const char *name, solo5_handle_t *handle, struct solo5_block_info *info) { return SOLO5_R_EUNSPEC; }
+-
+-solo5_result_t solo5_block_write(solo5_handle_t handle, solo5_off_t offset, const uint8_t *buf, size_t size) { return SOLO5_R_EUNSPEC; }
+-solo5_result_t solo5_block_read(solo5_handle_t handle, solo5_off_t offset, uint8_t *buf, size_t size) { return SOLO5_R_EUNSPEC; }
+-
+-solo5_result_t solo5_set_tls_base(uintptr_t base) { return SOLO5_R_EUNSPEC; }
+-
+-uintptr_t SSP_GUARD;
+-void SSP_FAIL (void) { }
+--- src/lib/solo5/include/solo5/mft_abi.h
++++ src/lib/solo5/include/solo5/mft_abi.h
+@@ -154,7 +154,8 @@ struct mft1_note {
+  * Internal alignment of (m) within struct mft1_note. Must be passed to
+  * elf_load_note() as note_align when loading.
+  */
+-#define MFT1_NOTE_ALIGN offsetof(struct { char c; struct mft m; }, m)
++struct _mft1_note_aligned { char c; struct mft m; };
++#define MFT1_NOTE_ALIGN offsetof(struct _mft1_note_aligned, m)
+ 
+ _Static_assert((offsetof(struct mft1_note, m) & (MFT1_NOTE_ALIGN - 1)) == 0,
+         "struct mft1_note.m is not aligned to a MFT1_NOTE_ALIGN boundary");
