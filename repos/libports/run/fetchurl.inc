@@ -115,7 +115,7 @@ install_config {
 </config>
 }
 
-build            { }
+#build            { }
 build_boot_image { }
 
 proc qemu_nic_model {} {
