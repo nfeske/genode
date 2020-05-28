@@ -18,7 +18,7 @@ consolidation, and architectural improvements.
 
 On the latter account, the Linux version gained an architectural revamp of its
 inter-component communication model, leveraging the combination of the
-seccommp and epoll kernel mechanisms to enable Genode's capability-based
+seccomp and epoll kernel mechanisms to enable Genode's capability-based
 security concept on this kernel. The new version applies strict sandboxing
 to each component individually. In particular, the host file system is
 shielded from Genode components and Genode's least-privilege access-control
