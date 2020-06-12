@@ -1,5 +1,5 @@
 /*
- * \brief  Nitpicker wrapper for monitoring the user input of GUI components
+ * \brief  GUI wrapper for monitoring the user input of GUI components
  * \author Norman Feske
  * \date   2018-04-30
  */
@@ -22,7 +22,7 @@
 /* local includes */
 #include "input_event_handler.h"
 
-namespace Nitpicker {
+namespace Gui {
 
 	using namespace Genode;
 	using Sculpt::Input_event_handler;
@@ -32,7 +32,7 @@ namespace Nitpicker {
 }
 
 
-struct Nitpicker::Root : Genode::Root_component<Session_component>
+struct Gui::Root : Genode::Root_component<Session_component>
 {
 	Env &_env;
 	Input_event_handler &_event_handler;

@@ -1,5 +1,5 @@
 /*
- * \brief  Nitpicker wrapper for monitoring the user input of GUI components
+ * \brief  GUI wrapper for monitoring the user input of GUI components
  * \author Norman Feske
  * \date   2018-04-30
  */
@@ -11,20 +11,20 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#include "nitpicker.h"
+#include "gui.h"
 
 /* Genode includes */
 #include <input/component.h>
 #include <gui_session/connection.h>
 #include <base/heap.h>
 
-struct Nitpicker::Session_component : Rpc_object<Nitpicker::Session>
+struct Gui::Session_component : Rpc_object<Gui::Session>
 {
 	Env &_env;
 
 	Input_event_handler &_event_handler;
 
-	Nitpicker::Connection _connection;
+	Gui::Connection _connection;
 
 	Input::Session_component _input_component { _env, _env.ram() };
 
@@ -101,30 +101,30 @@ struct Nitpicker::Session_component : Rpc_object<Nitpicker::Session>
 		_connection.Client::buffer(mode, use_alpha);
 	}
 
-	void focus(Capability<Nitpicker::Session> session) override {
+	void focus(Capability<Gui::Session> session) override {
 		_connection.focus(session); }
 };
 
 
-Nitpicker::Session_component *Nitpicker::Root::_create_session(const char *args)
+Gui::Session_component *Gui::Root::_create_session(const char *args)
 {
 	return new (md_alloc()) Session_component(_env, args, _event_handler);
 }
 
 
-void Nitpicker::Root::_upgrade_session(Session_component *session, const char *args)
+void Gui::Root::_upgrade_session(Session_component *session, const char *args)
 {
 	session->upgrade(session_resources_from_args(args));
 }
 
 
-void Nitpicker::Root::_destroy_session(Session_component *session)
+void Gui::Root::_destroy_session(Session_component *session)
 {
 	Genode::destroy(md_alloc(), session);
 }
 
 
-Nitpicker::Root::Root(Env &env, Allocator &md_alloc, Input_event_handler &event_handler)
+Gui::Root::Root(Env &env, Allocator &md_alloc, Input_event_handler &event_handler)
 :
 	Root_component<Session_component>(env.ep(), md_alloc),
 	_env(env), _event_handler(event_handler)
@@ -133,5 +133,5 @@ Nitpicker::Root::Root(Env &env, Allocator &md_alloc, Input_event_handler &event_
 }
 
 
-Nitpicker::Root::~Root() { _env.ep().dissolve(*this); }
+Gui::Root::~Root() { _env.ep().dissolve(*this); }
 

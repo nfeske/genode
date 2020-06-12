@@ -1,5 +1,5 @@
 /*
- * \brief  Nitpicker wrapper for monitoring the user input of GUI components
+ * \brief  GUI wrapper for monitoring the user input of GUI components
  * \author Norman Feske
  * \date   2020-01-12
  */
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _NITPICKER_H_
-#define _NITPICKER_H_
+#ifndef _GUI_H_
+#define _GUI_H_
 
 /* Genode includes */
 #include <input/component.h>
@@ -22,7 +22,7 @@
 /* local includes */
 #include <input_event_handler.h>
 
-namespace Nitpicker {
+namespace Gui {
 
 	using namespace Genode;
 
@@ -30,13 +30,13 @@ namespace Nitpicker {
 }
 
 
-struct Nitpicker::Session_component : Session_object<Nitpicker::Session>
+struct Gui::Session_component : Session_object<Gui::Session>
 {
 	Env &_env;
 
 	Input_event_handler &_event_handler;
 
-	Nitpicker::Connection _connection;
+	Gui::Connection _connection;
 
 	Input::Session_component _input_component { _env, _env.ram() };
 
@@ -115,8 +115,8 @@ struct Nitpicker::Session_component : Session_object<Nitpicker::Session>
 		_connection.Client::buffer(mode, use_alpha);
 	}
 
-	void focus(Capability<Nitpicker::Session> session) override {
+	void focus(Capability<Gui::Session> session) override {
 		_connection.focus(session); }
 };
 
-#endif /* _NITPICKER_H_ */
+#endif /* _GUI_H_ */
