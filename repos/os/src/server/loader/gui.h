@@ -1,5 +1,5 @@
 /*
- * \brief  Virtualized nitpicker session interface exposed to the subsystem
+ * \brief  Virtualized GUI session interface exposed to the subsystem
  * \author Christian Prochaska
  * \author Norman Feske
  * \date   2009-10-05
@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _NITPICKER_H_
-#define _NITPICKER_H_
+#ifndef _GUI_H_
+#define _GUI_H_
 
 /* Genode includes */
 #include <util/arg_string.h>
@@ -25,13 +25,13 @@
 /* local includes */
 #include <input.h>
 
-namespace Nitpicker {
+namespace Gui {
 	using namespace Genode;
 	class Session_component;
 }
 
 
-class Nitpicker::Session_component : public Rpc_object<Session>
+class Gui::Session_component : public Rpc_object<Session>
 {
 	private:
 
@@ -45,7 +45,7 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 
 		Area _max_size;
 
-		Nitpicker::Connection _nitpicker;
+		Gui::Connection _gui;
 
 		View_handle _parent_view_handle;
 
@@ -73,14 +73,14 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 		/*
 		 * Command buffer
 		 */
-		typedef Nitpicker::Session::Command_buffer Command_buffer;
+		typedef Gui::Session::Command_buffer Command_buffer;
 		Attached_ram_dataspace _command_ds;
 		Command_buffer &_command_buffer = *_command_ds.local_addr<Command_buffer>();
 
 		void _propagate_view_offset()
 		{
-			_nitpicker.enqueue<Command::Offset>(_view_handle,
-			                                    _view_offset + _virt_view_offset);
+			_gui.enqueue<Command::Offset>(_view_handle,
+			                              _view_offset + _virt_view_offset);
 		}
 
 		void _update_motion_delta()
@@ -109,14 +109,14 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 				{
 					_virt_view_offset = command.offset.offset;
 					_propagate_view_offset();
-					_nitpicker.execute();
+					_gui.execute();
 					return;
 				}
 
 			case Command::OP_TO_FRONT:
 				{
-					_nitpicker.enqueue<Command::To_front>(_view_handle, _parent_view_handle);
-					_nitpicker.execute();
+					_gui.enqueue<Command::To_front>(_view_handle, _parent_view_handle);
+					_gui.execute();
 					return;
 				}
 
@@ -134,8 +134,8 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 
 			case Command::OP_TITLE:
 				{
-					_nitpicker.enqueue(command);
-					_nitpicker.execute();
+					_gui.enqueue(command);
+					_gui.execute();
 					return;
 				}
 
@@ -154,22 +154,22 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 		                  Region_map                &rm,
 		                  Ram_allocator             &ram,
 		                  Area                       max_size,
-		                  Nitpicker::View_capability parent_view,
+		                  Gui::View_capability       parent_view,
 		                  Signal_context_capability  view_ready_sigh,
 		                  char const                * /* args */)
 		:
 			_view_ready_sigh(view_ready_sigh),
 			_ep(ep),
 			_max_size(max_size),
-			_nitpicker(env),
+			_gui(env),
 
 			/* import parent view */
-			_parent_view_handle(_nitpicker.view_handle(parent_view)),
+			_parent_view_handle(_gui.view_handle(parent_view)),
 
-			/* create nitpicker view */
-			_view_handle(_nitpicker.create_view(_parent_view_handle)),
+			/* create GUI view */
+			_view_handle(_gui.create_view(_parent_view_handle)),
 
-			_proxy_input(rm, _nitpicker.input_session(), _motion_delta),
+			_proxy_input(rm, _gui.input_session(), _motion_delta),
 
 			_command_ds(ram, env.rm(), sizeof(Command_buffer))
 		{
@@ -184,13 +184,13 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 		}
 
 
-		/*********************************
-		 ** Nitpicker session interface **
-		 *********************************/
+		/***************************
+		 ** GUI session interface **
+		 ***************************/
 
 		Framebuffer::Session_capability framebuffer_session() override
 		{
-			return _nitpicker.framebuffer_session();
+			return _gui.framebuffer_session();
 		}
 
 		Input::Session_capability input_session() override
@@ -232,21 +232,21 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 		{
 			int mode_width = _max_size.valid() ?
 			                 _max_size.w() :
-			                 _nitpicker.mode().width();
+			                 _gui.mode().width();
 
 			int mode_height = _max_size.valid() ?
 			                  _max_size.h() :
-			                  _nitpicker.mode().height();
+			                  _gui.mode().height();
 
 			return Framebuffer::Mode(mode_width, mode_height,
-			                         _nitpicker.mode().format());
+			                         _gui.mode().format());
 		}
 
 		void mode_sigh(Signal_context_capability) override { }
 
 		void buffer(Framebuffer::Mode mode, bool use_alpha) override
 		{
-			_nitpicker.buffer(mode, use_alpha);
+			_gui.buffer(mode, use_alpha);
 		}
 
 		void focus(Capability<Session>) override { }
@@ -272,18 +272,18 @@ class Nitpicker::Session_component : public Rpc_object<Session>
 		 */
 		void loader_view_geometry(Rect rect, Point offset)
 		{
-			typedef Nitpicker::Session::Command Command;
+			typedef Gui::Session::Command Command;
 
 			_view_geometry = rect;
 			_view_offset   = offset;
 
 			_propagate_view_offset();
-			_nitpicker.enqueue<Command::Geometry>(_view_handle, _view_geometry);
-			_nitpicker.enqueue<Command::To_front>(_view_handle, _parent_view_handle);
-			_nitpicker.execute();
+			_gui.enqueue<Command::Geometry>(_view_handle, _view_geometry);
+			_gui.enqueue<Command::To_front>(_view_handle, _parent_view_handle);
+			_gui.execute();
 
 			_update_motion_delta();
 		}
 };
 
-#endif /* _NITPICKER_H_ */
+#endif /* _GUI_H_ */

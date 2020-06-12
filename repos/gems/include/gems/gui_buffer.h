@@ -1,5 +1,5 @@
 /*
- * \brief  Utility for the buffered pixel output via nitpicker
+ * \brief  Utility for the buffered pixel output via the GUI server interface
  * \author Norman Feske
  * \date   2014-08-22
  */
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__GEMS__NITPICKER_BUFFER_H_
-#define _INCLUDE__GEMS__NITPICKER_BUFFER_H_
+#ifndef _INCLUDE__GEMS__GUI_BUFFER_H_
+#define _INCLUDE__GEMS__GUI_BUFFER_H_
 
 /* Genode includes */
 #include <base/ram_allocator.h>
@@ -28,7 +28,7 @@
 #include <gems/dither_painter.h>
 
 
-struct Nitpicker_buffer
+struct Gui_buffer
 {
 	typedef Genode::Pixel_rgb888 Pixel_rgb888;
 	typedef Genode::Pixel_rgb565 Pixel_rgb565;
@@ -46,27 +46,27 @@ struct Nitpicker_buffer
 	Genode::Ram_allocator &ram;
 	Genode::Region_map    &rm;
 
-	Nitpicker::Connection &nitpicker;
+	Gui::Connection &gui;
 
 	Framebuffer::Mode const mode;
 
 	/**
 	 * Return dataspace capability for virtual framebuffer
 	 */
-	Genode::Dataspace_capability _ds_cap(Nitpicker::Connection &nitpicker)
+	Genode::Dataspace_capability _ds_cap(Gui::Connection &gui)
 	{
 		/* setup virtual framebuffer mode */
-		nitpicker.buffer(mode, true);
+		gui.buffer(mode, true);
 
 		if (mode.format() != Framebuffer::Mode::RGB565) {
 			Genode::warning("color mode ", mode, " not supported");
 			return Genode::Dataspace_capability();
 		}
 
-		return nitpicker.framebuffer()->dataspace();
+		return gui.framebuffer()->dataspace();
 	}
 
-	Genode::Attached_dataspace fb_ds { rm, _ds_cap(nitpicker) };
+	Genode::Attached_dataspace fb_ds { rm, _ds_cap(gui) };
 
 	Genode::size_t pixel_surface_num_bytes() const
 	{
@@ -84,12 +84,12 @@ struct Nitpicker_buffer
 	/**
 	 * Constructor
 	 */
-	Nitpicker_buffer(Nitpicker::Connection &nitpicker, Area size,
-	                 Genode::Ram_allocator &ram, Genode::Region_map &rm)
+	Gui_buffer(Gui::Connection &gui, Area size,
+	           Genode::Ram_allocator &ram, Genode::Region_map &rm)
 	:
-		ram(ram), rm(rm), nitpicker(nitpicker),
+		ram(ram), rm(rm), gui(gui),
 		mode(Genode::max(1UL, size.w()), Genode::max(1UL, size.h()),
-		     nitpicker.mode().format())
+		     gui.mode().format())
 	{
 		reset_surface();
 	}
@@ -186,4 +186,4 @@ struct Nitpicker_buffer
 	}
 };
 
-#endif /* _INCLUDE__GEMS__NITPICKER_BUFFER_H_ */
+#endif /* _INCLUDE__GEMS__GUI_BUFFER_H_ */

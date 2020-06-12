@@ -1,5 +1,5 @@
 /*
- * \brief   Nitpicker-based graphics backend for scout
+ * \brief   Graphics backend based on the GUI session interface
  * \date    2013-12-30
  * \author  Norman Feske
  */
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__SCOUT__NITPICKER_GRAPHICS_BACKEND_H_
-#define _INCLUDE__SCOUT__NITPICKER_GRAPHICS_BACKEND_H_
+#ifndef _INCLUDE__SCOUT__GRAPHICS_BACKEND_IMPL_H_
+#define _INCLUDE__SCOUT__GRAPHICS_BACKEND_IMPL_H_
 
 /* Genode includes */
 #include <gui_session/connection.h>
@@ -25,61 +25,61 @@
 
 namespace Scout {
 	using Genode::Pixel_rgb565;
-	class Nitpicker_graphics_backend;
+	class Graphics_backend_impl;
 }
 
 
-class Scout::Nitpicker_graphics_backend : public Graphics_backend
+class Scout::Graphics_backend_impl : public Graphics_backend
 {
 	private:
 
 		/*
 		 * Noncopyable
 		 */
-		Nitpicker_graphics_backend(Nitpicker_graphics_backend const &);
-		Nitpicker_graphics_backend &operator = (Nitpicker_graphics_backend const &);
+		Graphics_backend_impl(Graphics_backend_impl const &);
+		Graphics_backend_impl &operator = (Graphics_backend_impl const &);
 
 		Genode::Region_map &_local_rm;
 
-		Nitpicker::Connection &_nitpicker;
+		Gui::Connection &_gui;
 
 		Genode::Dataspace_capability _init_fb_ds(Area max_size)
 		{
-			_nitpicker.buffer(Framebuffer::Mode(max_size.w(), max_size.h()*2,
-			                                    Framebuffer::Mode::RGB565), false);
-			return _nitpicker.framebuffer()->dataspace();
+			_gui.buffer(Framebuffer::Mode(max_size.w(), max_size.h()*2,
+			                              Framebuffer::Mode::RGB565), false);
+			return _gui.framebuffer()->dataspace();
 		}
 
 		Area _max_size;
 
 		Genode::Attached_dataspace _fb_ds { _local_rm, _init_fb_ds(_max_size) };
 
-		typedef Nitpicker::Session::View_handle View_handle;
+		typedef Gui::Session::View_handle View_handle;
 
 		Point        _position;
 		Area         _view_size;
-		View_handle  _view { _nitpicker.create_view() };
+		View_handle  _view { _gui.create_view() };
 		Canvas_base *_canvas[2];
 		bool         _flip_state = { false };
 
 		void _update_viewport()
 		{
-			typedef Nitpicker::Session::Command Command;
+			typedef Gui::Session::Command Command;
 
-			Nitpicker::Rect rect(_position, _view_size);
-			_nitpicker.enqueue<Command::Geometry>(_view, rect);
+			Gui::Rect rect(_position, _view_size);
+			_gui.enqueue<Command::Geometry>(_view, rect);
 
-			Nitpicker::Point offset(0, _flip_state ? -_max_size.h() : 0);
-			_nitpicker.enqueue<Command::Offset>(_view, offset);
+			Gui::Point offset(0, _flip_state ? -_max_size.h() : 0);
+			_gui.enqueue<Command::Offset>(_view, offset);
 
-			_nitpicker.execute();
+			_gui.execute();
 		}
 
 		void _refresh_view(Rect rect)
 		{
 			int const y_offset = _flip_state ? _max_size.h() : 0;
-			_nitpicker.framebuffer()->refresh(rect.x1(), rect.y1() + y_offset,
-			                                  rect.w(), rect.h());
+			_gui.framebuffer()->refresh(rect.x1(), rect.y1() + y_offset,
+			                            rect.w(), rect.h());
 		}
 
 		template <typename PT>
@@ -98,13 +98,13 @@ class Scout::Nitpicker_graphics_backend : public Graphics_backend
 		 *
 		 * \param alloc  allocator used for allocating textures
 		 */
-		Nitpicker_graphics_backend(Genode::Region_map &local_rm,
-		                           Nitpicker::Connection &nitpicker,
-		                           Genode::Allocator &alloc,
-		                           Area max_size, Point position, Area view_size)
+		Graphics_backend_impl(Genode::Region_map &local_rm,
+		                      Gui::Connection &gui,
+		                      Genode::Allocator &alloc,
+		                      Area max_size, Point position, Area view_size)
 		:
 			_local_rm(local_rm),
-			_nitpicker(nitpicker),
+			_gui(gui),
 			_max_size(max_size),
 			_position(position),
 			_view_size(view_size)
@@ -160,10 +160,10 @@ class Scout::Nitpicker_graphics_backend : public Graphics_backend
 
 		void bring_to_front() override
 		{
-			typedef Nitpicker::Session::Command     Command;
-			typedef Nitpicker::Session::View_handle View_handle;
-			_nitpicker.enqueue<Command::To_front>(_view, View_handle());
-			_nitpicker.execute();
+			typedef Gui::Session::Command     Command;
+			typedef Gui::Session::View_handle View_handle;
+			_gui.enqueue<Command::To_front>(_view, View_handle());
+			_gui.execute();
 		}
 
 		void view_area(Area area) override
@@ -172,4 +172,4 @@ class Scout::Nitpicker_graphics_backend : public Graphics_backend
 		}
 };
 
-#endif /* _INCLUDE__SCOUT__NITPICKER_GRAPHICS_BACKEND_H_ */
+#endif /* _INCLUDE__SCOUT__GRAPHICS_BACKEND_IMPL_H_ */
