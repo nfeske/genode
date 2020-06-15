@@ -1,5 +1,5 @@
 /*
- * \brief  A Qt Widget that shows a nitpicker view
+ * \brief  A Qt Widget that shows a Genode GUI view
  * \author Christian Prochaska
  * \date   2010-08-26
  */
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef QNITPICKERVIEWWIDGET_H
-#define QNITPICKERVIEWWIDGET_H
+#ifndef QGENODEVIEWWIDGET_H
+#define QGENODEVIEWWIDGET_H
 
 #include <QtWidgets>
 #if 0
@@ -63,14 +63,14 @@ protected:
 };
 
 
-class QNitpickerViewWidget : public QEmbeddedViewWidget
+class QGenodeViewWidget : public QEmbeddedViewWidget
 {
 	Q_OBJECT
 
 protected:
 
-	Nitpicker::Session_client      *nitpicker;
-	Nitpicker::Session::View_handle view_handle;
+	Gui::Session_client      *gui;
+	Gui::Session::View_handle view_handle;
 
 	virtual void showEvent(QShowEvent *event);
 	virtual void hideEvent(QHideEvent *event);
@@ -79,11 +79,11 @@ protected:
 
 public:
 
-	QNitpickerViewWidget(QWidget *parent =0);
-	~QNitpickerViewWidget();
-	void setNitpickerView(Nitpicker::Session_client *nitpicker,
-	                      Nitpicker::Session::View_handle view_handle,
-	                      int buf_x, int buf_y, int w, int h);
+	QGenodeViewWidget(QWidget *parent =0);
+	~QGenodeViewWidget();
+	void setGenodeView(Gui::Session_client *gui,
+	                   Gui::Session::View_handle view_handle,
+	                   int buf_x, int buf_y, int w, int h);
 };
 
-#endif // QNITPICKERVIEWWIDGET_H
+#endif // QGENODEVIEWWIDGET_H

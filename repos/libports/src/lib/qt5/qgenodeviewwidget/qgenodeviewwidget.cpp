@@ -1,5 +1,5 @@
 /*
- * \brief  A Qt Widget that shows a nitpicker view
+ * \brief  A Qt Widget that shows a Genode GUI view
  * \author Christian Prochaska
  * \date   2010-08-26
  */
@@ -10,8 +10,8 @@
 
 #include <QtGui>
 
-#include <qnitpickerplatformwindow.h>
-#include <qnitpickerviewwidget/qnitpickerviewwidget.h>
+#include <qgenodeplatformwindow.h>
+#include <qgenodeviewwidget/qgenodeviewwidget.h>
 
 
 /*************************
@@ -121,116 +121,113 @@ void QEmbeddedViewWidget::destroyed(QObject *obj)
 
 
 /**************************
- ** QNitpickerViewWidget **
+ ** QGenodeViewWidget **
  **************************/
 
-QNitpickerViewWidget::QNitpickerViewWidget(QWidget *parent)
+QGenodeViewWidget::QGenodeViewWidget(QWidget *parent)
 :
-	QEmbeddedViewWidget(parent), nitpicker(0)
+	QEmbeddedViewWidget(parent), gui(0)
 { }
 
 
-void QNitpickerViewWidget::setNitpickerView(Nitpicker::Session_client *new_nitpicker,
-                                            Nitpicker::Session::View_handle new_view_handle,
-                                            int buf_x, int buf_y, int w, int h)
+void QGenodeViewWidget::setGenodeView(Gui::Session_client *new_gui,
+                                      Gui::Session::View_handle new_view_handle,
+                                      int buf_x, int buf_y, int w, int h)
 {
 	QEmbeddedViewWidget::_orig_geometry(w, h, buf_x, buf_y);
 
-	nitpicker = new_nitpicker;
+	gui = new_gui;
 	view_handle = new_view_handle;
 	setFixedSize(w, h);
 }
 
 
-QNitpickerViewWidget::~QNitpickerViewWidget() { }
+QGenodeViewWidget::~QGenodeViewWidget() { }
 
 
-void QNitpickerViewWidget::showEvent(QShowEvent *event)
+void QGenodeViewWidget::showEvent(QShowEvent *event)
 {
 	QWidget::showEvent(event);
 }
 
 
-void QNitpickerViewWidget::hideEvent(QHideEvent *event)
+void QGenodeViewWidget::hideEvent(QHideEvent *event)
 {
 	QWidget::hideEvent(event);
 
-	if (nitpicker) {
+	if (gui) {
 
 		QEmbeddedViewWidget::View_geometry const view_geometry =
 			QEmbeddedViewWidget::_calc_view_geometry();
 
-		typedef Nitpicker::Session::Command Command;
+		typedef Gui::Session::Command Command;
 
-		Nitpicker::Rect const geometry(Nitpicker::Point(mapToGlobal(pos()).x(),
-		                                                mapToGlobal(pos()).y()),
-		                               Nitpicker::Area(0, 0));
-		nitpicker->enqueue<Command::Geometry>(view_handle, geometry);
+		Gui::Rect const geometry(Gui::Point(mapToGlobal(pos()).x(),
+		                                    mapToGlobal(pos()).y()),
+		                         Gui::Area(0, 0));
+		gui->enqueue<Command::Geometry>(view_handle, geometry);
 
-		Nitpicker::Point const offset(view_geometry.buf_x, view_geometry.buf_y);
-		nitpicker->enqueue<Command::Offset>(view_handle, offset);
+		Gui::Point const offset(view_geometry.buf_x, view_geometry.buf_y);
+		gui->enqueue<Command::Offset>(view_handle, offset);
 
-		nitpicker->execute();
+		gui->execute();
 	}
 }
 
 
-void QNitpickerViewWidget::paintEvent(QPaintEvent *event)
+void QGenodeViewWidget::paintEvent(QPaintEvent *event)
 {
 	QWidget::paintEvent(event);
 
-	if (!nitpicker)
+	if (!gui)
 		return;
 
 	QEmbeddedViewWidget::View_geometry const view_geometry =
 		QEmbeddedViewWidget::_calc_view_geometry();
 
-	typedef Nitpicker::Session::Command Command;
+	typedef Gui::Session::Command Command;
 
 	/* argument to mapToGlobal() is relative to the Widget's origin
 	 * the plugin view starts at (0, 0)
 	 */
 	if (mask().isEmpty()) {
 
-		Nitpicker::Rect const geometry(Nitpicker::Point(view_geometry.x,
-		                                                view_geometry.y),
-		                               Nitpicker::Area(view_geometry.w,
-		                                               view_geometry.h));
-		nitpicker->enqueue<Command::Geometry>(view_handle, geometry);
-		Nitpicker::Point const offset(view_geometry.buf_x,
-		                              view_geometry.buf_y);
-		nitpicker->enqueue<Command::Offset>(view_handle, offset);
+		Gui::Rect const geometry(Gui::Point(view_geometry.x, view_geometry.y),
+		                         Gui::Area(view_geometry.w, view_geometry.h));
+		gui->enqueue<Command::Geometry>(view_handle, geometry);
+		Gui::Point const offset(view_geometry.buf_x, view_geometry.buf_y);
+		gui->enqueue<Command::Offset>(view_handle, offset);
 	} else {
 
-		Nitpicker::Rect const
-			geometry(Nitpicker::Point(mapToGlobal(mask().boundingRect().topLeft()).x(),
-			                          mapToGlobal(mask().boundingRect().topLeft()).y()),
-			         Nitpicker::Area(mask().boundingRect().width(),
-			                         mask().boundingRect().height()));
-		nitpicker->enqueue<Command::Geometry>(view_handle, geometry);
+		Gui::Rect const
+			geometry(Gui::Point(mapToGlobal(mask().boundingRect().topLeft()).x(),
+			                    mapToGlobal(mask().boundingRect().topLeft()).y()),
+			         Gui::Area(mask().boundingRect().width(),
+			                   mask().boundingRect().height()));
+		gui->enqueue<Command::Geometry>(view_handle, geometry);
 
-		Nitpicker::Point const offset(view_geometry.buf_x, view_geometry.buf_y);
-		nitpicker->enqueue<Command::Offset>(view_handle, offset);
+		Gui::Point const offset(view_geometry.buf_x, view_geometry.buf_y);
+		gui->enqueue<Command::Offset>(view_handle, offset);
 	}
 
 	/* bring the plugin view to the front of the Qt window */
-	QNitpickerPlatformWindow *platform_window =
-		dynamic_cast<QNitpickerPlatformWindow*>(window()->windowHandle()->handle());
+	QGenodePlatformWindow *platform_window =
+		dynamic_cast<QGenodePlatformWindow*>(window()->windowHandle()->handle());
 
-	Nitpicker::Session::View_handle const neighbor_handle =
-		nitpicker->view_handle(platform_window->view_cap());
+	Gui::Session::View_handle const neighbor_handle =
+		gui->view_handle(platform_window->view_cap());
 
-	nitpicker->enqueue<Command::To_front>(view_handle, neighbor_handle);
-	nitpicker->execute();
+	gui->enqueue<Command::To_front>(view_handle, neighbor_handle);
+	gui->execute();
 
-	nitpicker->release_view_handle(neighbor_handle);
+	gui->release_view_handle(neighbor_handle);
 }
 
 
-void QNitpickerViewWidget::focusInEvent(QFocusEvent *)
+void QGenodeViewWidget::focusInEvent(QFocusEvent *)
 {
-	QNitpickerPlatformWindow *platform_window =
-		dynamic_cast<QNitpickerPlatformWindow*>(window()->windowHandle()->handle());
+	QGenodePlatformWindow *platform_window =
+		dynamic_cast<QGenodePlatformWindow*>(window()->windowHandle()->handle());
 
-	platform_window->nitpicker().focus(nitpicker->rpc_cap());
+	platform_window->gui_session().focus(gui->rpc_cap());
 }
