@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerPlatformWindow
+ * \brief  QGenodePlatformWindow
  * \author Christian Prochaska
  * \author Christian Helmuth
  * \date   2013-05-08
@@ -22,15 +22,15 @@
 #include <QGuiApplication>
 #include <QDebug>
 
-#include "qnitpickerplatformwindow.h"
+#include "qgenodeplatformwindow.h"
 
 QT_BEGIN_NAMESPACE
 
 static const bool qnpw_verbose = false/*true*/;
 
-QStringList QNitpickerPlatformWindow::_nitpicker_session_label_list;
+QStringList QGenodePlatformWindow::_gui_session_label_list;
 
-QTouchDevice * QNitpickerPlatformWindow::_init_touch_device()
+QTouchDevice * QGenodePlatformWindow::_init_touch_device()
 {
 	QVector<QWindowSystemInterface::TouchPoint>::iterator i = _touch_points.begin();
 	for (unsigned n = 0; i != _touch_points.end(); ++i, ++n) {
@@ -49,7 +49,7 @@ QTouchDevice * QNitpickerPlatformWindow::_init_touch_device()
 	return dev;
 }
 
-void QNitpickerPlatformWindow::_process_touch_events(QList<Input::Event> const &events)
+void QGenodePlatformWindow::_process_touch_events(QList<Input::Event> const &events)
 {
 	if (events.empty()) return;
 
@@ -150,9 +150,9 @@ static Qt::Key key_from_unicode(unsigned unicode)
 }
 
 
-QNitpickerPlatformWindow::Mapped_key QNitpickerPlatformWindow::_map_key(Input::Keycode    key,
-                                                                        Codepoint         codepoint,
-                                                                        Mapped_key::Event e)
+QGenodePlatformWindow::Mapped_key QGenodePlatformWindow::_map_key(Input::Keycode    key,
+                                                                  Codepoint         codepoint,
+                                                                  Mapped_key::Event e)
 {
 	/* non-printable key mappings */
 	switch (key) {
@@ -257,8 +257,8 @@ QNitpickerPlatformWindow::Mapped_key QNitpickerPlatformWindow::_map_key(Input::K
 }
 
 
-void QNitpickerPlatformWindow::_key_event(Input::Keycode key, Codepoint codepoint,
-                                          Mapped_key::Event e)
+void QGenodePlatformWindow::_key_event(Input::Keycode key, Codepoint codepoint,
+                                       Mapped_key::Event e)
 {
 	bool const pressed = e != Mapped_key::RELEASED;
 
@@ -292,7 +292,7 @@ void QNitpickerPlatformWindow::_key_event(Input::Keycode key, Codepoint codepoin
 }
 
 
-void QNitpickerPlatformWindow::_mouse_button_event(Input::Keycode button, bool press)
+void QGenodePlatformWindow::_mouse_button_event(Input::Keycode button, bool press)
 {
 	Qt::MouseButton current_mouse_button = Qt::NoButton;
 
@@ -324,7 +324,7 @@ void QNitpickerPlatformWindow::_mouse_button_event(Input::Keycode button, bool p
 }
 
 
-void QNitpickerPlatformWindow::_handle_input()
+void QGenodePlatformWindow::_handle_input()
 {
 	QList<Input::Event> touch_events;
 
@@ -377,9 +377,9 @@ void QNitpickerPlatformWindow::_handle_input()
 }
 
 
-void QNitpickerPlatformWindow::_handle_mode_changed()
+void QGenodePlatformWindow::_handle_mode_changed()
 {
-	Framebuffer::Mode mode(_nitpicker_session.mode());
+	Framebuffer::Mode mode(_gui_session.mode());
 
 	if ((mode.width() == 0) && (mode.height() == 0)) {
 		/* interpret a size of 0x0 as indication to close the window */
@@ -403,13 +403,13 @@ void QNitpickerPlatformWindow::_handle_mode_changed()
 }
 
 
-Nitpicker::Session::View_handle QNitpickerPlatformWindow::_create_view()
+Gui::Session::View_handle QGenodePlatformWindow::_create_view()
 {
 	if (window()->type() == Qt::Desktop)
-		return Nitpicker::Session::View_handle();
+		return Gui::Session::View_handle();
 
 	if (window()->type() == Qt::Dialog)
-		return _nitpicker_session.create_view();
+		return _gui_session.create_view();
 
 	/*
 	 * Popup menus should never get a window decoration, therefore we set a top
@@ -421,24 +421,24 @@ Nitpicker::Session::View_handle QNitpickerPlatformWindow::_create_view()
 	}
 
 	if (window()->transientParent()) {
-		QNitpickerPlatformWindow *parent_platform_window =
-			static_cast<QNitpickerPlatformWindow*>(window()->transientParent()->handle());
+		QGenodePlatformWindow *parent_platform_window =
+			static_cast<QGenodePlatformWindow*>(window()->transientParent()->handle());
 
-		Nitpicker::Session::View_handle parent_handle =
-			_nitpicker_session.view_handle(parent_platform_window->view_cap());
+		Gui::Session::View_handle parent_handle =
+			_gui_session.view_handle(parent_platform_window->view_cap());
 
-		Nitpicker::Session::View_handle result =
-			_nitpicker_session.create_view(parent_handle);
+		Gui::Session::View_handle result =
+			_gui_session.create_view(parent_handle);
 
-		_nitpicker_session.release_view_handle(parent_handle);
+		_gui_session.release_view_handle(parent_handle);
 
 		return result;
 	}
 
-	return _nitpicker_session.create_view();
+	return _gui_session.create_view();
 }
 
-void QNitpickerPlatformWindow::_adjust_and_set_geometry(const QRect &rect)
+void QGenodePlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 {
 	/* limit window size to screen size */
 	QRect adjusted_rect(rect.intersected(screen()->geometry()));
@@ -451,7 +451,7 @@ void QNitpickerPlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 
 	Framebuffer::Mode mode(adjusted_rect.width(), adjusted_rect.height(),
 	                       Framebuffer::Mode::RGB565);
-	_nitpicker_session.buffer(mode, false);
+	_gui_session.buffer(mode, false);
 
 	_current_mode = mode;
 
@@ -462,7 +462,7 @@ void QNitpickerPlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 }
 
 
-QString QNitpickerPlatformWindow::_sanitize_label(QString label)
+QString QGenodePlatformWindow::_sanitize_label(QString label)
 {
 	enum { MAX_LABEL = 25 };
 
@@ -479,10 +479,10 @@ QString QNitpickerPlatformWindow::_sanitize_label(QString label)
 	if (label.isEmpty())
 		label = QString("Untitled Window");
 
-	if (_nitpicker_session_label_list.contains(label))
+	if (_gui_session_label_list.contains(label))
 		for (unsigned int i = 2; ; i++) {
 			QString versioned_label = label + "." + QString::number(i);
-			if (!_nitpicker_session_label_list.contains(versioned_label)) {
+			if (!_gui_session_label_list.contains(versioned_label)) {
 				label = versioned_label;
 				break;
 			}
@@ -492,46 +492,46 @@ QString QNitpickerPlatformWindow::_sanitize_label(QString label)
 }
 
 
-QNitpickerPlatformWindow::QNitpickerPlatformWindow(Genode::Env &env, QWindow *window,
-                                                   int screen_width, int screen_height)
+QGenodePlatformWindow::QGenodePlatformWindow(Genode::Env &env, QWindow *window,
+                                             int screen_width, int screen_height)
 : QPlatformWindow(window),
   _env(env),
-  _nitpicker_session_label(_sanitize_label(window->title())),
-  _nitpicker_session(env, _nitpicker_session_label.toStdString().c_str()),
-  _framebuffer_session(_nitpicker_session.framebuffer_session()),
+  _gui_session_label(_sanitize_label(window->title())),
+  _gui_session(env, _gui_session_label.toStdString().c_str()),
+  _framebuffer_session(_gui_session.framebuffer_session()),
   _framebuffer(0),
   _framebuffer_changed(false),
   _geometry_changed(false),
   _view_handle(_create_view()),
-  _input_session(env.rm(), _nitpicker_session.input_session()),
+  _input_session(env.rm(), _gui_session.input_session()),
   _ev_buf(env.rm(), _input_session.dataspace()),
   _resize_handle(!window->flags().testFlag(Qt::Popup)),
   _decoration(!window->flags().testFlag(Qt::Popup)),
   _egl_surface(EGL_NO_SURFACE),
   _input_signal_handler(_env.ep(), *this,
-                        &QNitpickerPlatformWindow::_input),
+                        &QGenodePlatformWindow::_input),
   _mode_changed_signal_handler(_env.ep(), *this,
-                               &QNitpickerPlatformWindow::_mode_changed),
+                               &QGenodePlatformWindow::_mode_changed),
   _touch_device(_init_touch_device())
 {
 	if (qnpw_verbose)
 		if (window->transientParent())
-			qDebug() << "QNitpickerPlatformWindow(): child window of" << window->transientParent();
+			qDebug() << "QGenodePlatformWindow(): child window of" << window->transientParent();
 
-	_nitpicker_session_label_list.append(_nitpicker_session_label);
+	_gui_session_label_list.append(_gui_session_label);
 
 	_input_session.sigh(_input_signal_handler);
 
-	_nitpicker_session.mode_sigh(_mode_changed_signal_handler);
+	_gui_session.mode_sigh(_mode_changed_signal_handler);
 
 	_adjust_and_set_geometry(geometry());
 
 	if (_view_handle.valid()) {
 
 		/* bring the view to the top */
-		typedef Nitpicker::Session::Command Command;
-		_nitpicker_session.enqueue<Command::To_front>(_view_handle);
-		_nitpicker_session.execute();
+		typedef Gui::Session::Command Command;
+		_gui_session.enqueue<Command::To_front>(_view_handle);
+		_gui_session.execute();
 	}
 
 	connect(this, SIGNAL(_input()),
@@ -543,49 +543,49 @@ QNitpickerPlatformWindow::QNitpickerPlatformWindow(Genode::Env &env, QWindow *wi
 	        Qt::QueuedConnection);
 }
 
-QNitpickerPlatformWindow::~QNitpickerPlatformWindow()
+QGenodePlatformWindow::~QGenodePlatformWindow()
 {
-	_nitpicker_session_label_list.removeOne(_nitpicker_session_label);
+	_gui_session_label_list.removeOne(_gui_session_label);
 }
 
-QSurfaceFormat QNitpickerPlatformWindow::format() const
+QSurfaceFormat QGenodePlatformWindow::format() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::format()";
+	    qDebug() << "QGenodePlatformWindow::format()";
 	return QPlatformWindow::format();
 }
 
-void QNitpickerPlatformWindow::setGeometry(const QRect &rect)
+void QGenodePlatformWindow::setGeometry(const QRect &rect)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setGeometry(" << rect << ")";
+	    qDebug() << "QGenodePlatformWindow::setGeometry(" << rect << ")";
 
 	_adjust_and_set_geometry(rect);
 
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setGeometry() finished";
+	    qDebug() << "QGenodePlatformWindow::setGeometry() finished";
 }
 
-QRect QNitpickerPlatformWindow::geometry() const
+QRect QGenodePlatformWindow::geometry() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::geometry(): returning" << QPlatformWindow::geometry();
+	    qDebug() << "QGenodePlatformWindow::geometry(): returning" << QPlatformWindow::geometry();
 	return QPlatformWindow::geometry();
 }
 
-QMargins QNitpickerPlatformWindow::frameMargins() const
+QMargins QGenodePlatformWindow::frameMargins() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::frameMargins()";
+	    qDebug() << "QGenodePlatformWindow::frameMargins()";
 	return QPlatformWindow::frameMargins();
 }
 
-void QNitpickerPlatformWindow::setVisible(bool visible)
+void QGenodePlatformWindow::setVisible(bool visible)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setVisible(" << visible << ")";
+	    qDebug() << "QGenodePlatformWindow::setVisible(" << visible << ")";
 
-	typedef Nitpicker::Session::Command Command;
+	typedef Gui::Session::Command Command;
 
 	if (visible) {
 		QRect g(geometry());
@@ -595,40 +595,40 @@ void QNitpickerPlatformWindow::setVisible(bool visible)
 			g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 		}
 
-		_nitpicker_session.enqueue<Command::Geometry>(_view_handle,
-		     Nitpicker::Rect(Nitpicker::Point(g.x(), g.y()),
-		                     Nitpicker::Area(g.width(), g.height())));
+		_gui_session.enqueue<Command::Geometry>(_view_handle,
+			Gui::Rect(Gui::Point(g.x(), g.y()),
+			Gui::Area(g.width(), g.height())));
 	} else {
 
-		_nitpicker_session.enqueue<Command::Geometry>(_view_handle,
-		     Nitpicker::Rect(Nitpicker::Point(), Nitpicker::Area(0, 0)));
+		_gui_session.enqueue<Command::Geometry>(_view_handle,
+		     Gui::Rect(Gui::Point(), Gui::Area(0, 0)));
 	}
 
-	_nitpicker_session.execute();
+	_gui_session.execute();
 
 
 
 	QPlatformWindow::setVisible(visible);
 
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setVisible() finished";
+	    qDebug() << "QGenodePlatformWindow::setVisible() finished";
 }
 
-void QNitpickerPlatformWindow::setWindowFlags(Qt::WindowFlags flags)
+void QGenodePlatformWindow::setWindowFlags(Qt::WindowFlags flags)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowFlags(" << flags << ")";
+	    qDebug() << "QGenodePlatformWindow::setWindowFlags(" << flags << ")";
 
 	QPlatformWindow::setWindowFlags(flags);
 
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowFlags() finished";
+	    qDebug() << "QGenodePlatformWindow::setWindowFlags() finished";
 }
 
-void QNitpickerPlatformWindow::setWindowState(Qt::WindowStates state)
+void QGenodePlatformWindow::setWindowState(Qt::WindowStates state)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowState(" << state << ")";
+	    qDebug() << "QGenodePlatformWindow::setWindowState(" << state << ")";
 
 	QPlatformWindow::setWindowState(state);
 
@@ -639,206 +639,206 @@ void QNitpickerPlatformWindow::setWindowState(Qt::WindowStates state)
 	}
 }
 
-WId QNitpickerPlatformWindow::winId() const
+WId QGenodePlatformWindow::winId() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::winId()";
+	    qDebug() << "QGenodePlatformWindow::winId()";
 	return WId(this);
 }
 
-void QNitpickerPlatformWindow::setParent(const QPlatformWindow *window)
+void QGenodePlatformWindow::setParent(const QPlatformWindow *window)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setParent()";
+	    qDebug() << "QGenodePlatformWindow::setParent()";
 	QPlatformWindow::setParent(window);
 }
 
-void QNitpickerPlatformWindow::setWindowTitle(const QString &title)
+void QGenodePlatformWindow::setWindowTitle(const QString &title)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowTitle(" << title << ")";
+	    qDebug() << "QGenodePlatformWindow::setWindowTitle(" << title << ")";
 
 	QPlatformWindow::setWindowTitle(title);
 
 	_title = title.toLocal8Bit();
 
-	typedef Nitpicker::Session::Command Command;
+	typedef Gui::Session::Command Command;
 
 	if (_view_handle.valid()) {
-		_nitpicker_session.enqueue<Command::Title>(_view_handle, _title.constData());
-		_nitpicker_session.execute();
+		_gui_session.enqueue<Command::Title>(_view_handle, _title.constData());
+		_gui_session.execute();
 	}
 
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowTitle() finished";
+	    qDebug() << "QGenodePlatformWindow::setWindowTitle() finished";
 }
 
-void QNitpickerPlatformWindow::setWindowFilePath(const QString &title)
+void QGenodePlatformWindow::setWindowFilePath(const QString &title)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowFilePath(" << title << ")";
+	    qDebug() << "QGenodePlatformWindow::setWindowFilePath(" << title << ")";
 	QPlatformWindow::setWindowFilePath(title);
 }
 
-void QNitpickerPlatformWindow::setWindowIcon(const QIcon &icon)
+void QGenodePlatformWindow::setWindowIcon(const QIcon &icon)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowIcon()";
+	    qDebug() << "QGenodePlatformWindow::setWindowIcon()";
 	QPlatformWindow::setWindowIcon(icon);
 }
 
-void QNitpickerPlatformWindow::raise()
+void QGenodePlatformWindow::raise()
 {
 	/* bring the view to the top */
-	_nitpicker_session.enqueue<Nitpicker::Session::Command::To_front>(_view_handle);
-	_nitpicker_session.execute();
+	_gui_session.enqueue<Gui::Session::Command::To_front>(_view_handle);
+	_gui_session.execute();
 
 	QPlatformWindow::raise();
 }
 
-void QNitpickerPlatformWindow::lower()
+void QGenodePlatformWindow::lower()
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::lower()";
+	    qDebug() << "QGenodePlatformWindow::lower()";
 	QPlatformWindow::lower();
 }
 
-bool QNitpickerPlatformWindow::isExposed() const
+bool QGenodePlatformWindow::isExposed() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::isExposed()";
+	    qDebug() << "QGenodePlatformWindow::isExposed()";
 	return QPlatformWindow::isExposed();
 }
 
-bool QNitpickerPlatformWindow::isActive() const
+bool QGenodePlatformWindow::isActive() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::isActive()";
+	    qDebug() << "QGenodePlatformWindow::isActive()";
 	return QPlatformWindow::isActive();
 }
 
-bool QNitpickerPlatformWindow::isEmbedded() const
+bool QGenodePlatformWindow::isEmbedded() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::isEmbedded()";
+	    qDebug() << "QGenodePlatformWindow::isEmbedded()";
 	return QPlatformWindow::isEmbedded();
 }
 
-QPoint QNitpickerPlatformWindow::mapToGlobal(const QPoint &pos) const
+QPoint QGenodePlatformWindow::mapToGlobal(const QPoint &pos) const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::mapToGlobal(" << pos << ")";
+	    qDebug() << "QGenodePlatformWindow::mapToGlobal(" << pos << ")";
 	return QPlatformWindow::mapToGlobal(pos);
 }
 
-QPoint QNitpickerPlatformWindow::mapFromGlobal(const QPoint &pos) const
+QPoint QGenodePlatformWindow::mapFromGlobal(const QPoint &pos) const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::mapFromGlobal(" << pos << ")";
+	    qDebug() << "QGenodePlatformWindow::mapFromGlobal(" << pos << ")";
 	return QPlatformWindow::mapFromGlobal(pos);
 }
 
-void QNitpickerPlatformWindow::propagateSizeHints()
+void QGenodePlatformWindow::propagateSizeHints()
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::propagateSizeHints()";
+	    qDebug() << "QGenodePlatformWindow::propagateSizeHints()";
 	QPlatformWindow::propagateSizeHints();
 }
 
-void QNitpickerPlatformWindow::setOpacity(qreal level)
+void QGenodePlatformWindow::setOpacity(qreal level)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setOpacity(" << level << ")";
+	    qDebug() << "QGenodePlatformWindow::setOpacity(" << level << ")";
 	QPlatformWindow::setOpacity(level);
 }
 
-void QNitpickerPlatformWindow::setMask(const QRegion &region)
+void QGenodePlatformWindow::setMask(const QRegion &region)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setMask(" << region << ")";
+	    qDebug() << "QGenodePlatformWindow::setMask(" << region << ")";
 	QPlatformWindow::setMask(region);
 }
 
-void QNitpickerPlatformWindow::requestActivateWindow()
+void QGenodePlatformWindow::requestActivateWindow()
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::requestActivateWindow()";
+	    qDebug() << "QGenodePlatformWindow::requestActivateWindow()";
 	QPlatformWindow::requestActivateWindow();
 }
 
-void QNitpickerPlatformWindow::handleContentOrientationChange(Qt::ScreenOrientation orientation)
+void QGenodePlatformWindow::handleContentOrientationChange(Qt::ScreenOrientation orientation)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::handleContentOrientationChange()";
+	    qDebug() << "QGenodePlatformWindow::handleContentOrientationChange()";
 	QPlatformWindow::handleContentOrientationChange(orientation);
 }
 
-qreal QNitpickerPlatformWindow::devicePixelRatio() const
+qreal QGenodePlatformWindow::devicePixelRatio() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::devicePixelRatio()";
+	    qDebug() << "QGenodePlatformWindow::devicePixelRatio()";
 	return QPlatformWindow::devicePixelRatio();
 }
 
-bool QNitpickerPlatformWindow::setKeyboardGrabEnabled(bool grab)
+bool QGenodePlatformWindow::setKeyboardGrabEnabled(bool grab)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setKeyboardGrabEnabled()";
+	    qDebug() << "QGenodePlatformWindow::setKeyboardGrabEnabled()";
 	return QPlatformWindow::setKeyboardGrabEnabled(grab);
 }
 
-bool QNitpickerPlatformWindow::setMouseGrabEnabled(bool grab)
+bool QGenodePlatformWindow::setMouseGrabEnabled(bool grab)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setMouseGrabEnabled()";
+	    qDebug() << "QGenodePlatformWindow::setMouseGrabEnabled()";
 	return QPlatformWindow::setMouseGrabEnabled(grab);
 }
 
-bool QNitpickerPlatformWindow::setWindowModified(bool modified)
+bool QGenodePlatformWindow::setWindowModified(bool modified)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setWindowModified()";
+	    qDebug() << "QGenodePlatformWindow::setWindowModified()";
 	return QPlatformWindow::setWindowModified(modified);
 }
 
-bool QNitpickerPlatformWindow::windowEvent(QEvent *event)
+bool QGenodePlatformWindow::windowEvent(QEvent *event)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::windowEvent(" << event->type() << ")";
+	    qDebug() << "QGenodePlatformWindow::windowEvent(" << event->type() << ")";
 	return QPlatformWindow::windowEvent(event);
 }
 
-bool QNitpickerPlatformWindow::startSystemResize(const QPoint &pos, Qt::Corner corner)
+bool QGenodePlatformWindow::startSystemResize(const QPoint &pos, Qt::Corner corner)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::startSystemResize()";
+	    qDebug() << "QGenodePlatformWindow::startSystemResize()";
 	return QPlatformWindow::startSystemResize(pos, corner);
 }
 
-void QNitpickerPlatformWindow::setFrameStrutEventsEnabled(bool enabled)
+void QGenodePlatformWindow::setFrameStrutEventsEnabled(bool enabled)
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::setFrameStrutEventsEnabled()";
+	    qDebug() << "QGenodePlatformWindow::setFrameStrutEventsEnabled()";
 	QPlatformWindow::setFrameStrutEventsEnabled(enabled);
 }
 
-bool QNitpickerPlatformWindow::frameStrutEventsEnabled() const
+bool QGenodePlatformWindow::frameStrutEventsEnabled() const
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::frameStrutEventsEnabled()";
+	    qDebug() << "QGenodePlatformWindow::frameStrutEventsEnabled()";
 	return QPlatformWindow::frameStrutEventsEnabled();
 }
 
 /* functions used by the window surface */
 
-unsigned char *QNitpickerPlatformWindow::framebuffer()
+unsigned char *QGenodePlatformWindow::framebuffer()
 {
 	if (qnpw_verbose)
-	    qDebug() << "QNitpickerPlatformWindow::framebuffer()" << _framebuffer;
+	    qDebug() << "QGenodePlatformWindow::framebuffer()" << _framebuffer;
 
 	/*
 	 * The new framebuffer is acquired in this function to avoid a time span when
-	 * the nitpicker buffer would be black and not refilled yet by Qt.
+	 * the GUI buffer would be black and not refilled yet by Qt.
 	 */
 
 	if (_framebuffer_changed) {
@@ -854,10 +854,10 @@ unsigned char *QNitpickerPlatformWindow::framebuffer()
 	return _framebuffer;
 }
 
-void QNitpickerPlatformWindow::refresh(int x, int y, int w, int h)
+void QGenodePlatformWindow::refresh(int x, int y, int w, int h)
 {
 	if (qnpw_verbose)
-	    qDebug("QNitpickerPlatformWindow::refresh(%d, %d, %d, %d)", x, y, w, h);
+	    qDebug("QGenodePlatformWindow::refresh(%d, %d, %d, %d)", x, y, w, h);
 
 	if (_geometry_changed) {
 
@@ -871,36 +871,36 @@ void QNitpickerPlatformWindow::refresh(int x, int y, int w, int h)
 				g.moveTo(window()->transientParent()->mapFromGlobal(g.topLeft()));
 			}
 
-			typedef Nitpicker::Session::Command Command;
-			_nitpicker_session.enqueue<Command::Geometry>(_view_handle,
-		             	 Nitpicker::Rect(Nitpicker::Point(g.x(), g.y()),
-		                             	 Nitpicker::Area(g.width(), g.height())));
-			_nitpicker_session.execute();
+			typedef Gui::Session::Command Command;
+			_gui_session.enqueue<Command::Geometry>(_view_handle,
+		             	 Gui::Rect(Gui::Point(g.x(), g.y()),
+		                             	 Gui::Area(g.width(), g.height())));
+			_gui_session.execute();
 		}
 	}
 
 	_framebuffer_session.refresh(x, y, w, h);
 }
 
-EGLSurface QNitpickerPlatformWindow::egl_surface() const
+EGLSurface QGenodePlatformWindow::egl_surface() const
 {
 	return _egl_surface;
 }
 
-void QNitpickerPlatformWindow::egl_surface(EGLSurface egl_surface)
+void QGenodePlatformWindow::egl_surface(EGLSurface egl_surface)
 {
 	_egl_surface = egl_surface;
 }
 
-Nitpicker::Session_client &QNitpickerPlatformWindow::nitpicker()
+Gui::Session_client &QGenodePlatformWindow::gui_session()
 {
-	return _nitpicker_session;
+	return _gui_session;
 }
 
-Nitpicker::View_capability QNitpickerPlatformWindow::view_cap() const
+Gui::View_capability QGenodePlatformWindow::view_cap() const
 {
-	QNitpickerPlatformWindow *npw = const_cast<QNitpickerPlatformWindow *>(this);
-	return npw->_nitpicker_session.view_capability(_view_handle);
+	QGenodePlatformWindow *npw = const_cast<QGenodePlatformWindow *>(this);
+	return npw->_gui_session.view_capability(_view_handle);
 }
 
 QT_END_NAMESPACE

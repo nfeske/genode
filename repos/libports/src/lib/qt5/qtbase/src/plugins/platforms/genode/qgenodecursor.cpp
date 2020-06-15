@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerCursor
+ * \brief  QGenodeCursor
  * \author Christian Prochaska
  * \date   2017-11-13
  */
@@ -17,11 +17,11 @@
 
 /* Qt includes */
 #include <QtGui/QBitmap>
-#include "qnitpickercursor.h"
+#include "qgenodecursor.h"
 
 QT_BEGIN_NAMESPACE
 
-QNitpickerCursor::QNitpickerCursor(Genode::Env &env)
+QGenodeCursor::QGenodeCursor(Genode::Env &env)
 {
 	try {
 		_shape_report_connection.construct(env, "shape", sizeof(Pointer::Shape_report));
@@ -30,7 +30,7 @@ QNitpickerCursor::QNitpickerCursor(Genode::Env &env)
 	} catch (Genode::Service_denied) { }
 }
 
-void QNitpickerCursor::changeCursor(QCursor *widgetCursor, QWindow *window)
+void QGenodeCursor::changeCursor(QCursor *widgetCursor, QWindow *window)
 {
 	Q_UNUSED(window);
 

@@ -1,5 +1,5 @@
 /*
- * \brief  Pass-through nitpicker service announced to the outside world
+ * \brief  Pass-through GUI service announced to the outside world
  * \author Norman Feske
  * \date   2015-09-29
  */
@@ -11,29 +11,29 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _DIRECT_NITPICKER_H_
-#define _DIRECT_NITPICKER_H_
+#ifndef _DIRECT_GUI_H_
+#define _DIRECT_GUI_H_
 
 /* Genode includes */
 #include <os/session_policy.h>
 #include <gui_session/connection.h>
 
-namespace Wm { class Direct_nitpicker_session; }
+namespace Wm { class Direct_gui_session; }
 
 
-class Wm::Direct_nitpicker_session : public Genode::Rpc_object<Nitpicker::Session>
+class Wm::Direct_gui_session : public Genode::Rpc_object<Gui::Session>
 {
 	private:
 
 		Genode::Session_label _session_label;
-		Nitpicker::Connection _session;
+		Gui::Connection       _session;
 
 	public:
 
 		/**
 		 * Constructor
 		 */
-		Direct_nitpicker_session(Genode::Env &env, Genode::Session_label const &session_label)
+		Direct_gui_session(Genode::Env &env, Genode::Session_label const &session_label)
 		:
 			_session_label(session_label),
 			_session(env, _session_label.string())
@@ -46,9 +46,9 @@ class Wm::Direct_nitpicker_session : public Genode::Rpc_object<Nitpicker::Sessio
 		}
 
 
-		/*********************************
-		 ** Nitpicker session interface **
-		 *********************************/
+		/***************************
+		 ** GUI session interface **
+		 ***************************/
 		
 		Framebuffer::Session_capability framebuffer_session() override
 		{
@@ -70,12 +70,12 @@ class Wm::Direct_nitpicker_session : public Genode::Rpc_object<Nitpicker::Sessio
 			_session.destroy_view(view);
 		}
 
-		View_handle view_handle(Nitpicker::View_capability view_cap, View_handle handle) override
+		View_handle view_handle(Gui::View_capability view_cap, View_handle handle) override
 		{
 			return _session.view_handle(view_cap, handle);
 		}
 
-		Nitpicker::View_capability view_capability(View_handle view) override
+		Gui::View_capability view_capability(View_handle view) override
 		{
 			return _session.view_capability(view);
 		}
@@ -110,10 +110,10 @@ class Wm::Direct_nitpicker_session : public Genode::Rpc_object<Nitpicker::Sessio
 			_session.buffer(mode, use_alpha);
 		}
 
-		void focus(Genode::Capability<Nitpicker::Session> session) override
+		void focus(Genode::Capability<Gui::Session> session) override
 		{
 			_session.focus(session);
 		}
 };
 
-#endif /* _DIRECT_NITPICKER_H_ */
+#endif /* _DIRECT_GUI_H_ */

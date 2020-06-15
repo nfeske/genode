@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerCursor
+ * \brief  QGenodeCursor
  * \author Christian Prochaska
  * \date   2017-11-13
  */
@@ -12,8 +12,8 @@
  */
 
 
-#ifndef _QNITPICKERCURSOR_H_
-#define _QNITPICKERCURSOR_H_
+#ifndef _QGENODECURSOR_H_
+#define _QGENODECURSOR_H_
 
 /* Genode includes */
 #include <base/attached_dataspace.h>
@@ -25,7 +25,7 @@
 
 QT_BEGIN_NAMESPACE
 
-class QNitpickerCursor : public QPlatformCursor
+class QGenodeCursor : public QPlatformCursor
 {
 	private:
 
@@ -35,11 +35,11 @@ class QNitpickerCursor : public QPlatformCursor
 
 	public:
 
-		QNitpickerCursor(Genode::Env &env);
+		QGenodeCursor(Genode::Env &env);
 
 		virtual void changeCursor(QCursor *widgetCursor, QWindow *window) override;
 };
 
 QT_END_NAMESPACE
 
-#endif /* _QNITPICKERCURSOR_H_ */
+#endif /* _QGENODECURSOR_H_ */

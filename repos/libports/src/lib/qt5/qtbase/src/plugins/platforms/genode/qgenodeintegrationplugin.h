@@ -1,5 +1,5 @@
 /*
- * \brief  Nitpicker QPA plugin
+ * \brief  Genode QPA plugin
  * \author Christian Prochaska
  * \date   2013-05-08
  */
@@ -11,22 +11,22 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _QNITPICKERINTEGRATIONPLUGIN_H_
-#define _QNITPICKERINTEGRATIONPLUGIN_H_
+#ifndef _QGENODEINTEGRATIONPLUGIN_H_
+#define _QGENODEINTEGRATIONPLUGIN_H_
 
 /* Genode includes */
 #include <base/env.h>
 
 /* Qt includes */
 #include <qpa/qplatformintegrationplugin.h>
-#include "qnitpickerintegration.h"
+#include "qgenodeintegration.h"
 
 QT_BEGIN_NAMESPACE
 
-class QNitpickerIntegrationPlugin : public QPlatformIntegrationPlugin
+class QGenodeIntegrationPlugin : public QPlatformIntegrationPlugin
 {
 	Q_OBJECT
-    Q_PLUGIN_METADATA(IID QPlatformIntegrationFactoryInterface_iid FILE "nitpicker.json")
+    Q_PLUGIN_METADATA(IID QPlatformIntegrationFactoryInterface_iid FILE "genode.json")
 
 private:
 	static Genode::Env *_env;
@@ -40,4 +40,4 @@ public:
 
 QT_END_NAMESPACE
 
-#endif /* _QNITPICKERINTEGRATIONPLUGIN_H_ */
+#endif /* _QGENODEINTEGRATIONPLUGIN_H_ */

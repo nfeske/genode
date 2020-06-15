@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerWindowSurface
+ * \brief  QGenodeWindowSurface
  * \author Christian Prochaska
  * \date   2013-05-08
  */
@@ -12,30 +12,30 @@
  */
 
 
-#ifndef _QNITPICKERWINDOWSURFACE_H_
-#define _QNITPICKERWINDOWSURFACE_H_
+#ifndef _QGENODEWINDOWSURFACE_H_
+#define _QGENODEWINDOWSURFACE_H_
 
 #include <qpa/qplatformbackingstore.h>
 
-class QNitpickerPlatformWindow;
+class QGenodePlatformWindow;
 
 QT_BEGIN_NAMESPACE
 
-class QNitpickerWindowSurface : public QObject, public QPlatformBackingStore
+class QGenodeWindowSurface : public QObject, public QPlatformBackingStore
 {
 	Q_OBJECT
 
 	private:
 
-		QNitpickerPlatformWindow *_platform_window;
-		unsigned char            *_backbuffer;
-		QImage                    _image;
-		bool                      _framebuffer_changed;
+		QGenodePlatformWindow *_platform_window;
+		unsigned char         *_backbuffer;
+		QImage                 _image;
+		bool                   _framebuffer_changed;
 
 	public:
 
-		QNitpickerWindowSurface(QWindow *window);
-		~QNitpickerWindowSurface();
+		QGenodeWindowSurface(QWindow *window);
+		~QGenodeWindowSurface();
 
 		QPaintDevice *paintDevice();
 		void flush(QWindow *window, const QRegion &region, const QPoint &offset);
@@ -48,4 +48,4 @@ class QNitpickerWindowSurface : public QObject, public QPlatformBackingStore
 
 QT_END_NAMESPACE
 
-#endif /* _QNITPICKERWINDOWSURFACE_H_ */
+#endif /* _QGENODEWINDOWSURFACE_H_ */

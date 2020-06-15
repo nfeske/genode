@@ -1,5 +1,5 @@
 /*
- * \brief  Nitpicker service provided to decorator
+ * \brief  GUI service provided to decorator
  * \author Norman Feske
  * \date   2014-02-14
  */
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _DECORATOR_NITPICKER_H_
-#define _DECORATOR_NITPICKER_H_
+#ifndef _DECORATOR_GUI_H_
+#define _DECORATOR_GUI_H_
 
 /* Genode includes */
 #include <util/string.h>
@@ -42,7 +42,7 @@ namespace Wm { class Main;
 
 namespace Wm {
 
-	struct Decorator_nitpicker_session;
+	struct Decorator_gui_session;
 	struct Decorator_content_callback;
 	struct Decorator_content_registry;
 }
@@ -52,7 +52,7 @@ struct Wm::Decorator_content_callback : Interface
 {
 	virtual void content_geometry(Window_registry::Id win_id, Rect rect) = 0;
 
-	virtual Nitpicker::View_capability content_view(Window_registry::Id win_id) = 0;
+	virtual Gui::View_capability content_view(Window_registry::Id win_id) = 0;
 
 	virtual void update_content_child_views(Window_registry::Id win_id) = 0;
 };
@@ -69,13 +69,14 @@ class Wm::Decorator_content_registry
 
 	private:
 
+		using View_handle = Gui::Session::View_handle;
+
 		struct Entry : List<Entry>::Element
 		{
-			Nitpicker::Session::View_handle const decorator_view_handle;
-			Window_registry::Id             const win_id;
+			View_handle         const decorator_view_handle;
+			Window_registry::Id const win_id;
 
-			Entry(Nitpicker::Session::View_handle decorator_view_handle,
-			      Window_registry::Id             win_id)
+			Entry(View_handle decorator_view_handle, Window_registry::Id win_id)
 			:
 				decorator_view_handle(decorator_view_handle),
 				win_id(win_id)
@@ -85,7 +86,7 @@ class Wm::Decorator_content_registry
 		List<Entry>  _list { };
 		Allocator   &_entry_alloc;
 
-		Entry const &_lookup(Nitpicker::Session::View_handle view_handle) const
+		Entry const &_lookup(View_handle view_handle) const
 		{
 			for (Entry const *e = _list.first(); e; e = e->next()) {
 				if (e->decorator_view_handle == view_handle)
@@ -114,8 +115,7 @@ class Wm::Decorator_content_registry
 				_remove(*e);
 		}
 
-		void insert(Nitpicker::Session::View_handle decorator_view_handle,
-		            Window_registry::Id             win_id)
+		void insert(View_handle decorator_view_handle, Window_registry::Id win_id)
 		{
 			Entry *e = new (_entry_alloc) Entry(decorator_view_handle, win_id);
 			_list.insert(e);
@@ -126,12 +126,12 @@ class Wm::Decorator_content_registry
 		 *
 		 * \throw Lookup_failed
 		 */
-		Window_registry::Id lookup(Nitpicker::Session::View_handle view_handle) const
+		Window_registry::Id lookup(View_handle view_handle) const
 		{
 			return _lookup(view_handle).win_id;
 		}
 
-		bool registered(Nitpicker::Session::View_handle view_handle) const
+		bool registered(View_handle view_handle) const
 		{
 			try { lookup(view_handle); return true; } catch (...) { }
 			return false;
@@ -142,21 +142,22 @@ class Wm::Decorator_content_registry
 		 *
 		 * \throw Lookup_failed
 		 */
-		void remove(Nitpicker::Session::View_handle view_handle)
+		void remove(View_handle view_handle)
 		{
 			_remove(_lookup(view_handle));
 		}
 };
 
 
-struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
-                                         private List<Decorator_nitpicker_session>::Element
+struct Wm::Decorator_gui_session : Genode::Rpc_object<Gui::Session>,
+                                   private List<Decorator_gui_session>::Element
 {
-	friend class List<Decorator_nitpicker_session>;
-	using List<Decorator_nitpicker_session>::Element::next;
+	friend class List<Decorator_gui_session>;
+	using List<Decorator_gui_session>::Element::next;
 
-	typedef Nitpicker::View_capability      View_capability;
-	typedef Nitpicker::Session::View_handle View_handle;
+	using View_capability = Gui::View_capability;
+	using View_handle     = Gui::Session::View_handle;
+	using Command_buffer  = Gui::Session::Command_buffer;
 
 	Genode::Env &_env;
 
@@ -164,11 +165,9 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 
 	Genode::Ram_allocator &_ram;
 
-	Nitpicker::Connection _nitpicker_session { _env, "decorator" };
+	Gui::Connection _gui_session { _env, "decorator" };
 
 	Genode::Signal_context_capability _mode_sigh { };
-
-	typedef Nitpicker::Session::Command_buffer Command_buffer;
 
 	Attached_ram_dataspace _command_ds { _ram, _env.rm(), sizeof(Command_buffer) };
 
@@ -191,26 +190,26 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 
 	Allocator &_md_alloc;
 
-	/* Nitpicker::Connection requires a valid input session */
+	/* Gui::Connection requires a valid input session */
 	Input::Session_component  _dummy_input_component { _env, _env.ram() };
 	Input::Session_capability _dummy_input_component_cap =
 		_env.ep().manage(_dummy_input_component);
 
-	Signal_handler<Decorator_nitpicker_session>
-		_input_handler { _env.ep(), *this, &Decorator_nitpicker_session::_handle_input };
+	Signal_handler<Decorator_gui_session>
+		_input_handler { _env.ep(), *this, &Decorator_gui_session::_handle_input };
 
 	/**
 	 * Constructor
 	 *
 	 * \param ep  entrypoint used for dispatching signals
 	 */
-	Decorator_nitpicker_session(Genode::Env &env,
-	                            Genode::Ram_allocator &ram,
-	                            Allocator &md_alloc,
-	                            Reporter &pointer_reporter,
-	                            Last_motion &last_motion,
-	                            Input::Session_component &window_layouter_input,
-	                            Decorator_content_callback &content_callback)
+	Decorator_gui_session(Genode::Env &env,
+	                      Genode::Ram_allocator &ram,
+	                      Allocator &md_alloc,
+	                      Reporter &pointer_reporter,
+	                      Last_motion &last_motion,
+	                      Input::Session_component &window_layouter_input,
+	                      Decorator_content_callback &content_callback)
 	:
 		_env(env),
 		_ram(ram),
@@ -220,10 +219,10 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 		_content_callback(content_callback),
 		_md_alloc(md_alloc)
 	{
-		_nitpicker_session.input()->sigh(_input_handler);
+		_gui_session.input()->sigh(_input_handler);
 	}
 
-	~Decorator_nitpicker_session()
+	~Decorator_gui_session()
 	{
 		_env.ep().dissolve(_dummy_input_component);
 	}
@@ -238,8 +237,8 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 			});
 		};
 
-		while (_nitpicker_session.input()->pending())
-			_nitpicker_session.input()->for_each_event([&] (Input::Event const &ev) {
+		while (_gui_session.input()->pending())
+			_gui_session.input()->for_each_event([&] (Input::Event const &ev) {
 
 				if (ev.press()) _key_cnt++;
 
@@ -325,14 +324,13 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 				 * Replace content view originally created by the decorator
 				 * by view that shows the real window content.
 				 */
-				Nitpicker::View_capability view_cap =
-					_content_callback.content_view(win_id);
+				View_capability view_cap = _content_callback.content_view(win_id);
 
-				_nitpicker_session.destroy_view(view_handle);
-				_nitpicker_session.view_handle(view_cap, view_handle);
+				_gui_session.destroy_view(view_handle);
+				_gui_session.view_handle(view_cap, view_handle);
 
-				_nitpicker_session.enqueue(cmd);
-				_nitpicker_session.execute();
+				_gui_session.enqueue(cmd);
+				_gui_session.execute();
 
 				/*
 				 * Now that the physical content view exists, it is time
@@ -342,7 +340,7 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 
 			} catch (Decorator_content_registry::Lookup_failed) {
 
-				_nitpicker_session.enqueue(cmd);
+				_gui_session.enqueue(cmd);
 			}
 
 			return;
@@ -353,8 +351,8 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 
 				/*
 				 * If the content view changes position, propagate the new
-				 * position to the nitpicker service to properly transform
-				 * absolute input coordinates.
+				 * position to the GUI service to properly transform absolute
+				 * input coordinates.
 				 */
 				Window_registry::Id win_id = _content_registry.lookup(cmd.geometry.view);
 
@@ -363,7 +361,7 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 			catch (Decorator_content_registry::Lookup_failed) { }
 
 			/* forward command */
-			_nitpicker_session.enqueue(cmd);
+			_gui_session.enqueue(cmd);
 			return;
 
 		case Command::OP_OFFSET:
@@ -377,14 +375,14 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 				_content_registry.lookup(cmd.geometry.view);
 			}
 			catch (Decorator_content_registry::Lookup_failed) {
-				_nitpicker_session.enqueue(cmd);
+				_gui_session.enqueue(cmd);
 			}
 			return;
 
 		case Command::OP_BACKGROUND:
 		case Command::OP_NOP:
 
-			_nitpicker_session.enqueue(cmd);
+			_gui_session.enqueue(cmd);
 			return;
 		}
 	}
@@ -392,17 +390,17 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 	void upgrade(const char *args)
 	{
 		size_t const ram_quota = Arg_string::find_arg(args, "ram_quota").ulong_value(0);
-		_nitpicker_session.upgrade_ram(ram_quota);
+		_gui_session.upgrade_ram(ram_quota);
 	}
 
 
-	/*********************************
-	 ** Nitpicker session interface **
-	 *********************************/
+	/***************************
+	 ** GUI session interface **
+	 ***************************/
 	
 	Framebuffer::Session_capability framebuffer_session() override
 	{
-		return _nitpicker_session.framebuffer_session();
+		return _gui_session.framebuffer_session();
 	}
 
 	Input::Session_capability input_session() override
@@ -416,7 +414,7 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 
 	View_handle create_view(View_handle parent) override
 	{
-		return _nitpicker_session.create_view(parent);
+		return _gui_session.create_view(parent);
 	}
 
 	void destroy_view(View_handle view) override
@@ -425,28 +423,28 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 		 * Reset view geometry when destroying a content view
 		 */
 		if (_content_registry.registered(view)) {
-			Nitpicker::Rect rect(Nitpicker::Point(0, 0), Nitpicker::Area(0, 0));
-			_nitpicker_session.enqueue<Nitpicker::Session::Command::Geometry>(view, rect);
-			_nitpicker_session.execute();
+			Gui::Rect rect(Gui::Point(0, 0), Gui::Area(0, 0));
+			_gui_session.enqueue<Gui::Session::Command::Geometry>(view, rect);
+			_gui_session.execute();
 		}
 
-		_nitpicker_session.destroy_view(view);
+		_gui_session.destroy_view(view);
 	}
 
 	View_handle view_handle(View_capability view_cap, View_handle handle) override
 	{
-		return _nitpicker_session.view_handle(view_cap, handle);
+		return _gui_session.view_handle(view_cap, handle);
 	}
 
 	View_capability view_capability(View_handle view) override
 	{
-		return _nitpicker_session.view_capability(view);
+		return _gui_session.view_capability(view);
 	}
 
 	void release_view_handle(View_handle view) override
 	{
 		/* XXX dealloc View_ptr */
-		_nitpicker_session.release_view_handle(view);
+		_gui_session.release_view_handle(view);
 	}
 
 	Genode::Dataspace_capability command_dataspace() override
@@ -464,12 +462,12 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 				Genode::warning("unhandled exception while processing command from decorator");
 			}
 		}
-		_nitpicker_session.execute();
+		_gui_session.execute();
 	}
 
 	Framebuffer::Mode mode() override
 	{
-		return _nitpicker_session.mode();
+		return _gui_session.mode();
 	}
 
 	void mode_sigh(Genode::Signal_context_capability sigh) override
@@ -479,18 +477,18 @@ struct Wm::Decorator_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>,
 		 * transitive delegations of the capability.
 		 */
 		_mode_sigh = sigh;
-		_nitpicker_session.mode_sigh(sigh);
+		_gui_session.mode_sigh(sigh);
 	}
 
 	void buffer(Framebuffer::Mode mode, bool use_alpha) override
 	{
 		/*
-		 * See comment in 'Wm::Nitpicker::Session_component::buffer'.
+		 * See comment in 'Wm::Gui::Session_component::buffer'.
 		 */
-		Nitpicker::Session_client(_env.rm(), _nitpicker_session.cap()).buffer(mode, use_alpha);
+		Gui::Session_client(_env.rm(), _gui_session.cap()).buffer(mode, use_alpha);
 	}
 
-	void focus(Genode::Capability<Nitpicker::Session>) override { }
+	void focus(Genode::Capability<Gui::Session>) override { }
 };
 
-#endif /* _DECORATOR_NITPICKER_H_ */
+#endif /* _DECORATOR_GUI_H_ */

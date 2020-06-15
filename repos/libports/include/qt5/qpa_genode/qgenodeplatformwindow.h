@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerPlatformWindow
+ * \brief  QGenodePlatformWindow
  * \author Christian Prochaska
  * \author Christian Helmuth
  * \date   2013-05-08
@@ -13,8 +13,8 @@
  */
 
 
-#ifndef _QNITPICKERPLATFORMWINDOW_H_
-#define _QNITPICKERPLATFORMWINDOW_H_
+#ifndef _QGENODEPLATFORMWINDOW_H_
+#define _QGENODEPLATFORMWINDOW_H_
 
 /* Genode includes */
 #include <input/event.h>
@@ -33,31 +33,31 @@
 
 QT_BEGIN_NAMESPACE
 
-class QNitpickerPlatformWindow : public QObject, public QPlatformWindow
+class QGenodePlatformWindow : public QObject, public QPlatformWindow
 {
 	Q_OBJECT
 
 	private:
 
-		Genode::Env                     &_env;
-		QString                          _nitpicker_session_label;
-		static QStringList               _nitpicker_session_label_list;
-		Nitpicker::Connection            _nitpicker_session;
-		Framebuffer::Session_client      _framebuffer_session;
-		unsigned char                   *_framebuffer;
-		bool                             _framebuffer_changed;
-		bool                             _geometry_changed;
-		Framebuffer::Mode                _current_mode;
-		Nitpicker::Session::View_handle  _view_handle;
-		Input::Session_client            _input_session;
-		Genode::Attached_dataspace       _ev_buf;
-		QPoint                           _mouse_position;
-		Qt::KeyboardModifiers            _keyboard_modifiers;
-		Qt::MouseButtons                 _mouse_button_state;
-		QByteArray                       _title;
-		bool                             _resize_handle;
-		bool                             _decoration;
-		EGLSurface                       _egl_surface;
+		Genode::Env                &_env;
+		QString                     _gui_session_label;
+		static QStringList          _gui_session_label_list;
+		Gui::Connection             _gui_session;
+		Framebuffer::Session_client _framebuffer_session;
+		unsigned char              *_framebuffer;
+		bool                        _framebuffer_changed;
+		bool                        _geometry_changed;
+		Framebuffer::Mode           _current_mode;
+		Gui::Session::View_handle   _view_handle;
+		Input::Session_client       _input_session;
+		Genode::Attached_dataspace  _ev_buf;
+		QPoint                      _mouse_position;
+		Qt::KeyboardModifiers       _keyboard_modifiers;
+		Qt::MouseButtons            _mouse_button_state;
+		QByteArray                  _title;
+		bool                        _resize_handle;
+		bool                        _decoration;
+		EGLSurface                  _egl_surface;
 
 		QPoint _local_position() const
 		{
@@ -82,8 +82,8 @@ class QNitpickerPlatformWindow : public QObject, public QPlatformWindow
 		void _key_event(Input::Keycode, Codepoint, Mapped_key::Event);
 		void _mouse_button_event(Input::Keycode, bool press);
 
-		Genode::Io_signal_handler<QNitpickerPlatformWindow> _input_signal_handler;
-		Genode::Io_signal_handler<QNitpickerPlatformWindow> _mode_changed_signal_handler;
+		Genode::Io_signal_handler<QGenodePlatformWindow> _input_signal_handler;
+		Genode::Io_signal_handler<QGenodePlatformWindow> _mode_changed_signal_handler;
 
 		QVector<QWindowSystemInterface::TouchPoint>  _touch_points { 16 };
 		QTouchDevice                                *_touch_device;
@@ -91,7 +91,7 @@ class QNitpickerPlatformWindow : public QObject, public QPlatformWindow
 
 		void _process_touch_events(QList<Input::Event> const &events);
 
-		Nitpicker::Session::View_handle _create_view();
+		Gui::Session::View_handle _create_view();
 		void _adjust_and_set_geometry(const QRect &rect);
 
 		QString _sanitize_label(QString label);
@@ -114,10 +114,10 @@ class QNitpickerPlatformWindow : public QObject, public QPlatformWindow
 
 	public:
 
-		QNitpickerPlatformWindow(Genode::Env &env, QWindow *window,
-		                         int screen_width, int screen_height);
+		QGenodePlatformWindow(Genode::Env &env, QWindow *window,
+		                      int screen_width, int screen_height);
 
-		~QNitpickerPlatformWindow();
+		~QGenodePlatformWindow();
 
 	    QSurfaceFormat format() const override;
 
@@ -184,24 +184,24 @@ class QNitpickerPlatformWindow : public QObject, public QPlatformWindow
 	    bool frameStrutEventsEnabled() const override;
 
 
-	    /* for QNitpickerWindowSurface */
+	    /* for QGenodeWindowSurface */
 
 	    unsigned char *framebuffer();
 
 		void refresh(int x, int y, int w, int h);
 
 
-		/* for QNitpickerGLContext */ 
+		/* for QGenodeGLContext */ 
 
 		EGLSurface egl_surface() const;
 
 		void egl_surface(EGLSurface egl_surface);
 
 
-		/* for QNitpickerViewWidget */
+		/* for QGenodeViewWidget */
 
-		Nitpicker::Session_client &nitpicker();
-		Nitpicker::View_capability view_cap() const;
+		Gui::Session_client &gui_session();
+		Gui::View_capability view_cap() const;
 
 	signals:
 
@@ -211,4 +211,4 @@ class QNitpickerPlatformWindow : public QObject, public QPlatformWindow
 
 QT_END_NAMESPACE
 
-#endif /* _QNITPICKERPLATFORMWINDOW_H_ */
+#endif /* _QGENODEPLATFORMWINDOW_H_ */

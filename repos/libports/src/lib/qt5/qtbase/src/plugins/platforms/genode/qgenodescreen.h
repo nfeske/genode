@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerScreen
+ * \brief  QGenodeScreen
  * \author Christian Prochaska
  * \date   2013-05-08
  */
@@ -12,8 +12,8 @@
  */
 
 
-#ifndef _QNITPICKERSCREEN_H_
-#define _QNITPICKERSCREEN_H_
+#ifndef _QGENODESCREEN_H_
+#define _QGENODESCREEN_H_
 
 /* Genode includes */
 #include <gui_session/connection.h>
@@ -23,11 +23,11 @@
 
 #include <QDebug>
 
-#include "qnitpickercursor.h"
+#include "qgenodecursor.h"
 
 QT_BEGIN_NAMESPACE
 
-class QNitpickerScreen : public QPlatformScreen
+class QGenodeScreen : public QPlatformScreen
 {
 	private:
 
@@ -36,14 +36,14 @@ class QNitpickerScreen : public QPlatformScreen
 
 	public:
 
-		QNitpickerScreen(Genode::Env &env) : _env(env)
+		QGenodeScreen(Genode::Env &env) : _env(env)
 		{
-			Nitpicker::Connection _nitpicker(env);
+			Gui::Connection _gui(env);
 
-			Framebuffer::Mode const scr_mode = _nitpicker.mode();
+			Framebuffer::Mode const scr_mode = _gui.mode();
 
 			if (scr_mode.format() != Framebuffer::Mode::RGB565)
-				qCritical() << "Nitpicker screen format is not RGB565";
+				qCritical() << "GUI screen format is not RGB565";
 
 			_geometry.setRect(0, 0, scr_mode.width(),
 			                        scr_mode.height());
@@ -56,11 +56,11 @@ class QNitpickerScreen : public QPlatformScreen
 
 		QPlatformCursor *cursor() const
 		{
-			static QNitpickerCursor instance(_env);
+			static QGenodeCursor instance(_env);
 			return &instance;
 		}
 };
 
 QT_END_NAMESPACE
 
-#endif /* _QNITPICKERSCREEN_H_ */
+#endif /* _QGENODESCREEN_H_ */

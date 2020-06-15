@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerGLContext
+ * \brief  QGenodeGLContext
  * \author Christian Prochaska
  * \date   2013-11-18
  */
@@ -25,14 +25,14 @@
 #include <QDebug>
 
 /* local includes */
-#include "qnitpickerplatformwindow.h"
-#include "qnitpickerglcontext.h"
+#include "qgenodeplatformwindow.h"
+#include "qgenodeglcontext.h"
 
 static const bool qnglc_verbose = false;
 
 QT_BEGIN_NAMESPACE
 
-QNitpickerGLContext::QNitpickerGLContext(QOpenGLContext *context)
+QGenodeGLContext::QGenodeGLContext(QOpenGLContext *context)
     : QPlatformOpenGLContext()
 {
 	if (qnglc_verbose)
@@ -65,14 +65,14 @@ QNitpickerGLContext::QNitpickerGLContext(QOpenGLContext *context)
 }
 
 
-bool QNitpickerGLContext::makeCurrent(QPlatformSurface *surface)
+bool QGenodeGLContext::makeCurrent(QPlatformSurface *surface)
 {
 	if (qnglc_verbose)
 		Genode::log(__func__, " called");
 
 	doneCurrent();
 
-	QNitpickerPlatformWindow *w = static_cast<QNitpickerPlatformWindow*>(surface);
+	QGenodePlatformWindow *w = static_cast<QGenodePlatformWindow*>(surface);
 
 	Genode_egl_window egl_window = { w->geometry().width(),
 		                             w->geometry().height(),
@@ -100,7 +100,7 @@ bool QNitpickerGLContext::makeCurrent(QPlatformSurface *surface)
 }
 
 
-void QNitpickerGLContext::doneCurrent()
+void QGenodeGLContext::doneCurrent()
 {
 	if (qnglc_verbose)
 		Genode::log(__func__, " called");
@@ -110,12 +110,12 @@ void QNitpickerGLContext::doneCurrent()
 }
 
 
-void QNitpickerGLContext::swapBuffers(QPlatformSurface *surface)
+void QGenodeGLContext::swapBuffers(QPlatformSurface *surface)
 {
 	if (qnglc_verbose)
 		Genode::log(__func__, " called");
 
-	QNitpickerPlatformWindow *w = static_cast<QNitpickerPlatformWindow*>(surface);
+	QGenodePlatformWindow *w = static_cast<QGenodePlatformWindow*>(surface);
 
 	if (!eglSwapBuffers(_egl_display, w->egl_surface()))
 		qFatal("eglSwapBuffers() failed");
@@ -124,7 +124,7 @@ void QNitpickerGLContext::swapBuffers(QPlatformSurface *surface)
 }
 
 
-QFunctionPointer QNitpickerGLContext::getProcAddress(const char *procName)
+QFunctionPointer QGenodeGLContext::getProcAddress(const char *procName)
 {
 	if (qnglc_verbose)
 		Genode::log("procName=", Genode::Cstring(procName), " , "
@@ -134,7 +134,7 @@ QFunctionPointer QNitpickerGLContext::getProcAddress(const char *procName)
 }
 
 
-QSurfaceFormat QNitpickerGLContext::format() const
+QSurfaceFormat QGenodeGLContext::format() const
 {
     return _format;
 }

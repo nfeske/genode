@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerWindowSurface
+ * \brief  QGenodeWindowSurface
  * \author Christian Prochaska
  * \date   2013-05-08
  */
@@ -19,9 +19,9 @@
 
 #include <qpa/qplatformscreen.h>
 
-#include "qnitpickerplatformwindow.h"
+#include "qgenodeplatformwindow.h"
 
-#include "qnitpickerwindowsurface.h"
+#include "qgenodewindowsurface.h"
 
 #include <QDebug>
 
@@ -29,27 +29,27 @@ static const bool verbose = false;
 
 QT_BEGIN_NAMESPACE
 
-QNitpickerWindowSurface::QNitpickerWindowSurface(QWindow *window)
+QGenodeWindowSurface::QGenodeWindowSurface(QWindow *window)
     : QPlatformBackingStore(window), _backbuffer(0), _framebuffer_changed(true)
 {
-    //qDebug() << "QNitpickerWindowSurface::QNitpickerWindowSurface:" << (long)this;
+    //qDebug() << "QGenodeWindowSurface::QGenodeWindowSurface:" << (long)this;
 
     /* Calling 'QWindow::winId()' ensures that the platform window has been created */
     window->winId();
 
-    _platform_window = static_cast<QNitpickerPlatformWindow*>(window->handle());
+    _platform_window = static_cast<QGenodePlatformWindow*>(window->handle());
     connect(_platform_window, SIGNAL(framebuffer_changed()), this, SLOT(framebuffer_changed()));
 }
 
-QNitpickerWindowSurface::~QNitpickerWindowSurface()
+QGenodeWindowSurface::~QGenodeWindowSurface()
 {
 	free(_backbuffer);
 }
 
-QPaintDevice *QNitpickerWindowSurface::paintDevice()
+QPaintDevice *QGenodeWindowSurface::paintDevice()
 {
 	if (verbose)
-		qDebug() << "QNitpickerWindowSurface::paintDevice()";
+		qDebug() << "QGenodeWindowSurface::paintDevice()";
 
     if (_framebuffer_changed) {
 
@@ -66,23 +66,23 @@ QPaintDevice *QNitpickerWindowSurface::paintDevice()
 		_image = QImage(_backbuffer, geo.width(), geo.height(), geo.width() * bytes_per_pixel, format);
 
         if (verbose)
-        	qDebug() << "QNitpickerWindowSurface::paintDevice(): w =" << geo.width() << ", h =" << geo.height();
+        	qDebug() << "QGenodeWindowSurface::paintDevice(): w =" << geo.width() << ", h =" << geo.height();
     }
 
     if (verbose)
-    	qDebug() << "QNitpickerWindowSurface::paintDevice() finished";
+    	qDebug() << "QGenodeWindowSurface::paintDevice() finished";
 
     return &_image;
 }
 
-void QNitpickerWindowSurface::flush(QWindow *window, const QRegion &region, const QPoint &offset)
+void QGenodeWindowSurface::flush(QWindow *window, const QRegion &region, const QPoint &offset)
 {
     Q_UNUSED(window);
     Q_UNUSED(region);
     Q_UNUSED(offset);
 
     if (verbose)
-    	qDebug() << "QNitpickerWindowSurface::flush("
+    	qDebug() << "QGenodeWindowSurface::flush("
     	         << "window =" << window
     	         << ", region =" << region
     	         << ", offset =" << offset
@@ -117,13 +117,13 @@ void QNitpickerWindowSurface::flush(QWindow *window, const QRegion &region, cons
 
 }
 
-void QNitpickerWindowSurface::resize(const QSize &size, const QRegion &staticContents)
+void QGenodeWindowSurface::resize(const QSize &size, const QRegion &staticContents)
 {
 	if (verbose)
-		qDebug() << "QNitpickerWindowSurface::resize:" << this << size;
+		qDebug() << "QGenodeWindowSurface::resize:" << this << size;
 }
 
-void QNitpickerWindowSurface::framebuffer_changed()
+void QGenodeWindowSurface::framebuffer_changed()
 {
 	_framebuffer_changed = true;
 }

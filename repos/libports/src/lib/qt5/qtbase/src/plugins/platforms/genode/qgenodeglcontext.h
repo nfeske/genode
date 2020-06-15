@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerGLContext
+ * \brief  QGenodeGLContext
  * \author Christian Prochaska
  * \date   2013-11-18
  */
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef QNITPICKERGLCONTEXT_H
-#define QNITPICKERGLCONTEXT_H
+#ifndef QGENODEGLCONTEXT_H
+#define QGENODEGLCONTEXT_H
 
 #include <QOpenGLContext>
 
@@ -24,7 +24,7 @@
 QT_BEGIN_NAMESPACE
 
 
-class QNitpickerGLContext : public QPlatformOpenGLContext
+class QGenodeGLContext : public QPlatformOpenGLContext
 {
 	private:
 
@@ -36,7 +36,7 @@ class QNitpickerGLContext : public QPlatformOpenGLContext
 
 	public:
 
-		QNitpickerGLContext(QOpenGLContext *context);
+		QGenodeGLContext(QOpenGLContext *context);
 
 		QSurfaceFormat format() const Q_DECL_OVERRIDE;
 
@@ -51,4 +51,4 @@ class QNitpickerGLContext : public QPlatformOpenGLContext
 
 QT_END_NAMESPACE
 
-#endif // QNITPICKERGLCONTEXT_H
+#endif // QGENODEGLCONTEXT_H

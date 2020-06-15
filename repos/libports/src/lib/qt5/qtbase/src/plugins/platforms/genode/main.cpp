@@ -1,5 +1,5 @@
 /*
- * \brief  Nitpicker QPA plugin
+ * \brief  Genode QPA plugin
  * \author Christian Prochaska
  * \date   2013-05-08
  */
@@ -15,19 +15,19 @@
 #include <assert.h>
 
 /* Qt includes */
-#include "qnitpickerintegrationplugin.h"
+#include "qgenodeintegrationplugin.h"
 
 QT_BEGIN_NAMESPACE
 
-Genode::Env *QNitpickerIntegrationPlugin::_env = nullptr;
+Genode::Env *QGenodeIntegrationPlugin::_env = nullptr;
 
 void initialize_qt_gui(Genode::Env &env)
 {
-	QNitpickerIntegrationPlugin::env(env);
+	QGenodeIntegrationPlugin::env(env);
 }
 
 
-QStringList QNitpickerIntegrationPlugin::keys() const
+QStringList QGenodeIntegrationPlugin::keys() const
 {
 	QStringList list;
 	list << "Gui";
@@ -35,17 +35,17 @@ QStringList QNitpickerIntegrationPlugin::keys() const
 }
 
 
-QPlatformIntegration *QNitpickerIntegrationPlugin::create(const QString& system, const QStringList& paramList)
+QPlatformIntegration *QGenodeIntegrationPlugin::create(const QString& system, const QStringList& paramList)
 {
 	Q_UNUSED(paramList);
-	if (system.toLower() == "nitpicker") {
+	if (system.toLower() == "genode") {
 		assert(_env != nullptr);
-		return new QNitpickerIntegration(*_env);
+		return new QGenodeIntegration(*_env);
 	}
 
 	return 0;
 }
 
-Q_IMPORT_PLUGIN(QNitpickerIntegrationPlugin)
+Q_IMPORT_PLUGIN(QGenodeIntegrationPlugin)
 
 QT_END_NAMESPACE

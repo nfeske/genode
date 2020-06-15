@@ -1,7 +1,7 @@
-MIRROR_FROM_REP_DIR := include/qt5/qpa_nitpicker \
-                       lib/import/import-qt5_qpa_nitpicker.mk \
+MIRROR_FROM_REP_DIR := include/qt5/qpa_genode \
+                       lib/import/import-qt5_qpa_genode.mk \
                        lib/import/import-qt5.inc \
-                       lib/symbols/qt5_qpa_nitpicker
+                       lib/symbols/qt5_qpa_genode
 
 content: $(MIRROR_FROM_REP_DIR)
 

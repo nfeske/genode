@@ -1,5 +1,5 @@
 /*
- * \brief  Nitpicker service provided to layouter
+ * \brief  GUI service provided to layouter
  * \author Norman Feske
  * \date   2015-06-06
  */
@@ -11,47 +11,46 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _LAYOUTER_NITPICKER_H_
-#define _LAYOUTER_NITPICKER_H_
+#ifndef _LAYOUTER_GUI_H_
+#define _LAYOUTER_GUI_H_
 
 /* Genode includes */
 #include <input/component.h>
 #include <gui_session/connection.h>
 
 namespace Wm {
-	struct Layouter_nitpicker_session;
-	struct Layouter_nitpicker_service;
+	struct Layouter_gui_session;
+	struct Layouter_gui_service;
 }
 
 
-struct Wm::Layouter_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>
+struct Wm::Layouter_gui_session : Genode::Rpc_object<Gui::Session>
 {
-	typedef Nitpicker::View_capability      View_capability;
-	typedef Nitpicker::Session::View_handle View_handle;
+	using View_capability = Gui::View_capability;
+	using View_handle     = Gui::Session::View_handle;
 
 	Input::Session_capability _input_session_cap;
 
 	/*
-	 * Nitpicker session solely used to supply the nitpicker mode to the
-	 * layouter
+	 * GUI session solely used to supply the GUI mode to the layouter
 	 */
-	Nitpicker::Connection _mode_sigh_nitpicker;
+	Gui::Connection _mode_sigh_gui;
 
 	Genode::Signal_context_capability _mode_sigh { };
 
 	Attached_ram_dataspace _command_ds;
 
-	Layouter_nitpicker_session(Genode::Env &env,
-	                           Input::Session_capability input_session_cap)
+	Layouter_gui_session(Genode::Env &env,
+	                     Input::Session_capability input_session_cap)
 	:
 		_input_session_cap(input_session_cap),
-		_mode_sigh_nitpicker(env), _command_ds(env.ram(), env.rm(), 4096)
+		_mode_sigh_gui(env), _command_ds(env.ram(), env.rm(), 4096)
 	{ }
 
 
-	/*********************************
-	 ** Nitpicker session interface **
-	 *********************************/
+	/***************************
+	 ** GUI session interface **
+	 ***************************/
 	
 	Framebuffer::Session_capability framebuffer_session() override
 	{
@@ -86,7 +85,7 @@ struct Wm::Layouter_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>
 
 	void execute() override { }
 
-	Framebuffer::Mode mode() override { return _mode_sigh_nitpicker.mode(); }
+	Framebuffer::Mode mode() override { return _mode_sigh_gui.mode(); }
 
 	void mode_sigh(Genode::Signal_context_capability sigh) override
 	{
@@ -96,12 +95,12 @@ struct Wm::Layouter_nitpicker_session : Genode::Rpc_object<Nitpicker::Session>
 		 */
 		_mode_sigh = sigh;
 
-		_mode_sigh_nitpicker.mode_sigh(sigh);
+		_mode_sigh_gui.mode_sigh(sigh);
 	}
 
 	void buffer(Framebuffer::Mode, bool) override { }
 
-	void focus(Genode::Capability<Nitpicker::Session>) override { }
+	void focus(Genode::Capability<Gui::Session>) override { }
 };
 
-#endif /* _LAYOUTER_NITPICKER_H_ */
+#endif /* _LAYOUTER_GUI_H_ */

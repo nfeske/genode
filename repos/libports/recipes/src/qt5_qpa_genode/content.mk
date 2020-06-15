@@ -1,15 +1,15 @@
-MIRROR_FROM_REP_DIR := lib/mk/qt5_qpa_nitpicker.mk \
+MIRROR_FROM_REP_DIR := lib/mk/qt5_qpa_genode.mk \
                        lib/mk/qt5.inc \
-                       src/lib/qt5/qtbase/src/plugins/platforms/nitpicker
+                       src/lib/qt5/qtbase/src/plugins/platforms/genode
 
-content: $(MIRROR_FROM_REP_DIR) src/lib/qt5_qpa_nitpicker/target.mk
+content: $(MIRROR_FROM_REP_DIR) src/lib/qt5_qpa_genode/target.mk
 
 $(MIRROR_FROM_REP_DIR):
 	$(mirror_from_rep_dir)
 
-src/lib/qt5_qpa_nitpicker/target.mk:
+src/lib/qt5_qpa_genode/target.mk:
 	mkdir -p $(dir $@)
-	echo "LIBS = qt5_qpa_nitpicker" > $@
+	echo "LIBS = qt5_qpa_genode" > $@
 
 PORT_DIR := $(call port_dir,$(REP_DIR)/ports/qt5)
 

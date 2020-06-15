@@ -1,5 +1,5 @@
 /*
- * \brief  Virtualized nitpicker service announced to the outside world
+ * \brief  Virtualized GUI service announced to the outside world
  * \author Norman Feske
  * \date   2014-02-14
  */
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _NITPICKER_H_
-#define _NITPICKER_H_
+#ifndef _GUI_H_
+#define _GUI_H_
 
 /* Genode includes */
 #include <util/list.h>
@@ -29,9 +29,9 @@
 
 /* local includes */
 #include <window_registry.h>
-#include <decorator_nitpicker.h>
-#include <layouter_nitpicker.h>
-#include <direct_nitpicker.h>
+#include <decorator_gui.h>
+#include <layouter_gui.h>
+#include <direct_gui.h>
 
 
 namespace Wm {
@@ -53,9 +53,9 @@ namespace Wm {
 	using Genode::Interface;
 }
 
-namespace Wm { namespace Nitpicker {
+namespace Wm { namespace Gui {
 
-	using namespace ::Nitpicker;
+	using namespace ::Gui;
 
 	class Click_handler;
 	class Input_origin_changed_handler;
@@ -82,7 +82,7 @@ namespace Wm { namespace Nitpicker {
  * clicks into an already focused window should be of no interest to the
  * layouter. So we hide them from the layouter.
  */
-struct Wm::Nitpicker::Click_handler : Interface
+struct Wm::Gui::Click_handler : Interface
 {
 	virtual void handle_click(Point pos) = 0;
 	virtual void handle_enter(Point pos) = 0;
@@ -93,17 +93,17 @@ struct Wm::Nitpicker::Click_handler : Interface
  * Called by a top-level view to propagate the need to update the virtual
  * pointer position of a client when the client's window moved.
  */
-struct Wm::Nitpicker::Input_origin_changed_handler : Interface
+struct Wm::Gui::Input_origin_changed_handler : Interface
 {
 	virtual void input_origin_changed() = 0;
 };
 
 
-struct Nitpicker::View : Genode::Interface { GENODE_RPC_INTERFACE(); };
+struct Gui::View : Genode::Interface { GENODE_RPC_INTERFACE(); };
 
 
-class Wm::Nitpicker::View : private Genode::Weak_object<View>,
-                            public Genode::Rpc_object< ::Nitpicker::View>
+class Wm::Gui::View : private Genode::Weak_object<View>,
+                      public  Genode::Rpc_object< ::Gui::View>
 {
 	private:
 
@@ -112,35 +112,35 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 
 	protected:
 
-		typedef Genode::String<100>             Title;
-		typedef Nitpicker::Session::Command     Command;
-		typedef Nitpicker::Session::View_handle View_handle;
+		using Title       = Genode::String<100>;
+		using Command     = Gui::Session::Command;
+		using View_handle = Gui::Session::View_handle;
 
-		Session_label              _session_label;
-		Nitpicker::Session_client &_real_nitpicker;
-		View_handle                _real_handle     { };
-		Title                      _title           { };
-		Rect                       _geometry        { };
-		Point                      _buffer_offset   { };
-		Weak_ptr<View>             _neighbor_ptr    { };
-		bool                       _neighbor_behind { };
-		bool                       _has_alpha;
+		Session_label        _session_label;
+		Gui::Session_client &_real_gui;
+		View_handle          _real_handle     { };
+		Title                _title           { };
+		Rect                 _geometry        { };
+		Point                _buffer_offset   { };
+		Weak_ptr<View>       _neighbor_ptr    { };
+		bool                 _neighbor_behind { };
+		bool                 _has_alpha;
 
-		View(Nitpicker::Session_client &real_nitpicker,
-		     Session_label       const &session_label,
-		     bool                       has_alpha)
+		View(Gui::Session_client &real_gui,
+		     Session_label const &session_label,
+		     bool                 has_alpha)
 		:
-			_session_label(session_label), _real_nitpicker(real_nitpicker),
+			_session_label(session_label), _real_gui(real_gui),
 			_has_alpha(has_alpha)
 		{ }
 
 		/**
-		 * Propagate cached view geometry to the physical nitpicker view
+		 * Propagate cached view geometry to the physical GUI view
 		 */
 		virtual void _propagate_view_geometry() = 0;
 
 		/**
-		 * Apply cached view state to the physical nitpicker view
+		 * Apply cached view state to the physical GUI view
 		 */
 		void _unsynchronized_apply_view_config(Locked_ptr<View> &neighbor)
 		{
@@ -148,23 +148,23 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 				return;
 
 			_propagate_view_geometry();
-			_real_nitpicker.enqueue<Command::Offset>(_real_handle, _buffer_offset);
-			_real_nitpicker.enqueue<Command::Title> (_real_handle, _title.string());
+			_real_gui.enqueue<Command::Offset>(_real_handle, _buffer_offset);
+			_real_gui.enqueue<Command::Title> (_real_handle, _title.string());
 
 			View_handle real_neighbor_handle;
 
 			if (neighbor.valid())
-				real_neighbor_handle = _real_nitpicker.view_handle(neighbor->real_view_cap());
+				real_neighbor_handle = _real_gui.view_handle(neighbor->real_view_cap());
 
 			if (_neighbor_behind)
-				_real_nitpicker.enqueue<Command::To_front>(_real_handle, real_neighbor_handle);
+				_real_gui.enqueue<Command::To_front>(_real_handle, real_neighbor_handle);
 			else
-				_real_nitpicker.enqueue<Command::To_back>(_real_handle, real_neighbor_handle);
+				_real_gui.enqueue<Command::To_back>(_real_handle, real_neighbor_handle);
 
-			_real_nitpicker.execute();
+			_real_gui.execute();
 
 			if (real_neighbor_handle.valid())
-				_real_nitpicker.release_view_handle(real_neighbor_handle);
+				_real_gui.release_view_handle(real_neighbor_handle);
 		}
 
 		void _apply_view_config()
@@ -178,7 +178,7 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 		~View()
 		{
 			if (_real_handle.valid())
-				_real_nitpicker.destroy_view(_real_handle);
+				_real_gui.destroy_view(_real_handle);
 		}
 
 		using Genode::Weak_object<View>::weak_ptr;
@@ -193,11 +193,11 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 			_geometry = geometry;
 
 			/*
-			 * Propagate new size to real nitpicker view but
+			 * Propagate new size to real GUI view but
 			 */
 			if (_real_handle.valid()) {
 				_propagate_view_geometry();
-				_real_nitpicker.execute();
+				_real_gui.execute();
 			}
 		}
 
@@ -206,8 +206,8 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 			_title = Title(title);
 
 			if (_real_handle.valid()) {
-				_real_nitpicker.enqueue<Command::Title>(_real_handle, title);
-				_real_nitpicker.execute();
+				_real_gui.enqueue<Command::Title>(_real_handle, title);
+				_real_gui.execute();
 			}
 		}
 
@@ -219,7 +219,7 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 
 		View_capability real_view_cap()
 		{
-			return _real_nitpicker.view_capability(_real_handle);
+			return _real_gui.view_capability(_real_handle);
 		}
 
 		void buffer_offset(Point buffer_offset)
@@ -227,8 +227,8 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 			_buffer_offset = buffer_offset;
 
 			if (_real_handle.valid()) {
-				_real_nitpicker.enqueue<Command::Offset>(_real_handle, _buffer_offset);
-				_real_nitpicker.execute();
+				_real_gui.enqueue<Command::Offset>(_real_handle, _buffer_offset);
+				_real_gui.execute();
 			}
 		}
 
@@ -236,8 +236,7 @@ class Wm::Nitpicker::View : private Genode::Weak_object<View>,
 };
 
 
-class Wm::Nitpicker::Top_level_view : public View,
-                                      private List<Top_level_view>::Element
+class Wm::Gui::Top_level_view : public View, private List<Top_level_view>::Element
 {
 	private:
 
@@ -260,17 +259,17 @@ class Wm::Nitpicker::Top_level_view : public View,
 		Title         _window_title { };
 		Session_label _session_label;
 
-		typedef Nitpicker::Session::Command Command;
+		using Command = Gui::Session::Command;
 
 	public:
 
-		Top_level_view(Nitpicker::Session_client    &real_nitpicker,
+		Top_level_view(Gui::Session_client          &real_gui,
 		               Session_label          const &session_label,
 		               bool                          has_alpha,
 		               Window_registry              &window_registry,
 		               Input_origin_changed_handler &input_origin_changed_handler)
 		:
-			View(real_nitpicker, session_label, has_alpha),
+			View(real_gui, session_label, has_alpha),
 			_window_registry(window_registry),
 			_input_origin_changed_handler(input_origin_changed_handler),
 			_session_label(session_label)
@@ -347,16 +346,16 @@ class Wm::Nitpicker::Top_level_view : public View,
 			if (!_real_handle.valid()) {
 
 				/*
-				 * Create and configure physical nitpicker view.
+				 * Create and configure physical GUI view.
 				 */
-				_real_handle = _real_nitpicker.create_view();
+				_real_handle = _real_gui.create_view();
 
-				_real_nitpicker.enqueue<Command::Offset>(_real_handle, _buffer_offset);
-				_real_nitpicker.enqueue<Command::Title> (_real_handle, _title.string());
-				_real_nitpicker.execute();
+				_real_gui.enqueue<Command::Offset>(_real_handle, _buffer_offset);
+				_real_gui.enqueue<Command::Title> (_real_handle, _title.string());
+				_real_gui.execute();
 			}
 
-			return _real_nitpicker.view_capability(_real_handle);
+			return _real_gui.view_capability(_real_handle);
 		}
 
 		void hidden(bool hidden) { _window_registry.hidden(_win_id, hidden); }
@@ -371,8 +370,7 @@ class Wm::Nitpicker::Top_level_view : public View,
 };
 
 
-class Wm::Nitpicker::Child_view : public View,
-                                  private List<Child_view>::Element
+class Wm::Gui::Child_view : public View, private List<Child_view>::Element
 {
 	private:
 
@@ -382,12 +380,12 @@ class Wm::Nitpicker::Child_view : public View,
 
 	public:
 
-		Child_view(Nitpicker::Session_client &real_nitpicker,
-		           Session_label       const &session_label,
-		           bool                       has_alpha,
-		           Weak_ptr<View>             parent)
+		Child_view(Gui::Session_client &real_gui,
+		           Session_label const &session_label,
+		           bool                 has_alpha,
+		           Weak_ptr<View>       parent)
 		:
-			View(real_nitpicker, session_label, has_alpha), _parent(parent)
+			View(real_gui, session_label, has_alpha), _parent(parent)
 		{
 			try_to_init_real_view();
 		}
@@ -401,7 +399,7 @@ class Wm::Nitpicker::Child_view : public View,
 
 		void _propagate_view_geometry() override
 		{
-			_real_nitpicker.enqueue<Command::Geometry>(_real_handle, _geometry);
+			_real_gui.enqueue<Command::Geometry>(_real_handle, _geometry);
 		}
 
 		void stack(Weak_ptr<View> neighbor_ptr, bool behind) override
@@ -436,13 +434,13 @@ class Wm::Nitpicker::Child_view : public View,
 			if (!parent.valid())
 				return;
 
-			View_handle parent_handle = _real_nitpicker.view_handle(parent->real_view_cap());
+			View_handle parent_handle = _real_gui.view_handle(parent->real_view_cap());
 			if (!parent_handle.valid())
 				return;
 
-			_real_handle = _real_nitpicker.create_view(parent_handle);
+			_real_handle = _real_gui.create_view(parent_handle);
 
-			_real_nitpicker.release_view_handle(parent_handle);
+			_real_gui.release_view_handle(parent_handle);
 
 			if (_neighbor_ptr == _parent)
 				_unsynchronized_apply_view_config(parent);
@@ -457,28 +455,28 @@ class Wm::Nitpicker::Child_view : public View,
 };
 
 
-struct Wm::Nitpicker::Session_control_fn : Interface
+struct Wm::Gui::Session_control_fn : Interface
 {
 	virtual void session_control(char const *selector, Session::Session_control) = 0;
 	
 };
 
 
-class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
-                                         private List<Session_component>::Element,
-                                         private Input_origin_changed_handler
+class Wm::Gui::Session_component : public Rpc_object<Gui::Session>,
+                                   private List<Session_component>::Element,
+                                   private Input_origin_changed_handler
 {
 	private:
 
 		friend class List<Session_component>;
 
-		typedef Nitpicker::Session::View_handle View_handle;
+		using View_handle = Gui::Session::View_handle;
 
 		Genode::Env &_env;
 
 		Session_label          _session_label;
 		Genode::Ram_allocator &_ram;
-		Nitpicker::Connection  _session { _env, _session_label.string() };
+		Gui::Connection        _session { _env, _session_label.string() };
 
 		Window_registry             &_window_registry;
 		Session_control_fn          &_session_control_fn;
@@ -501,7 +499,7 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 		/*
 		 * Command buffer
 		 */
-		typedef Nitpicker::Session::Command_buffer Command_buffer;
+		using Command_buffer = Gui::Session::Command_buffer;
 
 		Attached_ram_dataspace _command_ds { _ram, _env.rm(), sizeof(Command_buffer) };
 
@@ -518,8 +516,8 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 		/*
 		 * Input
 		 */
-		Input::Session_client _nitpicker_input    { _env.rm(), _session.input_session() };
-		Attached_dataspace    _nitpicker_input_ds { _env.rm(), _nitpicker_input.dataspace() };
+		Input::Session_client _gui_input    { _env.rm(), _session.input_session() };
+		Attached_dataspace    _gui_input_ds { _env.rm(), _gui_input.dataspace() };
 
 		Signal_handler<Session_component> _input_handler {
 			_env.ep(), *this, &Session_component::_handle_input };
@@ -569,13 +567,16 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 			Point const input_origin = _input_origin();
 
 			Input::Event const * const events =
-				_nitpicker_input_ds.local_addr<Input::Event>();
+				_gui_input_ds.local_addr<Input::Event>();
 
-			while (_nitpicker_input.pending()) {
+			while (_gui_input.pending()) {
 
-				size_t const num_events = _nitpicker_input.flush();
+				size_t const num_events = _gui_input.flush();
 
-				/* we trust nitpicker to return a valid number of events */
+				/*
+				 * We trust the nitpicker GUI server to return a valid number
+				 * of events.
+				 */
 
 				for (size_t i = 0; i < num_events; i++) {
 
@@ -788,7 +789,7 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 			_click_handler(click_handler),
 			_view_handle_registry(session_alloc)
 		{
-			_nitpicker_input.sigh(_input_handler);
+			_gui_input.sigh(_input_handler);
 			_input_session.event_queue().enabled(true);
 		}
 
@@ -886,14 +887,14 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 		}
 
 		/**
-		 * Return session capability to real nitpicker session
+		 * Return session capability to real GUI session
 		 */
 		Capability<Session> session() { return _session.rpc_cap(); }
 
 
-		/*********************************
-		 ** Nitpicker session interface **
-		 *********************************/
+		/***************************
+		 ** GUI session interface **
+		 ***************************/
 		
 		Framebuffer::Session_capability framebuffer_session() override
 		{
@@ -985,7 +986,7 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 
 			/*
 			 * If the first top-level view has a defined size, use it
-			 * as the size of the virtualized nitpicker session.
+			 * as the size of the virtualized GUI session.
 			 */
 			if (Top_level_view const *v = _top_level_views.first())
 				if (v->size().valid())
@@ -1017,19 +1018,18 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 		{
 			/*
 			 * We must not perform the 'buffer' operation on the connection
-			 * object because the 'Nitpicker::Connection::buffer'
-			 * implementation implicitly performs upgrade operations.
+			 * object because the 'Gui::Connection::buffer' implementation
+			 * implicitly performs upgrade operations.
 			 *
 			 * Here, we merely want to forward the buffer RPC call to the
-			 * wrapped nitpicker session. Otherwise, we would perform
-			 * session upgrades initiated by the wm client's buffer
-			 * operation twice.
+			 * wrapped GUI session. Otherwise, we would perform session
+			 * upgrades initiated by the wm client's buffer operation twice.
 			 */
-			Nitpicker::Session_client(_env.rm(), _session.cap()).buffer(mode, has_alpha);
+			Gui::Session_client(_env.rm(), _session.cap()).buffer(mode, has_alpha);
 			_has_alpha = has_alpha;
 		}
 
-		void focus(Genode::Capability<Nitpicker::Session>) override { }
+		void focus(Genode::Capability<Gui::Session>) override { }
 
 		void session_control(Label suffix, Session_control operation) override
 		{
@@ -1040,9 +1040,9 @@ class Wm::Nitpicker::Session_component : public Rpc_object<Nitpicker::Session>,
 };
 
 
-class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session> >,
-                            public Decorator_content_callback,
-                            public Session_control_fn
+class Wm::Gui::Root : public Genode::Rpc_object<Genode::Typed_root<Session> >,
+                      public Decorator_content_callback,
+                      public Session_control_fn
 {
 	private:
 
@@ -1077,13 +1077,13 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 		Input::Session_capability _window_layouter_input_cap { _env.ep().manage(_window_layouter_input) };
 
 		/* handler that forwards clicks into unfocused windows to the layouter */
-		struct Click_handler : Nitpicker::Click_handler
+		struct Click_handler : Gui::Click_handler
 		{
 			Input::Session_component &window_layouter_input;
 			Reporter                 &pointer_reporter;
 			Last_motion              &last_motion;
 
-			void handle_enter(Nitpicker::Point pos) override
+			void handle_enter(Gui::Point pos) override
 			{
 				last_motion = LAST_MOTION_NITPICKER;
 
@@ -1094,7 +1094,7 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 				});
 			}
 
-			void handle_click(Nitpicker::Point pos) override
+			void handle_click(Gui::Point pos) override
 			{
 				/*
 				 * Propagate clicked-at position to decorator such that it can
@@ -1132,14 +1132,14 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 		 */
 		List<Session_component> _sessions { };
 
-		Layouter_nitpicker_session *_layouter_session = nullptr;
+		Layouter_gui_session *_layouter_session = nullptr;
 
-		List<Decorator_nitpicker_session> _decorator_sessions { };
+		List<Decorator_gui_session> _decorator_sessions { };
 
 		/**
-		 * Nitpicker session used to perform session-control operations
+		 * GUI session used to perform session-control operations
 		 */
-		Nitpicker::Session &_focus_nitpicker_session;
+		Gui::Session &_focus_gui_session;
 
 	public:
 
@@ -1150,14 +1150,14 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 		     Window_registry &window_registry, Allocator &md_alloc,
 		     Genode::Ram_allocator &ram,
 		     Reporter &pointer_reporter, Reporter &focus_request_reporter,
-		     Nitpicker::Session &focus_nitpicker_session)
+		     Gui::Session &focus_gui_session)
 		:
 			_env(env),
 			_md_alloc(md_alloc), _ram(ram),
 			_pointer_reporter(pointer_reporter),
 			_focus_request_reporter(focus_request_reporter),
 			_window_registry(window_registry),
-			_focus_nitpicker_session(focus_nitpicker_session)
+			_focus_gui_session(focus_gui_session)
 		{
 			_window_layouter_input.event_queue().enabled(true);
 
@@ -1215,11 +1215,11 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 			case ROLE_DECORATOR:
 				{
 					auto session = new (_md_alloc)
-						Decorator_nitpicker_session(_env, _ram, _md_alloc,
-						                            _pointer_reporter,
-						                            _last_motion,
-						                            _window_layouter_input,
-						                            *this);
+						Decorator_gui_session(_env, _ram, _md_alloc,
+						                      _pointer_reporter,
+						                      _last_motion,
+						                      _window_layouter_input,
+						                      *this);
 					_decorator_sessions.insert(session);
 					return _env.ep().manage(*session);
 				}
@@ -1227,15 +1227,15 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 			case ROLE_LAYOUTER:
 				{
 					_layouter_session = new (_md_alloc)
-						Layouter_nitpicker_session(_env, _window_layouter_input_cap);
+						Layouter_gui_session(_env, _window_layouter_input_cap);
 
 					return _env.ep().manage(*_layouter_session);
 				}
 
 			case ROLE_DIRECT:
 				{
-					Direct_nitpicker_session *session = new (_md_alloc)
-						Direct_nitpicker_session(_env, session_label);
+					Direct_gui_session *session = new (_md_alloc)
+						Direct_gui_session(_env, session_label);
 
 					return _env.ep().manage(*session);
 				}
@@ -1260,14 +1260,14 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 				if (regular_session)
 					regular_session->upgrade(args.string());
 
-				Decorator_nitpicker_session *decorator_session =
-					dynamic_cast<Decorator_nitpicker_session *>(session);
+				Decorator_gui_session *decorator_session =
+					dynamic_cast<Decorator_gui_session *>(session);
 
 				if (decorator_session)
 					decorator_session->upgrade(args.string());
 
-				Direct_nitpicker_session *direct_session =
-					dynamic_cast<Direct_nitpicker_session *>(session);
+				Direct_gui_session *direct_session =
+					dynamic_cast<Direct_gui_session *>(session);
 
 				if (direct_session)
 					direct_session->upgrade(args.string());
@@ -1292,8 +1292,8 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 				return;
 			}
 
-			Direct_nitpicker_session *direct_session =
-				ep.apply(session_cap, [this] (Direct_nitpicker_session *session) {
+			Direct_gui_session *direct_session =
+				ep.apply(session_cap, [this] (Direct_gui_session *session) {
 					if (session) {
 						_env.ep().dissolve(*session);
 					}
@@ -1304,8 +1304,8 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 				return;
 			}
 
-			Decorator_nitpicker_session *decorator_session =
-				ep.apply(session_cap, [this] (Decorator_nitpicker_session *session) {
+			Decorator_gui_session *decorator_session =
+				ep.apply(session_cap, [this] (Decorator_gui_session *session) {
 					if (session) {
 						_decorator_sessions.remove(session);
 						_env.ep().dissolve(*session);
@@ -1317,7 +1317,7 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 				return;
 			}
 
-			auto layouter_lambda = [this] (Layouter_nitpicker_session *session) {
+			auto layouter_lambda = [this] (Layouter_gui_session *session) {
 				this->_env.ep().dissolve(*_layouter_session);
 				_layouter_session = nullptr;
 				return session;
@@ -1366,11 +1366,10 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 			_window_registry.flush();
 
 			/*
-			 * Forward the request to the nitpicker control session to apply
-			 * the show/hide/to-front operations on "direct" nitpicker
-			 * sessions.
+			 * Forward the request to the GUI server's control session to apply
+			 * the show/hide/to-front operations on "direct" GUI sessions.
 			 */
-			_focus_nitpicker_session.session_control(selector, operation);
+			_focus_gui_session.session_control(selector, operation);
 		}
 
 
@@ -1423,7 +1422,7 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 				s->content_geometry(id, rect);
 		}
 
-		Capability<Session> lookup_nitpicker_session(unsigned win_id)
+		Capability<Session> lookup_gui_session(unsigned win_id)
 		{
 			for (Session_component *s = _sessions.first(); s; s = s->next())
 				if (s->has_win_id(win_id))
@@ -1440,4 +1439,4 @@ class Wm::Nitpicker::Root : public Genode::Rpc_object<Genode::Typed_root<Session
 		}
 };
 
-#endif /* _NITPICKER_H_ */
+#endif /* _GUI_H_ */

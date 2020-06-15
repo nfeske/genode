@@ -1,5 +1,5 @@
 /*
- * \brief  QNitpickerIntegration
+ * \brief  QGenodeIntegration
  * \author Christian Prochaska
  * \date   2013-05-08
  */
@@ -12,8 +12,8 @@
  */
 
 
-#ifndef _QNITPICKERINTEGRATION_H_
-#define _QNITPICKERINTEGRATION_H_
+#ifndef _QGENODEINTEGRATION_H_
+#define _QGENODEINTEGRATION_H_
 
 #include <QOpenGLContext>
 
@@ -21,21 +21,21 @@
 #include <qpa/qplatformscreen.h>
 #include <qpa/qplatforminputcontext.h>
 
-#include "qnitpickerscreen.h"
+#include "qgenodescreen.h"
 
 QT_BEGIN_NAMESPACE
 
-class QNitpickerIntegration : public QPlatformIntegration
+class QGenodeIntegration : public QPlatformIntegration
 {
 	private:
 
-		Genode::Env        &_env;
-		QNitpickerScreen   *_nitpicker_screen;
+		Genode::Env   &_env;
+		QGenodeScreen *_genode_screen;
 		QScopedPointer<QPlatformInputContext> m_inputContext;
 
 	public:
 
-		QNitpickerIntegration(Genode::Env &env);
+		QGenodeIntegration(Genode::Env &env);
 
 		void initialize() Q_DECL_OVERRIDE;
 		bool hasCapability(QPlatformIntegration::Capability cap) const Q_DECL_OVERRIDE;
@@ -57,4 +57,4 @@ class QNitpickerIntegration : public QPlatformIntegration
 
 QT_END_NAMESPACE
 
-#endif /* _QNITPICKERINTEGRATION_H_ */
+#endif /* _QGENODEINTEGRATION_H_ */
