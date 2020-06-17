@@ -4,8 +4,7 @@ MIRROR_FROM_REP_DIR := include/blit \
                        lib/mk/spec/arm_64/blit.mk \
                        lib/mk/spec/x86_32/blit.mk \
                        lib/mk/spec/arm/blit.mk \
-                       lib/mk/spec/x86_64/blit.mk \
-                       LICENSE
+                       lib/mk/spec/x86_64/blit.mk
 
 content: $(MIRROR_FROM_REP_DIR)
 
