@@ -91,7 +91,7 @@ install_config {
 	</start>
 
 	<start name="gui_fader">
-		<resource name="RAM" quantum="5M"/>
+		<resource name="RAM" quantum="8M"/>
 		<provides><service name="Gui"/></provides>
 		<route>
 			<service name="ROM" label="config">
@@ -103,7 +103,7 @@ install_config {
 	</start>
 
 	<start name="scout">
-		<resource name="RAM" quantum="10M"/>
+		<resource name="RAM" quantum="16M"/>
 		<route>
 			<service name="Gui"> <child name="gui_fader" /> </service>
 			<any-service> <parent/> <any-child/> </any-service>
@@ -112,7 +112,7 @@ install_config {
 
 	<start name="scout2">
 		<binary name="scout" />
-		<resource name="RAM" quantum="10M"/>
+		<resource name="RAM" quantum="16M"/>
 		<route>
 			<service name="Gui"> <child name="nitpicker" /> </service>
 			<any-service> <parent/> <any-child/> </any-service>
