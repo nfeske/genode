@@ -35,6 +35,7 @@
 #include <signal.h>
 
 /* libc-internal includes */
+#include <internal/kernel.h>
 #include <internal/init.h>
 #include <internal/signal.h>
 #include <internal/suspend.h>
@@ -207,7 +208,7 @@ static int selscan(int nfds,
 
 
 /* this function gets called by plugin backends when file descripors become ready */
-static void select_notify()
+void Libc::select_notify_from_kernel()
 {
 	bool resume_all = false;
 	fd_set tmp_readfds, tmp_writefds, tmp_exceptfds;
@@ -259,10 +260,6 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	fd_set in_readfds, in_writefds, in_exceptfds;
 
 	Constructible<Select_cb> select_cb;
-
-	/* initialize the select notification function pointer */
-	if (!libc_select_notify)
-		libc_select_notify = select_notify;
 
 	if (readfds)   in_readfds   = *readfds;   else FD_ZERO(&in_readfds);
 	if (writefds)  in_writefds  = *writefds;  else FD_ZERO(&in_writefds);
@@ -352,7 +349,7 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	if (signal_occurred_during_select())
 		return Errno(EINTR);
 
-	/* not timed out -> results have been stored in select_cb by select_notify() */
+	/* not timed out -> results have been stored in select_cb by select_notify_from_kernel() */
 
 	if (readfds)   *readfds   = select_cb->readfds;
 	if (writefds)  *writefds  = select_cb->writefds;
@@ -406,10 +403,6 @@ int Libc::Select_handler_base::select(int nfds, fd_set &readfds,
 {
 	fd_set in_readfds, in_writefds, in_exceptfds;
 
-	/* initialize the select notification function pointer */
-	if (!libc_select_notify)
-		libc_select_notify = select_notify;
-
 	in_readfds   = readfds;
 	in_writefds  = writefds;
 	in_exceptfds = exceptfds;
@@ -420,7 +413,7 @@ int Libc::Select_handler_base::select(int nfds, fd_set &readfds,
 
 	{
 		/*
-		 * We use the guard directly to atomically check is any descripor is
+		 * We use the guard directly to atomically check if any descripor is
 		 * ready, and insert into select-callback list otherwise.
 		 */
 		Select_cb_list::Guard guard(select_cb_list());
