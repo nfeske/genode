@@ -527,10 +527,8 @@ __SYS_(int, open, (const char *pathname, int flags, ...),
 	}
 
 	new_fdo = plugin->open(resolved_path.base(), flags);
-	if (!new_fdo) {
-		error("plugin()->open(\"", pathname, "\") failed");
+	if (!new_fdo)
 		return -1;
-	}
 	new_fdo->path(resolved_path.base());
 
 	return new_fdo->libc_fd;
