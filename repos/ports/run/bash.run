@@ -195,7 +195,7 @@ install_config {
 	</start>
 
 	<start name="trace_logger" >
-		<resource name="RAM" quantum="80M"/>
+		<resource name="RAM" quantum="180M"/>
 		<config verbose="no"
 				session_ram="10M"
 				session_parent_levels="1"
@@ -206,9 +206,16 @@ install_config {
 				default_policy="null"
 				default_buffer="1K">
 
+<!--
 			<policy label_prefix="init -> /bin/vim"
-			        buffer="8M"
+			        buffer="4M"
 			        policy="null"/>
+			<policy label="init -> vfs"
+			        buffer="4M"
+			        policy="null"/>
+			<policy label="init -> rw_vfs"
+			        buffer="4M"
+			        policy="null"/> -->
 		</config>
 	</start>
 </config>}
@@ -217,8 +224,8 @@ set fd [open [run_dir]/genode/focus w]
 puts $fd "<focus label=\"gui_fb -> \" domain=\"default\"/>"
 close $fd
 
-build { lib/trace app/trace_logger lib/ld test/fork test/execve }
+build { server/vfs lib/trace app/trace_logger lib/ld test/fork test/execve }
 
-build_boot_image { null log_output trace_logger ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
+build_boot_image { vfs null log_output trace_logger ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
 
 run_genode_until forever
