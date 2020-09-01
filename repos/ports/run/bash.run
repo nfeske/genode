@@ -23,8 +23,24 @@ set hls
 set nocompatible
 set laststatus=2
 set noswapfile
-set viminfo=}
+set viminfo=
+set backspace=indent,eol,start
+set nowrap
+set ruler
+set ts=2
+set wildmode=list:longest
+set completeopt=menu,longest}
 close $vimrc_fd
+
+
+proc artificial_inline_files { } {
+	set result ""
+	for {set i 0} { $i < 30 } { incr i } {
+		append result "<inline name=\"a$i\"/>\n"
+	}
+	return $result
+}
+
 
 install_config {
 <config verbose="yes">
@@ -37,6 +53,7 @@ install_config {
 		<service name="IRQ"/>
 		<service name="IO_PORT"/>
 		<service name="IO_MEM"/>
+		<service name="TRACE"/>
 	</parent-provides>
 
 	<default-route>
@@ -98,6 +115,25 @@ install_config {
 		</route>
 	</start>
 
+	<start name="rw_vfs" caps="120">
+		<resource name="RAM" quantum="30M"/>
+		<binary name="vfs"/>
+		<provides><service name="File_system"/></provides>
+		<config>
+			<vfs>
+				<dir name="subdir">
+					<tar name="bash.tar" />
+				</dir>
+				<dir name="s"/>
+				<dir name="s2"/>
+				<dir name="t"/>
+				<inline name="f1"/>} [artificial_inline_files] {
+			</vfs>
+
+			<default-policy root="/" writeable="yes"/>
+		</config>
+	</start>
+
 	<start name="vfs" caps="120">
 		<resource name="RAM" quantum="30M"/>
 		<provides><service name="File_system"/></provides>
@@ -114,12 +150,18 @@ install_config {
 					<zero/> <null/> <terminal/>
 					<inline name="rtc">2018-01-01 00:01</inline>
 				</dir>
+				<dir name="rw"> <fs label="rw"/> </dir>
 				<dir name="pipe"> <pipe/> </dir>
 			</vfs>
 
 			<policy label_prefix="vfs_rom" root="/"/>
 			<default-policy root="/" writeable="yes"/>
 		</config>
+		<route>
+			<service name="File_system"> <child name="rw_vfs"/> </service>
+			<service name="Terminal"> <child name="terminal"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
 	</start>
 
 	<start name="vfs_rom">
@@ -133,23 +175,41 @@ install_config {
 		</route>
 	</start>
 
-	<start name="/bin/bash" caps="1000">
+	<start name="/bin/vim" caps="1000">
 		<resource name="RAM" quantum="30M" />
 		<config ld_verbose="yes">
 			<libc stdin="/dev/terminal" stdout="/dev/terminal"
 			      stderr="/dev/terminal" rtc="/dev/rtc" pipe="/pipe"/>
-			<vfs> <fs/> </vfs>
-			<arg value="bash"/>
+			<vfs> <fs buffer_size="8K"/> </vfs>
+			<arg value="vim"/>
 			<env key="TERM" value="screen"/>
 			<env key="PATH" value="/bin" />
 		</config>
 		<route>
 			<service name="File_system"> <child name="vfs"/> </service>
 			<service name="ROM" label_suffix=".lib.so"> <parent/> </service>
-			<service name="ROM" label_last="/bin/bash"> <child name="vfs_rom"/> </service>
+			<service name="ROM" label_last="/bin/vim"> <child name="vfs_rom"/> </service>
 			<service name="ROM" label_prefix="/bin"> <child name="vfs_rom"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
+	</start>
+
+	<start name="trace_logger" >
+		<resource name="RAM" quantum="80M"/>
+		<config verbose="no"
+				session_ram="10M"
+				session_parent_levels="1"
+				session_arg_buffer="64K"
+				period_sec="5"
+				activity="no"
+				affinity="no"
+				default_policy="null"
+				default_buffer="1K">
+
+			<policy label_prefix="init -> /bin/vim"
+			        buffer="8M"
+			        policy="null"/>
+		</config>
 	</start>
 </config>}
 
@@ -157,8 +217,8 @@ set fd [open [run_dir]/genode/focus w]
 puts $fd "<focus label=\"gui_fb -> \" domain=\"default\"/>"
 close $fd
 
-build { lib/ld test/fork test/execve }
+build { lib/trace app/trace_logger lib/ld test/fork test/execve }
 
-build_boot_image { ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
+build_boot_image { null log_output trace_logger ld.lib.so libc.lib.so libm.lib.so vfs.lib.so posix.lib.so }
 
 run_genode_until forever
