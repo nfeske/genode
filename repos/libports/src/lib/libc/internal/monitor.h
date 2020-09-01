@@ -143,14 +143,28 @@ struct Libc::Monitor::Pool
 			mutex.acquire();
 		}
 
+		enum class State { JOBS_PENDING, ALL_COMPLETE };
+
 		/* called by the monitor context itself */
-		void execute_monitors()
+		State execute_monitors()
 		{
+			State result = State::ALL_COMPLETE;
+
 			_jobs.for_each([&] (Job &job) {
-				if (!job.completed() && !job.expired() && job.execute()) {
-					job.complete();
+
+				if (!job.completed() && !job.expired()) {
+
+					bool const completed = job.execute();
+
+					if (completed)
+						job.complete();
+
+					if (!completed)
+						result = State::JOBS_PENDING;
 				}
 			});
+
+			return result;
 		}
 };
 
