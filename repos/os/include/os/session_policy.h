@@ -200,7 +200,7 @@ class Genode::Session_policy : public Xml_node
 			try { return config.sub_node("default-policy"); }
 			catch (...) { }
 
-			warning("no policy defined for label '", label, "'");
+//			warning("no policy defined for label '", label, "'");
 			throw No_policy_defined();
 		}
 
