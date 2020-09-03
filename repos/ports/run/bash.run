@@ -175,20 +175,20 @@ install_config {
 		</route>
 	</start>
 
-	<start name="/bin/vim" caps="1000">
+	<start name="/bin/bash" caps="1000">
 		<resource name="RAM" quantum="30M" />
 		<config ld_verbose="yes">
 			<libc stdin="/dev/terminal" stdout="/dev/terminal"
 			      stderr="/dev/terminal" rtc="/dev/rtc" pipe="/pipe"/>
 			<vfs> <fs buffer_size="8K"/> </vfs>
-			<arg value="vim"/>
+			<arg value="bash"/>
 			<env key="TERM" value="screen"/>
 			<env key="PATH" value="/bin" />
 		</config>
 		<route>
 			<service name="File_system"> <child name="vfs"/> </service>
 			<service name="ROM" label_suffix=".lib.so"> <parent/> </service>
-			<service name="ROM" label_last="/bin/vim"> <child name="vfs_rom"/> </service>
+			<service name="ROM" label_last="/bin/bash"> <child name="vfs_rom"/> </service>
 			<service name="ROM" label_prefix="/bin"> <child name="vfs_rom"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
