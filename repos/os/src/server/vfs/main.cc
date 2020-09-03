@@ -183,7 +183,7 @@ class Vfs_server::Session_component : private Session_resources,
 
 				auto drop_packet_from_submit_queue = [&] ()
 				{
-					_stream.get_packet();
+					_stream.try_get_packet();
 
 					overall_progress      = true;
 					progress_in_iteration = true;
@@ -273,7 +273,7 @@ class Vfs_server::Session_component : private Session_resources,
 				}
 
 				if (node.acknowledgement_pending()) {
-					_stream.acknowledge_packet(node.dequeue_acknowledgement());
+					_stream.try_ack_packet(node.dequeue_acknowledgement());
 					progress = true;
 				}
 
@@ -335,6 +335,7 @@ class Vfs_server::Session_component : private Session_resources,
 
 				overall_progress |= progress_in_iteration;
 			}
+
 			return overall_progress ? Process_packets_result::PROGRESS
 			                        : Process_packets_result::NONE;
 		}
@@ -351,6 +352,19 @@ class Vfs_server::Session_component : private Session_resources,
 		bool no_longer_idle() const
 		{
 			return !Session_queue::Element::enqueued() && !_active_nodes.empty();
+		}
+
+		void wakeup_client()
+		{
+			/*
+			 * The 'process_packets' method interacts with the packet stream
+			 * without immediately triggering any signals (using
+			 * 'try_get_packet' and 'try_ack_packet').
+			 *
+			 * Once the packet processing has settled, the 'wakeup_client'
+			 * method is called to notify the client.
+			 */
+			_stream.wakeup();
 		}
 
 	private:
@@ -375,6 +389,8 @@ class Vfs_server::Session_component : private Session_resources,
 			 */
 			if (progress == Process_packets_result::PROGRESS)
 				_io_progress_handler.handle_io_progress();
+
+			wakeup_client();
 		}
 
 		/**
@@ -816,8 +832,11 @@ class Vfs_server::Root : public Genode::Root_component<Session_component>,
 						break;
 					}
 
-					if (!session.no_longer_active())
+					if (session.no_longer_active()) {
+						session.wakeup_client();
+					} else {
 						still_active_sessions.enqueue(session);
+					}
 				});
 
 				_active_sessions = still_active_sessions;
@@ -832,6 +851,10 @@ class Vfs_server::Root : public Genode::Root_component<Session_component>,
 			 */
 			if (yield)
 				Genode::Signal_transmitter(_reactivate_handler).submit();
+
+			_active_sessions.for_each([&] (Session_component &session) {
+				session.wakeup_client();
+			});
 		}
 
 	protected:
