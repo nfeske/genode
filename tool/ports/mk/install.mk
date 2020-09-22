@@ -199,7 +199,7 @@ _file_name = $(call _prefer,$(NAME($1)),$(notdir $(URL($1))))
 	$(VERBOSE)mkdir -p $(dir $(call _file_name,$*))
 	$(VERBOSE)name=$(call _file_name,$*);\
 		(test -f $$name || $(MSG_DOWNLOAD)$(URL($*))); \
-		(test -f $$name || wget --quiet --no-check-certificate $(URL($*)) -O $$name) || \
+		(test -f $$name || cp ~/vbox6/$$name $$name) || \
 			($(ECHO) Error: Download for $* failed; false)
 	$(VERBOSE)\
 		($(ECHO) "$(SHA($*))  $(call _file_name,$*)" |\
