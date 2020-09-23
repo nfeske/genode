@@ -74,6 +74,9 @@ VBOX_CC_OPT += -DVBOX_WITH_VDMA
 VBOX_CC_OPT += -DVBOX_WITH_VMSVGA
 VBOX_CC_OPT += -DVBOX_HDD_NO_DYNAMIC_BACKENDS
 
+# prevent error preprocessor directive in VBox/version.h
+VBOX_CC_OPT += -DVBOX_PRIVATE_BUILD_DESC
+
 CC_WARN += -Wno-trigraphs -Werror
 
 CC_OPT += $(VBOX_CC_OPT)

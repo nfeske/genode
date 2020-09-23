@@ -87,8 +87,8 @@ VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-all/, $(VBOX_MAIN_ALL)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/glue/, $(VBOX_MAIN_GLUE)))
 
 VBOX_INC += types.h cdefs.h hgcmsvc.h err.h dis.h disopcode.h log.h sup.h pci.h
-VBOX_INC += param.h ostypes.h VMMDev.h vusb.h dbg.h version.h
-VBOX_INC += bioslogo.h scsi.h shflsvc.h vd.h
+VBOX_INC += param.h ostypes.h VMMDev.h vusb.h dbg.h version.h scsiinline.h
+VBOX_INC += bioslogo.h scsi.h shflsvc.h vd.h vdmedia.h vd-common.h
 VBOX_INC += vd-plugin.h vd-ifs.h vd-ifs-internal.h vd-image-backend.h
 VBOX_INC += vd-cache-backend.h vd-filter-backend.h msi.h asmdefs.mac err.mac
 VBOX_INC += settings.h VBoxAuth.h

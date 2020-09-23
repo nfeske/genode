@@ -99,9 +99,6 @@ SRC_CC += VMM/VMMR3/MMHeap.cpp
 
 CC_OPT += -DVBOX_IN_VMM
 
-# prevent error preprocessor directive in VBox/version.h
-CC_OPT += -DVBOX_PRIVATE_BUILD_DESC
-
 # definitions needed by SSM.cpp
 CC_OPT += -DKBUILD_TYPE=\"debug\" \
           -DKBUILD_TARGET=\"genode\" \
