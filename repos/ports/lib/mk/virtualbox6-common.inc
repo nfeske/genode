@@ -49,6 +49,7 @@ VBOX_CC_OPT += -DVBOX_WITH_E1000
 VBOX_CC_OPT += -DVBOX_WITH_AHCI
 VBOX_CC_OPT += -DVBOX_WITH_MULTI_CORE
 VBOX_CC_OPT += -DVBOX_WITH_AUDIO_OSS
+VBOX_CC_OPT += -DVBOX_WITH_INTEL_HDA
 
 # Required for guest additions 5++
 VBOX_CC_OPT += -DVBOX_WITH_GUEST_PROPS
@@ -84,6 +85,12 @@ CC_OPT += $(VBOX_CC_OPT)
 # VirtualBox expects wchar_t to be a 16-bit type. yasm does not understand this
 # flag, therefore it gets added to CC_OPT instead of VBOX_CC_OPT.
 CC_OPT += -fshort-wchar
+
+#
+# Prevent inclusion of the Genode::Log definition after the vbox #define
+# of 'Log'. Otherwise, the attempt to compile base/log.h will fail.
+#
+CC_OPT += -include base/log.h
 
 LIBS += libc libm libc-mem
 

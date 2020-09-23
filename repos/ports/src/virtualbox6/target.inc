@@ -15,7 +15,7 @@ LIBS  += base
 LIBS  += stdcxx
 
 LIBS  += virtualbox6-bios virtualbox6-runtime \
-         virtualbox6-vmm virtualbox6-devices virtualbox6-drivers \
+         virtualbox6-vmm virtualbox6-devices \
          virtualbox6-storage virtualbox6-zlib virtualbox6-liblzf \
          virtualbox6-xml virtualbox6-main virtualbox6-apiwrap \
          virtualbox6-dis

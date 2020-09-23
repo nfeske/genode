@@ -92,8 +92,8 @@ VBOX_INC += bioslogo.h scsi.h shflsvc.h vd.h vdmedia.h vd-common.h
 VBOX_INC += vd-plugin.h vd-ifs.h vd-ifs-internal.h vd-image-backend.h
 VBOX_INC += vd-cache-backend.h vd-filter-backend.h msi.h asmdefs.mac err.mac
 VBOX_INC += settings.h VBoxAuth.h
-VBOX_INC += usb.h usbfilter.h vrdpusb.h AssertGuest.h
-VBOX_INC += RemoteDesktop Graphics ExtPack/ExtPack.h
+VBOX_INC += usb.h usbfilter.h vrdpusb.h AssertGuest.h bios.h ata.h
+VBOX_INC += RemoteDesktop Graphics ExtPack/ExtPack.h VMMDevCoreTypes.h
 
 VBOX_INC_COM := array.h assert.h AutoLock.h ErrorInfo.h EventQueue.h Guid.h
 VBOX_INC_COM += list.h MultiResult.h string.h
@@ -216,18 +216,20 @@ define NEWLINE
 endef
 
 src/virtualbox6/src/VBox/VMM/include/IEMInstructionStatisticsTmpl.h: additional_steps
-	$(VERBOSE)echo -e '$(subst $(NEWLINE),\n,$(IEM_INSTRUCTION_STATISTICS_TMPL_HEADER))' > $@
-	$(VERBOSE)sed \
-		-e '/IEMOP_MNEMONIC\(\|[01234]\|[01234]EX\)(/!d' \
-		-e ':look-for-end-of-invocation' \
-		-e '/)/bend-of-invocation' \
-		-e 'N' \
-		-e 'blook-for-end-of-invocation' \
-		-e ':end-of-invocation' \
-		-e 's/\n/ /g' \
-		-e 's/  */ /g' \
-		-e 's/^.*IEMOP_MNEMONIC\(\|[01234]\|[01234]EX\)(/IEM_DO_INSTR_STAT\1(/' \
-		-e 's/;.*$(DOLLAR)//' \
-		$(IEM_INSTRUCTIONS_CPP_H) | sort >> $@
-	$(VERBOSE)echo -e '$(subst $(NEWLINE),\n,$(IEM_INSTRUCTION_STATISTICS_TMPL_FOOTER))' >> $@
+	$(VERBOSE)( \
+	 echo -e '$(subst $(NEWLINE),\n,$(IEM_INSTRUCTION_STATISTICS_TMPL_HEADER))'; \
+	 sed \
+	     -e '/IEMOP_MNEMONIC\(\|[01234]\|[01234]EX\)(/!d' \
+	     -e ':look-for-end-of-invocation' \
+	     -e '/)/bend-of-invocation' \
+	     -e 'N' \
+	     -e 'blook-for-end-of-invocation' \
+	     -e ':end-of-invocation' \
+	     -e 's/\n/ /g' \
+	     -e 's/  */ /g' \
+	     -e 's/^.*IEMOP_MNEMONIC\(\|[01234]\|[01234]EX\)(/IEM_DO_INSTR_STAT\1(/' \
+	     -e 's/;.*$(DOLLAR)//' \
+	   $(IEM_INSTRUCTIONS_CPP_H) | sort ; \
+	 echo -e '$(subst $(NEWLINE),\n,$(IEM_INSTRUCTION_STATISTICS_TMPL_FOOTER))' \
+	) > $@
 
