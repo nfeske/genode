@@ -112,4 +112,7 @@ CC_OPT += -DVBOX_SVN_REV=~0
 
 INC_DIR += $(VBOX_DIR)/VMM/include
 
+# override conflicting parts of the libc headers
+INC_DIR += $(REP_DIR)/src/virtualbox6/include/libc
+
 CC_CXX_WARN_STRICT =

@@ -86,7 +86,6 @@ LIBS += libc libm libc-mem
 
 INC_DIR += $(REP_DIR)/src/virtualbox6/include
 INC_DIR += $(REP_DIR)/src/virtualbox6/include/xpcom
-INC_DIR += $(REP_DIR)/src/virtualbox6/include/libc
 INC_DIR += $(VIRTUALBOX_DIR)/include
 INC_DIR += $(VIRTUALBOX_SDK_DIR)/sdk/bindings/xpcom/include
 INC_DIR += $(VBOX_DIR)/Devices/build
