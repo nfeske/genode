@@ -71,6 +71,11 @@ VBOX_MAIN_INC += USBDeviceImpl HostUSBDeviceImpl Matching Wrapper
 VBOX_MAIN_INC += RemoteUSBDeviceImpl RemoteUSBBackend ConsoleVRDPServer
 VBOX_MAIN_INC += MachineDebuggerImpl EmulatedUSBImpl
 VBOX_MAIN_INC += ThreadTask USBProxyBackend
+VBOX_MAIN_INC += RecordingSettingsImpl GraphicsAdapterImpl PerformanceImpl
+VBOX_MAIN_INC += AudioDriver GuestSessionImplTasks ClientTokenHolder
+VBOX_MAIN_INC += DHCPConfigImpl MachineImplMoveVM MediumIOImpl
+VBOX_MAIN_INC += MachineLaunchVMCommonWorker ClientWatcher
+VBOX_MAIN_INC += CloudProviderManagerImpl
 
 VBOX_SRC_VBOX := VMM Devices Runtime GuestHost/HGSMI Storage Disassembler
 VBOX_SRC_VBOX += HostServices/SharedFolders Main/xml/Settings.cpp
@@ -78,6 +83,7 @@ VBOX_SRC_VBOX += HostServices/SharedClipboard
 VBOX_SRC_VBOX += HostServices/GuestProperties
 VBOX_SRC_VBOX += Main/xml/VirtualBox-settings.xsd Main/xml/SchemaDefs.xsl
 VBOX_SRC_VBOX += Main/idl/docstrip.xsl Main/idl/VirtualBox.xidl
+VBOX_SRC_VBOX += Main/idl/comimpl.xsl
 VBOX_SRC_VBOX += Main/idl/apiwrap-server.xsl
 VBOX_SRC_VBOX += Main/idl/typemap-shared.inc.xsl
 VBOX_SRC_VBOX += $(addsuffix .h,   $(addprefix Main/include/, $(VBOX_MAIN_INC)))
@@ -94,6 +100,7 @@ VBOX_INC += vd-cache-backend.h vd-filter-backend.h msi.h asmdefs.mac err.mac
 VBOX_INC += settings.h VBoxAuth.h
 VBOX_INC += usb.h usbfilter.h vrdpusb.h AssertGuest.h bios.h ata.h
 VBOX_INC += RemoteDesktop Graphics ExtPack/ExtPack.h VMMDevCoreTypes.h
+VBOX_INC += VBoxGuestCoreTypes.h intnet.h
 
 VBOX_INC_COM := array.h assert.h AutoLock.h ErrorInfo.h EventQueue.h Guid.h
 VBOX_INC_COM += list.h MultiResult.h string.h
@@ -102,6 +109,7 @@ VBOX_CONTENT += $(addprefix src/VBox/,$(VBOX_SRC_VBOX))
 VBOX_CONTENT += $(addprefix include/VBox/, $(VBOX_INC))
 VBOX_CONTENT += $(addprefix include/VBox/com/, $(VBOX_INC_COM))
 VBOX_CONTENT += include/VBox/HostServices/
+VBOX_CONTENT += include/VBox/GuestHost/
 
 VBOX_CONTENT += src/libs/zlib-1.2.11 src/libs/liblzf-3.4 src/libs/libxml2-2.9.4
 VBOX_CONTENT += include/VBox/vmm include/iprt Version.kmk
@@ -127,6 +135,10 @@ additional_steps : $(DOWNLOADS)
 	$(VERBOSE)xsltproc \
 	   -o src/virtualbox6/src/VBox/Runtime/common/err/errmsgvboxcomdata.h \
 	   src/virtualbox6/src/VBox/Runtime/VBox/errmsgvboxcom.xsl \
+	   src/virtualbox6/VirtualBox_stripped.xidl
+	$(VERBOSE)xsltproc --stringparam G_kind VBoxEventHeader \
+	   -o src/virtualbox6/src/VBox/Main/include/VBoxEvents.h \
+	   src/virtualbox6/src/VBox/Main/idl/comimpl.xsl \
 	   src/virtualbox6/VirtualBox_stripped.xidl
 	$(VERBOSE)xsltproc --stringparam KBUILD_HOST genode \
 	   --stringparam generating "headers" -o src/virtualbox6/VBoxAPIWrap/apiwrappers-headers \

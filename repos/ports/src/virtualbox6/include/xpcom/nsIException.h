@@ -5,6 +5,6 @@
 #include "nsISupports.h"
 #endif
 
-class nsIException : public nsISupports { };
+struct nsIException : nsISupports { };
 
 #endif /* __gen_nsIException_h__ */

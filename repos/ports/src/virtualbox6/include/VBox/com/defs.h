@@ -2,8 +2,8 @@
 #define ___VBox_com_defs_h
 
 #include <iprt/types.h>
-
 #include <xpcom/nsISupports.h>
+#include <xpcom/nsISupportsImpl.h>
 #include <nsID.h>
 
 #define ATL_NO_VTABLE
@@ -16,7 +16,12 @@
 #define COM_INTERFACE_ENTRY(X)
 #define COM_INTERFACE_ENTRY2(X,Y)
 #define COM_INTERFACE_ENTRY_AGGREGATE(X, Y)
-#define END_COM_MAP()
+
+/*
+ * The 'END_COM_MAP' macro equips all APIWrap classes with 'QueryInterface'
+ * methods as required by the ComPtr implementation (VBox/com/ptr.h).
+ */
+#define END_COM_MAP() NS_DECL_ISUPPORTS
 
 #define HRESULT nsresult
 #define SUCCEEDED(X) ((X) == VINF_SUCCESS)
@@ -27,6 +32,7 @@
                                    )
 
 #define IUnknown nsISupports
+#define IErrorInfo nsIException
 
 typedef       PRBool               BOOL;
 typedef       PRUint8              BYTE;
@@ -67,6 +73,7 @@ typedef       CBSTR                IN_BSTR;
 
 /* OLE error codes */
 #define S_OK                ((nsresult)NS_OK)
+#define S_FALSE             ((nsresult)1)
 #define E_UNEXPECTED        NS_ERROR_UNEXPECTED
 #define E_NOTIMPL           NS_ERROR_NOT_IMPLEMENTED
 #define E_OUTOFMEMORY       NS_ERROR_OUT_OF_MEMORY
@@ -88,6 +95,8 @@ inline GUID& stuffstuff() {
 }
 #define COM_IIDOF(X) stuffstuff()
 
+typedef nsIID IID;
+
 #define COM_STRUCT_OR_CLASS(I) class I
 
 extern "C"
@@ -95,6 +104,7 @@ extern "C"
 	BSTR SysAllocString(const OLECHAR* sz);
 	BSTR SysAllocStringByteLen(char *psz, unsigned int len);
 	BSTR SysAllocStringLen(const OLECHAR *pch, unsigned int cch);
+	int  SysReAllocStringLen(BSTR *pbstr, const OLECHAR *psz, unsigned int cch);
 	void SysFreeString(BSTR bstr);
 	unsigned int SysStringByteLen(BSTR bstr);
 	unsigned int SysStringLen(BSTR bstr);

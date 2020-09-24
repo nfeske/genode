@@ -1,7 +1,8 @@
 #ifndef prtypes_h___
 #define prtypes_h___
 
-typedef bool      PRBool;
+typedef int       PRIntn;
+typedef PRIntn    PRBool;
 typedef uint8_t   PRUint8;
 typedef int16_t   PRInt16;
 typedef uint16_t  PRUint16;

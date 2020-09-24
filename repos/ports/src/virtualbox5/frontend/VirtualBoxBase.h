@@ -133,7 +133,8 @@ class VirtualBoxBase : public VirtualBoxTranslatable
 		                                const char *aComponent,
 		                                Utf8Str aText,
 		                                bool aWarning,
-		                                bool aLogIt);
+		                                bool aLogIt,
+		                                LONG aResultDetail = 0);
 
 		virtual VBoxLockingClass getLockingClass() const
 		{

@@ -1,6 +1,8 @@
 #ifndef nsError_h__
 #define nsError_h__
 
+#define NS_SUCCEEDED(_nsresult)            (!((_nsresult) & 0x80000000))
+
 /* Standard "it worked" return value */
 #define NS_OK                              0
 

@@ -8,7 +8,9 @@
 typedef struct { char x [sizeof(RTUUID)]; } nsID; /* differs from original */
 
 typedef nsID nsCID;
+typedef nsID nsIID;
 
 #define NS_DEFINE_STATIC_IID_ACCESSOR(x)
+#define REFNSIID const nsIID&
 
 #endif

@@ -32,6 +32,7 @@
 #include "VBox/com/Guid.h"
 
 #include "VBox/com/VirtualBox.h"
+#include "VBox/com/ErrorInfo.h"
 
 namespace com
 {
@@ -114,6 +115,8 @@ class VirtualBoxBase : public VirtualBoxTranslatable
 
 		virtual const char* getComponentName() const = 0;
 
+		virtual const IID& getClassIID() const = 0;
+
 		static HRESULT handleUnexpectedExceptions(VirtualBoxBase *const aThis, RT_SRC_POS_DECL);
 		static HRESULT initializeComForThread(void);
 		static void uninitializeComForThread(void);
@@ -133,7 +136,10 @@ class VirtualBoxBase : public VirtualBoxTranslatable
 		                                const char *aComponent,
 		                                Utf8Str aText,
 		                                bool aWarning,
-		                                bool aLogIt);
+		                                bool aLogIt,
+		                                LONG aResultDetail = 0);
+
+		HRESULT setWarning(HRESULT aResultCode, const char *pcsz, ...);
 
 		virtual VBoxLockingClass getLockingClass() const
 		{
