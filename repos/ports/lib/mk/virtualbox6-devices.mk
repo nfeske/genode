@@ -72,6 +72,9 @@ SRC_CC += Devices/Input/UsbKbd.cpp
 
 SRC_CC += Devices/build/VBoxDD.cpp
 
+# don't use the 'VBoxDevicesRegister' implementation provided by VBoxDD.cpp
+CC_OPT_Devices/build/VBoxDD = -DVBoxDevicesRegister=VBoxDevicesRegisterDD
+
 SRC_CC += GuestHost/HGSMI/HGSMICommon.cpp
 SRC_CC += GuestHost/HGSMI/HGSMIMemAlloc.cpp
 
