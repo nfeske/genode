@@ -90,12 +90,6 @@ CC_OPT += $(VBOX_CC_OPT)
 # flag, therefore it gets added to CC_OPT instead of VBOX_CC_OPT.
 CC_OPT += -fshort-wchar
 
-#
-# Prevent inclusion of the Genode::Log definition after the vbox #define
-# of 'Log'. Otherwise, the attempt to compile base/log.h will fail.
-#
-CC_OPT += -include base/log.h
-
 LIBS += libc libm libc-mem
 
 INC_DIR += $(REP_DIR)/src/virtualbox6/include

@@ -1,4 +1,5 @@
 include $(REP_DIR)/lib/mk/virtualbox6-common.inc
+include $(REP_DIR)/lib/mk/virtualbox6-log.inc
 
 LIBS  += stdcxx
 
@@ -17,6 +18,7 @@ SRC_CC += Main/src-all/SecretKeyStore.cpp
 SRC_CC += Main/src-all/SharedFolderImpl.cpp
 SRC_CC += Main/src-all/ThreadTask.cpp
 SRC_CC += Main/src-all/VirtualBoxBase.cpp
+SRC_CC += Main/src-all/GlobalStatusConversion.cpp
 SRC_CC += Main/src-server/AudioAdapterImpl.cpp
 SRC_CC += Main/src-server/BandwidthControlImpl.cpp
 SRC_CC += Main/src-server/BandwidthGroupImpl.cpp

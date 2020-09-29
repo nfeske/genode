@@ -19,11 +19,20 @@
 #define NS_IMPL_CI_INTERFACE_GETTER4(a, b, c, d, e)
 #define NS_IMPL_CI_INTERFACE_GETTER5(a, b, c, d, e, f)
 
-#define NS_DECL_ISUPPORTS                                                     \
-public:                                                                       \
-  NS_IMETHOD QueryInterface(REFNSIID aIID,                                    \
-                            void** aInstancePtr);                             \
-  NS_IMETHOD_(nsrefcnt) AddRef(void);                                         \
-  NS_IMETHOD_(nsrefcnt) Release(void);
+#define NS_DECL_ISUPPORTS \
+private: \
+\
+  class ISupports_not_implemented { }; \
+\
+public: \
+\
+  NS_IMETHOD QueryInterface(REFNSIID aIID, void** aInstancePtr) \
+  { throw ISupports_not_implemented(); } \
+\
+  NS_IMETHOD_(nsrefcnt) AddRef(void) \
+  { throw ISupports_not_implemented(); } \
+\
+  NS_IMETHOD_(nsrefcnt) Release(void) \
+  { throw ISupports_not_implemented(); }
 
 #endif

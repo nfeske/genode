@@ -25,7 +25,7 @@ VBOX_MAIN_GLUE := AutoLock EventQueue string xpcom/helpers
 
 VBOX_MAIN_ALL := AuthLibrary AutoCaller DisplayResampleImage DisplayUtils EventImpl Global HashedPw
 VBOX_MAIN_ALL += PCIDeviceAttachmentImpl ProgressImpl SharedFolderImpl SecretKeyStore
-VBOX_MAIN_ALL += ThreadTask VirtualBoxBase
+VBOX_MAIN_ALL += ThreadTask VirtualBoxBase GlobalStatusConversion
 
 VBOX_MAIN_CLI := AdditionsFacilityImpl BusAssignmentManager
 VBOX_MAIN_CLI += ConsoleImpl ConsoleImpl2 ConsoleVRDPServer
