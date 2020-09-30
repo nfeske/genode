@@ -24,8 +24,6 @@ void name(void) { \
 	while (1) { Assert(!"not implemented"); } \
 }
 
-DUMMY(RTDbgStackDumpSelf)
-
 //DUMMY(DBGCRegisterCommands)
 //
 //DUMMY(DBGFR3AsLineByAddrA)

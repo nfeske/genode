@@ -50,10 +50,14 @@ SRC_CC += Runtime/common/checksum/crc32.cpp
 SRC_CC += Runtime/common/checksum/crc32c.cpp
 SRC_CC += Runtime/common/checksum/ipv4.cpp
 SRC_CC += Runtime/common/checksum/sha512str.cpp
+SRC_CC += Runtime/common/dbg/dbgmod.cpp
+SRC_CC += Runtime/common/dbg/dbgstackdumpself.cpp
 SRC_CC += Runtime/common/err/errinfo.cpp
 SRC_CC += Runtime/common/err/errinfolog.cpp
 SRC_CC += Runtime/common/err/errmsgxpcom.cpp
 SRC_CC += Runtime/common/err/RTErrConvertFromErrno.cpp
+SRC_CC += Runtime/common/ldr/ldr.cpp
+SRC_CC += Runtime/common/ldr/ldrEx.cpp
 SRC_CC += Runtime/common/log/log.cpp
 SRC_CC += Runtime/common/log/logellipsis.cpp
 SRC_CC += Runtime/common/log/logrelellipsis.cpp
@@ -187,6 +191,7 @@ SRC_S  += Runtime/common/asm/ASMCpuIdExSlow.asm
 SRC_S  += Runtime/common/asm/ASMGetXcr0.asm
 SRC_S  += Runtime/common/asm/ASMFxSave.asm
 SRC_S  += Runtime/common/asm/ASMMemFirstMismatchingU8.asm
+SRC_S  += Runtime/common/dbg/dbgstackdumpself-amd64-x86.asm
 
 SRC_CC += Runtime/common/err/errmsg.cpp
 Runtime/common/err/errmsg.o: errmsgdata.h
