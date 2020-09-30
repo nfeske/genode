@@ -32,7 +32,7 @@
 #include <VBox/vmm/hm.h>
 #include <VBox/vmm/iom.h>
 
-//#include "util.h"
+#include "util.h"
 
 static const bool trace = false;
 
@@ -79,30 +79,30 @@ RT_C_DECLS_BEGIN
 //}
 
 
-//static_assert(sizeof(RTR0PTR) == sizeof(RTR3PTR), "pointer transformation bug");
-//static_assert(sizeof(RTR0PTR) == sizeof(void *) , "pointer transformation bug");
-//static_assert(sizeof(RTR3PTR) == sizeof(RTR0PTR), "pointer transformation bug");
-//
-//RTR0PTR MMHyperR3ToR0(PVM pVM, RTR3PTR R3Ptr) { return (RTR0PTR)R3Ptr; }
-//RTRCPTR MMHyperR3ToRC(PVM pVM, RTR3PTR R3Ptr) { return to_rtrcptr(R3Ptr); }
-//RTR0PTR MMHyperCCToR0(PVM pVM, void *pv)      { return (RTR0PTR)pv; }
-//RTRCPTR MMHyperCCToRC(PVM pVM, void *pv)      { return to_rtrcptr(pv); }
-//RTR3PTR MMHyperR0ToR3(PVM pVM, RTR0PTR R0Ptr) { return (RTR3PTR*)(R0Ptr | 0UL); }
-//RTR3PTR MMHyperRCToR3(PVM pVM, RTRCPTR RCPtr)
-//{
-//	static_assert(sizeof(RCPtr) <= sizeof(RTR3PTR), "ptr transformation bug");
-//	return reinterpret_cast<RTR3PTR>(0UL | RCPtr);
-//}
-//
-///* debugger */
+static_assert(sizeof(RTR0PTR) == sizeof(RTR3PTR), "pointer transformation bug");
+static_assert(sizeof(RTR0PTR) == sizeof(void *) , "pointer transformation bug");
+static_assert(sizeof(RTR3PTR) == sizeof(RTR0PTR), "pointer transformation bug");
+
+RTR0PTR MMHyperR3ToR0(PVM pVM, RTR3PTR R3Ptr) { return (RTR0PTR)R3Ptr; }
+RTRCPTR MMHyperR3ToRC(PVM pVM, RTR3PTR R3Ptr) { return to_rtrcptr(R3Ptr); }
+RTR0PTR MMHyperCCToR0(PVM pVM, void *pv)      { return (RTR0PTR)pv; }
+RTRCPTR MMHyperCCToRC(PVM pVM, void *pv)      { return to_rtrcptr(pv); }
+RTR3PTR MMHyperR0ToR3(PVM pVM, RTR0PTR R0Ptr) { return (RTR3PTR*)(R0Ptr | 0UL); }
+RTR3PTR MMHyperRCToR3(PVM pVM, RTRCPTR RCPtr)
+{
+	static_assert(sizeof(RCPtr) <= sizeof(RTR3PTR), "ptr transformation bug");
+	return reinterpret_cast<RTR3PTR>(0UL | RCPtr);
+}
+
+/* debugger */
 //int  DBGFR3AsSymbolByAddr(PUVM, RTDBGAS, PCDBGFADDRESS, uint32_t, PRTGCINTPTR,
 //                          PRTDBGSYMBOL, PRTDBGMOD)                              TRACE(VERR_INVALID_HANDLE)
-//
+
 ///* called by 'VMMR3InitRC', but we don't use GC */
 //void CPUMPushHyper(PVMCPU, uint32_t)                                            TRACE()
 //
 //int  PGMR3FinalizeMappings(PVM)                                                 TRACE(VINF_SUCCESS)
-//int  pgmR3InitSavedState(PVM pVM, uint64_t cbRam)                               TRACE(VINF_SUCCESS)
+int  pgmR3InitSavedState(PVM pVM, uint64_t cbRam)                               TRACE(VINF_SUCCESS)
 //
 //int  vmmR3SwitcherInit(PVM pVM)                                                 TRACE(VINF_SUCCESS)
 //void vmmR3SwitcherRelocate(PVM, RTGCINTPTR)                                     TRACE()
@@ -134,10 +134,10 @@ RT_C_DECLS_BEGIN
 //void HMR3Relocate(PVM)                                                          TRACE()
 //
 //int  SELMR3Init(PVM)                                                            TRACE(VINF_SUCCESS)
-//int  SELMR3Term(PVM)                                                            TRACE(VINF_SUCCESS)
+int  SELMR3Term(PVM)                                                            TRACE(VINF_SUCCESS)
 //int  SELMR3InitFinalize(PVM)                                                    TRACE(VINF_SUCCESS)
 //void SELMR3Relocate(PVM)                                                        TRACE()
-//void SELMR3Reset(PVM)                                                           TRACE()
+void SELMR3Reset(PVM)                                                           TRACE()
 //void SELMR3DisableMonitoring(PVM)                                               TRACE()
 //
 //int SUPR3SetVMForFastIOCtl(PVMR0)                                               TRACE(VINF_SUCCESS)
@@ -145,33 +145,33 @@ RT_C_DECLS_BEGIN
 //_AVLOU32NodeCore* RTAvloU32RemoveBestFit(PAVLOU32TREE, AVLOU32KEY, bool)        TRACE(VINF_SUCCESS)
 int RTAvlrFileOffsetDestroy(PAVLRFOFFTREE, PAVLRFOFFCALLBACK, void*)            TRACE(VINF_SUCCESS)
 
-///* module loader of pluggable device manager */
-//int  pdmR3LdrInitU(PUVM)                                                        TRACE(VINF_SUCCESS)
-//int  PDMR3LdrLoadVMMR0U(PUVM)                                                   TRACE(VINF_SUCCESS)
-//void PDMR3LdrRelocateU(PUVM, RTGCINTPTR)                                        TRACE()
-//int  pdmR3LoadR3U(PUVM, const char *, const char *)                             TRACE(VINF_SUCCESS)
-//void pdmR3LdrTermU(PUVM)                                                        TRACE()
-//
-//char *pdmR3FileR3(const char * file, bool)
-//{
-//	char * pv = reinterpret_cast<char *>(RTMemTmpAllocZ(1));
-//
-//	if (trace)
-//		Genode::log(__func__, ": file ", file, " ", (void *)pv, " ", __builtin_return_address(0));
-//
-//	TRACE(pv)
-//}
-//
-//void RTAssertMsg2Add(const char *pszFormat, ...)
-//{
-//	Genode::error(__func__, "not implemented");
-//	Genode::sleep_forever();
-//}
-//
-//const char * RTBldCfgRevisionStr(void)
-//{
-//	return "Genode";
-//}
+/* module loader of pluggable device manager */
+int  pdmR3LdrInitU(PUVM)                            TRACE(VINF_SUCCESS)
+int  PDMR3LdrLoadVMMR0U(PUVM)                       TRACE(VINF_SUCCESS)
+void PDMR3LdrRelocateU(PUVM, RTGCINTPTR)            TRACE()
+int  pdmR3LoadR3U(PUVM, const char *, const char *) TRACE(VINF_SUCCESS)
+void pdmR3LdrTermU(PUVM)                            TRACE()
+
+char *pdmR3FileR3(const char * file, bool)
+{
+	char * pv = reinterpret_cast<char *>(RTMemTmpAllocZ(1));
+
+	if (trace)
+		Genode::log(__func__, ": file ", file, " ", (void *)pv, " ", __builtin_return_address(0));
+
+	TRACE(pv)
+}
+
+void RTAssertMsg2Add(const char *pszFormat, ...)
+{
+	Genode::error(__func__, "not implemented");
+	Genode::sleep_forever();
+}
+
+const char * RTBldCfgRevisionStr(void)
+{
+	return "Genode";
+}
 
 DECLHIDDEN(int) rtProcInitExePath(char *pszPath, size_t cchPath)
 {
@@ -181,3 +181,16 @@ DECLHIDDEN(int) rtProcInitExePath(char *pszPath, size_t cchPath)
 }
 
 RT_C_DECLS_END
+
+
+/* HostHardwareLinux.cpp */
+
+#include "HostHardwareLinux.h"
+
+int VBoxMainDriveInfo::updateDVDs() TRACE(VINF_SUCCESS)
+
+
+#include <iprt/buildconfig.h>
+
+uint32_t RTBldCfgRevision(void) { return ~0; }
+

@@ -25,7 +25,10 @@ SRC_CC += Main/src-server/BandwidthGroupImpl.cpp
 SRC_CC += Main/src-server/BIOSSettingsImpl.cpp
 SRC_CC += Main/src-server/ClientToken.cpp
 SRC_CC += Main/src-server/DHCPServerImpl.cpp
+SRC_CC += Main/src-server/DHCPConfigImpl.cpp
+SRC_CC += Main/src-server/GraphicsAdapterImpl.cpp
 SRC_CC += Main/src-server/GuestOSTypeImpl.cpp
+SRC_CC += Main/src-server/HostImpl.cpp
 SRC_CC += Main/src-server/MachineImpl.cpp
 SRC_CC += Main/src-server/MachineImplCloneVM.cpp
 SRC_CC += Main/src-server/Matching.cpp
@@ -38,6 +41,10 @@ SRC_CC += Main/src-server/NATNetworkImpl.cpp
 SRC_CC += Main/src-server/NetworkAdapterImpl.cpp
 SRC_CC += Main/src-server/NetworkServiceRunner.cpp
 SRC_CC += Main/src-server/ParallelPortImpl.cpp
+SRC_CC += Main/src-server/Performance.cpp
+SRC_CC += Main/src-server/PerformanceImpl.cpp
+SRC_CC += Main/src-server/RecordingSettingsImpl.cpp
+SRC_CC += Main/src-server/RecordingScreenSettingsImpl.cpp
 SRC_CC += Main/src-server/SerialPortImpl.cpp
 SRC_CC += Main/src-server/SnapshotImpl.cpp
 SRC_CC += Main/src-server/StorageControllerImpl.cpp
@@ -48,6 +55,11 @@ SRC_CC += Main/src-server/USBDeviceFilterImpl.cpp
 SRC_CC += Main/src-server/USBDeviceFiltersImpl.cpp
 SRC_CC += Main/src-server/VirtualBoxImpl.cpp
 SRC_CC += Main/src-server/VRDEServerImpl.cpp
+SRC_CC += Main/src-server/HostDnsService.cpp
+SRC_CC += Main/src-server/HostNetworkInterfaceImpl.cpp
+SRC_CC += Main/src-server/MediumIOImpl.cpp
+SRC_CC += Main/src-server/DataStreamImpl.cpp
+SRC_CC += Main/src-server/HostPower.cpp
 
 SRC_CC += Main/glue/AutoLock.cpp
 SRC_CC += Main/glue/EventQueue.cpp
@@ -56,6 +68,9 @@ SRC_CC += Main/glue/xpcom/helpers.cpp
 
 # see comment in virtualbox6-client.mk
 CC_OPT_Main/src-server/MediumImpl = -Wno-enum-compare
+
+# prevent double define of 'LOG_GROUP'
+VBOX_CC_OPT += -DIN_VBOXSVC
 
 INC_DIR += $(VBOX_DIR)/Main/xml
 INC_DIR += $(VBOX_DIR)/Main/include

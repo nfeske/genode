@@ -243,7 +243,7 @@ void SUPR3QueryHWACCLonGenodeSupport(VM * pVM)
 
 
 /* VirtualBox SUPLib interface */
-int SUPR3QueryVTxSupported(void) { return VINF_SUCCESS; }
+int SUPR3QueryVTxSupported(const char **ppszWhy) { return VINF_SUCCESS; }
 
 
 int SUPR3CallVMMR0Fast(PVMR0 pVMR0, unsigned uOperation, VMCPUID idCpu)

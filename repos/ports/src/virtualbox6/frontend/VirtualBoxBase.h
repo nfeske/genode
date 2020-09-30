@@ -52,16 +52,16 @@ class Medium;
 typedef std::list<ComObjPtr<Medium> > MediaList;
 typedef std::list<Utf8Str> StringsList;
 
-class VirtualBoxTranslatable : public util::Lockable
+struct VirtualBoxTranslatable : util::Lockable
 {
-	public:
+	virtual ~VirtualBoxTranslatable() { }
 
-		/* should be used for translations */
-		inline static const char *tr(const char *pcszSourceText,
-		                             const char *aComment = NULL)
-		{
-			return pcszSourceText;
-		}
+	/* should be used for translations */
+	inline static const char *tr(const char *pcszSourceText,
+	                             const char *aComment = NULL)
+	{
+		return pcszSourceText;
+	}
 };
 
 class VirtualBoxBase : public VirtualBoxTranslatable
@@ -444,6 +444,21 @@ class Backupable : public Shareable<T>
     do { \
         if (RT_UNLIKELY(ComSafeArrayInIsNull(arg))) \
             return setError(E_INVALIDARG, tr("Argument %s is NULL"), #arg); \
+    } while (0)
+
+/**
+ * Checks that the given pointer to an argument is valid and returns
+ * E_POINTER + extended error info otherwise.
+ * @param arg   Pointer argument.
+ */
+#define CheckComArgPointerValid(arg) \
+    do { \
+        if (RT_LIKELY(RT_VALID_PTR(arg))) \
+        { /* likely */ }\
+        else \
+            return setError(E_POINTER, \
+                tr("Argument %s points to invalid memory location (%p)"), \
+                #arg, (void *)(arg)); \
     } while (0)
 
 /**

@@ -10,11 +10,11 @@ CC_WARN += -Wall
 SRC_CC = frontend/main.cc frontend/console.cc \
          frontend/VirtualBoxErrorInfoImpl.cpp
 
-SRC_CC += libc.cc unimpl.cc dummies.cc pdm.cc devices.cc
+SRC_CC += libc.cc unimpl.cc dummies.cc pdm.cc devices.cc mm.cc dynlib.cc
 
-#         drivers.cc \
-#         mm.cc pgm.cc
-#         hm.cc thread.cc dynlib.cc
+#         drivers.cc
+#         pgm.cc
+#         hm.cc thread.cc
 
 LIBS  += base
 LIBS  += stdcxx
@@ -23,7 +23,7 @@ LIBS  += virtualbox6-bios virtualbox6-runtime \
          virtualbox6-vmm virtualbox6-devices \
          virtualbox6-storage virtualbox6-zlib virtualbox6-liblzf \
          virtualbox6-xml virtualbox6-main virtualbox6-apiwrap \
-         virtualbox6-dis virtualbox6-client
+         virtualbox6-dis virtualbox6-client virtualbox6-sup
 
 LIBS  += libiconv
 
@@ -46,7 +46,7 @@ INC_DIR += $(VBOX_DIR)/Runtime/include
 #
 SRC_CC += frontend/dummy/errorinfo.cc
 #SRC_CC += frontend/dummy/virtualboxbase.cc
-#SRC_CC += frontend/dummy/autostart.cc frontend/dummy/rest.cc
+SRC_CC += frontend/dummy/autostart.cc frontend/dummy/rest.cc
 #SRC_CC += frontend/dummy/host.cc
 
 INC_DIR += $(REP_DIR)/src/virtualbox6
@@ -59,7 +59,8 @@ INC_DIR += $(VIRTUALBOX_DIR)/VBoxAPIWrap
 
 INC_DIR += $(VBOX_DIR)/Main/xml
 INC_DIR += $(VIRTUALBOX_DIR)/include/VBox/Graphics
-#INC_DIR += $(VBOX_DIR)/HostServices
+INC_DIR += $(VBOX_DIR)/Main/src-server
+INC_DIR += $(VBOX_DIR)/NetworkServices
 
 # search path to 'scan_code_set_1.h'
 INC_DIR += $(call select_from_repositories,src/drivers/ps2)

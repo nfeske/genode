@@ -3,4 +3,4 @@
 #include "VirtualBoxErrorInfoImpl.h"
 
 HRESULT VirtualBoxErrorInfo::init(HRESULT, const GUID &, const char *,
-                                  const Utf8Str &, IVirtualBoxErrorInfo *) DUMMY(E_FAIL)
+                                  const Utf8Str &, IVirtualBoxErrorInfo *) DUMMY()

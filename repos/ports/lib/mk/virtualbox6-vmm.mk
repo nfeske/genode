@@ -9,11 +9,17 @@ SRC_CC += VMM/VMMR3/STAM.cpp
 
 SRC_CC += VMM/VMMR3/SSM.cpp
 
+SRC_CC += VMM/VMMR3/NEMR3.cpp
+SRC_CC += VMM/VMMAll/NEMAll.cpp
+
 SRC_CC += VMM/VMMR3/PDM.cpp
 SRC_CC += VMM/VMMR3/PDMBlkCache.cpp
 SRC_CC += VMM/VMMR3/PDMDevice.cpp
 SRC_CC += VMM/VMMR3/PDMQueue.cpp
 SRC_CC += VMM/VMMR3/PDMCritSect.cpp
+SRC_CC += VMM/VMMR3/PDMAsyncCompletion.cpp
+SRC_CC += VMM/VMMR3/PDMNetShaper.cpp
+SRC_CC += VMM/VMMR3/PDMR3Task.cpp
 SRC_CC += VMM/VMMAll/PDMAll.cpp
 SRC_CC += VMM/VMMAll/PDMAllQueue.cpp
 SRC_CC += VMM/VMMAll/PDMAllCritSect.cpp
@@ -44,6 +50,9 @@ SRC_CC += VMM/VMMR3/VMReq.cpp
 
 SRC_CC += VMM/VMMAll/DBGFAll.cpp
 SRC_CC += VMM/VMMR3/DBGFInfo.cpp
+SRC_CC += VMM/VMMR3/DBGFAddrSpace.cpp
+SRC_CC += VMM/VMMR3/DBGFOS.cpp
+SRC_CC += VMM/VMMR3/DBGFR3PlugIn.cpp
 
 SRC_CC += VMM/VMMR3/CPUM.cpp
 SRC_CC += VMM/VMMR3/CPUMR3CpuId.cpp
@@ -52,8 +61,12 @@ SRC_CC += VMM/VMMR3/CPUMR3Db.cpp
 SRC_CC += VMM/VMMAll/EMAll.cpp
 SRC_CC += VMM/VMMR3/EM.cpp
 SRC_CC += VMM/VMMR3/EMHM.cpp
+SRC_CC += VMM/VMMR3/EMR3Nem.cpp
 
 SRC_CC += VMM/VMMAll/HMAll.cpp
+SRC_CC += VMM/VMMR3/HM.cpp
+SRC_CC += VMM/VMMAll/HMSVMAll.cpp
+SRC_CC += VMM/VMMAll/HMVMXAll.cpp
 
 SRC_CC += VMM/VMMR3/TRPM.cpp
 SRC_CC += VMM/VMMAll/SELMAll.cpp
@@ -64,6 +77,13 @@ SRC_CC += VMM/VMMAll/IEMAll.cpp
 SRC_S  += VMM/VMMAll/IEMAllAImpl.asm
 SRC_CC += VMM/VMMAll/IEMAllAImplC.cpp
 SRC_CC += VMM/VMMR3/IEMR3.cpp
+
+SRC_CC += VMM/VMMAll/GIMAll.cpp
+SRC_CC += VMM/VMMAll/GIMAllHv.cpp
+SRC_CC += VMM/VMMAll/GIMAllKvm.cpp
+SRC_CC += VMM/VMMR3/GIM.cpp
+SRC_CC += VMM/VMMR3/GIMHv.cpp
+SRC_CC += VMM/VMMR3/GIMKvm.cpp
 
 SRC_CC += VMM/VMMR3/GMM.cpp
 
@@ -88,6 +108,7 @@ SRC_CC += VMM/VMMAll/APICAll.cpp
 
 SRC_CC += VMM/VMMR3/MM.cpp
 SRC_CC += VMM/VMMR3/MMHeap.cpp
+SRC_CC += VMM/VMMR3/MMUkHeap.cpp
 
 CC_OPT += -DVBOX_IN_VMM
 

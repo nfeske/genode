@@ -11,7 +11,7 @@
 		return X; \
 	}
 
-#define DUMMY(X) \
+#define DUMMY() \
 	{ \
 		Genode::error(__func__, " called (", __FILE__, ":", __LINE__, "), " \
 		              "not implemented, eip=", \
@@ -19,7 +19,8 @@
 		while (1) \
 			asm volatile ("ud2a"); \
 		\
-		return X; \
+		class Not_implemented { }; \
+		throw Not_implemented();  \
 	}
 
 #define DUMMY_STATIC(X) \
