@@ -291,7 +291,10 @@ void Libc::Component::construct(Libc::Env &env)
 		static char *argv[1] = { argv0 };
 		char **dummy_argv = argv;
 
-		int rc = RTR3InitExe(1, &dummy_argv, 0);
+		/* sidestep 'rtThreadPosixSelectPokeSignal' */
+		uint32_t const fFlags = RTR3INIT_FLAGS_UNOBTRUSIVE;
+
+		int rc = RTR3InitExe(1, &dummy_argv, fFlags);
 		if (RT_FAILURE(rc))
 			throw -1;
 

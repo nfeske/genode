@@ -13,6 +13,7 @@
 
 #include <base/log.h>
 #include <base/sleep.h>
+#include <util/string.h>
 
 #include <string.h> /* libc memcpy */
 
@@ -171,5 +172,12 @@ int RTAvlrFileOffsetDestroy(PAVLRFOFFTREE, PAVLRFOFFCALLBACK, void*)            
 //{
 //	return "Genode";
 //}
+
+DECLHIDDEN(int) rtProcInitExePath(char *pszPath, size_t cchPath)
+{
+	Genode::copy_cstring(pszPath, "/undefined_ProcInitExePath", cchPath);
+
+	return VINF_SUCCESS;
+}
 
 RT_C_DECLS_END

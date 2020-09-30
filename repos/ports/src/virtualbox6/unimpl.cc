@@ -113,7 +113,6 @@ void name(void) { \
 //DUMMY(RTSemPing)
 //DUMMY(RTSemPingWait)
 
-DUMMY(RTMemExecFree)
 DUMMY(RTFsIsoMakerCmdEx)
 
 //DUMMY(RTMpGetPresentCount)

@@ -306,3 +306,9 @@ extern "C" int lchown(const char *pathname, uid_t owner, gid_t group)
 //	Genode::warning(__func__, " called, caller=", thread ? thread->name() : "");
 //	return 0;
 //}
+
+extern "C" int mlock(const void *addr, size_t len)
+{
+	Genode::warning(__func__, " called, not implemented");
+	return 0;
+}
