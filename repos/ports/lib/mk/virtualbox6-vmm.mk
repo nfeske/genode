@@ -83,10 +83,8 @@ SRC_CC += VMM/VMMR3/IOM.cpp
 SRC_CC += VMM/VMMAll/IOMAll.cpp
 SRC_CC += VMM/VMMAll/IOMAllMmioNew.cpp
 
-ifneq ($(filter $(VBOX_CC_OPT),-DVBOX_WITH_NEW_APIC),)
 SRC_CC += VMM/VMMR3/APIC.cpp
 SRC_CC += VMM/VMMAll/APICAll.cpp
-endif
 
 SRC_CC += VMM/VMMR3/MM.cpp
 SRC_CC += VMM/VMMR3/MMHeap.cpp

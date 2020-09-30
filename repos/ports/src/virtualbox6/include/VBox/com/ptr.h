@@ -86,11 +86,14 @@ struct ComObjPtr : ComPtr<T>
 		return *this;
 	}
 
-	class Not_implemented { };
-
 	HRESULT createObject()
 	{
-		throw Not_implemented();
+		T * obj = new T { };
+		if (!obj)
+			return E_OUTOFMEMORY;
+
+		ComPtr<T>::m_p = obj;
+		return obj->FinalConstruct();
 	}
 };
 

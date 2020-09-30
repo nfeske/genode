@@ -38,37 +38,37 @@ static bool vm_down = false;
 //static char                           *decoded_clipboard_content = nullptr;
 
 
-void Console::uninit()
-	DUMMY()
-HRESULT Console::teleport(const com::Utf8Str &, ULONG, const com::Utf8Str &,
-                          ULONG, ComPtr<IProgress> &aProgress)
-	DUMMY(E_FAIL)
-HRESULT Console::i_teleporterTrg(PUVM, IMachine *, Utf8Str *, bool, Progress *,
-                                 bool *)
-	DUMMY(E_FAIL)
+//void Console::uninit()
+//	DUMMY()
+//HRESULT Console::teleport(const com::Utf8Str &, ULONG, const com::Utf8Str &,
+//                          ULONG, ComPtr<IProgress> &aProgress)
+//	DUMMY(E_FAIL)
+//HRESULT Console::i_teleporterTrg(PUVM, IMachine *, Utf8Str *, bool, Progress *,
+//                                 bool *)
+//	DUMMY(E_FAIL)
 
-HRESULT Console::i_attachToTapInterface(INetworkAdapter *networkAdapter)
-{
-	ULONG slot = 0;
-	HRESULT rc = networkAdapter->COMGETTER(Slot)(&slot);
-	AssertComRC(rc);
+//HRESULT Console::i_attachToTapInterface(INetworkAdapter *networkAdapter)
+//{
+//	ULONG slot = 0;
+//	HRESULT rc = networkAdapter->COMGETTER(Slot)(&slot);
+//	AssertComRC(rc);
+//
+//	maTapFD[slot] = (RTFILE)1;
+//
+//	TRACE(rc)
+//}
 
-	maTapFD[slot] = (RTFILE)1;
-
-	TRACE(rc)
-}
-
-HRESULT Console::i_detachFromTapInterface(INetworkAdapter *networkAdapter)
-{
-	ULONG slot = 0;
-	HRESULT rc = networkAdapter->COMGETTER(Slot)(&slot);
-	AssertComRC(rc);
-
-	if (maTapFD[slot] != NIL_RTFILE)
-		maTapFD[slot] = NIL_RTFILE;
-
-	TRACE(rc)
-}
+//HRESULT Console::i_detachFromTapInterface(INetworkAdapter *networkAdapter)
+//{
+//	ULONG slot = 0;
+//	HRESULT rc = networkAdapter->COMGETTER(Slot)(&slot);
+//	AssertComRC(rc);
+//
+//	if (maTapFD[slot] != NIL_RTFILE)
+//		maTapFD[slot] = NIL_RTFILE;
+//
+//	TRACE(rc)
+//}
 
 void fireStateChangedEvent(IEventSource* aSource,
                            MachineState_T a_state)
@@ -91,10 +91,10 @@ void fireRuntimeErrorEvent(IEventSource* aSource, BOOL a_fatal,
 	TRACE();
 }
 
-void Console::i_onAdditionsStateChange()
-{
-	dynamic_cast<GenodeConsole *>(this)->update_video_mode();
-}
+//void Console::i_onAdditionsStateChange()
+//{
+//	dynamic_cast<GenodeConsole *>(this)->update_video_mode();
+//}
 
 void GenodeConsole::update_video_mode()
 {
@@ -288,8 +288,8 @@ void GenodeConsole::_handle_mode_change()
 	update_video_mode();
 }
 
-//void GenodeConsole::init_clipboard()
-//{
+void GenodeConsole::init_clipboard()
+{
 //	if (!&*i_machine())
 //		return;
 //
@@ -313,8 +313,8 @@ void GenodeConsole::_handle_mode_change()
 //
 //		clipboard_reporter = _clipboard_reporter;
 //	}
-//}
-//
+}
+
 //void GenodeConsole::_handle_cb_rom_change()
 //{
 //	if (!_clipboard_rom)

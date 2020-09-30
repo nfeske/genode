@@ -170,6 +170,7 @@ SRC_CC += Runtime/r3/posix/path2-posix.cpp
 SRC_CC += Runtime/r3/posix/pipe-posix.cpp
 SRC_CC += Runtime/r3/posix/process-posix.cpp
 SRC_CC += Runtime/r3/posix/RTTimeNow-posix.cpp
+SRC_CC += Runtime/r3/posix/rtmempage-exec-mmap-posix.cpp
 SRC_CC += Runtime/r3/posix/semeventmulti-posix.cpp
 SRC_CC += Runtime/r3/posix/semevent-posix.cpp
 SRC_CC += Runtime/r3/posix/semmutex-posix.cpp

@@ -26,8 +26,8 @@ void name(void) { \
 
 //DUMMY(DBGCRegisterCommands)
 //
-//DUMMY(DBGFR3AsLineByAddrA)
-//DUMMY(DBGFR3AsSymbolByAddrA)
+DUMMY(DBGFR3AsLineByAddrA)
+DUMMY(DBGFR3AsSymbolByAddrA)
 //DUMMY(DBGFR3CoreWrite)
 //DUMMY(DBGFR3LogModifyDestinations)
 //DUMMY(DBGFR3LogModifyFlags)
@@ -38,10 +38,10 @@ void name(void) { \
 //DUMMY(DBGFR3PlugInLoad)
 //DUMMY(DBGFR3PlugInLoadAll)
 //DUMMY(DBGFR3StackWalkBegin)
-//DUMMY(DBGFR3StackWalkBeginEx)
-//DUMMY(DBGFR3StackWalkNext)
-//DUMMY(DBGFR3StackWalkEnd)
-//DUMMY(DBGFR3PagingDumpEx)
+DUMMY(DBGFR3StackWalkBeginEx)
+DUMMY(DBGFR3StackWalkNext)
+DUMMY(DBGFR3StackWalkEnd)
+DUMMY(DBGFR3PagingDumpEx)
 //DUMMY(DBGFR3PlugInUnload)
 //DUMMY(DBGFR3PlugInUnloadAll)
 //
