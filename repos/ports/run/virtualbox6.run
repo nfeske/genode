@@ -225,7 +225,7 @@ append config {
 			<libc stdout="/dev/log" stderr="/dev/log" pipe="/pipe" rtc="/dev/rtc"/>
 			<vfs>
 				<dir name="dev">
-					<log/> <rtc/>
+					<log/> <rtc/> <null/>
 				</dir>
 				<dir name="pipe"> <pipe/> </dir>}
 
