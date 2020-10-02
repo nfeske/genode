@@ -54,8 +54,6 @@ typedef std::list<Utf8Str> StringsList;
 
 struct VirtualBoxTranslatable : util::Lockable
 {
-	virtual ~VirtualBoxTranslatable() { }
-
 	/* should be used for translations */
 	inline static const char *tr(const char *pcszSourceText,
 	                             const char *aComment = NULL)

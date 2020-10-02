@@ -61,6 +61,9 @@ SRC_CC += Main/src-server/MediumIOImpl.cpp
 SRC_CC += Main/src-server/DataStreamImpl.cpp
 SRC_CC += Main/src-server/HostPower.cpp
 
+# use OS/2 version of 'pm::createHAL()' because it is empty
+SRC_CC += Main/src-server/os2/PerformanceOs2.cpp
+
 SRC_CC += Main/glue/AutoLock.cpp
 SRC_CC += Main/glue/EventQueue.cpp
 SRC_CC += Main/glue/string.cpp

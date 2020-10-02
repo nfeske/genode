@@ -142,26 +142,29 @@ USBProxyBackendUsbIp::USBProxyBackendUsbIp() DUMMY()
 
 #include "USBProxyService.h"
 
-USBProxyService::USBProxyService(Host* aHost) : mHost(aHost), mDevices(), mBackends() DUMMY()
+USBProxyService::USBProxyService(Host* aHost) : mHost(aHost), mDevices(), mBackends() { }
+USBProxyService::~USBProxyService() { }
 
-HRESULT USBProxyService::autoCaptureDevicesForVM(SessionMachine *)           DUMMY()
-HRESULT USBProxyService::captureDeviceForVM(SessionMachine *, IN_GUID,
-                                            com::Utf8Str const&)             DUMMY()
-HRESULT USBProxyService::detachAllDevicesFromVM(SessionMachine*, bool, bool) DUMMY()
-HRESULT USBProxyService::detachDeviceFromVM(SessionMachine*, IN_GUID, bool)  DUMMY()
-void   *USBProxyService::insertFilter(PCUSBFILTER aFilter)                   DUMMY()
-void    USBProxyService::removeFilter(void *aId)                             DUMMY()
-int     USBProxyService::getLastError()                                      DUMMY()
-bool    USBProxyService::isActive()                                          DUMMY()
-HRESULT USBProxyService::removeUSBDeviceSource(com::Utf8Str const&)          DUMMY()
-HRESULT USBProxyService::addUSBDeviceSource(com::Utf8Str const&,
-                                            com::Utf8Str const&,
-                                            com::Utf8Str const&,
-                                            std::vector<com::Utf8Str, std::allocator<com::Utf8Str> > const&,
-                                            std::vector<com::Utf8Str, std::allocator<com::Utf8Str> > const&) DUMMY()
-HRESULT USBProxyService::getDeviceCollection(std::vector<ComPtr<IHostUSBDevice>, std::allocator<ComPtr<IHostUSBDevice> > >&) DUMMY()
-HRESULT USBProxyService::i_loadSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> > const&) DUMMY()
-HRESULT USBProxyService::i_saveSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> >&) DUMMY()
+HRESULT       USBProxyService::init() { return VINF_SUCCESS; }
+RWLockHandle *USBProxyService::lockHandle() const                                  DUMMY()
+HRESULT       USBProxyService::autoCaptureDevicesForVM(SessionMachine *)           DUMMY()
+HRESULT       USBProxyService::captureDeviceForVM(SessionMachine *, IN_GUID,
+                                                  com::Utf8Str const&)             DUMMY()
+HRESULT       USBProxyService::detachAllDevicesFromVM(SessionMachine*, bool, bool) DUMMY()
+HRESULT       USBProxyService::detachDeviceFromVM(SessionMachine*, IN_GUID, bool)  DUMMY()
+void         *USBProxyService::insertFilter(PCUSBFILTER aFilter)                   DUMMY()
+void          USBProxyService::removeFilter(void *aId)                             DUMMY()
+int           USBProxyService::getLastError()                                      DUMMY()
+bool          USBProxyService::isActive()                                          DUMMY()
+HRESULT       USBProxyService::removeUSBDeviceSource(com::Utf8Str const&)          DUMMY()
+HRESULT       USBProxyService::addUSBDeviceSource(com::Utf8Str const&,
+                                                  com::Utf8Str const&,
+                                                  com::Utf8Str const&,
+                                                  std::vector<com::Utf8Str, std::allocator<com::Utf8Str> > const&,
+                                                  std::vector<com::Utf8Str, std::allocator<com::Utf8Str> > const&) DUMMY()
+HRESULT       USBProxyService::getDeviceCollection(std::vector<ComPtr<IHostUSBDevice>, std::allocator<ComPtr<IHostUSBDevice> > >&) DUMMY()
+HRESULT       USBProxyService::i_loadSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> > const&) DUMMY()
+HRESULT       USBProxyService::i_saveSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> >&) DUMMY()
 
 
 /* USBFilter.cpp */
@@ -212,13 +215,6 @@ HRESULT CloudProviderManager::getProviderByName     (com::Utf8Str const&, ComPtr
 HRESULT CloudProviderManager::getProviderByShortName(com::Utf8Str const&, ComPtr<ICloudProvider>&) DUMMY()
 HRESULT CloudProviderManager::getProviders(std::vector<ComPtr<ICloudProvider>,
                                            std::allocator<ComPtr<ICloudProvider> > >&) DUMMY()
-
-
-/* PerformanceFreeBSD.cpp */
-
-#include "Performance.h"
-
-pm::CollectorHAL *pm::createHAL() DUMMY()
 
 
 /* NetIf-freebsd.cpp */
