@@ -226,6 +226,6 @@ DUMMY(RTDbgSymbolFree)
 
 DUMMY(VDIfTcpNetInstDefaultCreate)
 
-DUMMY(SysAllocStringByteLen)
+//DUMMY(SysAllocStringByteLen)
 
 } /* extern "C" */

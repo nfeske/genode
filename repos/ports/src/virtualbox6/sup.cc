@@ -34,15 +34,20 @@ SUPR3DECL(bool) SUPR3IsNemSupportedWhenNoVtxOrAmdV(void)
 
 SUPR3DECL(int) SUPR3InitEx(bool fUnrestricted, PSUPDRVSESSION *ppSession)
 {
-	Genode::warning(__func__, " called, not completely implemented");
-	return E_FAIL;
+	Genode::warning(__func__, " called, forward call to SUPR3Init");
+	return SUPR3Init(ppSession);
 }
 
 
 SUPR3DECL(int) SUPR3QueryVTCaps(uint32_t *pfCaps)
 {
-	Genode::warning(__func__, " called, not completely implemented");
-	return E_FAIL;
+	AssertPtrReturn(pfCaps, VERR_INVALID_POINTER);
+
+	Genode::warning(__func__, " called, returning empty pfCaps");
+
+	*pfCaps = 0;
+
+	return VINF_SUCCESS;
 }
 
 

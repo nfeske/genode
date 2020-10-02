@@ -99,16 +99,13 @@ typedef nsIID IID;
 
 #define COM_STRUCT_OR_CLASS(I) class I
 
-extern "C"
-{
-	BSTR SysAllocString(const OLECHAR* sz);
-	BSTR SysAllocStringByteLen(char *psz, unsigned int len);
-	BSTR SysAllocStringLen(const OLECHAR *pch, unsigned int cch);
-	int  SysReAllocStringLen(BSTR *pbstr, const OLECHAR *psz, unsigned int cch);
-	void SysFreeString(BSTR bstr);
-	unsigned int SysStringByteLen(BSTR bstr);
-	unsigned int SysStringLen(BSTR bstr);
-}
+BSTR SysAllocString(const OLECHAR* sz);
+BSTR SysAllocStringByteLen(char const *psz, unsigned int len);
+BSTR SysAllocStringLen(const OLECHAR *pch, unsigned int cch);
+int  SysReAllocStringLen(BSTR *pbstr, const OLECHAR *psz, unsigned int cch);
+void SysFreeString(BSTR bstr);
+unsigned int SysStringByteLen(BSTR bstr);
+unsigned int SysStringLen(BSTR bstr);
 
 namespace com {
 

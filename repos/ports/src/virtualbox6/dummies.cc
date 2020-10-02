@@ -20,7 +20,7 @@
 #include "stub_macros.h"
 #include "util.h"
 
-static bool const debug = false;
+static bool const debug = true;
 
 
 /* ApplianceImplExport.cpp */
@@ -30,6 +30,7 @@ static bool const debug = false;
 HRESULT Machine::exportTo(const ComPtr<IAppliance> &aAppliance,
                           const com::Utf8Str &aLocation,
                           ComPtr<IVirtualSystemDescription> &aDescription) STOP
+
 
 /* com.cpp */
 
@@ -41,8 +42,53 @@ com::Guid const com::Guid::Empty;
 char const com::Zeroes[16] = {0, };
 
 #include "xpcom/nsIServiceManager.h"
+#include "xpcom/nsIExceptionService.h"
 
-nsGetServiceByContractID do_GetService(char const*, unsigned int*) STOP
+nsGetServiceByContractID do_GetService(char const *iid, unsigned int *rc)
+{
+	void *result = nullptr;
+
+	if (strcmp(iid, ns_type_trait<nsIExceptionService>::name()) == 0) {
+		Genode::log("create new instance of nsIExceptionService");
+		result = new nsIExceptionService { };
+	}
+
+	if (!result) {
+		Genode::log("do_GetService(iid=", iid, ") called, returning invalid service");
+		*rc = NS_ERROR_NO_INTERFACE;
+		return nsGetServiceByContractID { nullptr };
+	}
+
+	*rc = NS_OK;
+	return nsGetServiceByContractID { result };
+}
+
+
+nsresult nsIExceptionManager::GetCurrentException(nsIException **out)
+{
+	Genode::log("GetCurrentException called, return nullptr");
+
+	out = nullptr;
+
+	return NS_OK;
+}
+
+
+nsresult nsIExceptionManager::SetCurrentException(nsIException *)
+{
+	Genode::log("SetCurrentException called, ignored");
+
+	return NS_OK;
+}
+
+
+nsresult nsIExceptionService::GetCurrentExceptionManager(already_AddRefed<nsIExceptionManager> arg)
+{
+	Genode::log("nsIExceptionService::GetCurrentExceptionManager called, doing nothing");
+	Genode::log("mRawPtr=", arg.mRawPtr);
+
+	return NS_OK;
+}
 
 
 /* DisplayPNGUtil.cpp */
@@ -140,8 +186,12 @@ HRESULT       USBProxyService::addUSBDeviceSource(com::Utf8Str const&,
                                                   std::vector<com::Utf8Str, std::allocator<com::Utf8Str> > const&) STOP
 HRESULT       USBProxyService::getDeviceCollection(std::vector<ComPtr<IHostUSBDevice>,
                                                    std::allocator<ComPtr<IHostUSBDevice> > >&) STOP
-HRESULT       USBProxyService::i_loadSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> > const&) STOP
-HRESULT       USBProxyService::i_saveSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> >&) STOP
+
+using USBDeviceSourceList =
+	std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> >;
+
+HRESULT USBProxyService::i_saveSettings(USBDeviceSourceList &) STOP
+HRESULT USBProxyService::i_loadSettings(USBDeviceSourceList const &) TRACE(VINF_SUCCESS)
 
 
 /* USBFilter.cpp */
@@ -164,9 +214,9 @@ HRESULT VirtualBox::createAppliance(ComPtr<IAppliance> &) STOP
 VirtualBox::ClientWatcher::~ClientWatcher() { }
 
 VirtualBox::ClientWatcher::ClientWatcher(const ComObjPtr<VirtualBox> &)
-: mLock(LOCKCLASS_OBJECTSTATE) STOP
+: mLock(LOCKCLASS_OBJECTSTATE) TRACE()
 
-bool VirtualBox::ClientWatcher::isReady() STOP
+bool VirtualBox::ClientWatcher::isReady() TRACE(true)
 void VirtualBox::ClientWatcher::update()  STOP
 
 
@@ -181,11 +231,11 @@ Session::ClientTokenHolder::~ClientTokenHolder() { }
 
 #include "CloudProviderManagerImpl.h"
 
-CloudProviderManager::CloudProviderManager() STOP
+CloudProviderManager::CloudProviderManager() TRACE()
 CloudProviderManager::~CloudProviderManager() { }
 
-HRESULT CloudProviderManager::FinalConstruct() STOP
-HRESULT CloudProviderManager::init()           STOP
+HRESULT CloudProviderManager::FinalConstruct() TRACE(VINF_SUCCESS)
+HRESULT CloudProviderManager::init()           TRACE(VINF_SUCCESS)
 void    CloudProviderManager::uninit()         STOP
 HRESULT CloudProviderManager::getProviderById       (com::Guid    const&, ComPtr<ICloudProvider>&) STOP
 HRESULT CloudProviderManager::getProviderByName     (com::Utf8Str const&, ComPtr<ICloudProvider>&) STOP
@@ -250,7 +300,7 @@ RTDECL(int) RTSystemQueryTotalRam(uint64_t *pcb) STOP
 
 HostDnsServiceResolvConf::~HostDnsServiceResolvConf() { }
 
-HRESULT HostDnsServiceResolvConf::init(HostDnsMonitorProxy*, char const*) STOP
+HRESULT HostDnsServiceResolvConf::init(HostDnsMonitorProxy*, char const*) TRACE(VINF_SUCCESS)
 void    HostDnsServiceResolvConf::uninit() STOP
 
 

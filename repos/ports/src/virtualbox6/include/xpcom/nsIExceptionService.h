@@ -3,24 +3,17 @@
 
 #include "nsIException.h"
 
-struct nsIExceptionService
-{
-	class Not_implemented { };
-
-	template <typename T>
-	nsresult GetCurrentExceptionManager(T) { throw Not_implemented(); }
-};
-
 struct nsIExceptionManager
 {
-	class Not_implemented { };
-
-	template <typename T>
-	nsresult GetCurrentException(T) { throw Not_implemented(); }
-
-	nsresult SetCurrentException(nsIException *) { throw Not_implemented(); }
+	nsresult GetCurrentException(nsIException **);
+	nsresult SetCurrentException(nsIException *);
 };
 
-#define NS_EXCEPTIONSERVICE_CONTRACTID "@mozilla.org/exceptionservice;1"
+struct nsIExceptionService
+{
+	nsresult GetCurrentExceptionManager(already_AddRefed<nsIExceptionManager>);
+};
+
+#define NS_EXCEPTIONSERVICE_CONTRACTID ns_type_trait<nsIExceptionService>::name()
 
 #endif /* __gen_nsIExceptionService_h__ */

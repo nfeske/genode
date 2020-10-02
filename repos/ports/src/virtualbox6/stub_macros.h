@@ -19,18 +19,17 @@
 #define TRACE(retval) \
 	{ \
 		if (debug) \
-			Genode::log(__func__, " called (", __FILE__, ") - eip=", \
+			Genode::log(__PRETTY_FUNCTION__, " called (", __FILE__, ") - eip=", \
 			            __builtin_return_address(0)); \
 		return retval; \
 	}
 
 #define STOP \
 	{ \
-		Genode::error(__func__, " called (", __FILE__, ":", __LINE__, "), " \
+		Genode::error(__PRETTY_FUNCTION__, " called (", __FILE__, ":", __LINE__, "), " \
 		              "not implemented, eip=", \
 		              __builtin_return_address(0)); \
-		while (1) \
-			asm volatile ("ud2a"); \
+		while (1); \
 		\
 		class Not_implemented { }; \
 		throw Not_implemented(); /* sparing the need for a return value */ \
@@ -39,7 +38,7 @@
 #define DUMMY_STATIC(X) \
 	{ \
 		static X dummy; \
-		Genode::error("static ", __func__, " called (", __FILE__, "), " \
+		Genode::error("static ", __PRETTY_FUNCTION__, " called (", __FILE__, "), " \
 		              "not implemented, eip=", \
 		              __builtin_return_address(0)); \
 		while (1) \
