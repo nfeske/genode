@@ -44,9 +44,8 @@ INC_DIR += $(VBOX_DIR)/Runtime/include
 #
 #SRC_CC += HostServices/GuestProperties/service.cpp
 #
-SRC_CC += frontend/dummy/errorinfo.cc
 #SRC_CC += frontend/dummy/virtualboxbase.cc
-SRC_CC += frontend/dummy/autostart.cc frontend/dummy/rest.cc
+SRC_CC += frontend/dummy/rest.cc
 #SRC_CC += frontend/dummy/host.cc
 
 INC_DIR += $(REP_DIR)/src/virtualbox6

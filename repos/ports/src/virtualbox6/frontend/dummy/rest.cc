@@ -289,3 +289,28 @@ HRESULT HostVideoInputDevice::queryHostDevices(VirtualBox*, std::__cxx11::list<C
 #include "Dhcpd/DhcpOptions.h"
 
 DhcpOption *DhcpOption::parse(unsigned char, int, char const*, int*) DUMMY()
+
+
+/* ErrorInfo.cpp */
+
+#include <VBox/com/ErrorInfo.h>
+
+void ErrorInfo::init(bool aKeepObj) TRACE()
+void ErrorInfo::cleanup()           TRACE()
+HRESULT ErrorInfoKeeper::restore()  TRACE(S_OK)
+
+void ErrorInfo::copyFrom(const ErrorInfo &x) DUMMY()
+
+
+/* AutostartDb-generic.cpp */
+
+#include "AutostartDb.h"
+
+int AutostartDb::addAutostartVM(const char *)    DUMMY()
+int AutostartDb::addAutostopVM(char const*)      DUMMY()
+int AutostartDb::removeAutostopVM(char const*)   DUMMY()
+int AutostartDb::removeAutostartVM(char const*)  DUMMY()
+
+AutostartDb::AutostartDb()                       TRACE()
+AutostartDb::~AutostartDb() { }
+int AutostartDb::setAutostartDbPath(char const*) TRACE(VINF_SUCCESS)

@@ -26,7 +26,7 @@
 #define DUMMY_STATIC(X) \
 	{ \
 		static X dummy; \
-		Genode::error(__func__, " called (", __FILE__, "), " \
+		Genode::error("static ", __func__, " called (", __FILE__, "), " \
 		              "not implemented, eip=", \
 		              __builtin_return_address(0)); \
 		while (1) \
