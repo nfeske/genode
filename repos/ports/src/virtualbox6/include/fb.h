@@ -21,10 +21,9 @@
 #include <nitpicker_gfx/texture_painter.h>
 
 /* VirtualBox includes */
-
-#include "Global.h"
-#include "VirtualBoxBase.h"
-#include "DisplayWrap.h"
+#include <Global.h>
+#include <VirtualBoxBase.h>
+#include <DisplayWrap.h>
 
 typedef Gui::Session::View_handle View_handle;
 

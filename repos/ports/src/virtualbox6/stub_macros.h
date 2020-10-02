@@ -1,17 +1,30 @@
-#ifndef ____H_MACROS
-#define ____H_MACROS
+/*
+ * \brief  Dummy implementations of symbols needed by VirtualBox
+ * \author Norman Feske
+ * \date   2013-08-22
+ */
+
+/*
+ * Copyright (C) 2013-2017 Genode Labs GmbH
+ *
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
+ */
+
+#ifndef _STUB_MACROS_H_
+#define _STUB_MACROS_H_
 
 #include <base/log.h>
 
-#define TRACE(X) \
+#define TRACE(retval) \
 	{ \
 		if (debug) \
 			Genode::log(__func__, " called (", __FILE__, ") - eip=", \
 			            __builtin_return_address(0)); \
-		return X; \
+		return retval; \
 	}
 
-#define DUMMY() \
+#define STOP \
 	{ \
 		Genode::error(__func__, " called (", __FILE__, ":", __LINE__, "), " \
 		              "not implemented, eip=", \
@@ -20,7 +33,7 @@
 			asm volatile ("ud2a"); \
 		\
 		class Not_implemented { }; \
-		throw Not_implemented();  \
+		throw Not_implemented(); /* sparing the need for a return value */ \
 	}
 
 #define DUMMY_STATIC(X) \
@@ -35,4 +48,4 @@
 		return dummy; \
 	}
 
-#endif /* ____H_MACROS */
+#endif /* _STUB_MACROS_H_ */

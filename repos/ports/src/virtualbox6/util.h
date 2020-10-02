@@ -16,6 +16,7 @@
 
 /* VirtualBox includes */
 #include <iprt/types.h>
+#include <iprt/assert.h>
 
 
 /**

@@ -16,15 +16,12 @@
 #include <util/xml_node.h>
 
 #include <VBox/settings.h>
-//#include <SharedClipboard/VBoxClipboard.h>
 #include <VBox/HostServices/VBoxClipboardSvc.h>
 
-#include "ConsoleImpl.h"
 #include "MouseImpl.h"
 #include "DisplayImpl.h"
-#include "GuestImpl.h"
 
-#include "dummy/macros.h"
+#include "stub_macros.h"
 
 #include "console.h"
 #include "fb.h"

@@ -11,39 +11,291 @@
  * version 2.
  */
 
+/* Genode includes */
 #include <base/log.h>
 #include <base/sleep.h>
 #include <util/string.h>
 
-#include <string.h> /* libc memcpy */
-
-#include "VMMInternal.h"
-#include "EMInternal.h"
-//#include "PDMInternal.h"
-
-#include <iprt/buildconfig.h>
-#include <iprt/err.h>
-#include <iprt/mem.h>
-#include <VBox/vmm/cpum.h>
-#include <VBox/vmm/mm.h>
-#include <VBox/vmm/dbgf.h>
-//#include <VBox/vmm/ftm.h>
-#include <VBox/vmm/selm.h>
-#include <VBox/vmm/hm.h>
-#include <VBox/vmm/iom.h>
-
+/* local includes */
+#include "stub_macros.h"
 #include "util.h"
 
-static const bool trace = false;
+static bool const debug = false;
 
-#define TRACE(retval) \
-	{ \
-		if (trace) \
-			Genode::log(__func__, " called, return dummy, eip=", \
-			            __builtin_return_address(0)); \
-		return retval; \
-	}
 
+/* ApplianceImplExport.cpp */
+
+#include "MachineImpl.h"
+
+HRESULT Machine::exportTo(const ComPtr<IAppliance> &aAppliance,
+                          const com::Utf8Str &aLocation,
+                          ComPtr<IVirtualSystemDescription> &aDescription) STOP
+
+/* com.cpp */
+
+#include "VBox/com/Guid.h"
+#include "VBox/com/array.h"
+
+com::Guid const com::Guid::Empty;
+
+char const com::Zeroes[16] = {0, };
+
+#include "xpcom/nsIServiceManager.h"
+
+nsGetServiceByContractID do_GetService(char const*, unsigned int*) STOP
+
+
+/* DisplayPNGUtil.cpp */
+
+#include "DisplayImpl.h"
+
+int DisplayMakePNG(uint8_t *, uint32_t, uint32_t, uint8_t **, uint32_t *,
+                   uint32_t *, uint32_t *, uint8_t) STOP
+
+
+/* ErrorInfo.cpp */
+
+#include "VBox/com/ErrorInfo.h"
+
+com::ProgressErrorInfo::ProgressErrorInfo(IProgress*) STOP
+
+
+/* EventImpl.cpp */
+
+#include "EventImpl.h"
+
+HRESULT VBoxEventDesc::init(IEventSource*, VBoxEventType_T, ...) TRACE(S_OK)
+HRESULT VBoxEventDesc::reinit(VBoxEventType_T, ...)              TRACE(S_OK)
+
+
+/* initterm.cpp */
+
+#include "VBox/com/com.h"
+
+HRESULT com::Initialize(bool) TRACE(S_OK)
+HRESULT com::Shutdown()       STOP
+
+
+/* USBFilter.cpp */
+
+#include "VBox/usbfilter.h"
+
+USBFILTERMATCH USBFilterGetMatchingMethod(PCUSBFILTER, USBFILTERIDX) STOP
+char const *   USBFilterGetString        (PCUSBFILTER, USBFILTERIDX) STOP
+
+int  USBFilterGetNum          (PCUSBFILTER, USBFILTERIDX) STOP
+void USBFilterInit            (PUSBFILTER, USBFILTERTYPE) STOP
+bool USBFilterIsMethodNumeric (USBFILTERMATCH)            STOP
+bool USBFilterIsMethodString  (USBFILTERMATCH)            STOP
+bool USBFilterIsNumericField  (USBFILTERIDX)              STOP
+bool USBFilterIsStringField   (USBFILTERIDX)              STOP
+bool USBFilterMatch           (PCUSBFILTER, PCUSBFILTER)  STOP
+int  USBFilterSetIgnore       (PUSBFILTER, USBFILTERIDX)  STOP
+int  USBFilterSetNumExact     (PUSBFILTER, USBFILTERIDX, uint16_t, bool)     STOP
+int  USBFilterSetNumExpression(PUSBFILTER, USBFILTERIDX, const char *, bool) STOP
+int  USBFilterSetStringExact  (PUSBFILTER, USBFILTERIDX, const char *, bool) STOP
+int  USBFilterSetStringPattern(PUSBFILTER, USBFILTERIDX, const char *, bool) STOP
+int  USBFilterSetStringExact  (PUSBFILTER, USBFILTERIDX, const char *, bool, bool) STOP
+
+
+/* USBProxyBackend.cpp */
+
+#include "USBProxyBackend.h"
+
+USBProxyBackendFreeBSD::USBProxyBackendFreeBSD() STOP
+
+USBProxyBackend::USBProxyBackend() STOP
+USBProxyBackend::~USBProxyBackend() { }
+
+HRESULT             USBProxyBackend::FinalConstruct() STOP
+com::Utf8Str const &USBProxyBackend::i_getAddress()   STOP
+com::Utf8Str const &USBProxyBackend::i_getId()        STOP
+
+USBProxyBackendUsbIp::USBProxyBackendUsbIp() STOP
+
+
+/* USBProxyService.cpp */
+
+#include "USBProxyService.h"
+
+USBProxyService::USBProxyService(Host* aHost) : mHost(aHost), mDevices(), mBackends() { }
+USBProxyService::~USBProxyService() { }
+
+HRESULT       USBProxyService::init() { return VINF_SUCCESS; }
+RWLockHandle *USBProxyService::lockHandle() const                                  STOP
+HRESULT       USBProxyService::autoCaptureDevicesForVM(SessionMachine *)           STOP
+HRESULT       USBProxyService::captureDeviceForVM(SessionMachine *, IN_GUID,
+                                                  com::Utf8Str const&)             STOP
+HRESULT       USBProxyService::detachAllDevicesFromVM(SessionMachine*, bool, bool) STOP
+HRESULT       USBProxyService::detachDeviceFromVM(SessionMachine*, IN_GUID, bool)  STOP
+void         *USBProxyService::insertFilter(PCUSBFILTER aFilter)                   STOP
+void          USBProxyService::removeFilter(void *aId)                             STOP
+int           USBProxyService::getLastError()                                      STOP
+bool          USBProxyService::isActive()                                          STOP
+HRESULT       USBProxyService::removeUSBDeviceSource(com::Utf8Str const&)          STOP
+HRESULT       USBProxyService::addUSBDeviceSource(com::Utf8Str const&,
+                                                  com::Utf8Str const&,
+                                                  com::Utf8Str const&,
+                                                  std::vector<com::Utf8Str, std::allocator<com::Utf8Str> > const&,
+                                                  std::vector<com::Utf8Str, std::allocator<com::Utf8Str> > const&) STOP
+HRESULT       USBProxyService::getDeviceCollection(std::vector<ComPtr<IHostUSBDevice>,
+                                                   std::allocator<ComPtr<IHostUSBDevice> > >&) STOP
+HRESULT       USBProxyService::i_loadSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> > const&) STOP
+HRESULT       USBProxyService::i_saveSettings(std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> >&) STOP
+
+
+/* USBFilter.cpp */
+
+#include "VBox/usbfilter.h"
+
+USBLIB_DECL(USBFILTERTYPE) USBFilterGetFilterType(PCUSBFILTER) STOP
+USBLIB_DECL(int)           USBFilterSetFilterType(PUSBFILTER, USBFILTERTYPE) STOP
+
+
+/* ApplianceImpl.cpp */
+
+HRESULT VirtualBox::createAppliance(ComPtr<IAppliance> &) STOP
+
+
+/* ClientWatcher.cpp */
+
+#include "ClientWatcher.h"
+
+VirtualBox::ClientWatcher::~ClientWatcher() { }
+
+VirtualBox::ClientWatcher::ClientWatcher(const ComObjPtr<VirtualBox> &)
+: mLock(LOCKCLASS_OBJECTSTATE) STOP
+
+bool VirtualBox::ClientWatcher::isReady() STOP
+void VirtualBox::ClientWatcher::update()  STOP
+
+
+/* ClientTokenHolder.cpp */
+
+#include "ClientTokenHolder.h"
+
+Session::ClientTokenHolder::~ClientTokenHolder() { }
+
+
+/* CloudProviderManagerImpl.cpp */
+
+#include "CloudProviderManagerImpl.h"
+
+CloudProviderManager::CloudProviderManager() STOP
+CloudProviderManager::~CloudProviderManager() { }
+
+HRESULT CloudProviderManager::FinalConstruct() STOP
+HRESULT CloudProviderManager::init()           STOP
+void    CloudProviderManager::uninit()         STOP
+HRESULT CloudProviderManager::getProviderById       (com::Guid    const&, ComPtr<ICloudProvider>&) STOP
+HRESULT CloudProviderManager::getProviderByName     (com::Utf8Str const&, ComPtr<ICloudProvider>&) STOP
+HRESULT CloudProviderManager::getProviderByShortName(com::Utf8Str const&, ComPtr<ICloudProvider>&) STOP
+HRESULT CloudProviderManager::getProviders(std::vector<ComPtr<ICloudProvider>,
+                                           std::allocator<ComPtr<ICloudProvider> > >&) STOP
+
+
+/* NetIf-freebsd.cpp */
+
+#include "HostNetworkInterfaceImpl.h"
+#include "netif.h"
+
+int NetIfGetLinkSpeed(const char *, uint32_t *) STOP
+int NetIfGetState(const char *, NETIFSTATUS *)  STOP
+int NetIfRemoveHostOnlyNetworkInterface(VirtualBox *, const Guid &, IProgress **) STOP
+int NetIfList(std::__cxx11::list<ComObjPtr<HostNetworkInterface>,
+              std::allocator<ComObjPtr<HostNetworkInterface> > >&) TRACE(VINF_SUCCESS)
+
+
+/* fatvfs.cpp */
+
+#include "iprt/fsvfs.h"
+
+RTDECL(int) RTFsFatVolFormat(RTVFSFILE, uint64_t, uint64_t, uint32_t, uint16_t,
+                             uint16_t, RTFSFATTYPE, uint32_t, uint32_t,
+                             uint8_t, uint16_t, uint32_t, PRTERRINFO) STOP
+
+/* dvm.cpp */
+
+#include "iprt/dvm.h"
+
+RTDECL(uint32_t) RTDvmRelease(RTDVM)                                STOP
+RTDECL(int)      RTDvmCreate(PRTDVM, RTVFSFILE, uint32_t, uint32_t) STOP
+RTDECL(int)      RTDvmMapInitialize(RTDVM, const char *)            STOP
+
+
+/* MachineImplMoveVM.cpp */
+
+#include "MachineImplMoveVM.h"
+
+HRESULT MachineMoveVM::init()                              STOP
+void    MachineMoveVM::i_MoveVMThreadTask(MachineMoveVM *) STOP
+
+
+/* NetIf-generic.cpp */
+
+int NetIfCreateHostOnlyNetworkInterface(VirtualBox *, IHostNetworkInterface **,
+                                        IProgress **, const char *) STOP
+
+
+/* systemmem-freebsd.cpp */
+
+#include "iprt/system.h"
+
+RTDECL(int) RTSystemQueryTotalRam(uint64_t *pcb) STOP
+
+
+/* HostDnsServiceResolvConf.cpp */
+
+#include "HostDnsService.h"
+
+HostDnsServiceResolvConf::~HostDnsServiceResolvConf() { }
+
+HRESULT HostDnsServiceResolvConf::init(HostDnsMonitorProxy*, char const*) STOP
+void    HostDnsServiceResolvConf::uninit() STOP
+
+
+/* HostVideoInputDeviceImpl.cpp */
+
+#include "HostVideoInputDeviceImpl.h"
+
+using VideoDeviceList =
+	std::__cxx11::list<ComObjPtr<HostVideoInputDevice>,
+	                   std::allocator<ComObjPtr<HostVideoInputDevice> > >;
+
+HRESULT HostVideoInputDevice::queryHostDevices(VirtualBox*, VideoDeviceList *) STOP
+
+
+/* DhcpOptions.cpp */
+
+#undef LOG_GROUP
+#include "Dhcpd/DhcpOptions.h"
+
+DhcpOption *DhcpOption::parse(unsigned char, int, char const*, int*) STOP
+
+
+/* ErrorInfo.cpp */
+
+#include <VBox/com/ErrorInfo.h>
+
+void ErrorInfo::init(bool aKeepObj) TRACE()
+void ErrorInfo::cleanup()           TRACE()
+HRESULT ErrorInfoKeeper::restore()  TRACE(S_OK)
+
+void ErrorInfo::copyFrom(const ErrorInfo &x) STOP
+
+
+/* AutostartDb-generic.cpp */
+
+#include "AutostartDb.h"
+
+int AutostartDb::addAutostartVM   (char const *) STOP
+int AutostartDb::addAutostopVM    (char const *) STOP
+int AutostartDb::removeAutostopVM (char const *) STOP
+int AutostartDb::removeAutostartVM(char const *)  STOP
+
+AutostartDb::AutostartDb() TRACE()
+AutostartDb::~AutostartDb() { }
+int AutostartDb::setAutostartDbPath(char const*) TRACE(VINF_SUCCESS)
 
 RT_C_DECLS_BEGIN
 
@@ -141,7 +393,10 @@ void SELMR3Reset(PVM)                                                           
 //void SELMR3DisableMonitoring(PVM)                                               TRACE()
 //
 //int SUPR3SetVMForFastIOCtl(PVMR0)                                               TRACE(VINF_SUCCESS)
-//
+
+
+#include <iprt/avl.h>
+
 //_AVLOU32NodeCore* RTAvloU32RemoveBestFit(PAVLOU32TREE, AVLOU32KEY, bool)        TRACE(VINF_SUCCESS)
 int RTAvlrFileOffsetDestroy(PAVLRFOFFTREE, PAVLRFOFFCALLBACK, void*)            TRACE(VINF_SUCCESS)
 
@@ -156,7 +411,7 @@ char *pdmR3FileR3(const char * file, bool)
 {
 	char * pv = reinterpret_cast<char *>(RTMemTmpAllocZ(1));
 
-	if (trace)
+	if (debug)
 		Genode::log(__func__, ": file ", file, " ", (void *)pv, " ", __builtin_return_address(0));
 
 	TRACE(pv)
