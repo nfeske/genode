@@ -5,6 +5,8 @@
 #include "nscore.h"
 #endif
 
+#include <base/log.h>
+
 #define NS_DECL_ISUPPORTS \
 public: \
   \
@@ -12,12 +14,14 @@ public: \
   \
   NS_IMETHOD_(nsrefcnt) AddRef(void) \
   { \
+    Genode::error(__PRETTY_FUNCTION__, " not implemented"); \
     class Not_implemented { }; \
     throw Not_implemented(); \
   } \
   \
   NS_IMETHOD_(nsrefcnt) Release(void) \
   { \
+    Genode::error(__PRETTY_FUNCTION__, " not implemented"); \
     class Not_implemented { }; \
     throw Not_implemented(); \
   }

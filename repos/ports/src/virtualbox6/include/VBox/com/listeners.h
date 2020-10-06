@@ -6,6 +6,8 @@
 
 #define VBOX_LISTENER_DECLARE(klazz)
 
+#include <base/log.h>
+
 template <class T, class TParam = void *>
 struct ListenerImpl
 :
@@ -49,11 +51,13 @@ struct ListenerImpl
 
 	NS_IMETHOD_(nsrefcnt) AddRef(void)
 	{
+		Genode::error(__PRETTY_FUNCTION__, " not implemented");
 		throw Not_implemented();
 	}
 
 	STDMETHOD(HandleEvent)(IEvent * aEvent) override
 	{
+		Genode::error(__PRETTY_FUNCTION__, " not implemented");
 		throw Not_implemented();
 	}
 };

@@ -98,20 +98,26 @@ HRESULT setupmachine(Genode::Env &env)
 {
 	HRESULT rc;
 
+	using Genode::warning;
+
 	static com::Utf8Str vm_config(c_vbox_file);
 	static com::Utf8Str vm_name(c_vbox_vmname);
+
+warning("setup_machine 1");
 
 	/* Machine object */
 	static ComObjPtr<Machine> machine;
 	rc = machine.createObject();
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 2");
 
 	/* Virtualbox object */
 	static ComObjPtr<VirtualBox> virtualbox;
 	rc = virtualbox.createObject();
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 3");
 
 	/*
 	 * Used in src-client/ConsoleImpl.cpp, which constructs Progress objects,
@@ -122,55 +128,75 @@ HRESULT setupmachine(Genode::Env &env)
 	rc = machine->initFromSettings(virtualbox, vm_config, nullptr);
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 4");
 
 	rc = genode_setup_machine(machine);
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 5");
 
-	rc = virtualbox->RegisterMachine(machine);
-	if (FAILED(rc))
-		return rc;
+	//
+	// XXX adds the machine to th VirtualBox::allMachines list
+	//
+	// Unfortunately, the 'i_registerMachine' function performs a
+	// 'i_saveSettings' should the 'VirtualBox' object not be in the
+	// 'InInit' state. However, the object is already in 'Ready' state.
+	// So, 'i_saveSettings' attempts to write a 'VirtualBox.xml' file
+	//
+//	rc = virtualbox->RegisterMachine(machine);
+//	if (FAILED(rc))
+//		return rc;
+warning("setup_machine 6");
 
 	// open a session
 	static ComObjPtr<Session> session;
 	rc = session.createObject();
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 7");
 
 	rc = machine->LockMachine(session, LockType_VM);
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 8");
 
 	/* Validate configured memory of vbox file and Genode config */
 	ULONG memory_vbox;
 	rc = machine->COMGETTER(MemorySize)(&memory_vbox);
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 9");
 
 	/* Console object */
 	static ComPtr<IConsole> gConsole;
 	rc = session->COMGETTER(Console)(gConsole.asOutParam());
+warning("setup_machine 10");
 
 	/* handle input of Genode and forward it to VMM layer */
 	static ComPtr<GenodeConsole> genodeConsole = gConsole;
 
+warning("setup_machine 11");
 	genodeConsole->init_clipboard();
+warning("setup_machine 12");
 
 	/* Display object */
 	static ComPtr<IDisplay> display;
 	rc = gConsole->COMGETTER(Display)(display.asOutParam());
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 13");
 
 	static ComPtr<IGraphicsAdapter> graphics_adapter;
 	rc = machine->COMGETTER(GraphicsAdapter)(graphics_adapter.asOutParam());
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 14");
 
 	PRUint32 cMonitors = 1;
 	rc = graphics_adapter->COMGETTER(MonitorCount)(&cMonitors);
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 15");
 
 	static Bstr gaFramebufferId[64];
 
@@ -181,29 +207,34 @@ HRESULT setupmachine(Genode::Env &env)
 		if (FAILED(rc))
 			return rc;
 	}
+warning("setup_machine 16");
 
 	/* Power up the VMM */
 	ComPtr <IProgress> progress;
 	rc = gConsole->PowerUp(progress.asOutParam());
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 17");
 
 	/* check whether enough memory is available for VM + VMM */
 	ULONG const required_memory_vm = (13 * 1024 + 6 * memory_vbox) << 10;
 	rc = genode_check_memory_config(machine, required_memory_vm);
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 18");
 
 	/* wait until VM is up */
 	MachineState_T machineState = MachineState_Null;
 	do {
 		if (machineState != MachineState_Null)
 			RTThreadSleep(1000);
+warning("setup_machine 19");
 
 		rc = machine->COMGETTER(State)(&machineState);
 	} while (machineState == MachineState_Starting);
 	if (rc != S_OK || (machineState != MachineState_Running))
 		return E_FAIL;
+warning("setup_machine 20");
 
 	/* request mouse object */
 	static ComPtr<IMouse> gMouse;
@@ -211,6 +242,7 @@ HRESULT setupmachine(Genode::Env &env)
 	if (FAILED(rc))
 		return rc;
 	Assert (&*gMouse);
+warning("setup_machine 21");
 
 	/* request keyboard object */
 	static ComPtr<IKeyboard> gKeyboard;
@@ -218,9 +250,11 @@ HRESULT setupmachine(Genode::Env &env)
 	if (FAILED(rc))
 		return rc;
 	Assert (&*gKeyboard);
+warning("setup_machine 22");
 
 	genodeConsole->init_backends(gKeyboard, gMouse);
 
+warning("setup_machine 23");
 	/* check whether enough memory for the fb is available */
 	ULONG required_memory_fb = 0;
 	for (unsigned uScreenId = 0; uScreenId < cMonitors; uScreenId++)
@@ -233,12 +267,15 @@ HRESULT setupmachine(Genode::Env &env)
 
 		required_memory_fb += fb->w() * fb->h() * 4;
 	}
+warning("setup_machine 24");
 	if (!required_memory_fb)
 		required_memory_fb = 4096 * 2160 * 4;
+warning("setup_machine 25");
 
 	rc = genode_check_memory_config(machine, required_memory_fb);
 	if (FAILED(rc))
 		return rc;
+warning("setup_machine 26");
 
 	return rc;
 }

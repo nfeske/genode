@@ -11,6 +11,8 @@
 
 #include "nsID.h"
 
+#include <base/log.h>
+
 typedef unsigned long nsrefcnt;
 
 struct nsISupports
@@ -20,12 +22,21 @@ struct nsISupports
 
 	class Not_implemented { };
 
-	nsrefcnt AddRef() { throw Not_implemented(); }
+	nsrefcnt AddRef()
+	{
+		Genode::error(__PRETTY_FUNCTION__, " not implemented");
+		throw Not_implemented();
+	}
 
-	void Release() { throw Not_implemented();  }
+	void Release()
+	{
+		Genode::error(__PRETTY_FUNCTION__, " not implemented");
+		throw Not_implemented();
+	}
 
 	void QueryInterface(nsIID aIID, void **aInstancePtr)
 	{
+		Genode::log(__PRETTY_FUNCTION__, " called");
 		*aInstancePtr = this;
 	}
 };
