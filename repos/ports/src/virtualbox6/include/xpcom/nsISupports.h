@@ -26,7 +26,7 @@ struct nsISupports
 
 	void QueryInterface(nsIID aIID, void **aInstancePtr)
 	{
-		throw Not_implemented();
+		*aInstancePtr = this;
 	}
 };
 
