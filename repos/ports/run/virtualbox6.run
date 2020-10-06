@@ -238,6 +238,10 @@ append config {
 				<rom name="test.iso" />
 			</vfs>
 			<arg value="virtualbox"/>
+			<env key="VBOX_LOG_DEST" value="file=/dev/log"/>
+			<env key="VBOX_LOG" value="+main_virtualbox.e.l.f"/>
+			<env key="VBOX_RELEASE_LOG_DEST" value="file=/dev/log"/>
+			<env key="VBOX_RELEASE_LOG" value="+main_virtualbox.e.l.f +main_machine.e.l.f"/>
 		</config>
 		<route>}
 
