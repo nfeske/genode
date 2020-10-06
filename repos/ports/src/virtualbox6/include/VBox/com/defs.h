@@ -23,9 +23,9 @@
  */
 #define END_COM_MAP() NS_DECL_ISUPPORTS
 
-#define HRESULT nsresult
-#define SUCCEEDED(X) ((X) == VINF_SUCCESS)
-#define FAILED(X) ((X) != VINF_SUCCESS)
+#define HRESULT   nsresult
+#define SUCCEEDED NS_SUCCEEDED
+#define FAILED    NS_FAILED
 
 #define FAILED_DEAD_INTERFACE(rc)  (   (rc) == NS_ERROR_ABORT \
                                     || (rc) == NS_ERROR_CALL_FAILED \
