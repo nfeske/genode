@@ -18,6 +18,7 @@
 #include <base/heap.h>
 #include <base/log.h>
 #include <libc/component.h>
+#include <libc/args.h>
 
 /* Virtualbox includes */
 #include <iprt/initterm.h>
@@ -41,6 +42,9 @@
 
 static char c_vbox_file[128];
 static char c_vbox_vmname[128];
+
+/* initial environment for the FreeBSD libc implementation */
+extern char **environ;
 
 
 /**
@@ -287,14 +291,20 @@ void Libc::Component::construct(Libc::Env &env)
 	}
 
 	Libc::with_libc([&] () {
-		static char  argv0[] = { '_', 'm', 'a', 'i', 'n', 0};
-		static char *argv[1] = { argv0 };
-		char **dummy_argv = argv;
+
+		/* extract args and environment variables from config */
+		int argc    = 0;
+		char **argv = nullptr;
+		char **envp = nullptr;
+	
+		populate_args_and_env(env, argc, argv, envp);
+	
+		environ = envp;
 
 		/* sidestep 'rtThreadPosixSelectPokeSignal' */
 		uint32_t const fFlags = RTR3INIT_FLAGS_UNOBTRUSIVE;
 
-		int rc = RTR3InitExe(1, &dummy_argv, fFlags);
+		int rc = RTR3InitExe(argc, &argv, fFlags);
 		if (RT_FAILURE(rc))
 			throw -1;
 

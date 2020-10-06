@@ -208,6 +208,7 @@ append_if [expr $use_gui] config {
 				<rom name="test.vbox" />
 				<rom name="test.iso" />
 			</vfs>
+			<arg value="virtualbox"/>
 		</config>
 		<route>
 			<service name="Nic"> <child name="nic_bridge"/> </service>
@@ -236,6 +237,7 @@ append config {
 				<rom name="test.vbox" />
 				<rom name="test.iso" />
 			</vfs>
+			<arg value="virtualbox"/>
 		</config>
 		<route>}
 
