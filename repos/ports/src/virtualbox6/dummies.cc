@@ -190,7 +190,7 @@ HRESULT       USBProxyService::getDeviceCollection(std::vector<ComPtr<IHostUSBDe
 using USBDeviceSourceList =
 	std::__cxx11::list<settings::USBDeviceSource, std::allocator<settings::USBDeviceSource> >;
 
-HRESULT USBProxyService::i_saveSettings(USBDeviceSourceList &) STOP
+HRESULT USBProxyService::i_saveSettings(USBDeviceSourceList &)       TRACE(VINF_SUCCESS)
 HRESULT USBProxyService::i_loadSettings(USBDeviceSourceList const &) TRACE(VINF_SUCCESS)
 
 
@@ -498,4 +498,10 @@ int VBoxMainDriveInfo::updateDVDs() TRACE(VINF_SUCCESS)
 #include <iprt/buildconfig.h>
 
 uint32_t RTBldCfgRevision(void) { return ~0; }
+
+
+
+/* VDIfTcpNet.cpp */
+
+VBOXDDU_DECL(int) VDIfTcpNetInstDefaultCreate(PVDIFINST, PVDINTERFACE *) TRACE(VINF_SUCCESS)
 

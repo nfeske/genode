@@ -21,7 +21,7 @@ extern "C" {
 void name(void) { \
 	Genode::warning(__func__, ": " #name " called, not implemented, eip=", \
 	                __builtin_return_address(0)); \
-	while (1) { Assert(!"not implemented"); } \
+	for (;;); \
 }
 
 //DUMMY(DBGCRegisterCommands)
@@ -223,8 +223,6 @@ DUMMY(RTZipXarFsStreamFromIoStream)
 //
 DUMMY(RTDbgLineFree)
 DUMMY(RTDbgSymbolFree)
-
-DUMMY(VDIfTcpNetInstDefaultCreate)
 
 //DUMMY(SysAllocStringByteLen)
 
