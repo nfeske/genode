@@ -8,168 +8,39 @@ INC_DIR += $(VIRTUALBOX_DIR)/src/libs/zlib-1.2.11
 INC_DIR += $(call select_from_ports,libiconv)/include/iconv
 INC_DIR += $(REP_DIR)/src/virtualbox6/include/libc
 
-GENERIC_SRC_CC = $(notdir $(wildcard $(VBOX_DIR)/Runtime/generic/*.cpp))
-
-FILTERED_OUT_SRC_CC = fs-stubs-generic.cpp \
-                      http-curl.cpp \
-                      mppresent-generic-online.cpp \
-                      semrw-lockless-generic.cpp \
-                      tls-generic.cpp \
-                      RTDirExists-generic.cpp \
-                      RTFileExists-generic.cpp \
-                      RTLogDefaultInit-generic.cpp \
-                      RTLogWriteStdErr-generic.cpp \
-                      RTLogWriteStdOut-generic.cpp \
-                      RTMpGetDescription-generic-stub.cpp \
-                      RTMpOnPair-generic.cpp \
-                      RTProcessQueryUsernameA-generic.cpp \
-                      RTSemEventWait-2-ex-generic.cpp \
-                      RTSemEventWait-generic.cpp \
-                      RTSemEventWaitNoResume-2-ex-generic.cpp \
-                      RTSemEventMultiWait-2-ex-generic.cpp \
-                      RTSemMutexRequest-generic.cpp \
-                      RTSemMutexRequestDebug-generic.cpp \
-                      RTTimerCreate-generic.cpp \
-                      timer-generic.cpp
+LIBS += stdcxx
 
 CC_WARN += -Wno-unused-variable
 
-SRC_CC += Runtime/common/log/logrel.cpp \
-          Runtime/r3/init.cpp \
-          Runtime/common/misc/thread.cpp \
-          $(addprefix Runtime/generic/,$(filter-out $(FILTERED_OUT_SRC_CC), $(GENERIC_SRC_CC)))
+all_cpp_files_of_sub_dir = \
+  $(addprefix $1, $(notdir $(wildcard $(VBOX_DIR)/$1*.cpp)))
 
-SRC_CC += Runtime/common/alloc/alloc.cpp
-SRC_CC += Runtime/common/alloc/memcache.cpp
-SRC_CC += Runtime/common/alloc/heapoffset.cpp
-SRC_CC += Runtime/common/alloc/heapsimple.cpp
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/alloc/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/err/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/log/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/misc/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/path/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/rand/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/string/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/common/table/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/generic/)
+SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/r3/)
+
 SRC_CC += Runtime/common/checksum/alt-md5.cpp
 SRC_CC += Runtime/common/checksum/alt-sha512.cpp
 SRC_CC += Runtime/common/checksum/crc16ccitt.cpp
-SRC_CC += Runtime/common/checksum/crc32.cpp
 SRC_CC += Runtime/common/checksum/crc32c.cpp
+SRC_CC += Runtime/common/checksum/crc32.cpp
 SRC_CC += Runtime/common/checksum/ipv4.cpp
 SRC_CC += Runtime/common/checksum/ipv6.cpp
 SRC_CC += Runtime/common/checksum/sha512str.cpp
 SRC_CC += Runtime/common/dbg/dbgstackdumpself.cpp
-SRC_CC += Runtime/common/err/errinfo.cpp
-SRC_CC += Runtime/common/err/errinfolog.cpp
-SRC_CC += Runtime/common/err/errmsgxpcom.cpp
-SRC_CC += Runtime/common/err/RTErrConvertFromErrno.cpp
 SRC_CC += Runtime/common/fs/isovfs.cpp
 SRC_CC += Runtime/common/ldr/ldr.cpp
 SRC_CC += Runtime/common/ldr/ldrEx.cpp
-SRC_CC += Runtime/common/log/log.cpp
-SRC_CC += Runtime/common/log/logellipsis.cpp
-SRC_CC += Runtime/common/log/logrelellipsis.cpp
-SRC_CC += Runtime/common/log/logformat.cpp
-SRC_CC += Runtime/common/log/tracebuf.cpp
-SRC_CC += Runtime/common/log/tracedefault.cpp
-SRC_CC += Runtime/common/log/tracelogwriter.cpp
-SRC_CC += Runtime/common/misc/assert.cpp
-SRC_CC += Runtime/common/misc/buildconfig.cpp
-SRC_CC += Runtime/common/misc/cidr.cpp
-SRC_CC += Runtime/common/misc/circbuf.cpp
-SRC_CC += Runtime/common/misc/getopt.cpp
-SRC_CC += Runtime/common/misc/getoptargv.cpp
-SRC_CC += Runtime/common/misc/lockvalidator.cpp
-SRC_CC += Runtime/common/misc/once.cpp
-SRC_CC += Runtime/common/misc/req.cpp
-SRC_CC += Runtime/common/misc/reqpool.cpp
-SRC_CC += Runtime/common/misc/reqqueue.cpp
-SRC_CC += Runtime/common/misc/semspingpong.cpp
-SRC_CC += Runtime/common/misc/sg.cpp
-SRC_CC += Runtime/common/misc/zero.cpp
-SRC_CC += Runtime/common/misc/term.cpp
-SRC_CC += Runtime/common/misc/RTAssertMsg1Weak.cpp
-SRC_CC += Runtime/common/misc/RTAssertMsg2.cpp
-SRC_CC += Runtime/common/misc/RTAssertMsg2AddWeak.cpp
-SRC_CC += Runtime/common/misc/RTAssertMsg2AddWeakV.cpp
-SRC_CC += Runtime/common/misc/RTAssertMsg2Weak.cpp
-SRC_CC += Runtime/common/misc/RTAssertMsg2WeakV.cpp
-SRC_CC += Runtime/common/misc/RTFileModeToFlags.cpp
-SRC_CC += Runtime/common/misc/RTMemWipeThoroughly.cpp
-SRC_CC += Runtime/common/misc/uri.cpp
 SRC_CC += Runtime/common/net/macstr.cpp
 SRC_CC += Runtime/common/net/netaddrstr2.cpp
-SRC_CC += Runtime/common/path/comparepaths.cpp
-SRC_CC += Runtime/common/path/RTPathAbsDup.cpp
-SRC_CC += Runtime/common/path/RTPathAbsEx.cpp
-SRC_CC += Runtime/common/path/RTPathAbsExDup.cpp
-SRC_CC += Runtime/common/path/RTPathAppend.cpp
-SRC_CC += Runtime/common/path/RTPathAppendEx.cpp
-SRC_CC += Runtime/common/path/RTPathCalcRelative.cpp
-SRC_CC += Runtime/common/path/RTPathChangeToDosSlashes.cpp
-SRC_CC += Runtime/common/path/RTPathChangeToUnixSlashes.cpp
-SRC_CC += Runtime/common/path/RTPathEnsureTrailingSeparator.cpp
-SRC_CC += Runtime/common/path/RTPathExt.cpp
-SRC_CC += Runtime/common/path/RTPathFilename.cpp
-SRC_CC += Runtime/common/path/RTPathFindCommon.cpp
-SRC_CC += Runtime/common/path/RTPathHasExt.cpp
-SRC_CC += Runtime/common/path/RTPathHasPath.cpp
-SRC_CC += Runtime/common/path/RTPathJoinA.cpp
-SRC_CC += Runtime/common/path/RTPathJoinEx.cpp
-SRC_CC += Runtime/common/path/RTPathParentLength.cpp
-SRC_CC += Runtime/common/path/RTPathParse.cpp
-SRC_CC += Runtime/common/path/RTPathParsedReassemble.cpp
-SRC_CC += Runtime/common/path/RTPathParseSimple.cpp
-SRC_CC += Runtime/common/path/RTPathPurgeFilename.cpp
-SRC_CC += Runtime/common/path/rtPathRootSpecLen.cpp
-SRC_CC += Runtime/common/path/RTPathRealDup.cpp
-SRC_CC += Runtime/common/path/RTPathStartsWithRoot.cpp
-SRC_CC += Runtime/common/path/RTPathStripExt.cpp
-SRC_CC += Runtime/common/path/RTPathStripFilename.cpp
-SRC_CC += Runtime/common/path/RTPathStripTrailingSlash.cpp
-SRC_CC += Runtime/common/path/RTPathTraverseList.cpp
-SRC_CC += Runtime/common/path/rtPathVolumeSpecLen.cpp
-SRC_CC += Runtime/common/rand/rand.cpp
-SRC_CC += Runtime/common/rand/randadv.cpp
-SRC_CC += Runtime/common/rand/randparkmiller.cpp
 SRC_CC += Runtime/common/sort/shellsort.cpp
-SRC_CC += Runtime/common/string/base64.cpp
-SRC_CC += Runtime/common/string/RTStrCat.cpp
-SRC_CC += Runtime/common/string/RTStrCatP.cpp
-SRC_CC += Runtime/common/string/RTStrCmp.cpp
-SRC_CC += Runtime/common/string/RTStrCopy.cpp
-SRC_CC += Runtime/common/string/RTStrCopyEx.cpp
-SRC_CC += Runtime/common/string/RTStrCopyP.cpp
-SRC_CC += Runtime/common/string/RTStrICmpAscii.cpp
-SRC_CC += Runtime/common/string/RTStrNCmp.cpp
-SRC_CC += Runtime/common/string/RTStrNICmpAscii.cpp
-SRC_CC += Runtime/common/string/RTStrNLen.cpp
-SRC_CC += Runtime/common/string/RTStrNLenEx.cpp
-SRC_CC += Runtime/common/string/RTStrPrintHexBytes.cpp
-SRC_CC += Runtime/common/string/RTStrSplit.cpp
-SRC_CC += Runtime/common/string/RTStrStartsWith.cpp
-SRC_CC += Runtime/common/string/RTStrStr.cpp
-SRC_CC += Runtime/common/string/RTUtf16CmpAscii.cpp
-SRC_CC += Runtime/common/string/RTUtf16CopyAscii.cpp
-SRC_CC += Runtime/common/string/RTUtf16NLen.cpp
-SRC_CC += Runtime/common/string/simplepattern.cpp
-SRC_CC += Runtime/common/string/straprintf.cpp
-SRC_CC += Runtime/common/string/strformat.cpp
-SRC_CC += Runtime/common/string/strformatnum.cpp
-SRC_CC += Runtime/common/string/strformatrt.cpp
-SRC_CC += Runtime/common/string/strformattype.cpp
-SRC_CC += Runtime/common/string/stringalloc.cpp
-SRC_CC += Runtime/common/string/strprintf.cpp
-SRC_CC += Runtime/common/string/strprintf2.cpp
-SRC_CC += Runtime/common/string/strspace.cpp
-SRC_CC += Runtime/common/string/strstrip.cpp
-SRC_CC += Runtime/common/string/strtonum.cpp
-SRC_CC += Runtime/common/string/strversion.cpp
-SRC_CC += Runtime/common/string/unidata-lower.cpp
-SRC_CC += Runtime/common/string/unidata-upper.cpp
-SRC_CC += Runtime/common/string/utf-8.cpp
-SRC_CC += Runtime/common/string/utf-8-case.cpp
-SRC_CC += Runtime/common/string/utf-16.cpp
-SRC_CC += Runtime/common/string/utf-16-case.cpp
-SRC_CC += Runtime/common/table/avlohcphys.cpp
-SRC_CC += Runtime/common/table/avlpv.cpp
-SRC_CC += Runtime/common/table/avlroioport.cpp
-SRC_CC += Runtime/common/table/avlrogcphys.cpp
-SRC_CC += Runtime/common/table/avlul.cpp
-SRC_CC += Runtime/common/table/avlu32.cpp
 SRC_CC += Runtime/common/time/time.cpp
 SRC_CC += Runtime/common/time/timeprog.cpp
 SRC_CC += Runtime/common/time/timesup.cpp
@@ -179,28 +50,22 @@ SRC_CC += Runtime/common/vfs/vfschain.cpp
 SRC_CC += Runtime/common/vfs/vfsstddir.cpp
 SRC_CC += Runtime/common/vfs/vfsstdfile.cpp
 SRC_CC += Runtime/common/zip/zip.cpp
-SRC_CC += Runtime/r3/alloc.cpp
-SRC_CC += Runtime/r3/dir.cpp
-SRC_CC += Runtime/r3/fileio.cpp
-SRC_CC += Runtime/r3/posix/fileaio-posix.cpp
-SRC_CC += Runtime/r3/fs.cpp
-SRC_CC += Runtime/r3/path.cpp
-SRC_CC += Runtime/r3/generic/semspinmutex-r3-generic.cpp
 SRC_CC += Runtime/r3/generic/dirrel-r3-generic.cpp
-SRC_CC += Runtime/r3/poll.cpp
+SRC_CC += Runtime/r3/generic/semspinmutex-r3-generic.cpp
 SRC_CC += Runtime/r3/posix/dir-posix.cpp
 SRC_CC += Runtime/r3/posix/env-posix.cpp
-SRC_CC += Runtime/r3/posix/fileio-posix.cpp
+SRC_CC += Runtime/r3/posix/fileaio-posix.cpp
 SRC_CC += Runtime/r3/posix/fileio2-posix.cpp
-SRC_CC += Runtime/r3/posix/fs-posix.cpp
+SRC_CC += Runtime/r3/posix/fileio-posix.cpp
 SRC_CC += Runtime/r3/posix/fs2-posix.cpp
 SRC_CC += Runtime/r3/posix/fs3-posix.cpp
-SRC_CC += Runtime/r3/posix/path-posix.cpp
+SRC_CC += Runtime/r3/posix/fs-posix.cpp
 SRC_CC += Runtime/r3/posix/path2-posix.cpp
+SRC_CC += Runtime/r3/posix/path-posix.cpp
 SRC_CC += Runtime/r3/posix/pipe-posix.cpp
 SRC_CC += Runtime/r3/posix/process-posix.cpp
-SRC_CC += Runtime/r3/posix/RTTimeNow-posix.cpp
 SRC_CC += Runtime/r3/posix/rtmempage-exec-mmap-posix.cpp
+SRC_CC += Runtime/r3/posix/RTTimeNow-posix.cpp
 SRC_CC += Runtime/r3/posix/semeventmulti-posix.cpp
 SRC_CC += Runtime/r3/posix/semevent-posix.cpp
 SRC_CC += Runtime/r3/posix/semmutex-posix.cpp
@@ -211,10 +76,6 @@ SRC_CC += Runtime/r3/posix/thread-posix.cpp
 SRC_CC += Runtime/r3/posix/time-posix.cpp
 SRC_CC += Runtime/r3/posix/tls-posix.cpp
 SRC_CC += Runtime/r3/posix/utf8-posix.cpp
-SRC_CC += Runtime/r3/process.cpp
-SRC_CC += Runtime/r3/socket.cpp
-SRC_CC += Runtime/r3/stream.cpp
-SRC_CC += Runtime/r3/tcp.cpp
 SRC_CC += Runtime/VBox/log-vbox.cpp
 SRC_S  += Runtime/common/asm/ASMAtomicCmpXchgExU64.asm
 SRC_S  += Runtime/common/asm/ASMAtomicCmpXchgU64.asm
@@ -227,7 +88,38 @@ SRC_S  += Runtime/common/asm/ASMFxSave.asm
 SRC_S  += Runtime/common/asm/ASMMemFirstMismatchingU8.asm
 SRC_S  += Runtime/common/dbg/dbgstackdumpself-amd64-x86.asm
 
-SRC_CC += Runtime/common/err/errmsg.cpp
+FILTERED_OUT_SRC_CC += Runtime/common/misc/RTSystemIsInsideVM-amd64-x86.cpp
+FILTERED_OUT_SRC_CC += Runtime/common/misc/s3.cpp
+FILTERED_OUT_SRC_CC += Runtime/common/string/ministring.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/fs-stubs-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/http-curl.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/mppresent-generic-online.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTDirExists-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTFileExists-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTLogDefaultInit-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTLogWriteStdErr-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTLogWriteStdOut-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTMpGetDescription-generic-stub.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTMpOnPair-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTProcessQueryUsernameA-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTSemEventMultiWait-2-ex-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTSemEventWait-2-ex-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTSemEventWait-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTSemEventWaitNoResume-2-ex-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTSemMutexRequestDebug-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTSemMutexRequest-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/RTTimerCreate-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/semrw-lockless-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/strcache-stubs-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/timer-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/generic/tls-generic.cpp
+FILTERED_OUT_SRC_CC += Runtime/r3/xml.cpp
+FILTERED_OUT_SRC_CC += Runtime/r3/alloc-ef.cpp
+FILTERED_OUT_SRC_CC += Runtime/r3/alloc-ef-cpp.cpp
+FILTERED_OUT_SRC_CC += Runtime/r3/memsafer-r3.cpp
+
+SRC_CC := $(filter-out $(FILTERED_OUT_SRC_CC), $(SRC_CC))
+
 Runtime/common/err/errmsg.o: errmsgdata.h
 
 errmsgdata.h: $(VIRTUALBOX_DIR)/include/iprt/err.h \

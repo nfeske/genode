@@ -454,11 +454,6 @@ void SELMR3Reset(PVM)                                                           
 //int SUPR3SetVMForFastIOCtl(PVMR0)                                               TRACE(VINF_SUCCESS)
 
 
-#include <iprt/avl.h>
-
-//_AVLOU32NodeCore* RTAvloU32RemoveBestFit(PAVLOU32TREE, AVLOU32KEY, bool)        TRACE(VINF_SUCCESS)
-int RTAvlrFileOffsetDestroy(PAVLRFOFFTREE, PAVLRFOFFCALLBACK, void*)            TRACE(VINF_SUCCESS)
-
 /* module loader of pluggable device manager */
 int  pdmR3LdrInitU(PUVM)                            TRACE(VINF_SUCCESS)
 int  PDMR3LdrLoadVMMR0U(PUVM)                       TRACE(VINF_SUCCESS)
@@ -474,12 +469,6 @@ char *pdmR3FileR3(const char * file, bool)
 		Genode::log(__func__, ": file ", file, " ", (void *)pv, " ", __builtin_return_address(0));
 
 	TRACE(pv)
-}
-
-void RTAssertMsg2Add(const char *pszFormat, ...)
-{
-	Genode::error(__func__, "not implemented");
-	Genode::sleep_forever();
 }
 
 const char * RTBldCfgRevisionStr(void)
