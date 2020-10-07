@@ -84,8 +84,7 @@ nsresult nsIExceptionManager::SetCurrentException(nsIException *)
 
 nsresult nsIExceptionService::GetCurrentExceptionManager(already_AddRefed<nsIExceptionManager> arg)
 {
-	Genode::log("nsIExceptionService::GetCurrentExceptionManager called, doing nothing");
-	Genode::log("mRawPtr=", arg.mRawPtr);
+	Genode::log("nsIExceptionService::GetCurrentExceptionManager called, doing nothing, mRawPtr=", arg.mRawPtr);
 
 	return NS_OK;
 }

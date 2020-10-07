@@ -14,16 +14,14 @@ public: \
   \
   NS_IMETHOD_(nsrefcnt) AddRef(void) \
   { \
-    Genode::error(__PRETTY_FUNCTION__, " not implemented"); \
-    class Not_implemented { }; \
-    throw Not_implemented(); \
+    Genode::warning(__PRETTY_FUNCTION__, " not implemented, returning 1"); \
+    return 1; \
   } \
   \
   NS_IMETHOD_(nsrefcnt) Release(void) \
   { \
-    Genode::error(__PRETTY_FUNCTION__, " not implemented"); \
-    class Not_implemented { }; \
-    throw Not_implemented(); \
+    Genode::warning(__PRETTY_FUNCTION__, " not implemented, returning 1"); \
+    return 1; \
   }
 
 #define NS_DECL_CLASSINFO(x)

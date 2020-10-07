@@ -24,14 +24,13 @@ struct nsISupports
 
 	nsrefcnt AddRef()
 	{
-		Genode::error(__PRETTY_FUNCTION__, " not implemented");
-		throw Not_implemented();
+		Genode::warning(__PRETTY_FUNCTION__, " not implemented, returning 1");
+		return 1;
 	}
 
 	void Release()
 	{
-		Genode::error(__PRETTY_FUNCTION__, " not implemented");
-		throw Not_implemented();
+		Genode::warning(__PRETTY_FUNCTION__, " not implemented");
 	}
 
 	void QueryInterface(nsIID aIID, void **aInstancePtr)

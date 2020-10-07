@@ -52,6 +52,10 @@ struct nsCOMPtr
 	T * operator -> ()
 	{
 		Genode::log(__PRETTY_FUNCTION__, " called type=", ns_type_trait<T>::name(), " ptr=", _raw_ptr);
+		if (!_raw_ptr) {
+			Genode::error(__PRETTY_FUNCTION__, " de-referencing nullptr");
+		}
+
 		return _raw_ptr;
 	}
 };
