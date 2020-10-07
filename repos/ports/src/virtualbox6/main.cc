@@ -146,6 +146,14 @@ warning("setup_machine 5");
 //	rc = virtualbox->RegisterMachine(machine);
 //	if (FAILED(rc))
 //		return rc;
+
+	{
+		AutoWriteLock alock(virtualbox.m_p COMMA_LOCKVAL_SRC_POS);
+
+		rc = machine->i_prepareRegister();
+		if (FAILED(rc))
+			return rc;
+	}
 warning("setup_machine 6");
 
 	// open a session
