@@ -116,8 +116,8 @@ class VirtualBoxBase : public VirtualBoxTranslatable
 		virtual const IID& getClassIID() const = 0;
 
 		static HRESULT handleUnexpectedExceptions(VirtualBoxBase *const aThis, RT_SRC_POS_DECL);
-		static HRESULT initializeComForThread(void);
-		static void uninitializeComForThread(void);
+		static HRESULT initializeComForThread(void) { return S_OK; }
+		static void uninitializeComForThread(void) { }
 		static void clearError(void);
 
 		HRESULT setError(HRESULT aResultCode);

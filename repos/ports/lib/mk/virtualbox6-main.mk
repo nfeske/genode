@@ -43,6 +43,7 @@ SRC_CC += Main/src-server/NetworkServiceRunner.cpp
 SRC_CC += Main/src-server/ParallelPortImpl.cpp
 SRC_CC += Main/src-server/Performance.cpp
 SRC_CC += Main/src-server/PerformanceImpl.cpp
+SRC_CC += Main/src-server/ProgressProxyImpl.cpp
 SRC_CC += Main/src-server/RecordingSettingsImpl.cpp
 SRC_CC += Main/src-server/RecordingScreenSettingsImpl.cpp
 SRC_CC += Main/src-server/SerialPortImpl.cpp

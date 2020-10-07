@@ -7,16 +7,17 @@ include $(REP_DIR)/lib/mk/virtualbox6-common.inc
 
 CC_WARN += -Wall
 
-SRC_CC := main.cc console.cc VirtualBoxErrorInfoImpl.cpp
+SRC_CC := main.cc console.cc VirtualBoxErrorInfoImpl.cpp drivers.cc
 SRC_CC += libc.cc unimpl.cc dummies.cc pdm.cc devices.cc mm.cc dynlib.cc
 
-#         drivers.cc
 #         pgm.cc
 #         hm.cc thread.cc
 
 LIBS  += base
 LIBS  += stdcxx
 LIBS  += libiconv
+
+CC_OPT_console = -DProgress=ClientProgress
 
 LIB_MK_FILES := $(notdir $(wildcard $(REP_DIR)/lib/mk/virtualbox6-*.mk))
 
@@ -38,6 +39,7 @@ INC_DIR += $(VBOX_DIR)/Runtime/include
 #SRC_CC += HostServices/SharedClipboard/service.cpp
 #
 #SRC_CC += HostServices/GuestProperties/service.cpp
+SRC_CC += HostServices/common/message.cpp
 #
 #SRC_CC += frontend/dummy/virtualboxbase.cc
 #SRC_CC += frontend/dummy/host.cc

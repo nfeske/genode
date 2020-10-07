@@ -37,12 +37,11 @@ static bool vm_down = false;
 
 //void Console::uninit()
 //	DUMMY()
-//HRESULT Console::teleport(const com::Utf8Str &, ULONG, const com::Utf8Str &,
-//                          ULONG, ComPtr<IProgress> &aProgress)
-//	DUMMY(E_FAIL)
-//HRESULT Console::i_teleporterTrg(PUVM, IMachine *, Utf8Str *, bool, Progress *,
-//                                 bool *)
-//	DUMMY(E_FAIL)
+HRESULT Console::teleport(const com::Utf8Str &, ULONG, const com::Utf8Str &,
+                          ULONG, ComPtr<IProgress> &aProgress) TRACE(E_FAIL)
+
+HRESULT Console::i_teleporterTrg(UVM*, IMachine*, com::Utf8Str*, bool,
+                                 Progress*, bool*) TRACE(E_FAIL)
 
 //HRESULT Console::i_attachToTapInterface(INetworkAdapter *networkAdapter)
 //{

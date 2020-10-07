@@ -104,10 +104,6 @@ int PDMR3LdrGetSymbolR3(PVM pVM, const char *pszModule, const char *pszSymbol,
 			*ppvValue = (void *)VBoxDevicesRegister;
 			return VINF_SUCCESS;
 		}
-		if (Genode::strcmp(pszSymbol, "VBoxUsbRegister") == 0) {
-			*ppvValue = (void *)VBoxUsbRegister;
-			return VINF_SUCCESS;
-		}
 	}
 
 	if (Genode::strcmp(pszModule, "VBoxDD2") == 0) {
@@ -123,12 +119,12 @@ int PDMR3LdrGetSymbolR3(PVM pVM, const char *pszModule, const char *pszSymbol,
 		}
 	}
 
-	if (Genode::strcmp(pszModule, "VBoxC") == 0) {
-		if (Genode::strcmp(pszSymbol, "VBoxDriversRegister") == 0) {
-			*ppvValue = (void *)VBoxDriversRegister_Main;
-			return VINF_SUCCESS;
-		}
-	}
+//	if (Genode::strcmp(pszModule, "VBoxC") == 0) {
+//		if (Genode::strcmp(pszSymbol, "VBoxDriversRegister") == 0) {
+//			*ppvValue = (void *)VBoxDriversRegister_Main;
+//			return VINF_SUCCESS;
+//		}
+//	}
 
 	Genode::error("pszModule=", pszModule, " pszSymbol=", pszSymbol);
 

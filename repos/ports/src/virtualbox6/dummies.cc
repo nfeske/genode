@@ -91,6 +91,11 @@ nsresult nsIExceptionService::GetCurrentExceptionManager(already_AddRefed<nsIExc
 }
 
 
+int com::VBoxLogRelCreate(char const*, char const*, unsigned int, char const*,
+                          char const*, unsigned int, unsigned int, unsigned int,
+                          unsigned int, unsigned long, RTERRINFO*) TRACE(NS_OK)
+
+
 /* DisplayPNGUtil.cpp */
 
 #include "DisplayImpl.h"
@@ -142,6 +147,7 @@ int  USBFilterSetNumExpression(PUSBFILTER, USBFILTERIDX, const char *, bool) STO
 int  USBFilterSetStringExact  (PUSBFILTER, USBFILTERIDX, const char *, bool) STOP
 int  USBFilterSetStringPattern(PUSBFILTER, USBFILTERIDX, const char *, bool) STOP
 int  USBFilterSetStringExact  (PUSBFILTER, USBFILTERIDX, const char *, bool, bool) STOP
+int  USBFilterMatchRated      (PCUSBFILTER, PCUSBFILTER) STOP
 
 
 /* USBProxyBackend.cpp */
@@ -224,7 +230,10 @@ void VirtualBox::ClientWatcher::update()  STOP
 
 #include "ClientTokenHolder.h"
 
+Session::ClientTokenHolder::ClientTokenHolder(IToken*) STOP
 Session::ClientTokenHolder::~ClientTokenHolder() { }
+
+bool Session::ClientTokenHolder::isReady() STOP
 
 
 /* CloudProviderManagerImpl.cpp */
@@ -410,7 +419,7 @@ int  pgmR3InitSavedState(PVM pVM, uint64_t cbRam)                               
 //void vmmR3SwitcherRelocate(PVM, RTGCINTPTR)                                     TRACE()
 //int  VMMR3DisableSwitcher(PVM)                                                  TRACE(VINF_SUCCESS)
 //
-//int  emR3InitDbg(PVM pVM)                                                       TRACE(VINF_SUCCESS)
+int  emR3InitDbg(PVM pVM) TRACE(VINF_SUCCESS)
 //
 //int  FTMR3Init(PVM)                                                             TRACE(VINF_SUCCESS)
 //int  FTMR3SetCheckpoint(PVM, FTMCHECKPOINTTYPE)                                 TRACE(-1)
@@ -435,10 +444,10 @@ int  pgmR3InitSavedState(PVM pVM, uint64_t cbRam)                               
 //
 //void HMR3Relocate(PVM)                                                          TRACE()
 //
-//int  SELMR3Init(PVM)                                                            TRACE(VINF_SUCCESS)
+int  SELMR3Init(PVM) TRACE(VINF_SUCCESS)
 int  SELMR3Term(PVM)                                                            TRACE(VINF_SUCCESS)
 //int  SELMR3InitFinalize(PVM)                                                    TRACE(VINF_SUCCESS)
-//void SELMR3Relocate(PVM)                                                        TRACE()
+void SELMR3Relocate(PVM) TRACE()
 void SELMR3Reset(PVM)                                                           TRACE()
 //void SELMR3DisableMonitoring(PVM)                                               TRACE()
 //
@@ -495,13 +504,36 @@ RT_C_DECLS_END
 int VBoxMainDriveInfo::updateDVDs() TRACE(VINF_SUCCESS)
 
 
+/* buildconfig.cpp */
+
 #include <iprt/buildconfig.h>
 
-uint32_t RTBldCfgRevision(void) { return ~0; }
-
+uint32_t RTBldCfgRevision(void)     { return ~0; }
+uint32_t RTBldCfgVersionBuild(void) { return ~0; }
+uint32_t RTBldCfgVersionMajor(void) { return ~0; }
+uint32_t RTBldCfgVersionMinor(void) { return ~0; }
 
 
 /* VDIfTcpNet.cpp */
 
 VBOXDDU_DECL(int) VDIfTcpNetInstDefaultCreate(PVDIFINST, PVDINTERFACE *) TRACE(VINF_SUCCESS)
 
+
+/* SharedFolderImpl.cpp */
+
+#include <SharedFolderImpl.h>
+
+HRESULT SharedFolder::init(Console*, com::Utf8Str const&, com::Utf8Str const&,
+                           bool, bool, com::Utf8Str const&, bool) TRACE(E_FAIL)
+
+
+/* DBGFBp.cpp */
+
+#include <DBGFInternal.h>
+
+int dbgfR3BpInit(VM*) STOP
+
+
+/* DBGFR3BugCheck.cpp */
+
+int dbgfR3BugCheckInit(VM*) STOP

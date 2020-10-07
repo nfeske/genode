@@ -18,12 +18,16 @@ SRC_CC += VMM/VMMR3/PDMDevice.cpp
 SRC_CC += VMM/VMMR3/PDMQueue.cpp
 SRC_CC += VMM/VMMR3/PDMCritSect.cpp
 SRC_CC += VMM/VMMR3/PDMAsyncCompletion.cpp
+SRC_CC += VMM/VMMR3/PDMAsyncCompletionFile.cpp
+SRC_CC += VMM/VMMR3/PDMAsyncCompletionFileFailsafe.cpp
+SRC_CC += VMM/VMMR3/PDMAsyncCompletionFileNormal.cpp
 SRC_CC += VMM/VMMR3/PDMNetShaper.cpp
 SRC_CC += VMM/VMMR3/PDMR3Task.cpp
 SRC_CC += VMM/VMMAll/PDMAll.cpp
 SRC_CC += VMM/VMMAll/PDMAllQueue.cpp
 SRC_CC += VMM/VMMAll/PDMAllCritSect.cpp
 SRC_CC += VMM/VMMAll/PDMAllCritSectRw.cpp
+SRC_CC += VMM/VMMAll/PDMAllTask.cpp
 
 SRC_CC += VMM/VMMR3/TM.cpp
 SRC_CC += VMM/VMMAll/TMAll.cpp
@@ -84,6 +88,7 @@ SRC_CC += VMM/VMMAll/GIMAllKvm.cpp
 SRC_CC += VMM/VMMR3/GIM.cpp
 SRC_CC += VMM/VMMR3/GIMHv.cpp
 SRC_CC += VMM/VMMR3/GIMKvm.cpp
+SRC_CC += VMM/VMMR3/GIMMinimal.cpp
 
 SRC_CC += VMM/VMMR3/GMM.cpp
 
@@ -100,6 +105,8 @@ SRC_CC += VMM/VMMAll/PGMAllPool.cpp
 CC_OPT_VMM/VMMAll/PGMAll = -Dregister=
 
 SRC_CC += VMM/VMMR3/IOM.cpp
+SRC_CC += VMM/VMMR3/IOMR3IoPort.cpp
+SRC_CC += VMM/VMMR3/IOMR3Mmio.cpp
 SRC_CC += VMM/VMMAll/IOMAll.cpp
 SRC_CC += VMM/VMMAll/IOMAllMmioNew.cpp
 

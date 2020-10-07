@@ -47,7 +47,16 @@ public: \
     return *aInstancePtr ? NS_OK : NS_NOINTERFACE; \
   }
 
-#define NS_IMPL_QUERY_INTERFACE3_CI(a, b, c, d)
+#define NS_IMPL_QUERY_INTERFACE3_CI(a, b, c, d) \
+  nsresult a::QueryInterface(REFNSIID aIID, void** aInstancePtr) \
+  { \
+    if      (b *ptr = dynamic_cast<b *>(this)) { *aInstancePtr = ptr; } \
+    else if (c *ptr = dynamic_cast<c *>(this)) { *aInstancePtr = ptr; } \
+    else if (d *ptr = dynamic_cast<d *>(this)) { *aInstancePtr = ptr; } \
+    \
+    return *aInstancePtr ? NS_OK : NS_NOINTERFACE; \
+  }
+
 #define NS_IMPL_QUERY_INTERFACE4_CI(a, b, c, d, e)
 #define NS_IMPL_QUERY_INTERFACE5_CI(a, b, c, d, e, f)
 #define NS_IMPL_CI_INTERFACE_GETTER1(a, b)
