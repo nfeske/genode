@@ -116,4 +116,23 @@ namespace com {
 
 } /* namespace com */
 
+
+namespace ATL {
+
+	class CComMultiThreadModel { };
+
+	template <class T> struct CComObjectRootEx
+	{
+		HRESULT FinalConstruct() { return S_OK; }
+
+		void FinalRelease() { }
+	};
+
+	template <class BASE> struct CComObject : BASE
+	{
+		virtual ~CComObject() { this->FinalRelease(); }
+	};
+
+} /* namespace ATL */
+
 #endif /* !___VBox_com_defs_h */

@@ -243,6 +243,7 @@ CloudProviderManager::CloudProviderManager() TRACE()
 CloudProviderManager::~CloudProviderManager() { }
 
 HRESULT CloudProviderManager::FinalConstruct() TRACE(VINF_SUCCESS)
+void    CloudProviderManager::FinalRelease()   TRACE()
 HRESULT CloudProviderManager::init()           TRACE(VINF_SUCCESS)
 void    CloudProviderManager::uninit()         STOP
 HRESULT CloudProviderManager::getProviderById       (com::Guid    const&, ComPtr<ICloudProvider>&) STOP

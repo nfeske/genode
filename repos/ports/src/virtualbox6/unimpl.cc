@@ -118,6 +118,7 @@ DUMMY(SUPSemEventMultiWaitNsAbsIntr)
 DUMMY(SUPSemEventMultiWaitNsRelIntr)
 DUMMY(SUPSemEventWaitNsAbsIntr)
 DUMMY(SUPSemEventWaitNsRelIntr)
+DUMMY(USBFilterClone)
 DUMMY(VDIfTcpNetInstDefaultDestroy)
 
 } /* extern "C" */

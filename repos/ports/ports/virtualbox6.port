@@ -95,6 +95,7 @@ VBOX_MAIN_INC += CloudProviderManagerImpl HostNetworkInterfaceImpl
 VBOX_MAIN_INC += HostVideoInputDeviceImpl HostPower HostHardwareLinux
 VBOX_MAIN_INC += RecordingScreenSettingsImpl DataStreamImpl
 VBOX_MAIN_INC += GuestDnDSourceImpl GuestDnDTargetImpl GuestDnDPrivate
+VBOX_MAIN_INC += VirtualBoxBase
 
 VBOX_SRC_VBOX := VMM Devices Runtime GuestHost/HGSMI GuestHost/DragAndDrop
 VBOX_SRC_VBOX += Storage Disassembler

@@ -88,7 +88,7 @@ struct ComObjPtr : ComPtr<T>
 
 	HRESULT createObject()
 	{
-		T * obj = new T { };
+		T * obj = new ATL::CComObject<T>();
 		if (!obj)
 			return E_OUTOFMEMORY;
 
