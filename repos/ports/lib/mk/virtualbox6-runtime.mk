@@ -127,5 +127,4 @@ errmsgdata.h: $(VIRTUALBOX_DIR)/include/iprt/err.h \
 	$(MSG_CONVERT)$@
 	$(VERBOSE)sed -f $(VBOX_DIR)/Runtime/common/err/errmsg.sed $^ > $@
 
-
 CC_CXX_WARN_STRICT =

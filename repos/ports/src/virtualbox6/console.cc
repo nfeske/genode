@@ -336,7 +336,7 @@ void GenodeConsole::init_backends(IKeyboard * gKeyboard, IMouse * gMouse)
 
 void GenodeConsole::i_onMouseCapabilityChange(BOOL supportsAbsolute,
                                               BOOL supportsRelative,
-		                                      BOOL supportsMT,
+                                              BOOL supportsMT,
                                               BOOL needsHostCursor)
 {
 	if (supportsAbsolute) {
@@ -345,8 +345,6 @@ void GenodeConsole::i_onMouseCapabilityChange(BOOL supportsAbsolute,
 		gMouse->PutMouseEventAbsolute(-1, -1, 0, 0, 0);
 	}
 }
-
-
 
 
 ///**********************
@@ -564,3 +562,8 @@ void GenodeConsole::handle_mode_change() {
 
 void GenodeConsole::handle_cb_rom_change() {
 	Libc::with_libc([&] () { _handle_cb_rom_change(); }); }
+
+
+NS_IMPL_THREADSAFE_ISUPPORTS1_CI(Genodefb, IFramebuffer)
+NS_DECL_CLASSINFO(Genodefb)
+

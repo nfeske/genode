@@ -7,7 +7,7 @@ include $(REP_DIR)/lib/mk/virtualbox6-common.inc
 
 CC_WARN += -Wall
 
-SRC_CC := main.cc console.cc VirtualBoxErrorInfoImpl.cpp drivers.cc
+SRC_CC := main.cc console.cc drivers.cc
 SRC_CC += libc.cc unimpl.cc dummies.cc pdm.cc devices.cc mm.cc dynlib.cc
 
 #         pgm.cc
@@ -17,7 +17,7 @@ LIBS  += base
 LIBS  += stdcxx
 LIBS  += libiconv
 
-CC_OPT_console = -DProgress=ClientProgress
+CC_OPT_console = -DProgress=ClientProgress -Wno-multistatement-macros
 
 LIB_MK_FILES := $(notdir $(wildcard $(REP_DIR)/lib/mk/virtualbox6-*.mk))
 

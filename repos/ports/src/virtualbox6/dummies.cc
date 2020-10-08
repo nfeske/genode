@@ -31,64 +31,7 @@ HRESULT Machine::exportTo(const ComPtr<IAppliance> &aAppliance,
                           const com::Utf8Str &aLocation,
                           ComPtr<IVirtualSystemDescription> &aDescription) STOP
 
-
 /* com.cpp */
-
-#include "VBox/com/Guid.h"
-#include "VBox/com/array.h"
-
-com::Guid const com::Guid::Empty;
-
-char const com::Zeroes[16] = {0, };
-
-#include "xpcom/nsIServiceManager.h"
-#include "xpcom/nsIExceptionService.h"
-
-nsGetServiceByContractID do_GetService(char const *iid, unsigned int *rc)
-{
-	void *result = nullptr;
-
-	if (strcmp(iid, ns_type_trait<nsIExceptionService>::name()) == 0) {
-		Genode::log("create new instance of nsIExceptionService");
-		result = new nsIExceptionService { };
-	}
-
-	if (!result) {
-		Genode::log("do_GetService(iid=", iid, ") called, returning invalid service");
-		*rc = NS_ERROR_NO_INTERFACE;
-		return nsGetServiceByContractID { nullptr };
-	}
-
-	*rc = NS_OK;
-	return nsGetServiceByContractID { result };
-}
-
-
-nsresult nsIExceptionManager::GetCurrentException(nsIException **out)
-{
-	Genode::log("GetCurrentException called, return nullptr");
-
-	out = nullptr;
-
-	return NS_OK;
-}
-
-
-nsresult nsIExceptionManager::SetCurrentException(nsIException *)
-{
-	Genode::log("SetCurrentException called, ignored");
-
-	return NS_OK;
-}
-
-
-nsresult nsIExceptionService::GetCurrentExceptionManager(already_AddRefed<nsIExceptionManager> arg)
-{
-	Genode::log("nsIExceptionService::GetCurrentExceptionManager called, doing nothing, mRawPtr=", arg.mRawPtr);
-
-	return NS_OK;
-}
-
 
 int com::VBoxLogRelCreate(char const*, char const*, unsigned int, char const*,
                           char const*, unsigned int, unsigned int, unsigned int,
@@ -122,8 +65,8 @@ HRESULT VBoxEventDesc::reinit(VBoxEventType_T, ...)              TRACE(S_OK)
 
 #include "VBox/com/com.h"
 
-HRESULT com::Initialize(bool) TRACE(S_OK)
-HRESULT com::Shutdown()       STOP
+HRESULT com::Initialize(uint32_t) TRACE(S_OK)
+HRESULT com::Shutdown()           STOP
 
 
 /* USBFilter.cpp */
@@ -358,38 +301,6 @@ int AutostartDb::setAutostartDbPath(char const*) TRACE(VINF_SUCCESS)
 
 RT_C_DECLS_BEGIN
 
-//RTDECL(int) RTMemProtect(void *pv, size_t cb, unsigned fProtect)
-//{
-//	if (!trace)
-//		return VINF_SUCCESS;
-//
-//	char type[4];
-//
-//	if (fProtect & RTMEM_PROT_READ)
-//		type[0] = 'r';
-//	else
-//		type[0] = '-';
-//
-//	if (fProtect & RTMEM_PROT_WRITE)
-//		type[1] = 'w';
-//	else
-//		type[1] = '-';
-//
-//	if (fProtect & RTMEM_PROT_EXEC)
-//		type[2] = 'x';
-//	else
-//		type[2] = '-';
-//
-//	type[3] = 0;
-//
-//	Genode::warning(__func__, " called - not implemented - ", pv, "+",
-//	                Genode::Hex(cb), " protect ", Genode::Hex(fProtect), " - "
-//	                "'", (char const *)type, "'");
-//
-//	return VINF_SUCCESS;
-//}
-
-
 static_assert(sizeof(RTR0PTR) == sizeof(RTR3PTR), "pointer transformation bug");
 static_assert(sizeof(RTR0PTR) == sizeof(void *) , "pointer transformation bug");
 static_assert(sizeof(RTR3PTR) == sizeof(RTR0PTR), "pointer transformation bug");
@@ -405,54 +316,12 @@ RTR3PTR MMHyperRCToR3(PVM pVM, RTRCPTR RCPtr)
 	return reinterpret_cast<RTR3PTR>(0UL | RCPtr);
 }
 
-/* debugger */
-//int  DBGFR3AsSymbolByAddr(PUVM, RTDBGAS, PCDBGFADDRESS, uint32_t, PRTGCINTPTR,
-//                          PRTDBGSYMBOL, PRTDBGMOD)                              TRACE(VERR_INVALID_HANDLE)
-
-///* called by 'VMMR3InitRC', but we don't use GC */
-//void CPUMPushHyper(PVMCPU, uint32_t)                                            TRACE()
-//
-//int  PGMR3FinalizeMappings(PVM)                                                 TRACE(VINF_SUCCESS)
-int  pgmR3InitSavedState(PVM pVM, uint64_t cbRam)                               TRACE(VINF_SUCCESS)
-//
-//int  vmmR3SwitcherInit(PVM pVM)                                                 TRACE(VINF_SUCCESS)
-//void vmmR3SwitcherRelocate(PVM, RTGCINTPTR)                                     TRACE()
-//int  VMMR3DisableSwitcher(PVM)                                                  TRACE(VINF_SUCCESS)
-//
-int  emR3InitDbg(PVM pVM) TRACE(VINF_SUCCESS)
-//
-//int  FTMR3Init(PVM)                                                             TRACE(VINF_SUCCESS)
-//int  FTMR3SetCheckpoint(PVM, FTMCHECKPOINTTYPE)                                 TRACE(-1)
-//int  FTMSetCheckpoint(PVM, FTMCHECKPOINTTYPE)                                   TRACE(VINF_SUCCESS)
-//int  FTMR3Term(PVM)                                                             TRACE(VINF_SUCCESS)
-//
-//int  GIMR3Init(PVM)                                                             TRACE(VINF_SUCCESS)
-//int  GIMR3Term(PVM)                                                             TRACE(VINF_SUCCESS)
-//void GIMR3Reset(PVM)                                                            TRACE()
-//bool GIMIsEnabled(PVM)                                                          TRACE(false)
-//bool GIMIsParavirtTscEnabled(PVM)                                               TRACE(false)
-//int GIMR3InitCompleted(PVM pVM)
-//{
-//	/* from original GIMR3InitCompleted code */
-//	if (!TMR3CpuTickIsFixedRateMonotonic(pVM, true /* fWithParavirtEnabled */))
-//		Genode::warning("GIM: Warning!!! Host TSC is unstable. The guest may ",
-//		                "behave unpredictably with a paravirtualized clock.");
-//
-//	TRACE(VINF_SUCCESS)
-//}
-//
-//
-//void HMR3Relocate(PVM)                                                          TRACE()
-//
-int  SELMR3Init(PVM) TRACE(VINF_SUCCESS)
-int  SELMR3Term(PVM)                                                            TRACE(VINF_SUCCESS)
-//int  SELMR3InitFinalize(PVM)                                                    TRACE(VINF_SUCCESS)
-void SELMR3Relocate(PVM) TRACE()
-void SELMR3Reset(PVM)                                                           TRACE()
-//void SELMR3DisableMonitoring(PVM)                                               TRACE()
-//
-//int SUPR3SetVMForFastIOCtl(PVMR0)                                               TRACE(VINF_SUCCESS)
-
+int  pgmR3InitSavedState(PVM, uint64_t) TRACE(VINF_SUCCESS)
+int  emR3InitDbg(PVM)                   TRACE(VINF_SUCCESS)
+int  SELMR3Init(PVM)                    TRACE(VINF_SUCCESS)
+int  SELMR3Term(PVM)                    TRACE(VINF_SUCCESS)
+void SELMR3Relocate(PVM)                TRACE()
+void SELMR3Reset(PVM)                   TRACE()
 
 /* module loader of pluggable device manager */
 int  pdmR3LdrInitU(PUVM)                            TRACE(VINF_SUCCESS)

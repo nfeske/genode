@@ -19,6 +19,7 @@ SRC_CC += Main/src-all/SharedFolderImpl.cpp
 SRC_CC += Main/src-all/ThreadTask.cpp
 SRC_CC += Main/src-all/VirtualBoxBase.cpp
 SRC_CC += Main/src-all/GlobalStatusConversion.cpp
+SRC_CC += Main/src-all/VirtualBoxErrorInfoImpl.cpp
 SRC_CC += Main/src-server/AudioAdapterImpl.cpp
 SRC_CC += Main/src-server/BandwidthControlImpl.cpp
 SRC_CC += Main/src-server/BandwidthGroupImpl.cpp
@@ -68,6 +69,7 @@ SRC_CC += Main/src-server/os2/PerformanceOs2.cpp
 SRC_CC += Main/glue/AutoLock.cpp
 SRC_CC += Main/glue/EventQueue.cpp
 SRC_CC += Main/glue/string.cpp
+SRC_CC += Main/glue/com.cpp
 SRC_CC += Main/glue/xpcom/helpers.cpp
 
 # see comment in virtualbox6-client.mk

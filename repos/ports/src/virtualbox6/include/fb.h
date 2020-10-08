@@ -88,7 +88,9 @@ class Genodefb :
 
 	public:
 
-		Genodefb (Genode::Env &env, Gui::Connection &gui, ComPtr<IDisplay> const &display)
+		NS_DECL_ISUPPORTS
+
+		Genodefb(Genode::Env &env, Gui::Connection &gui, ComPtr<IDisplay> const &display)
 		:
 			_env(env),
 			_gui(gui),
@@ -100,6 +102,8 @@ class Genodefb :
 			int rc = RTCritSectInit(&_fb_lock);
 			Assert(rc == VINF_SUCCESS);
 		}
+
+		virtual ~Genodefb() { }
 
 		int w() const { return _fb_mode.area.w(); }
 		int h() const { return _fb_mode.area.h(); }
@@ -318,7 +322,7 @@ class Genodefb :
 			Assert(!"FixMe");
 			return E_NOTIMPL; }
 
-		STDMETHODIMP COMGETTER(PixelFormat) (ULONG *format) override {
+		STDMETHODIMP COMGETTER(PixelFormat) (BitmapFormat_T *format) {
 			Assert(!"FixMe");
 			return E_NOTIMPL; }
 
