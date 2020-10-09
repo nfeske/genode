@@ -25,6 +25,7 @@ SRC_CC += Main/src-server/BandwidthControlImpl.cpp
 SRC_CC += Main/src-server/BandwidthGroupImpl.cpp
 SRC_CC += Main/src-server/BIOSSettingsImpl.cpp
 SRC_CC += Main/src-server/ClientToken.cpp
+SRC_CC += Main/src-server/ClientWatcher.cpp
 SRC_CC += Main/src-server/DHCPServerImpl.cpp
 SRC_CC += Main/src-server/DHCPConfigImpl.cpp
 SRC_CC += Main/src-server/GraphicsAdapterImpl.cpp

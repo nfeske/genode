@@ -20,6 +20,7 @@ SRC_CC += Main/src-all/ProgressImpl.cpp
 
 SRC_CC += Main/src-client/AdditionsFacilityImpl.cpp
 SRC_CC += Main/src-client/BusAssignmentManager.cpp
+SRC_CC += Main/src-client/ClientTokenHolder.cpp
 SRC_CC += Main/src-client/ConsoleImpl.cpp
 SRC_CC += Main/src-client/ConsoleImpl2.cpp
 SRC_CC += Main/src-client/ConsoleVRDPServer.cpp

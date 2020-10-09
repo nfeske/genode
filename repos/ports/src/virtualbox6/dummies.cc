@@ -148,29 +148,6 @@ USBLIB_DECL(int)           USBFilterSetFilterType(PUSBFILTER, USBFILTERTYPE) STO
 HRESULT VirtualBox::createAppliance(ComPtr<IAppliance> &) STOP
 
 
-/* ClientWatcher.cpp */
-
-#include "ClientWatcher.h"
-
-VirtualBox::ClientWatcher::~ClientWatcher() { }
-
-VirtualBox::ClientWatcher::ClientWatcher(const ComObjPtr<VirtualBox> &)
-: mLock(LOCKCLASS_OBJECTSTATE) TRACE()
-
-bool VirtualBox::ClientWatcher::isReady() TRACE(true)
-void VirtualBox::ClientWatcher::update()  STOP
-
-
-/* ClientTokenHolder.cpp */
-
-#include "ClientTokenHolder.h"
-
-Session::ClientTokenHolder::ClientTokenHolder(IToken*) STOP
-Session::ClientTokenHolder::~ClientTokenHolder() { }
-
-bool Session::ClientTokenHolder::isReady() STOP
-
-
 /* CloudProviderManagerImpl.cpp */
 
 #include "CloudProviderManagerImpl.h"

@@ -39,7 +39,7 @@ VBOX_MAIN_CLI += HGCM HGCMThread HGCMObjects
 VBOX_MAIN_CLI += KeyboardImpl SessionImpl VMMDevInterface
 VBOX_MAIN_CLI += MouseImpl MachineDebuggerImpl
 VBOX_MAIN_CLI += USBDeviceImpl UsbWebcamInterface VBoxDriversRegister
-VBOX_MAIN_CLI += RemoteUSBDeviceImpl RemoteUSBBackend
+VBOX_MAIN_CLI += RemoteUSBDeviceImpl RemoteUSBBackend ClientTokenHolder
 VBOX_MAIN_CLI += GuestCtrlPrivate
 VBOX_MAIN_CLI += GuestDirectoryImpl
 VBOX_MAIN_CLI += GuestDnDPrivate
@@ -64,7 +64,7 @@ VBOX_MAIN_SRV += DHCPConfigImpl PerformanceImpl Performance RecordingSettingsImp
 VBOX_MAIN_SRV += HostImpl GraphicsAdapterImpl RecordingScreenSettingsImpl
 VBOX_MAIN_SRV += HostDnsService HostNetworkInterfaceImpl MediumIOImpl
 VBOX_MAIN_SRV += DataStreamImpl HostPower ProgressProxyImpl
-VBOX_MAIN_SRV += os2/PerformanceOs2
+VBOX_MAIN_SRV += os2/PerformanceOs2 ClientWatcher
 
 VBOX_MAIN_INC := AdditionsFacilityImpl AudioAdapterImpl AuthLibrary
 VBOX_MAIN_INC += AutoCaller AutostartDb AutoStateDep BandwidthControlImpl
