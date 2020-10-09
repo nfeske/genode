@@ -46,13 +46,6 @@ int DisplayMakePNG(uint8_t *, uint32_t, uint32_t, uint8_t **, uint32_t *,
                    uint32_t *, uint32_t *, uint8_t) STOP
 
 
-/* ErrorInfo.cpp */
-
-#include "VBox/com/ErrorInfo.h"
-
-com::ProgressErrorInfo::ProgressErrorInfo(IProgress*) STOP
-
-
 /* EventImpl.cpp */
 
 #include "EventImpl.h"
@@ -273,17 +266,6 @@ HRESULT HostVideoInputDevice::queryHostDevices(VirtualBox*, VideoDeviceList *) S
 #include "Dhcpd/DhcpOptions.h"
 
 DhcpOption *DhcpOption::parse(unsigned char, int, char const*, int*) STOP
-
-
-/* ErrorInfo.cpp */
-
-#include <VBox/com/ErrorInfo.h>
-
-void ErrorInfo::init(bool aKeepObj) TRACE()
-void ErrorInfo::cleanup()           TRACE()
-HRESULT ErrorInfoKeeper::restore()  TRACE(S_OK)
-
-void ErrorInfo::copyFrom(const ErrorInfo &x) STOP
 
 
 /* AutostartDb-generic.cpp */

@@ -21,7 +21,9 @@ $(call check_tool,xsltproc)
 $(call check_tool,yasm)
 $(call check_tool,iasl)
 
-VBOX_MAIN_GLUE := AutoLock EventQueue string xpcom/helpers com
+VBOX_MAIN_GLUE := AutoLock EventQueue string xpcom/helpers com ErrorInfo
+# VBOX_MAIN_GLUE := initterm
+VBOX_MAIN_GLUE := NativeEventQueue
 
 VBOX_MAIN_ALL := AuthLibrary AutoCaller DisplayResampleImage DisplayUtils
 VBOX_MAIN_ALL += PCIDeviceAttachmentImpl ProgressImpl SharedFolderImpl
@@ -129,7 +131,7 @@ VBOX_INC += VBoxGuestCoreTypes.h intnet.h
 
 VBOX_INC_COM := array.h assert.h AutoLock.h ErrorInfo.h EventQueue.h Guid.h
 VBOX_INC_COM += list.h MultiResult.h string.h defs.h ptr.h VirtualBox.h com.h
-VBOX_INC_COM += utils.h listeners.h
+VBOX_INC_COM += utils.h listeners.h NativeEventQueue.h
 
 VBOX_CONTENT += $(addprefix src/VBox/,$(VBOX_SRC_VBOX))
 VBOX_CONTENT += $(addprefix include/VBox/, $(VBOX_INC))
@@ -138,14 +140,7 @@ VBOX_CONTENT += include/VBox/HostServices/
 VBOX_CONTENT += include/VBox/GuestHost/
 
 VBOX_CONTENT += src/libs/zlib-1.2.11 src/libs/liblzf-3.4 src/libs/libxml2-2.9.4
-VBOX_CONTENT += src/libs/xpcom18a4/xpcom/glue/nsCOMPtr.cpp
-VBOX_CONTENT += src/libs/xpcom18a4/xpcom/glue/nsComponentManagerUtils.cpp
-VBOX_CONTENT += src/libs/xpcom18a4/nsprpub/pr/src/misc/pratom.c
-VBOX_CONTENT += src/libs/xpcom18a4/nsprpub/pr/include/private/primpl.h
-VBOX_CONTENT += src/libs/xpcom18a4/nsprpub/pr/include/private/prpriv.h
-VBOX_CONTENT += src/libs/xpcom18a4/xpcom/glue/standalone/nsXPCOMGlue.cpp
-VBOX_CONTENT += src/libs/xpcom18a4/xpcom/glue/standalone/nsGREDirServiceProvider.h
-VBOX_CONTENT += src/libs/xpcom18a4/xpcom/build/nsXPCOMPrivate.h
+VBOX_CONTENT += src/libs/xpcom18a4
 VBOX_CONTENT += include/VBox/vmm include/iprt Version.kmk
 VBOX_CONTENT += COPYING
 

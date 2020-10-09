@@ -47,33 +47,6 @@ static char c_vbox_vmname[128];
 extern char **environ;
 
 
-/**
- * xpcom style memory allocation
- */
-void * nsMemory::Alloc(size_t size)
-{
-	return new char[size];
-}
-void  nsMemory::Free(void* ptr)
-{
-	Assert(ptr);
-	delete [] reinterpret_cast<char *>(ptr);
-}
-void *nsMemory::Realloc(void* ptr, size_t size)
-{
-	Assert(!"not implemented");
-	return nullptr;
-}
-void * nsMemory::Clone(const void*, size_t)
-{
-	Assert(!"not implemented");
-	return nullptr;
-}
-
-/**
- * Other stuff
- */
-
 int com::GetVBoxUserHomeDirectory(char *aDir, size_t aDirLen, bool fCreateDir)
 {
     AssertReturn(aDir, VERR_INVALID_POINTER);
@@ -301,6 +274,8 @@ Genode::Env &genode_env()
 	return *genode_env_ptr;
 }
 
+#include <nsXPCOM.h>
+#include <nsCOMPtr.h>
 
 Genode::Allocator &vmm_heap()
 {
@@ -349,15 +324,29 @@ void Libc::Component::construct(Libc::Env &env)
 		/* sidestep 'rtThreadPosixSelectPokeSignal' */
 		uint32_t const fFlags = RTR3INIT_FLAGS_UNOBTRUSIVE;
 
-		int rc = RTR3InitExe(argc, &argv, fFlags);
-		if (RT_FAILURE(rc))
-			throw -1;
+		{
+			int const rc = RTR3InitExe(argc, &argv, fFlags);
+			if (RT_FAILURE(rc))
+				throw -1;
+		}
 
-		HRESULT hrc = setupmachine(env);
-		if (FAILED(hrc)) {
-			Genode::error("startup of VMM failed - reason ", hrc, " '",
-			              RTErrCOMGet(hrc)->pszMsgFull, "' - exiting ...");
-			throw -2;
+		{
+			nsCOMPtr<nsIServiceManager> serviceManager;
+			HRESULT const rc = NS_InitXPCOM2(getter_AddRefs(serviceManager), nsnull, nsnull);
+			if (NS_FAILED(rc))
+			{
+				Genode::error("failed to initialize XPCOM, rc=", rc);
+				throw -2;
+			}
+		}
+
+		{
+			HRESULT const hrc = setupmachine(env);
+			if (FAILED(hrc)) {
+				Genode::error("startup of VMM failed - reason ", hrc, " '",
+				              RTErrCOMGet(hrc)->pszMsgFull, "' - exiting ...");
+				throw -3;
+			}
 		}
 	});
 }

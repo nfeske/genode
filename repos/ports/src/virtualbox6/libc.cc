@@ -16,6 +16,8 @@
 #include <sys/times.h>
 #include <unistd.h>
 #include <aio.h>
+#include <sched.h>
+#include <pthread.h>
 
 /* local includes */
 #include <stub_macros.h>
@@ -24,6 +26,12 @@ static bool const debug = true;
 
 extern "C" {
 
+int sched_get_priority_max(int policy) TRACE(0)
+int sched_get_priority_min(int policy) TRACE(0)
+int pthread_setschedparam(pthread_t thread, int policy,
+                          const struct sched_param *param) TRACE(0)
+int pthread_getschedparam(pthread_t thread, int *policy,
+                          struct sched_param *param) TRACE(0)
 int futimes(int fd, const struct timeval tv[2]) TRACE(0)
 int lutimes(const char *filename, const struct timeval tv[2]) TRACE(0)
 int lchown(const char *pathname, uid_t owner, gid_t group) TRACE(0)

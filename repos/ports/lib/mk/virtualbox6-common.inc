@@ -101,6 +101,7 @@ INC_DIR += $(VIRTUALBOX_SDK_DIR)/sdk/bindings/xpcom/include
 INC_DIR += $(VIRTUALBOX_SDK_DIR)/sdk/bindings/xpcom/include/xpcom
 INC_DIR += $(VIRTUALBOX_SDK_DIR)/sdk/bindings/xpcom/include/nsprpub
 INC_DIR += $(VIRTUALBOX_SDK_DIR)/sdk/bindings/xpcom/include/ipcd
+INC_DIR += $(VIRTUALBOX_SDK_DIR)/sdk/bindings/xpcom/include/string
 INC_DIR += $(VBOX_DIR)/Devices/build
 
 vpath %.cpp $(VBOX_DIR)

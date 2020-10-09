@@ -121,4 +121,15 @@ DUMMY(SUPSemEventWaitNsRelIntr)
 DUMMY(USBFilterClone)
 DUMMY(VDIfTcpNetInstDefaultDestroy)
 
+/* xpcom */
+DUMMY(_MD_CreateUnixProcess)
+DUMMY(_MD_CreateUnixProcessDetached)
+DUMMY(_MD_KillUnixProcess)
+DUMMY(_MD_WaitUnixProcess)
+DUMMY(PR_FindSymbol)
+DUMMY(PR_LoadLibrary)
+DUMMY(PR_LoadLibraryWithFlags)
+DUMMY(_PR_MapOptionName)
+DUMMY(PR_UnloadLibrary)
+
 } /* extern "C" */
