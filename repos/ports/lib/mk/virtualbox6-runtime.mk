@@ -118,6 +118,9 @@ FILTERED_OUT_SRC_CC += Runtime/r3/alloc-ef.cpp
 FILTERED_OUT_SRC_CC += Runtime/r3/alloc-ef-cpp.cpp
 FILTERED_OUT_SRC_CC += Runtime/r3/memsafer-r3.cpp
 
+# avoid static allocation of 1 MiB array 'g_aCPInfo'
+FILTERED_OUT_SRC_CC += Runtime/common/string/uniread.cpp
+
 SRC_CC := $(filter-out $(FILTERED_OUT_SRC_CC), $(SRC_CC))
 
 Runtime/common/err/errmsg.o: errmsgdata.h
