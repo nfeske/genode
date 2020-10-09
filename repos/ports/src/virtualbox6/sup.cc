@@ -195,7 +195,12 @@ void genode_VMMR0_DO_GVMM_CREATE_VM(PSUPVMMR0REQHDR pReqHdr)
 	pVM->cCpus            = cCpus;
 	pVM->uCpuExecutionCap = 100;  /* expected by 'vmR3CreateU()' */
 
+	using Genode::log;
+	log("cCpus=", cCpus);
+
 	for (uint32_t i = 0; i < cCpus; i++) {
+		log("pVM=", pVM);
+		log("apCpusR3[", i, "]=", pVM->apCpusR3[i]);
 		pVM->apCpusR3[i]->pVMR3           = pVM;
 		pVM->apCpusR3[i]->idHostCpu       = NIL_RTCPUID;
 		pVM->apCpusR3[i]->hNativeThreadR0 = NIL_RTNATIVETHREAD;
