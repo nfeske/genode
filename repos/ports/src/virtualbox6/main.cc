@@ -121,18 +121,14 @@ HRESULT setupmachine(Genode::Env &env)
 	if (FAILED(rc))
 		return rc;
 
-	//
-	// XXX adds the machine to th VirtualBox::allMachines list
 	/*
+	 * Add the machine to th VirtualBox::allMachines list
+	 *
 	 * Unfortunately, the 'i_registerMachine' function performs a
 	 * 'i_saveSettings' should the 'VirtualBox' object not be in the
 	 * 'InInit' state. However, the object is already in 'Ready' state.
 	 * So, 'i_saveSettings' attempts to write a 'VirtualBox.xml' file
 	 */
-//	rc = virtualbox->RegisterMachine(machine);
-//	if (FAILED(rc))
-//		return rc;
-
 	{
 		AutoWriteLock alock(virtualbox.m_p COMMA_LOCKVAL_SRC_POS);
 
@@ -141,7 +137,6 @@ HRESULT setupmachine(Genode::Env &env)
 			return rc;
 	}
 
-	// open a session
 	static ComObjPtr<Session> session;
 	rc = session.createObject();
 	if (FAILED(rc))
@@ -157,11 +152,9 @@ HRESULT setupmachine(Genode::Env &env)
 	if (FAILED(rc))
 		return rc;
 
-	/* Console object */
 	static ComPtr<IConsole> gConsole;
 	rc = session->COMGETTER(Console)(gConsole.asOutParam());
 
-	/* Display object */
 	static ComPtr<IDisplay> display;
 	rc = gConsole->COMGETTER(Display)(display.asOutParam());
 	if (FAILED(rc))
@@ -187,21 +180,18 @@ HRESULT setupmachine(Genode::Env &env)
 		if (FAILED(rc))
 			return rc;
 	}
-warning("setup_machine 16");
 
 	/* Power up the VMM */
 	ComPtr <IProgress> progress;
 	rc = gConsole->PowerUp(progress.asOutParam());
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 17");
 
 	/* check whether enough memory is available for VM + VMM */
 	ULONG const required_memory_vm = (13 * 1024 + 6 * memory_vbox) << 10;
 	rc = genode_check_memory_config(machine, required_memory_vm);
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 18");
 
 	/* wait until VM is up */
 	MachineState_T machineState = MachineState_Null;
