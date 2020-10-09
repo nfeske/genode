@@ -35,7 +35,6 @@
 #include "VirtualBoxImpl.h"
 
 /* Genode port specific includes */
-#include "console.h"
 #include "fb.h"
 #include "vmm.h"
 #include "sup.h"
@@ -72,25 +71,41 @@ HRESULT setupmachine(Genode::Env &env)
 	HRESULT rc;
 
 	using Genode::warning;
+	using Genode::error;
 
 	static com::Utf8Str vm_config(c_vbox_file);
 	static com::Utf8Str vm_name(c_vbox_vmname);
-
-warning("setup_machine 1");
 
 	/* Machine object */
 	static ComObjPtr<Machine> machine;
 	rc = machine.createObject();
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 2");
 
-	/* Virtualbox object */
-	static ComObjPtr<VirtualBox> virtualbox;
-	rc = virtualbox.createObject();
-	if (FAILED(rc))
-		return rc;
-warning("setup_machine 3");
+	/*
+	 * Create VirtualBox object
+	 *
+	 * We cannot create the object via 'ComObjPtr<VirtualBox>::createObject'
+	 * because 'FinalConstruction' uses a temporary 'ComObjPtr<VirtualBox>'
+	 * (implicitely constructed as argument for the 'ClientWatcher' constructor.
+	 * Upon the destruction of the temporary, the 'VirtualBox' refcnt becomes
+	 * zero, which prompts 'VirtualBox::Release' to destuct the object.
+	 *
+	 * To sidestep this suicidal behavior, we manually perform the steps of
+	 * 'createObject' but calling 'AddRef' before 'FinalConstruct'.
+	 */
+	VirtualBox *virtualbox_ptr = new VirtualBox();
+
+	virtualbox_ptr->AddRef();
+
+	ComObjPtr<VirtualBox> virtualbox(virtualbox_ptr);
+	{
+		rc = virtualbox->FinalConstruct();
+		if (FAILED(rc)) {
+			error("construction of VirtualBox object failed, rc=", rc);
+			return rc;
+		}
+	}
 
 	/*
 	 * Used in src-client/ConsoleImpl.cpp, which constructs Progress objects,
@@ -101,21 +116,19 @@ warning("setup_machine 3");
 	rc = machine->initFromSettings(virtualbox, vm_config, nullptr);
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 4");
 
 	rc = genode_setup_machine(machine);
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 5");
 
 	//
 	// XXX adds the machine to th VirtualBox::allMachines list
-	//
-	// Unfortunately, the 'i_registerMachine' function performs a
-	// 'i_saveSettings' should the 'VirtualBox' object not be in the
-	// 'InInit' state. However, the object is already in 'Ready' state.
-	// So, 'i_saveSettings' attempts to write a 'VirtualBox.xml' file
-	//
+	/*
+	 * Unfortunately, the 'i_registerMachine' function performs a
+	 * 'i_saveSettings' should the 'VirtualBox' object not be in the
+	 * 'InInit' state. However, the object is already in 'Ready' state.
+	 * So, 'i_saveSettings' attempts to write a 'VirtualBox.xml' file
+	 */
 //	rc = virtualbox->RegisterMachine(machine);
 //	if (FAILED(rc))
 //		return rc;
@@ -127,63 +140,49 @@ warning("setup_machine 5");
 		if (FAILED(rc))
 			return rc;
 	}
-warning("setup_machine 6");
 
 	// open a session
 	static ComObjPtr<Session> session;
 	rc = session.createObject();
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 7");
 
 	rc = machine->LockMachine(session, LockType_VM);
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 8");
 
 	/* Validate configured memory of vbox file and Genode config */
 	ULONG memory_vbox;
 	rc = machine->COMGETTER(MemorySize)(&memory_vbox);
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 9");
 
 	/* Console object */
 	static ComPtr<IConsole> gConsole;
 	rc = session->COMGETTER(Console)(gConsole.asOutParam());
-warning("setup_machine 10");
-
-	/* handle input of Genode and forward it to VMM layer */
-	static ComPtr<GenodeConsole> genodeConsole = gConsole;
-
-warning("setup_machine 11");
-	genodeConsole->init_clipboard();
-warning("setup_machine 12");
 
 	/* Display object */
 	static ComPtr<IDisplay> display;
 	rc = gConsole->COMGETTER(Display)(display.asOutParam());
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 13");
 
 	static ComPtr<IGraphicsAdapter> graphics_adapter;
 	rc = machine->COMGETTER(GraphicsAdapter)(graphics_adapter.asOutParam());
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 14");
 
 	PRUint32 cMonitors = 1;
 	rc = graphics_adapter->COMGETTER(MonitorCount)(&cMonitors);
 	if (FAILED(rc))
 		return rc;
-warning("setup_machine 15");
 
+	static Gui::Connection gui { env };
 	static Bstr gaFramebufferId[64];
 
 	for (unsigned uScreenId = 0; uScreenId < cMonitors; uScreenId++)
 	{
-		Genodefb *fb = new Genodefb(env, genodeConsole->gui(), display);
+		Genodefb *fb = new Genodefb(env, gui, display);
 		HRESULT rc = display->AttachFramebuffer(uScreenId, fb, gaFramebufferId[uScreenId].asOutParam());
 		if (FAILED(rc))
 			return rc;
@@ -233,7 +232,7 @@ warning("setup_machine 21");
 	Assert (&*gKeyboard);
 warning("setup_machine 22");
 
-	genodeConsole->init_backends(gKeyboard, gMouse);
+//	genodeConsole->init_backends(gKeyboard, gMouse);
 
 warning("setup_machine 23");
 	/* check whether enough memory for the fb is available */
@@ -351,3 +350,6 @@ void Libc::Component::construct(Libc::Env &env)
 	});
 }
 
+
+NS_IMPL_THREADSAFE_ISUPPORTS1_CI(Genodefb, IFramebuffer)
+NS_DECL_CLASSINFO(Genodefb)

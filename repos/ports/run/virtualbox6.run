@@ -45,7 +45,7 @@ append_platform_drv_build_components
 build $build_components
 
 set config {
-<config prio_levels="4">
+<config prio_levels="4" verbose="yes">
 	<parent-provides>
 		<service name="ROM"/>
 		<service name="IRQ"/>

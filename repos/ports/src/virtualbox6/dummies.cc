@@ -344,6 +344,14 @@ HRESULT SharedFolder::init(Console*, com::Utf8Str const&, com::Utf8Str const&,
                            bool, bool, com::Utf8Str const&, bool) TRACE(E_FAIL)
 
 
+/* ConsoleImplTeleporter.cpp */
+
+#include <ConsoleImpl.h>
+
+HRESULT Console::teleport(const com::Utf8Str &, ULONG, const com::Utf8Str &, ULONG, ComPtr<IProgress> &) STOP
+HRESULT Console::i_teleporterTrg(PUVM, IMachine *, Utf8Str *, bool, Progress *, bool *) STOP
+
+
 /* DBGFBp.cpp */
 
 #include <DBGFInternal.h>
