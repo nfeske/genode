@@ -111,13 +111,13 @@ append_if [have_spec sdl] config {
 		<resource name="RAM" quantum="4M"/>
 	</start>}
 
-append_if [have_spec x86] config {
-	<start name="rtc_drv" priority="-1">
-		<resource name="RAM" quantum="1M"/>
-		<provides>
-			<service name="Rtc"/>
-		</provides>
-	</start>}
+#append_if [have_spec x86] config {
+#	<start name="rtc_drv" priority="-1">
+#		<resource name="RAM" quantum="1M"/>
+#		<provides>
+#			<service name="Rtc"/>
+#		</provides>
+#	</start>}
 
 append_if [expr $use_net] config {
 	<start name="nic_drv" priority="-1">
@@ -226,7 +226,8 @@ append config {
 			<libc stdout="/dev/log" stderr="/dev/log" pipe="/pipe" rtc="/dev/rtc"/>
 			<vfs>
 				<dir name="dev">
-					<log/> <rtc/> <null/>
+					<log/> <null/>
+					<inline name="rtc">2018-01-01 00:01</inline>
 				</dir>
 				<dir name="pipe"> <pipe/> </dir>}
 
