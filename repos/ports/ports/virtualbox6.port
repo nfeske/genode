@@ -13,17 +13,16 @@ URL(virtualbox_sdk) := http://download.virtualbox.org/virtualbox/$(VERSION)/$(VI
 DIR(virtualbox_sdk) := src/virtualbox6_sdk
 SHA(virtualbox_sdk) := 935c210fda2b0fbed42c4bc6acdf7d1fd2b197e348ad4c42b4be4c4d2ffd2c75
 
-PATCHES_DIR       := src/virtualbox6/patches
-PATCHES := $(addprefix $(PATCHES_DIR)/, $(shell cat $(REP_DIR)/$(PATCHES_DIR)/series))
-PATCH_OPT := -p1
+PATCHES_DIR := src/virtualbox6/patches
+PATCHES     := $(addprefix $(PATCHES_DIR)/, $(shell cat $(REP_DIR)/$(PATCHES_DIR)/series))
+PATCH_OPT   := -p1
 
 $(call check_tool,xsltproc)
 $(call check_tool,yasm)
 $(call check_tool,iasl)
 
 VBOX_MAIN_GLUE := AutoLock EventQueue string xpcom/helpers com ErrorInfo
-# VBOX_MAIN_GLUE := initterm
-VBOX_MAIN_GLUE := NativeEventQueue
+VBOX_MAIN_GLUE += NativeEventQueue
 
 VBOX_MAIN_ALL := AuthLibrary AutoCaller DisplayResampleImage DisplayUtils
 VBOX_MAIN_ALL += PCIDeviceAttachmentImpl ProgressImpl SharedFolderImpl
