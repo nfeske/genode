@@ -119,7 +119,7 @@ VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-server/, $(VBOX_MAIN_SRV
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-all/, $(VBOX_MAIN_ALL)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/glue/, $(VBOX_MAIN_GLUE)))
 
-VBOX_INC += types.h cdefs.h hgcmsvc.h err.h dis.h disopcode.h log.h sup.h pci.h
+VBOX_INC := types.h cdefs.h hgcmsvc.h err.h dis.h disopcode.h log.h sup.h pci.h
 VBOX_INC += param.h ostypes.h VMMDev.h vusb.h dbg.h version.h scsiinline.h
 VBOX_INC += bioslogo.h scsi.h shflsvc.h vd.h vdmedia.h vd-common.h
 VBOX_INC += vd-plugin.h vd-ifs.h vd-ifs-internal.h vd-image-backend.h
@@ -133,7 +133,7 @@ VBOX_INC_COM := array.h assert.h AutoLock.h ErrorInfo.h EventQueue.h Guid.h
 VBOX_INC_COM += list.h MultiResult.h string.h defs.h ptr.h VirtualBox.h com.h
 VBOX_INC_COM += utils.h listeners.h NativeEventQueue.h
 
-VBOX_CONTENT += $(addprefix src/VBox/,$(VBOX_SRC_VBOX))
+VBOX_CONTENT := $(addprefix src/VBox/,$(VBOX_SRC_VBOX))
 VBOX_CONTENT += $(addprefix include/VBox/, $(VBOX_INC))
 VBOX_CONTENT += $(addprefix include/VBox/com/, $(VBOX_INC_COM))
 VBOX_CONTENT += include/VBox/HostServices/
