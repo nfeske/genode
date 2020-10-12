@@ -37,7 +37,6 @@
 /* Genode port specific includes */
 #include "fb.h"
 #include "vmm.h"
-#include "sup.h"
 
 static char c_vbox_file[128];
 static char c_vbox_vmname[128];
@@ -117,9 +116,9 @@ HRESULT setupmachine(Genode::Env &env)
 	if (FAILED(rc))
 		return rc;
 
-	rc = genode_setup_machine(machine);
-	if (FAILED(rc))
-		return rc;
+//	rc = genode_setup_machine(machine);
+//	if (FAILED(rc))
+//		return rc;
 
 	/*
 	 * Add the machine to th VirtualBox::allMachines list
@@ -187,11 +186,11 @@ HRESULT setupmachine(Genode::Env &env)
 	if (FAILED(rc))
 		return rc;
 
-	/* check whether enough memory is available for VM + VMM */
-	ULONG const required_memory_vm = (13 * 1024 + 6 * memory_vbox) << 10;
-	rc = genode_check_memory_config(machine, required_memory_vm);
-	if (FAILED(rc))
-		return rc;
+//	/* check whether enough memory is available for VM + VMM */
+//	ULONG const required_memory_vm = (13 * 1024 + 6 * memory_vbox) << 10;
+//	rc = genode_check_memory_config(machine, required_memory_vm);
+//	if (FAILED(rc))
+//		return rc;
 
 	/* wait until VM is up */
 	MachineState_T machineState = MachineState_Null;
@@ -242,9 +241,9 @@ warning("setup_machine 24");
 		required_memory_fb = 4096 * 2160 * 4;
 warning("setup_machine 25");
 
-	rc = genode_check_memory_config(machine, required_memory_fb);
-	if (FAILED(rc))
-		return rc;
+//	rc = genode_check_memory_config(machine, required_memory_fb);
+//	if (FAILED(rc))
+//		return rc;
 warning("setup_machine 26");
 
 	return rc;

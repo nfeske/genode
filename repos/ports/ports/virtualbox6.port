@@ -101,6 +101,7 @@ VBOX_MAIN_INC += VirtualBoxBase VirtualBoxErrorInfoImpl
 
 VBOX_SRC_VBOX := VMM Devices Runtime GuestHost/HGSMI GuestHost/DragAndDrop
 VBOX_SRC_VBOX += Storage Disassembler
+VBOX_SRC_VBOX += HostDrivers/Support
 VBOX_SRC_VBOX += HostServices/SharedFolders Main/xml/Settings.cpp
 VBOX_SRC_VBOX += HostServices/SharedClipboard
 VBOX_SRC_VBOX += HostServices/GuestProperties
@@ -123,7 +124,7 @@ VBOX_INC += param.h ostypes.h VMMDev.h vusb.h dbg.h version.h scsiinline.h
 VBOX_INC += bioslogo.h scsi.h shflsvc.h vd.h vdmedia.h vd-common.h
 VBOX_INC += vd-plugin.h vd-ifs.h vd-ifs-internal.h vd-image-backend.h
 VBOX_INC += vd-cache-backend.h vd-filter-backend.h msi.h asmdefs.mac err.mac
-VBOX_INC += settings.h VBoxAuth.h
+VBOX_INC += settings.h VBoxAuth.h VBoxTpG.h
 VBOX_INC += usb.h usbfilter.h vrdpusb.h AssertGuest.h bios.h ata.h
 VBOX_INC += RemoteDesktop Graphics ExtPack/ExtPack.h VMMDevCoreTypes.h
 VBOX_INC += VBoxGuestCoreTypes.h intnet.h
