@@ -15,8 +15,6 @@ INC_DIR += $(REP_DIR)/src/virtualbox6
 INC_DIR += $(VBOX_DIR)/Main/xml
 INC_DIR += $(VBOX_DIR)/Main/include
 INC_DIR += $(VBOX_DIR)/VMM/include
-INC_DIR += $(REP_DIR)/src/virtualbox6
-INC_DIR += $(REP_DIR)/src/virtualbox6/frontend
 
 vpath sup.cc     $(REP_DIR)/src/virtualbox6
 vpath sup_sem.cc $(REP_DIR)/src/virtualbox6

@@ -35,6 +35,7 @@
 #include "VirtualBoxImpl.h"
 
 /* Genode port specific includes */
+#include <init.h>
 #include "fb.h"
 #include "vmm.h"
 
@@ -65,6 +66,7 @@ RTDECL(int) RTPathUserHome(char *pszPath, size_t cchPath)
 extern "C" VirtualBox * genode_global_vbox_pointer;
 VirtualBox * genode_global_vbox_pointer = nullptr;
 
+
 HRESULT setupmachine(Genode::Env &env)
 {
 	HRESULT rc;
@@ -74,6 +76,8 @@ HRESULT setupmachine(Genode::Env &env)
 
 	static com::Utf8Str vm_config(c_vbox_file);
 	static com::Utf8Str vm_name(c_vbox_vmname);
+
+	Sup::init(env);
 
 	/* Machine object */
 	static ComObjPtr<Machine> machine;
