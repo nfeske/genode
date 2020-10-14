@@ -12,7 +12,6 @@
  * version 2.
  */
 
-
 /* Genode includes */
 #include <base/attached_rom_dataspace.h>
 #include <base/heap.h>
@@ -24,7 +23,6 @@
 #include <nsXPCOM.h>
 #include <nsCOMPtr.h>
 #include <iprt/initterm.h>
-#include <iprt/assert.h>
 #include <iprt/err.h>
 
 /* Virtualbox includes of generic Main frontend */
@@ -40,14 +38,9 @@
 #include "vmm.h"
 
 static char c_vbox_file[128];
-static char c_vbox_vmname[128];
 
 /* initial environment for the FreeBSD libc implementation */
 extern char **environ;
-
-
-extern "C" VirtualBox * genode_global_vbox_pointer;
-VirtualBox * genode_global_vbox_pointer = nullptr;
 
 
 HRESULT setupmachine(Genode::Env &env)
@@ -58,7 +51,6 @@ HRESULT setupmachine(Genode::Env &env)
 	using Genode::error;
 
 	static com::Utf8Str vm_config(c_vbox_file);
-	static com::Utf8Str vm_name(c_vbox_vmname);
 
 	Sup::init(env);
 
@@ -93,19 +85,9 @@ HRESULT setupmachine(Genode::Env &env)
 		}
 	}
 
-	/*
-	 * Used in src-client/ConsoleImpl.cpp, which constructs Progress objects,
-	 * which requires the only-one pointer to VirtualBox object
-	 */
-	genode_global_vbox_pointer = virtualbox;
-
 	rc = machine->initFromSettings(virtualbox, vm_config, nullptr);
 	if (FAILED(rc))
 		return rc;
-
-//	rc = genode_setup_machine(machine);
-//	if (FAILED(rc))
-//		return rc;
 
 	/*
 	 * Add the machine to th VirtualBox::allMachines list
@@ -173,24 +155,16 @@ HRESULT setupmachine(Genode::Env &env)
 	if (FAILED(rc))
 		return rc;
 
-//	/* check whether enough memory is available for VM + VMM */
-//	ULONG const required_memory_vm = (13 * 1024 + 6 * memory_vbox) << 10;
-//	rc = genode_check_memory_config(machine, required_memory_vm);
-//	if (FAILED(rc))
-//		return rc;
-
 	/* wait until VM is up */
 	MachineState_T machineState = MachineState_Null;
 	do {
 		if (machineState != MachineState_Null)
 			RTThreadSleep(1000);
-warning("setup_machine 19");
 
 		rc = machine->COMGETTER(State)(&machineState);
 	} while (machineState == MachineState_Starting);
 	if (rc != S_OK || (machineState != MachineState_Running))
 		return E_FAIL;
-warning("setup_machine 20");
 
 	/* request mouse object */
 	static ComPtr<IMouse> gMouse;
@@ -198,7 +172,6 @@ warning("setup_machine 20");
 	if (FAILED(rc))
 		return rc;
 	Assert (&*gMouse);
-warning("setup_machine 21");
 
 	/* request keyboard object */
 	static ComPtr<IKeyboard> gKeyboard;
@@ -206,32 +179,6 @@ warning("setup_machine 21");
 	if (FAILED(rc))
 		return rc;
 	Assert (&*gKeyboard);
-warning("setup_machine 22");
-
-//	genodeConsole->init_backends(gKeyboard, gMouse);
-
-warning("setup_machine 23");
-	/* check whether enough memory for the fb is available */
-	ULONG required_memory_fb = 0;
-	for (unsigned uScreenId = 0; uScreenId < cMonitors; uScreenId++)
-	{
-		IFramebuffer * aFramebuffer = nullptr;
-		HRESULT rc = display->QueryFramebuffer(uScreenId, &aFramebuffer);
-		Genodefb * fb = dynamic_cast<Genodefb *>(aFramebuffer);
-		if (FAILED(rc) || !fb)
-			continue;
-
-		required_memory_fb += fb->w() * fb->h() * 4;
-	}
-warning("setup_machine 24");
-	if (!required_memory_fb)
-		required_memory_fb = 4096 * 2160 * 4;
-warning("setup_machine 25");
-
-//	rc = genode_check_memory_config(machine, required_memory_fb);
-//	if (FAILED(rc))
-//		return rc;
-warning("setup_machine 26");
 
 	return rc;
 }
@@ -269,9 +216,8 @@ void Libc::Component::construct(Libc::Env &env)
 		Attached_rom_dataspace config_ds(env, "config");
 		Xml_node const config = config_ds.xml();
 
-		if (!config.has_attribute("vbox_file") || !config.has_attribute("vm_name")) {
-			error("missing attributes in configuration, minimum requirements: ");
-			error("  <config vbox_file=\"...\" vm_name=\"...\">" );
+		if (!config.has_attribute("vbox_file")) {
+			error("missing 'vbox_file' attribute in config");
 			throw Exception();
 		}
 
@@ -279,9 +225,6 @@ void Libc::Component::construct(Libc::Env &env)
 
 		Name const vbox_file = config.attribute_value("vbox_file", Name());
 		copy_cstring(c_vbox_file, vbox_file.string(), sizeof(c_vbox_file));
-
-		Name const vm_name = config.attribute_value("vm_name", Name());
-		copy_cstring(c_vbox_vmname, vm_name.string(), sizeof(c_vbox_vmname));
 	}
 
 	Libc::with_libc([&] () {
@@ -290,7 +233,7 @@ void Libc::Component::construct(Libc::Env &env)
 		int argc    = 0;
 		char **argv = nullptr;
 		char **envp = nullptr;
-	
+
 		populate_args_and_env(env, argc, argv, envp);
 	
 		environ = envp;
