@@ -97,12 +97,6 @@ class Sup::Gip
 				 * read struct SUPGIPCPU description for more details.
 				 */
 				ASMAtomicIncU32(&cpu->u32TransactionId);
-
-				/* TODO call the timer function of the RTTimerCreate call */
-//				if (rttimer_func) {
-//					Libc::with_libc([&] () {
-//						rttimer_func(nullptr, rttimer_obj, 0); });
-//				}
 			}
 		};
 
@@ -117,29 +111,29 @@ class Sup::Gip
 
 	public:
 
-		Gip(Env &env, unsigned cpu_count, unsigned cpu_khz)
+		Gip(Env &env, Cpu_count cpu_count, Cpu_freq_khz cpu_khz)
 		:
-			_gip_size(RT_ALIGN_Z(RT_UOFFSETOF_DYN(SUPGLOBALINFOPAGE, aCPUs[cpu_count]),
+			_gip_size(RT_ALIGN_Z(RT_UOFFSETOF_DYN(SUPGLOBALINFOPAGE, aCPUs[cpu_count.value]),
 			                     PAGE_SIZE)),
 			_gip(*(SUPGLOBALINFOPAGE *)RTMemPageAllocZ(_gip_size))
 		{
-			Genode::uint64_t const cpu_hz = 1'000ull*cpu_khz;
+			Genode::uint64_t const cpu_hz = 1'000ull*cpu_khz.value;
 
 			/* checked by TMR3Init */
 			_gip.u32Magic              = SUPGLOBALINFOPAGE_MAGIC;
 			_gip.u32Version            = SUPGLOBALINFOPAGE_VERSION;
 			_gip.u32Mode               = SUPGIPMODE_SYNC_TSC;
-			_gip.cCpus                 = cpu_count;
+			_gip.cCpus                 = cpu_count.value;
 			_gip.cPages                = _gip_size/PAGE_SIZE;
 			_gip.u32UpdateHz           = UPDATE_HZ;
 			_gip.u32UpdateIntervalNS   = UPDATE_NS;
 			_gip.u64NanoTSLastUpdateHz = 0;
 			_gip.u64CpuHz              = cpu_hz;
-			_gip.cOnlineCpus           = cpu_count;
-			_gip.cPresentCpus          = cpu_count;
-			_gip.cPossibleCpus         = cpu_count;
+			_gip.cOnlineCpus           = cpu_count.value;
+			_gip.cPresentCpus          = cpu_count.value;
+			_gip.cPossibleCpus         = cpu_count.value;
 			_gip.cPossibleCpuGroups    = 1;
-			_gip.idCpuMax              = cpu_count - 1;
+			_gip.idCpuMax              = cpu_count.value - 1;
 			_gip.enmUseTscDelta        = SUPGIPUSETSCDELTA_NOT_APPLICABLE;
 			/* evaluated by rtTimeNanoTSInternalRediscover in Runtime/common/time/timesup.cpp */
 			_gip.fGetGipCpu            = SUPGIPGETCPU_APIC_ID;
@@ -149,7 +143,7 @@ class Sup::Gip
 			/* XXX in SUPGIPMODE_SYNC_TSC only the first CPU's TSC is updated */
 			Entrypoint &ep = *new Entrypoint(env, cpu, cpu_hz);
 
-			for (unsigned i = 0; i < cpu_count; ++i) {
+			for (unsigned i = 0; i < cpu_count.value; ++i) {
 				cpu[i].u32TransactionId        = 0;
 				cpu[i].u32UpdateIntervalTSC    = cpu_hz/UPDATE_HZ;
 				cpu[i].u64NanoTS               = 0ull;

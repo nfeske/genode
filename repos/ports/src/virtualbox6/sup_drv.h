@@ -16,10 +16,8 @@
 #ifndef _SUP_DRV_H_
 #define _SUP_DRV_H_
 
-/* VirtualBox includes */
-#include <VBox/sup.h>
-
 /* local includes */
+#include <sup.h>
 #include <sup_gip.h>
 
 /* Genode includes */
@@ -27,11 +25,7 @@
 #include <base/attached_rom_dataspace.h>
 #include <base/sleep.h>
 
-namespace Sup {
-	using namespace Genode;
-
-	struct Drv;
-}
+namespace Sup { struct Drv; }
 
 class Sup::Drv
 {
@@ -45,12 +39,12 @@ class Sup::Drv
 
 		Attached_rom_dataspace const _platform_info_rom { _env, "platform_info" };
 
-		unsigned _cpu_count_from_env()
+		Cpu_count _cpu_count_from_env()
 		{
-			return _env.cpu().affinity_space().total();
+			return Cpu_count { _env.cpu().affinity_space().total() };
 		}
 
-		unsigned _cpu_freq_khz_from_rom()
+		Cpu_freq_khz _cpu_freq_khz_from_rom()
 		{
 			unsigned khz = 0;
 
@@ -64,7 +58,7 @@ class Sup::Drv
 				sleep_forever();
 			}
 
-			return khz;
+			return Cpu_freq_khz { khz };
 		}
 
 		Cpu_virt _cpu_virt_from_rom()

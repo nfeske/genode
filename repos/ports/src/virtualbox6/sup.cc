@@ -17,14 +17,15 @@
 
 /* VirtualBox includes */
 #include <VBox/err.h>
-#include <VBox/sup.h>
 #include <VBox/vmm/vmm.h>
+#include <VBox/vmm/gvmm.h>
 #include <SUPLibInternal.h>
 #include <SUPDrvIOC.h>
 
 /* local includes */
 #include <init.h>
 #include <sup_drv.h>
+#include <sup_vm.h>
 #include <stub_macros.h>
 
 static bool const debug = true;
@@ -109,9 +110,26 @@ static int ioctl_vt_caps(SUPVTCAPS &request)
 }
 
 
-int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
+static int vmmr0_create_vm(GVMMCREATEVMREQ &request)
 {
-	warning(__PRETTY_FUNCTION__, " called"
+	warning(__PRETTY_FUNCTION__
+	       , " pSession=", request.pSession
+	       , " cCpus=", request.cCpus
+	       , " pVMR3=", request.pVMR3
+	       , " pVMR0=", request.pVMR0
+	       );
+
+	Sup::Cpu_count cpu_count { request.cCpus };
+
+	request.pVMR3 = &Sup::Vm::create(request.pSession, cpu_count);
+
+	return VINF_SUCCESS;
+}
+
+
+static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
+{
+	warning(__PRETTY_FUNCTION__
 	       , " cbIn=", request.Hdr.cbIn
 	       , " uOperation=", request.u.In.uOperation
 	       , " u64Arg=", request.u.In.u64Arg
@@ -121,15 +139,15 @@ int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 	VMMR0OPERATION const operation = VMMR0OPERATION(request.u.In.uOperation);
 
 	switch (operation) {
-	case VMMR0_DO_GVMM_CREATE_VM: log("VMMR0_DO_GVMM_CREATE_VM"); STOP; break;
+	case VMMR0_DO_GVMM_CREATE_VM:
+		request.Hdr.rc = vmmr0_create_vm(*(GVMMCREATEVMREQ *)request.abReqPkt);
+		break;
+
 	default:
 		error(__func__, " operation=", (int)operation);
+		request.Hdr.rc = VERR_NOT_IMPLEMENTED;
 		STOP
 	}
-
-	request.Hdr.rc = VERR_NOT_IMPLEMENTED;
-
-	STOP
 
 	return VINF_SUCCESS;
 }
