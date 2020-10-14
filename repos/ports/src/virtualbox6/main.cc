@@ -37,158 +37,236 @@
 #include "fb.h"
 #include "vmm.h"
 
-static char c_vbox_file[128];
+using Genode::warning;
+using Genode::error;
+using Genode::Xml_node;
+using Genode::Env;
+using Genode::String;
+using Genode::Attached_rom_dataspace;
 
-/* initial environment for the FreeBSD libc implementation */
-extern char **environ;
+
+/*
+ * Utility for avoiding repetitive code for checking the return value
+ * of Virtualbox API functions that are expected to always succeed.
+ */
+
+class Fatal : Genode::Exception { };
 
 
-HRESULT setupmachine(Genode::Env &env)
+template <typename FN, typename... ERR_MSG>
+static void attempt(FN const &fn, ERR_MSG &&... err_msg)
 {
-	HRESULT rc;
+	HRESULT const rc = fn();
 
-	using Genode::warning;
-	using Genode::error;
+	if (FAILED(rc)) {
+		error(err_msg..., " (rc=", rc, ")");
+		throw Fatal();
+	}
+}
 
-	static com::Utf8Str vm_config(c_vbox_file);
 
-	Sup::init(env);
+struct Main
+{
+	Env &_env;
 
-	/* Machine object */
-	static ComObjPtr<Machine> machine;
-	rc = machine.createObject();
-	if (FAILED(rc))
-		return rc;
+	Attached_rom_dataspace _config { _env, "config" };
+
+	struct Vbox_file_path
+	{
+		typedef String<128> Path;
+
+		Path const _path;
+
+		com::Utf8Str const utf8 { _path.string() };
+
+		Vbox_file_path(Xml_node config)
+		:
+			_path(config.attribute_value("vbox_file", Path()))
+		{
+			if (!_path.valid()) {
+				error("missing 'vbox_file' attribute in config");
+				throw Fatal();
+			}
+		}
+	} _vbox_file_path { _config.xml() };
 
 	/*
 	 * Create VirtualBox object
 	 *
 	 * We cannot create the object via 'ComObjPtr<VirtualBox>::createObject'
 	 * because 'FinalConstruction' uses a temporary 'ComObjPtr<VirtualBox>'
-	 * (implicitely constructed as argument for the 'ClientWatcher' constructor.
+	 * (implicitly constructed as argument for the 'ClientWatcher' constructor.
 	 * Upon the destruction of the temporary, the 'VirtualBox' refcnt becomes
-	 * zero, which prompts 'VirtualBox::Release' to destuct the object.
+	 * zero, which prompts 'VirtualBox::Release' to destruct the object.
 	 *
 	 * To sidestep this suicidal behavior, we manually perform the steps of
 	 * 'createObject' but calling 'AddRef' before 'FinalConstruct'.
 	 */
-	VirtualBox *virtualbox_ptr = new VirtualBox();
-
-	virtualbox_ptr->AddRef();
-
-	ComObjPtr<VirtualBox> virtualbox(virtualbox_ptr);
+	struct Virtualbox_instance : ComObjPtr<VirtualBox>
 	{
-		rc = virtualbox->FinalConstruct();
-		if (FAILED(rc)) {
-			error("construction of VirtualBox object failed, rc=", rc);
-			return rc;
+		VirtualBox _instance;
+
+		Virtualbox_instance()
+		{
+			_instance.AddRef();
+
+			attempt([&] () { return _instance.FinalConstruct(); },
+			        "construction of VirtualBox object failed");
+
+			ComObjPtr<VirtualBox>::operator = (&_instance);
+		}
+	} _virtualbox { };
+
+	struct Session_instance : ComObjPtr<Session>
+	{
+		Session_instance()
+		{
+			attempt([&] () { return createObject(); },
+			        "construction of VirtualBox session object failed");
+		}
+	} _session { };
+
+	struct Monitor_count { PRUint32 value; };
+
+	struct Machine_instance : ComObjPtr<Machine>
+	{
+		Machine_instance(Virtualbox_instance  &virtualbox,
+		                 Session_instance     &session,
+		                 Vbox_file_path const &vbox_file_path)
+		{
+			attempt([&] () { return createObject(); },
+			        "failed to create Machine object");
+
+			attempt([&] () { return (*this)->initFromSettings(virtualbox,
+			                                                  vbox_file_path.utf8,
+			                                                  nullptr); },
+			        "failed to init machine from settings");
+
+			/*
+			 * Add the machine to the VirtualBox::allMachines list
+			 *
+			 * Unfortunately, the 'i_registerMachine' function performs a
+			 * 'i_saveSettings' should the 'VirtualBox' object not be in the
+			 * 'InInit' state. However, the object is already in 'Ready' state.
+			 * So, 'i_saveSettings' attempts to write a 'VirtualBox.xml' file
+			 */
+			{
+				AutoWriteLock alock(virtualbox.m_p COMMA_LOCKVAL_SRC_POS);
+
+				attempt([&] () { return (*this)->i_prepareRegister(); },
+				        "could not enter registered state for machine");
+			}
+
+			attempt([&] () { return (*this)->LockMachine(session, LockType_VM); },
+			        "failed to lock machine");
+		}
+
+		Monitor_count monitor_count()
+		{
+			ComPtr<IGraphicsAdapter> adapter;
+
+			attempt([&] () { return (*this)->COMGETTER(GraphicsAdapter)(adapter.asOutParam()); },
+			        "attempt to access virtual graphics adapter failed");
+
+			Monitor_count result { 0 };
+
+			attempt([&] () { return adapter->COMGETTER(MonitorCount)(&result.value); },
+			        "unable to determine the number of virtual monitors");
+
+			return result;
+		}
+
+	} _machine { _virtualbox, _session, _vbox_file_path };
+
+	struct Console_interface : ComPtr<IConsole>
+	{
+		Console_interface(Session_instance &session)
+		{
+			attempt([&] () { return session->COMGETTER(Console)(this->asOutParam()); },
+			        "unable to request console for session");
+		}
+	} _iconsole { _session };
+
+	struct Display_interface : ComPtr<IDisplay>
+	{
+		Display_interface(Console_interface &iconsole)
+		{
+			attempt([&] () { return iconsole->COMGETTER(Display)(this->asOutParam()); },
+			        "unable to request display from console interface");
+		}
+	} _idisplay { _iconsole };
+
+	bool const _genode_gui_attached = ( _attach_genode_gui(), true );
+
+	void _attach_genode_gui()
+	{
+		Monitor_count const num_monitors = _machine.monitor_count();
+
+		for (unsigned i = 0; i < num_monitors.value; i++) {
+
+			Gui::Connection &gui = *new Gui::Connection(_env);
+
+			Genodefb *fb = new Genodefb(_env, gui, _idisplay);
+
+			Bstr fb_id { };
+
+			attempt([&] () { return _idisplay->AttachFramebuffer(i, fb, fb_id.asOutParam()); },
+			        "unable to attach framebuffer to virtual monitor ", i);
 		}
 	}
 
-	rc = machine->initFromSettings(virtualbox, vm_config, nullptr);
-	if (FAILED(rc))
-		return rc;
+	bool const _machine_powered_up = ( _power_up_machine(), true );
 
-	/*
-	 * Add the machine to th VirtualBox::allMachines list
-	 *
-	 * Unfortunately, the 'i_registerMachine' function performs a
-	 * 'i_saveSettings' should the 'VirtualBox' object not be in the
-	 * 'InInit' state. However, the object is already in 'Ready' state.
-	 * So, 'i_saveSettings' attempts to write a 'VirtualBox.xml' file
-	 */
+	void _power_up_machine()
 	{
-		AutoWriteLock alock(virtualbox.m_p COMMA_LOCKVAL_SRC_POS);
+		ComPtr <IProgress> progress;
 
-		rc = machine->i_prepareRegister();
-		if (FAILED(rc))
-			return rc;
+		attempt([&] () { return _iconsole->PowerUp(progress.asOutParam()); },
+		        "powering up via console interface failed");
+
+		/* wait until VM is up */
+		MachineState_T state = MachineState_Null;
+		do {
+			if (state != MachineState_Null)
+				RTThreadSleep(1000);
+
+			attempt([&] () { return _machine->COMGETTER(State)(&state); },
+			        "failed to obtain machine state");
+
+		} while (state == MachineState_Starting);
+
+		if (state != MachineState_Running) {
+			error("machine could not enter running state");
+			throw Fatal();
+		}
 	}
 
-	static ComObjPtr<Session> session;
-	rc = session.createObject();
-	if (FAILED(rc))
-		return rc;
-
-	rc = machine->LockMachine(session, LockType_VM);
-	if (FAILED(rc))
-		return rc;
-
-	/* Validate configured memory of vbox file and Genode config */
-	ULONG memory_vbox;
-	rc = machine->COMGETTER(MemorySize)(&memory_vbox);
-	if (FAILED(rc))
-		return rc;
-
-	static ComPtr<IConsole> gConsole;
-	rc = session->COMGETTER(Console)(gConsole.asOutParam());
-
-	static ComPtr<IDisplay> display;
-	rc = gConsole->COMGETTER(Display)(display.asOutParam());
-	if (FAILED(rc))
-		return rc;
-
-	static ComPtr<IGraphicsAdapter> graphics_adapter;
-	rc = machine->COMGETTER(GraphicsAdapter)(graphics_adapter.asOutParam());
-	if (FAILED(rc))
-		return rc;
-
-	PRUint32 cMonitors = 1;
-	rc = graphics_adapter->COMGETTER(MonitorCount)(&cMonitors);
-	if (FAILED(rc))
-		return rc;
-
-	static Gui::Connection gui { env };
-	static Bstr gaFramebufferId[64];
-
-	for (unsigned uScreenId = 0; uScreenId < cMonitors; uScreenId++)
+	struct Mouse_interface : ComPtr<IMouse>
 	{
-		Genodefb *fb = new Genodefb(env, gui, display);
-		HRESULT rc = display->AttachFramebuffer(uScreenId, fb, gaFramebufferId[uScreenId].asOutParam());
-		if (FAILED(rc))
-			return rc;
-	}
+		Mouse_interface(Console_interface &iconsole)
+		{
+			attempt([&] () { return iconsole->COMGETTER(Mouse)(this->asOutParam()); },
+			        "unable to request mouse interface from console");
+		}
+	} _imouse { _iconsole };
 
-	/* Power up the VMM */
-	ComPtr <IProgress> progress;
-	rc = gConsole->PowerUp(progress.asOutParam());
-	if (FAILED(rc))
-		return rc;
+	struct Keyboard_interface : ComPtr<IKeyboard>
+	{
+		Keyboard_interface(Console_interface &iconsole)
+		{
+			attempt([&] () { return iconsole->COMGETTER(Keyboard)(this->asOutParam()); },
+			        "unable to request keyboard interface from console");
+		}
+	} _ikeyboard { _iconsole };
 
-	/* wait until VM is up */
-	MachineState_T machineState = MachineState_Null;
-	do {
-		if (machineState != MachineState_Null)
-			RTThreadSleep(1000);
-
-		rc = machine->COMGETTER(State)(&machineState);
-	} while (machineState == MachineState_Starting);
-	if (rc != S_OK || (machineState != MachineState_Running))
-		return E_FAIL;
-
-	/* request mouse object */
-	static ComPtr<IMouse> gMouse;
-	rc = gConsole->COMGETTER(Mouse)(gMouse.asOutParam());
-	if (FAILED(rc))
-		return rc;
-	Assert (&*gMouse);
-
-	/* request keyboard object */
-	static ComPtr<IKeyboard> gKeyboard;
-	rc = gConsole->COMGETTER(Keyboard)(gKeyboard.asOutParam());
-	if (FAILED(rc))
-		return rc;
-	Assert (&*gKeyboard);
-
-	return rc;
-}
+	Main(Genode::Env &env) : _env(env) { }
+};
 
 
+static Env *genode_env_ptr = nullptr;
 
-static Genode::Env *genode_env_ptr = nullptr;
 
-
-Genode::Env &genode_env()
+Env &genode_env()
 {
 	struct Genode_env_ptr_uninitialized : Genode::Exception { };
 	if (!genode_env_ptr)
@@ -205,27 +283,14 @@ Genode::Allocator &vmm_heap()
 }
 
 
+/* initial environment for the FreeBSD libc implementation */
+extern char **environ;
+
+
 void Libc::Component::construct(Libc::Env &env)
 {
 	/* make Genode environment accessible via the global 'genode_env()' */
 	genode_env_ptr = &env;
-
-	{
-		using namespace Genode;
-
-		Attached_rom_dataspace config_ds(env, "config");
-		Xml_node const config = config_ds.xml();
-
-		if (!config.has_attribute("vbox_file")) {
-			error("missing 'vbox_file' attribute in config");
-			throw Exception();
-		}
-
-		typedef String<128> Name;
-
-		Name const vbox_file = config.attribute_value("vbox_file", Name());
-		copy_cstring(c_vbox_file, vbox_file.string(), sizeof(c_vbox_file));
-	}
 
 	Libc::with_libc([&] () {
 
@@ -257,13 +322,13 @@ void Libc::Component::construct(Libc::Env &env)
 			}
 		}
 
-		{
-			HRESULT const hrc = setupmachine(env);
-			if (FAILED(hrc)) {
-				Genode::error("startup of VMM failed - reason ", hrc, " '",
-				              RTErrCOMGet(hrc)->pszMsgFull, "' - exiting ...");
-				throw -3;
-			}
+		Sup::init(env);
+
+		try {
+			static Main main(env);
+		}
+		catch (...) {
+			error("startup of virtual machine failed, giving up.");
 		}
 	});
 }
