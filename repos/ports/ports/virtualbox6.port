@@ -22,7 +22,7 @@ $(call check_tool,yasm)
 $(call check_tool,iasl)
 
 VBOX_MAIN_GLUE := AutoLock EventQueue string xpcom/helpers com ErrorInfo
-VBOX_MAIN_GLUE += NativeEventQueue
+VBOX_MAIN_GLUE += NativeEventQueue GetVBoxUserHomeDirectory
 
 VBOX_MAIN_ALL := AuthLibrary AutoCaller DisplayResampleImage DisplayUtils
 VBOX_MAIN_ALL += PCIDeviceAttachmentImpl ProgressImpl SharedFolderImpl

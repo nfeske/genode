@@ -21,11 +21,11 @@
 #include <libc/args.h>
 
 /* Virtualbox includes */
+#include <nsXPCOM.h>
+#include <nsCOMPtr.h>
 #include <iprt/initterm.h>
 #include <iprt/assert.h>
 #include <iprt/err.h>
-#include <VBox/com/com.h>
-#include <VBox/vmm/vmapi.h>
 
 /* Virtualbox includes of generic Main frontend */
 #include "ConsoleImpl.h"
@@ -44,23 +44,6 @@ static char c_vbox_vmname[128];
 
 /* initial environment for the FreeBSD libc implementation */
 extern char **environ;
-
-
-int com::GetVBoxUserHomeDirectory(char *aDir, size_t aDirLen, bool fCreateDir)
-{
-    AssertReturn(aDir, VERR_INVALID_POINTER);
-    AssertReturn(aDirLen > 1, VERR_BUFFER_OVERFLOW);
-
-	memcpy(aDir, "/", 1);
-	aDir[1] = 0;
-	return VINF_SUCCESS;
-}
-
-extern "C"
-RTDECL(int) RTPathUserHome(char *pszPath, size_t cchPath)
-{
-	return com::GetVBoxUserHomeDirectory(pszPath, cchPath);
-}
 
 
 extern "C" VirtualBox * genode_global_vbox_pointer;
@@ -254,6 +237,7 @@ warning("setup_machine 26");
 }
 
 
+
 static Genode::Env *genode_env_ptr = nullptr;
 
 
@@ -266,8 +250,6 @@ Genode::Env &genode_env()
 	return *genode_env_ptr;
 }
 
-#include <nsXPCOM.h>
-#include <nsCOMPtr.h>
 
 Genode::Allocator &vmm_heap()
 {

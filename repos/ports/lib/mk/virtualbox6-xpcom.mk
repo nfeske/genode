@@ -14,6 +14,7 @@ SRC_CC += Main/glue/com.cpp
 SRC_CC += Main/glue/ErrorInfo.cpp
 SRC_CC += Main/glue/EventQueue.cpp
 SRC_CC += Main/glue/NativeEventQueue.cpp
+SRC_CC += Main/glue/GetVBoxUserHomeDirectory.cpp
 SRC_CC += Main/glue/string.cpp
 SRC_CC += Main/glue/xpcom/helpers.cpp
 SRC_CC += xpcom/base/nsID.cpp
