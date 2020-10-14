@@ -11,9 +11,14 @@
  * version 2.
  */
 
+/* Genode includes */
+#include <base/env.h>
+#include <base/log.h>
+
 /* VirtualBox includes */
 #include <VBox/err.h>
 #include <VBox/sup.h>
+#include <VBox/vmm/vmm.h>
 #include <SUPLibInternal.h>
 #include <SUPDrvIOC.h>
 
@@ -21,10 +26,6 @@
 #include <init.h>
 #include <sup_drv.h>
 #include <stub_macros.h>
-
-/* Genode includes */
-#include <base/env.h>
-#include <base/log.h>
 
 static bool const debug = true;
 
@@ -50,7 +51,7 @@ struct SUPDRVSESSION
 
 static int ioctl_cookie(SUPCOOKIE &request)
 {
-	log(__PRETTY_FUNCTION__, " called");
+	warning(__PRETTY_FUNCTION__, " misses session-object creation");
 
 	request.Hdr.rc = VINF_SUCCESS;
 	request.u.Out.u32SessionVersion = SUPDRV_IOC_VERSION;
@@ -61,7 +62,7 @@ static int ioctl_cookie(SUPCOOKIE &request)
 
 static int ioctl_query_funcs(SUPQUERYFUNCS &request)
 {
-	warning(__PRETTY_FUNCTION__, " is incomplete");
+	warning(__PRETTY_FUNCTION__, " reports zero functions");
 
 	request.Hdr.rc = VINF_SUCCESS;
 	request.u.Out.cFunctions = 0;
@@ -72,8 +73,6 @@ static int ioctl_query_funcs(SUPQUERYFUNCS &request)
 
 static int ioctl_gip_map(SUPGIPMAP &request)
 {
-	log(__PRETTY_FUNCTION__, " called");
-
 	request.Hdr.rc = VINF_SUCCESS;
 	request.u.Out.HCPhysGip = 0;
 	request.u.Out.pGipR3    = sup_drv->gip();
@@ -85,8 +84,6 @@ static int ioctl_gip_map(SUPGIPMAP &request)
 
 static int ioctl_vt_caps(SUPVTCAPS &request)
 {
-	log(__PRETTY_FUNCTION__, " called");
-
 	switch (sup_drv->cpu_virt()) {
 	case Sup::Drv::Cpu_virt::VMX:
 		request.Hdr.rc      = VINF_SUCCESS;
@@ -112,6 +109,32 @@ static int ioctl_vt_caps(SUPVTCAPS &request)
 }
 
 
+int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
+{
+	warning(__PRETTY_FUNCTION__, " called"
+	       , " cbIn=", request.Hdr.cbIn
+	       , " uOperation=", request.u.In.uOperation
+	       , " u64Arg=", request.u.In.u64Arg
+	       , " pVMR0=", request.u.In.pVMR0
+	       );
+
+	VMMR0OPERATION const operation = VMMR0OPERATION(request.u.In.uOperation);
+
+	switch (operation) {
+	case VMMR0_DO_GVMM_CREATE_VM: log("VMMR0_DO_GVMM_CREATE_VM"); STOP; break;
+	default:
+		error(__func__, " operation=", (int)operation);
+		STOP
+	}
+
+	request.Hdr.rc = VERR_NOT_IMPLEMENTED;
+
+	STOP
+
+	return VINF_SUCCESS;
+}
+
+
 /*********************************
  ** VirtualBox suplib interface **
  *********************************/
@@ -131,12 +154,13 @@ int suplibOsUninstall(void) TRACE(VERR_NOT_IMPLEMENTED)
 
 int suplibOsIOCtl(PSUPLIBDATA pThis, uintptr_t opcode, void *req, size_t len)
 {
-	switch (opcode) {
+	switch (SUP_CTL_CODE_NO_SIZE(opcode)) {
 
-	case SUP_IOCTL_COOKIE:        return ioctl_cookie(*(SUPCOOKIE *)req);
-	case SUP_IOCTL_QUERY_FUNCS(): return ioctl_query_funcs(*(SUPQUERYFUNCS *)req);
-	case SUP_IOCTL_GIP_MAP:       return ioctl_gip_map(*(SUPGIPMAP *)req);
-	case SUP_IOCTL_VT_CAPS:       return ioctl_vt_caps(*(SUPVTCAPS *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_COOKIE):               return ioctl_cookie(*(SUPCOOKIE *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_QUERY_FUNCS()):        return ioctl_query_funcs(*(SUPQUERYFUNCS *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GIP_MAP):              return ioctl_gip_map(*(SUPGIPMAP *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_VT_CAPS):              return ioctl_vt_caps(*(SUPVTCAPS *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_CALL_VMMR0_NO_SIZE()): return ioctl_call_vmmr0(*(SUPCALLVMMR0 *)req);
 
 	default:
 
