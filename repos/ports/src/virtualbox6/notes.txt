@@ -8,3 +8,4 @@
 * Assertion ticket: https://www.virtualbox.org/ticket/19939
 * Re-insert RAM-quota sanity checks in main.cc, see occurrences of
   genode_check_memory_config in virtualbox5/main.cc
+* Do we need locking of in guest_memory.h/cc?
