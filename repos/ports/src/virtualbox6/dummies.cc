@@ -252,7 +252,7 @@ DhcpOption *DhcpOption::parse(unsigned char, int, char const*, int*) STOP
 int AutostartDb::addAutostartVM   (char const *) STOP
 int AutostartDb::addAutostopVM    (char const *) STOP
 int AutostartDb::removeAutostopVM (char const *) STOP
-int AutostartDb::removeAutostartVM(char const *)  STOP
+int AutostartDb::removeAutostartVM(char const *) STOP
 
 AutostartDb::AutostartDb() TRACE()
 AutostartDb::~AutostartDb() { }
