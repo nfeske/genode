@@ -10,6 +10,7 @@ SRC_CC = frontend/main.cc frontend/console.cc \
          devices.cc drivers.cc dummies.cc libc.cc \
          mm.cc pdm.cc pgm.cc rt.cc \
          hm.cc thread.cc dynlib.cc unimpl.cc
+SRC_CC += guest_memory.cc
 
 LIBS  += base
 LIBS  += stdcxx

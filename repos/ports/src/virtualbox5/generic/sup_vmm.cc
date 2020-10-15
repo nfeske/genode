@@ -32,6 +32,7 @@
 #include "vcpu.h"
 #include "vcpu_svm.h"
 #include "vcpu_vmx.h"
+#include <guest_memory.h>
 
 /* libc memory allocator */
 #include <internal/mem_alloc.h>
@@ -73,33 +74,8 @@ enum {
 typedef Genode::Bit_allocator<HANDY_PAGES>   Page_ids;
 typedef Genode::Bit_array<PAGES_SUPERPAGE>   Free_ids;
 
-class Chunk_ids: public Genode::Bit_allocator<MAX_CHUNK_IDS>
-{
-	public:
-
-		void reserve(Genode::addr_t bit_start, size_t const num) {
-			_reserve(bit_start, num); };
-};
-
 static Page_ids  page_ids;
-static Chunk_ids chunk_ids;
 
-struct Region : Genode::List<Region>::Element
-{
-	Genode::uint64_t vmm_local;
-	Genode::uint64_t size;
-	Genode::Ram_dataspace_capability cap;
-
-	Region(uint64_t gp, uint64_t gs, Genode::Ram_dataspace_capability c)
-	: vmm_local(gp), size(gs), cap(c) { }
-
-	bool contains(Genode::uint64_t p)
-	{
-		return (vmm_local <= p) && (p < vmm_local + size);
-	}
-};
-
-static Genode::List<Region> regions;
 
 static Genode::Allocator & heap()
 {
@@ -108,56 +84,16 @@ static Genode::Allocator & heap()
 }
 
 
-static Sub_rm_connection &vm_memory(Genode::uint64_t vm_size = 0)
+static Guest_memory::Pool *_guest_memory_pool_ptr = nullptr;
+
+
+static Guest_memory::Pool &guest_memory_pool()
 {
-	/* memory used by the VM in any order as the VMM asks for allocations */
-	static Sub_rm_connection vm_memory(genode_env(), vm_size);
+	if (_guest_memory_pool_ptr)
+		return *_guest_memory_pool_ptr;
 
-	if (!vm_size)
-		return vm_memory;
-
-	using namespace Genode;
-
-	/* create iterator for aligned allocation and attachment of memory */
-	addr_t const vmm_local = vm_memory.local_addr(0);
-	Flexpage_iterator fli(vmm_local, vm_size, 0, ~0UL, 0);
-
-	/* start iteration */
-	Flexpage memory = fli.page();
-	while (memory.valid()) {
-		addr_t const memory_size = 1UL << memory.log2_order;
-		addr_t allocated  = 0;
-
-		addr_t alloc_size = 128 * 1024 * 1024;
-		if (alloc_size > memory_size)
-			alloc_size = memory_size;
-
-		while (allocated < memory_size) {
-			Ram_dataspace_capability ds = genode_env().ram().alloc(alloc_size);
-
-			addr_t to = vm_memory.attach_executable(ds, memory.addr +
-			                                            allocated - vmm_local,
-			                                        alloc_size);
-			Assert(to == vm_memory.local_addr(memory.addr + allocated - vmm_local));
-			allocated += alloc_size;
-
-			regions.insert(new (heap()) Region(to, alloc_size, ds));
-
-			if (memory_size - allocated < alloc_size)
-				alloc_size = memory_size - allocated;
-		}
-
-		/* request next aligned memory range to be allocated and attached */
-		memory = fli.page();
-	}
-
-	/* reserve chunkids which are special or unused */
-	chunk_ids.reserve(0, CHUNKID_START);
-	addr_t const unused_id = CHUNKID_START + vm_size / GMM_CHUNK_SIZE;
-	addr_t const unused_count = MAX_CHUNK_IDS - unused_id - 1;
-	chunk_ids.reserve(unused_id, unused_count);
-
-	return vm_memory;
+	Genode::error("missing initialization of Guest_memory::Pool");
+	throw Genode::Exception();
 }
 
 
@@ -207,8 +143,9 @@ HRESULT genode_setup_machine(ComObjPtr<Machine> machine)
 	size_t const vmm_memory = 1024ULL * 1024 * (memory_vbox + 16) +
 	                          (CHUNKID_START + 1) * GMM_CHUNK_SIZE;
 	HRESULT ret = genode_check_memory_config(machine, vmm_memory);
-	if (ret == VINF_SUCCESS)
-		vm_memory(vmm_memory);
+
+	_guest_memory_pool_ptr = new
+		Guest_memory::Pool(genode_env(), Guest_memory::Bytes{vmm_memory});
 
 	return ret;
 };
@@ -263,26 +200,20 @@ int SUPR3PageAllocEx(::size_t cPages, uint32_t fFlags, void **ppvPages,
 	Assert(ppvPages);
 	Assert(!fFlags);
 
-	using Genode::Attached_ram_dataspace;
-	Attached_ram_dataspace * ds = new (heap()) Attached_ram_dataspace(genode_env().ram(),
-	                                                                  genode_env().rm(),
-	                                                                  cPages * ONE_PAGE_SIZE);
+	Guest_memory::Bytes const bytes { cPages*Guest_memory::ONE_PAGE_SIZE };
 
-	Genode::addr_t const vmm_local = reinterpret_cast<Genode::addr_t>(ds->local_addr<void>());
+	Guest_memory::Vmm_addr const base = guest_memory_pool().extend(bytes);
 
-	regions.insert(new (heap()) Region(vmm_local, cPages * ONE_PAGE_SIZE, ds->cap()));
+	*ppvPages = (void *)base.value;
 
-	*ppvPages = ds->local_addr<void>();
 	if (pR0Ptr)
-		*pR0Ptr = vmm_local;
+		*pR0Ptr = base.value;
 
-	if (!paPages)
-		return VINF_SUCCESS;
-
-	for (unsigned iPage = 0; iPage < cPages; iPage++)
-	{
-		paPages[iPage].uReserved = 0;
-		paPages[iPage].Phys = vmm_local + iPage * ONE_PAGE_SIZE;
+	if (paPages) {
+		for (unsigned i = 0; i < cPages; i++) {
+			paPages[i].uReserved = 0;
+			paPages[i].Phys = base.value + i*Guest_memory::ONE_PAGE_SIZE;
+		}
 	}
 
 	return VINF_SUCCESS;
@@ -340,7 +271,7 @@ static void partial_free_large_page(unsigned chunkid, unsigned page_id)
 			track_free[pos].chunkid = 0;
 			track_free[pos].freed   = 0;
 
-			chunk_ids.free(chunkid);
+			guest_memory_pool().free_chunk_id(chunkid);
 		}
 	} catch (...) {
 		Genode::error(__func__," ", __LINE__, " allocation failed ", pos, ":",
@@ -454,8 +385,11 @@ int SUPR3CallVMMR0Ex(PVMR0 pVMR0, VMCPUID idCpu, unsigned uOperation,
 			Assert (page_idx <= GMM_PAGEID_IDX_MASK);
 
 			req->aPages[i].idPage = (chunk_id << GMM_CHUNKID_SHIFT) | page_idx;
-			req->aPages[i].HCPhysGCPhys = vm_memory().local_addr((chunk_id * GMM_CHUNK_SIZE) | (page_idx * ONE_PAGE_SIZE));
-			Assert(vm_memory().contains(req->aPages[i].HCPhysGCPhys));
+
+			Guest_memory::Phys_addr const guest_phys_addr {
+				(chunk_id * GMM_CHUNK_SIZE) | (page_idx * ONE_PAGE_SIZE) };
+
+			req->aPages[i].HCPhysGCPhys = guest_memory_pool().vmm_addr(guest_phys_addr).value;
 
 			#if 0
 			Genode::log("cPages ", Genode::Hex(req->cPages), " "
@@ -481,10 +415,11 @@ int SUPR3CallVMMR0Ex(PVMR0 pVMR0, VMCPUID idCpu, unsigned uOperation,
 		Assert(req->idChunkUnmap == NIL_GMM_CHUNKID);
 		Assert(req->idChunkMap   != NIL_GMM_CHUNKID);
 
-		Genode::addr_t local_addr_offset = (uintptr_t)req->idChunkMap << GMM_CHUNK_SHIFT;
-		Genode::addr_t to = vm_memory().local_addr(local_addr_offset);
+		Guest_memory::Phys_addr const guest_phys_addr { (uintptr_t)req->idChunkMap << GMM_CHUNK_SHIFT };
 
-		req->pvR3 = reinterpret_cast<RTR3PTR>(to);
+		Guest_memory::Vmm_addr  const vmm_addr = guest_memory_pool().vmm_addr(guest_phys_addr);
+
+		req->pvR3 = reinterpret_cast<RTR3PTR>(vmm_addr.value);
 
 		return VINF_SUCCESS;
 	}
@@ -542,17 +477,19 @@ int SUPR3CallVMMR0Ex(PVMR0 pVMR0, VMCPUID idCpu, unsigned uOperation,
 		Genode::uint64_t chunkid = 0;
 
 		try {
-			chunkid = chunk_ids.alloc();
+			chunkid = guest_memory_pool().alloc_chunk_id();
 		} catch (...) {
 			Genode::error(__func__," ", __LINE__, " allocation failed");
 			throw;
 		}
 
-		if (cPagesToAlloc != GMM_CHUNK_SIZE / ONE_PAGE_SIZE)
+		if (cPagesToAlloc != GMM_CHUNK_SIZE / ONE_PAGE_SIZE) {
+			Guest_memory::Phys_addr const phys_addr { chunkid << GMM_CHUNK_SHIFT };
 			Genode::log("special chunkid=", chunkid, " "
 			            "toupdate=", cPagesToUpdate, " "
 			            "toalloc=", cPagesToAlloc, " "
-			            "virt=", Genode::Hex(vm_memory().local_addr(chunkid << GMM_CHUNK_SHIFT)));
+			            "virt=", Genode::Hex(guest_memory_pool().vmm_addr(phys_addr).value));
+		}
 
 		for (unsigned i = 0; i < cPagesToUpdate; i++) {
 			if (pVM->pgm.s.aHandyPages[iFirst + i].idPage != NIL_GMM_PAGEID)
@@ -579,7 +516,13 @@ int SUPR3CallVMMR0Ex(PVMR0 pVMR0, VMCPUID idCpu, unsigned uOperation,
 				pVM->pgm.s.aHandyPages[iFirst + i].idPage = (chunkid << GMM_CHUNKID_SHIFT) | (iFirst + reverse);
 				pVM->pgm.s.aHandyPages[iFirst + i].idSharedPage = NIL_GMM_PAGEID;
 
-				pVM->pgm.s.aHandyPages[iFirst + i].HCPhysGCPhys = vm_memory().local_addr((chunkid << GMM_CHUNK_SHIFT) | ((iFirst + reverse) * ONE_PAGE_SIZE));
+				Guest_memory::Phys_addr const phys_addr {
+					(chunkid << GMM_CHUNK_SHIFT) |
+					((iFirst + reverse) * ONE_PAGE_SIZE) };
+
+				Guest_memory::Vmm_addr const vmm_addr = guest_memory_pool().vmm_addr(phys_addr);
+
+				pVM->pgm.s.aHandyPages[iFirst + i].HCPhysGCPhys = vmm_addr.value;
 			}
 		}
 		/* based on GMMR0AllocateHandyPages in VMM/VMMR0/GMMR0.cpp - end */
@@ -614,10 +557,15 @@ int SUPR3CallVMMR0Ex(PVMR0 pVMR0, VMCPUID idCpu, unsigned uOperation,
 		Assert(pVM->pgm.s.cLargeHandyPages == 0);
 
 		try {
-			Genode::uint64_t chunkid = chunk_ids.alloc();
+			Genode::uint64_t chunkid = guest_memory_pool().alloc_chunk_id();
 
 			pVM->pgm.s.aLargeHandyPage[0].idPage = (chunkid << GMM_CHUNKID_SHIFT);
-			pVM->pgm.s.aLargeHandyPage[0].HCPhysGCPhys = vm_memory().local_addr(chunkid << GMM_CHUNK_SHIFT);
+
+			Guest_memory::Phys_addr const guest_phys_addr { chunkid << GMM_CHUNK_SHIFT };
+
+			Guest_memory::Vmm_addr const vmm_addr = guest_memory_pool().vmm_addr(guest_phys_addr);
+
+			pVM->pgm.s.aLargeHandyPage[0].HCPhysGCPhys = vmm_addr.value;
 
 			pVM->pgm.s.cLargeHandyPages = 1;
 		} catch (...) {
@@ -805,19 +753,18 @@ static int _map_memory(Genode::Vm_connection &vm_session,
                        size_t const mapping_size,
                        bool writeable)
 {
-	for (Region *region = regions.first(); region; region = region->next())
-	{
-		if (!region->contains(vmm_local))
-			continue;
+	HRESULT rc = VERR_PGM_DYNMAP_FAILED;
 
+	guest_memory_pool().with_region_at(Guest_memory::Vmm_addr { vmm_local },
+	                                   [&] (Guest_memory::Pool::Region const &region) {
 		bool retry = false;
 
 		do {
-			Genode::addr_t const offset = vmm_local - region->vmm_local;
+			Genode::addr_t const offset = vmm_local - region.base.value;
 
 			try {
 				vm_session.with_upgrade([&]() {
-					vm_session.attach(region->cap, GCPhys,
+					vm_session.attach(region.ds, GCPhys,
 					                  { .offset     = offset,
 					                    .size       = mapping_size,
 					                    .executable = true,
@@ -829,9 +776,9 @@ static int _map_memory(Genode::Vm_connection &vm_session,
 				if (retry) {
 					Genode::log("region conflict - ", Genode::Hex(GCPhys),
 					            " ", Genode::Hex(mapping_size), " vmm_local=",
-					            Genode::Hex(vmm_local), " ", region->cap,
-					            " region=", Genode::Hex(region->vmm_local),
-					            "+", Genode::Hex(region->size));
+					            Genode::Hex(vmm_local), " ", region.ds,
+					            " region=", Genode::Hex(region.base.value),
+					            "+", Genode::Hex(region.size.value));
 
 					size_t detach_size = mapping_size;
 					while (detach_size) {
@@ -840,7 +787,8 @@ static int _map_memory(Genode::Vm_connection &vm_session,
 						detach_size -= detach_size > size ? size : detach_size;
 					}
 
-					return VERR_PGM_DYNMAP_FAILED;
+					rc = VERR_PGM_DYNMAP_FAILED;
+					return;
 				}
 
 				if (!retry) {
@@ -851,10 +799,11 @@ static int _map_memory(Genode::Vm_connection &vm_session,
 			retry = false;
 		} while (retry);
 
-		return VINF_SUCCESS;
-	}
-	Genode::error(" no mapping ?");
-	return VERR_PGM_DYNMAP_FAILED;
+		rc = VINF_SUCCESS;
+	});
+	if (FAILED(rc))
+		Genode::error(" no mapping ?");
+	return rc;
 }
 
 class Pgm_guard
