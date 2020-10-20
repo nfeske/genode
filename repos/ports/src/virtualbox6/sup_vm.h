@@ -35,7 +35,7 @@ struct Sup::Vm : VM
 		uCpuExecutionCap = 100;  /* expected by 'vmR3CreateU()' */
 
 		for (uint32_t i = 0; i < cpu_count.value; ++i) {
-			apCpusR3[i] = (VMCPU *)RTMemAllocZ(sizeof(apCpusR3[i]));
+			apCpusR3[i] = (VMCPU *)RTMemAllocZ(sizeof(VMCPU));
 			log(this, ": apCpusR3[", i, "]=", apCpusR3[i]);
 
 			apCpusR3[i]->pVMR3           = this;
