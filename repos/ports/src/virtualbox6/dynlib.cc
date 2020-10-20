@@ -85,4 +85,9 @@ int RTLdrLoad(const char *pszFilename, PRTLDRMOD phLdrMod)
 //	return VINF_SUCCESS;
 //}
 
+RTDECL(const char *) RTLdrGetSuff(void)
+{
+	return ".so";
+}
+
 }

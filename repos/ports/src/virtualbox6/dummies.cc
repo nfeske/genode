@@ -117,8 +117,8 @@ HRESULT       USBProxyService::detachAllDevicesFromVM(SessionMachine*, bool, boo
 HRESULT       USBProxyService::detachDeviceFromVM(SessionMachine*, IN_GUID, bool)  STOP
 void         *USBProxyService::insertFilter(PCUSBFILTER aFilter)                   STOP
 void          USBProxyService::removeFilter(void *aId)                             STOP
-int           USBProxyService::getLastError()                                      STOP
-bool          USBProxyService::isActive()                                          STOP
+int           USBProxyService::getLastError()                                      TRACE(VINF_SUCCESS)
+bool          USBProxyService::isActive()                                          TRACE(false)
 HRESULT       USBProxyService::removeUSBDeviceSource(com::Utf8Str const&)          STOP
 HRESULT       USBProxyService::addUSBDeviceSource(com::Utf8Str const&,
                                                   com::Utf8Str const&,
@@ -362,3 +362,4 @@ int dbgfR3BpInit(VM*) STOP
 /* DBGFR3BugCheck.cpp */
 
 int dbgfR3BugCheckInit(VM*) STOP
+

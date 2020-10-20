@@ -19,8 +19,8 @@ extern "C" {
 
 #define DUMMY(name) \
 void name(void) { \
-	Genode::warning(__func__, ": " #name " called, not implemented, eip=", \
-	                __builtin_return_address(0)); \
+	Genode::error(__func__, ": " #name " called, not implemented, eip=", \
+	              __builtin_return_address(0)); \
 	for (;;); \
 }
 
@@ -95,7 +95,6 @@ DUMMY(RTDbgSymbolDup)
 DUMMY(RTDbgSymbolFree)
 DUMMY(RTFileQueryFsSizes)
 DUMMY(RTFsIsoMakerCmdEx)
-DUMMY(RTLdrGetSuff)
 DUMMY(RTLdrLoadAppPriv)
 DUMMY(RTLdrLoadEx)
 DUMMY(RTProcCreate)
@@ -103,8 +102,6 @@ DUMMY(RTSystemQueryAvailableRam)
 DUMMY(RTZipXarFsStreamFromIoStream)
 DUMMY(SELMR3GetSelectorInfo)
 DUMMY(SUPGetCpuHzFromGipForAsyncMode)
-DUMMY(SUPR3HardenedLdrLoadPlugIn)
-DUMMY(SUPR3HardenedLdrLoadAppPriv)
 DUMMY(SUPReadTscWithDelta)
 DUMMY(USBFilterClone)
 DUMMY(VDIfTcpNetInstDefaultDestroy)

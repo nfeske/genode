@@ -5,6 +5,7 @@ LIBS  += stdcxx
 SRC_CC := sup.cc sup_sem.cc
 
 SRC_CC += HostDrivers/Support/SUPLib.cpp
+SRC_CC += HostDrivers/Support/SUPLibLdr.cpp
 
 INC_DIR += $(call select_from_repositories,src/lib/libc)
 

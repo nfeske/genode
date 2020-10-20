@@ -153,6 +153,32 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 }
 
 
+int ioctl_get_hmvirt_msrs(SUPGETHWVIRTMSRS &request)
+{
+	warning(__PRETTY_FUNCTION__
+	       , " fForce=", request.u.In.fForce
+	       );
+
+	request.Hdr.rc = VINF_SUCCESS;
+	::memset(&request.u.Out, 0, sizeof(request.u.Out));
+
+	return VINF_SUCCESS;
+}
+
+
+int ioctl_ucode_rev(SUPUCODEREV &request)
+{
+	warning(__PRETTY_FUNCTION__);
+
+	/* fake most recent revision possible */
+
+	request.Hdr.rc = VINF_SUCCESS;
+	request.u.Out.MicrocodeRev = ~0u;
+
+	return VINF_SUCCESS;
+}
+
+
 /*********************************
  ** VirtualBox suplib interface **
  *********************************/
@@ -179,6 +205,8 @@ int suplibOsIOCtl(PSUPLIBDATA pThis, uintptr_t opcode, void *req, size_t len)
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GIP_MAP):              return ioctl_gip_map(*(SUPGIPMAP *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_VT_CAPS):              return ioctl_vt_caps(*(SUPVTCAPS *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_CALL_VMMR0_NO_SIZE()): return ioctl_call_vmmr0(*(SUPCALLVMMR0 *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_HWVIRT_MSRS):      return ioctl_get_hmvirt_msrs(*(SUPGETHWVIRTMSRS *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_UCODE_REV):            return ioctl_ucode_rev(*(SUPUCODEREV *)req);
 
 	default:
 
