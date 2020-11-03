@@ -16,6 +16,7 @@
 #define _SUP_VM_H_
 
 /* VirtualBox includes */
+#include <PGMInternal.h>
 #include <VBox/vmm/vm.h>
 
 /* local includes */
@@ -28,7 +29,7 @@ struct Sup::Vm : VM
 	void init(PSUPDRVSESSION psession, Cpu_count cpu_count)
 	{
 		enmVMState       = VMSTATE_CREATING;
-//		pVMRC            = (RTGCUINTPTR)this;
+		pVMR0ForCall     = (PVMR0)this;
 		pSession         = psession;
 		cbSelf           = sizeof(VM);
 		cCpus            = cpu_count.value;

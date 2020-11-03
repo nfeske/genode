@@ -11,3 +11,11 @@
 * Do we need locking of in guest_memory.h/cc?
 * we no longer call rttimer_func in GIP
 * RTLdr fails with missing library object file (Drag and drop service is not available)
+* pgmR3InitSavedState needs Saved State Manager (SSM) 
+* currently we do not include SRC_CC +=
+  HostDrivers/Support/SUPLibSem.cpp in virtualbox6-sup.mk but
+  implement sup_sem.cc API
+
+
+
+LogRel(("\033[38;5;33m▶▶▶▶▶▶ %s:%u ◀◀◀◀◀◀ \033[0m\n", __func__, __LINE__));

@@ -110,7 +110,7 @@ static int ioctl_vt_caps(SUPVTCAPS &request)
 }
 
 
-static int vmmr0_create_vm(GVMMCREATEVMREQ &request)
+static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 {
 	warning(__PRETTY_FUNCTION__
 	       , " pSession=", request.pSession
@@ -122,7 +122,46 @@ static int vmmr0_create_vm(GVMMCREATEVMREQ &request)
 	Sup::Cpu_count cpu_count { request.cCpus };
 
 	request.pVMR3 = &Sup::Vm::create(request.pSession, cpu_count);
+	request.pVMR0 = (PVMR0)request.pVMR3;
 
+	return VINF_SUCCESS;
+}
+
+
+static int vmmr0_pgm_pool_grow(PVMR0 pvmr0)
+{
+	warning(__PRETTY_FUNCTION__
+	       , " pvmr0=", (void*)pvmr0
+//	       , " PGMPOOL_CFG_MAX_GROW=", PGMPOOL_CFG_MAX_GROW
+	       );
+
+	Sup::Vm     &vm   = *(Sup::Vm *)pvmr0;
+	PGMPOOL     &pool = *vm.pgm.s.pPoolR3;
+	PGMPOOLPAGE &page = pool.aPages[PGMPOOL_IDX_FIRST];
+
+	/* XXX */ void *a_page = RTMemPageAllocZ(4096);
+
+	page.pvPageR3  = (R3PTRTYPE(void *))a_page;
+	page.pvPageR0  = (R0PTRTYPE(void *))a_page;
+	page.enmKind   = PGMPOOLKIND_FREE;
+	pool.iFreeHead = PGMPOOL_IDX_FIRST;
+
+	error("-----"
+	     , " vm.pgm.s.pPoolR3=", vm.pgm.s.pPoolR3
+	     , " cMaxPages=", pool.cMaxPages
+	     , " page.enmKind=", page.enmKind
+	     , " iFreeHead=", pool.iFreeHead
+	     );
+
+	return VINF_SUCCESS;
+}
+
+
+static int vmmr0_gmm_initial_reservation(PVMR0 pvmr0)
+{
+	warning(__PRETTY_FUNCTION__
+	       , " pvmr0=", (void*)pvmr0
+	       );
 	return VINF_SUCCESS;
 }
 
@@ -133,15 +172,23 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 	       , " cbIn=", request.Hdr.cbIn
 	       , " uOperation=", request.u.In.uOperation
 	       , " u64Arg=", request.u.In.u64Arg
-	       , " pVMR0=", request.u.In.pVMR0
+	       , " pVMR0=", (void*)request.u.In.pVMR0
 	       );
 
 	VMMR0OPERATION const operation = VMMR0OPERATION(request.u.In.uOperation);
 
 	switch (operation) {
 	case VMMR0_DO_GVMM_CREATE_VM:
-		request.Hdr.rc = vmmr0_create_vm(*(GVMMCREATEVMREQ *)request.abReqPkt);
-		break;
+		request.Hdr.rc = vmmr0_gvmm_create_vm(*(GVMMCREATEVMREQ *)request.abReqPkt);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_PGM_POOL_GROW:
+		request.Hdr.rc = vmmr0_pgm_pool_grow(request.u.In.pVMR0);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_GMM_INITIAL_RESERVATION:
+		request.Hdr.rc = vmmr0_gmm_initial_reservation(request.u.In.pVMR0);
+		return VINF_SUCCESS;
 
 	default:
 		error(__func__, " operation=", (int)operation);
@@ -149,7 +196,7 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 		STOP
 	}
 
-	return VINF_SUCCESS;
+	return VERR_NOT_IMPLEMENTED;
 }
 
 
@@ -174,6 +221,18 @@ int ioctl_ucode_rev(SUPUCODEREV &request)
 
 	request.Hdr.rc = VINF_SUCCESS;
 	request.u.Out.MicrocodeRev = ~0u;
+
+	return VINF_SUCCESS;
+}
+
+
+int ioctl_get_paging_mode(SUPGETPAGINGMODE &request)
+{
+	warning(__PRETTY_FUNCTION__);
+
+	request.Hdr.rc = VINF_SUCCESS;
+	request.u.Out.enmMode = sizeof(long) == 32 ? SUPPAGINGMODE_32_BIT_GLOBAL
+	                                           : SUPPAGINGMODE_AMD64_GLOBAL_NX;
 
 	return VINF_SUCCESS;
 }
@@ -207,6 +266,7 @@ int suplibOsIOCtl(PSUPLIBDATA pThis, uintptr_t opcode, void *req, size_t len)
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_CALL_VMMR0_NO_SIZE()): return ioctl_call_vmmr0(*(SUPCALLVMMR0 *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_HWVIRT_MSRS):      return ioctl_get_hmvirt_msrs(*(SUPGETHWVIRTMSRS *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_UCODE_REV):            return ioctl_ucode_rev(*(SUPUCODEREV *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_PAGING_MODE):      return ioctl_get_paging_mode(*(SUPGETPAGINGMODE *)req);
 
 	default:
 

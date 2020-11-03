@@ -13,6 +13,7 @@
 
 /* VirtualBox includes */
 #include <iprt/err.h>
+#include <iprt/semaphore.h>
 #include <VBox/sup.h>
 #include <SUPLibInternal.h>
 
@@ -22,10 +23,18 @@
 static bool const debug = true;
 
 
-int SUPSemEventCreate(PSUPDRVSESSION pSession, PSUPSEMEVENT phEvent) STOP
+int SUPSemEventCreate(PSUPDRVSESSION pSession, PSUPSEMEVENT phEvent)
+{
+	return RTSemEventCreate((PRTSEMEVENT)phEvent);
+}
 
 
-int SUPSemEventClose(PSUPDRVSESSION pSession, SUPSEMEVENT hEvent) STOP
+int SUPSemEventClose(PSUPDRVSESSION pSession, SUPSEMEVENT hEvent)
+{
+	Assert (hEvent);
+
+	return RTSemEventDestroy((RTSEMEVENT)hEvent);
+}
 
 
 int SUPSemEventSignal(PSUPDRVSESSION pSession, SUPSEMEVENT hEvent) STOP
