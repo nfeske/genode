@@ -50,6 +50,7 @@ struct SUPDRVSESSION
 	SUPDRVSESSION() { }
 };
 
+
 static int ioctl_cookie(SUPCOOKIE &request)
 {
 	warning(__PRETTY_FUNCTION__, " misses session-object creation");
@@ -200,7 +201,7 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 }
 
 
-int ioctl_get_hmvirt_msrs(SUPGETHWVIRTMSRS &request)
+static int ioctl_get_hmvirt_msrs(SUPGETHWVIRTMSRS &request)
 {
 	warning(__PRETTY_FUNCTION__
 	       , " fForce=", request.u.In.fForce
@@ -213,7 +214,7 @@ int ioctl_get_hmvirt_msrs(SUPGETHWVIRTMSRS &request)
 }
 
 
-int ioctl_ucode_rev(SUPUCODEREV &request)
+static int ioctl_ucode_rev(SUPUCODEREV &request)
 {
 	warning(__PRETTY_FUNCTION__);
 
@@ -226,7 +227,7 @@ int ioctl_ucode_rev(SUPUCODEREV &request)
 }
 
 
-int ioctl_get_paging_mode(SUPGETPAGINGMODE &request)
+static int ioctl_get_paging_mode(SUPGETPAGINGMODE &request)
 {
 	warning(__PRETTY_FUNCTION__);
 
