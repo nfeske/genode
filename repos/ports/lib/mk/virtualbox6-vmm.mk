@@ -116,6 +116,10 @@ SRC_CC += VMM/VMMAll/APICAll.cpp
 SRC_CC += VMM/VMMR3/MM.cpp
 SRC_CC += VMM/VMMR3/MMHeap.cpp
 SRC_CC += VMM/VMMR3/MMUkHeap.cpp
+SRC_CC += VMM/VMMR3/MMHyper.cpp
+SRC_CC += VMM/VMMR3/MMPagePool.cpp
+SRC_CC += VMM/VMMAll/MMAll.cpp
+SRC_CC += VMM/VMMAll/MMAllHyper.cpp
 
 CC_OPT += -DVBOX_IN_VMM
 

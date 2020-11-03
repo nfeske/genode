@@ -243,7 +243,14 @@ int ioctl_get_paging_mode(SUPGETPAGINGMODE &request)
  *********************************/
 
 int suplibOsInit(PSUPLIBDATA pThis, bool fPreInited, bool fUnrestricted,
-                 SUPINITOP *penmWhat, PRTERRINFO pErrInfo) TRACE(VINF_SUCCESS)
+                 SUPINITOP *penmWhat, PRTERRINFO pErrInfo)
+{
+	/* set hDevice to !NIL_RTFILE - checked by SUPR3PageAllocEx() */
+	pThis->hDevice       = !NIL_RTFILE;
+	pThis->fUnrestricted = fUnrestricted;
+
+	return VINF_SUCCESS;
+}
 
 
 int suplibOsTerm(PSUPLIBDATA pThis) TRACE(VINF_SUCCESS)

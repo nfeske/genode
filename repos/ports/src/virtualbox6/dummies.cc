@@ -264,17 +264,6 @@ static_assert(sizeof(RTR0PTR) == sizeof(RTR3PTR), "pointer transformation bug");
 static_assert(sizeof(RTR0PTR) == sizeof(void *) , "pointer transformation bug");
 static_assert(sizeof(RTR3PTR) == sizeof(RTR0PTR), "pointer transformation bug");
 
-RTR0PTR MMHyperR3ToR0(PVM pVM, RTR3PTR R3Ptr) { return (RTR0PTR)R3Ptr; }
-RTRCPTR MMHyperR3ToRC(PVM pVM, RTR3PTR R3Ptr) { return to_rtrcptr(R3Ptr); }
-RTR0PTR MMHyperCCToR0(PVM pVM, void *pv)      { return (RTR0PTR)pv; }
-RTRCPTR MMHyperCCToRC(PVM pVM, void *pv)      { return to_rtrcptr(pv); }
-RTR3PTR MMHyperR0ToR3(PVM pVM, RTR0PTR R0Ptr) { return (RTR3PTR*)(R0Ptr | 0UL); }
-RTR3PTR MMHyperRCToR3(PVM pVM, RTRCPTR RCPtr)
-{
-	static_assert(sizeof(RCPtr) <= sizeof(RTR3PTR), "ptr transformation bug");
-	return reinterpret_cast<RTR3PTR>(0UL | RCPtr);
-}
-
 int  pgmR3InitSavedState(PVM, uint64_t) TRACE(VINF_SUCCESS)
 int  emR3InitDbg(PVM)                   TRACE(VINF_SUCCESS)
 int  SELMR3Init(PVM)                    TRACE(VINF_SUCCESS)
