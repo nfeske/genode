@@ -15,6 +15,8 @@
 * currently we do not include SRC_CC +=
   HostDrivers/Support/SUPLibSem.cpp in virtualbox6-sup.mk but
   implement sup_sem.cc API
+* PGM_WITHOUT_MAPPINGS is unconditionally defined in pgm.h
+  Hence, we can ignore all code wrapped by '#ifndef PGM_WITHOUT_MAPPINGS'
 
 
 
