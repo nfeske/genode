@@ -239,6 +239,28 @@ static int ioctl_get_paging_mode(SUPGETPAGINGMODE &request)
 }
 
 
+static int ioctl_page_alloc_ex(SUPPAGEALLOCEX &request)
+{
+	warning(__PRETTY_FUNCTION__
+	       , " cPages=", request.u.In.cPages
+	       , " fKernelMapping=", request.u.In.fKernelMapping
+	       , " fUserMapping=", request.u.In.fUserMapping
+	       );
+
+	size_t const cPages = request.u.In.cPages;
+	void * const base   = RTMemPageAllocZ(cPages*PAGE_SIZE);
+
+	request.Hdr.rc = VINF_SUCCESS;
+	request.u.Out.pvR3 = (R3PTRTYPE(void *))base;
+	request.u.Out.pvR0 = (R0PTRTYPE(void *))base;
+
+	for (size_t i = 0; i < cPages; ++i)
+		request.u.Out.aPages[i] = (RTHCPHYS)base + i*PAGE_SIZE;
+
+	return VINF_SUCCESS;
+}
+
+
 /*********************************
  ** VirtualBox suplib interface **
  *********************************/
@@ -275,6 +297,7 @@ int suplibOsIOCtl(PSUPLIBDATA pThis, uintptr_t opcode, void *req, size_t len)
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_HWVIRT_MSRS):      return ioctl_get_hmvirt_msrs(*(SUPGETHWVIRTMSRS *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_UCODE_REV):            return ioctl_ucode_rev(*(SUPUCODEREV *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_PAGING_MODE):      return ioctl_get_paging_mode(*(SUPGETPAGINGMODE *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_PAGE_ALLOC_EX):        return ioctl_page_alloc_ex(*(SUPPAGEALLOCEX *)req);
 
 	default:
 
