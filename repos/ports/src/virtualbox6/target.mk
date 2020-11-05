@@ -5,7 +5,7 @@ include $(REP_DIR)/lib/mk/virtualbox6-common.inc
 CC_WARN += -Wall
 
 SRC_CC := main.cc drivers.cc
-SRC_CC += libc.cc unimpl.cc dummies.cc pdm.cc devices.cc dynlib.cc
+SRC_CC += libc.cc unimpl.cc dummies.cc pdm.cc devices.cc nem.cc dynlib.cc
 
 # pgm.cc hm.cc thread.cc
 
