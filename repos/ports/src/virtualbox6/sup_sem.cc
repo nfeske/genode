@@ -22,10 +22,14 @@
 
 static bool const debug = true;
 
+/* check type assumptions */
+static_assert(sizeof(RTSEMEVENT) == sizeof(PSUPSEMEVENT), "type mismatch");
+static_assert(sizeof(RTSEMEVENTMULTI) == sizeof(PSUPSEMEVENTMULTI), "type mismatch");
+
 
 int SUPSemEventCreate(PSUPDRVSESSION pSession, PSUPSEMEVENT phEvent)
 {
-	return RTSemEventCreate((PRTSEMEVENT)phEvent);
+	return RTSemEventCreate((RTSEMEVENT *)phEvent);
 }
 
 
@@ -59,11 +63,21 @@ uint32_t SUPSemEventGetResolution(PSUPDRVSESSION pSession) STOP
 
 
 int SUPSemEventMultiCreate(PSUPDRVSESSION pSession,
-                           PSUPSEMEVENTMULTI phEventMulti) STOP
+                           PSUPSEMEVENTMULTI phEventMulti)
+{
+	AssertPtrReturn(phEventMulti, VERR_INVALID_POINTER);
+
+	RTSEMEVENTMULTI sem;
+
+	return RTSemEventMultiCreate((RTSEMEVENTMULTI*)phEventMulti);
+}
 
 
 int SUPSemEventMultiClose(PSUPDRVSESSION   pSession,
-                          SUPSEMEVENTMULTI hEventMulti) STOP
+                          SUPSEMEVENTMULTI hEventMulti)
+{
+	return RTSemEventMultiDestroy(reinterpret_cast<RTSEMEVENTMULTI>(hEventMulti));
+}
 
 
 int SUPSemEventMultiSignal(PSUPDRVSESSION   pSession,
