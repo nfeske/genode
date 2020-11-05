@@ -352,3 +352,19 @@ int dbgfR3BpInit(VM*) STOP
 
 int dbgfR3BugCheckInit(VM*) STOP
 
+
+/* dbgcfg.cpp */
+
+int RTDbgCfgCreate(PRTDBGCFG, const char *, bool)                          TRACE(VINF_SUCCESS)
+int RTDbgCfgChangeUInt(RTDBGCFG, RTDBGCFGPROP, RTDBGCFGOP, uint64_t)       TRACE(VINF_SUCCESS)
+int RTDbgCfgChangeString(RTDBGCFG, RTDBGCFGPROP, RTDBGCFGOP, const char *) TRACE(VINF_SUCCESS)
+
+
+/* dbgas.cpp */
+
+int RTDbgAsCreate(PRTDBGAS, RTUINTPTR, RTUINTPTR, const char *) TRACE(VINF_SUCCESS)
+
+const char * RTDbgAsName(RTDBGAS hDbgAs) { return "RTDbgAsName dummy"; }
+
+uint32_t RTDbgAsRetain(RTDBGAS)  { return 1; /* fake handle - UINT32_MAX is invalid */ }
+uint32_t RTDbgAsRelease(RTDBGAS) { return 1; /* fake reference counter */ }
