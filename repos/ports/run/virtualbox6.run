@@ -14,6 +14,7 @@ set use_bridge [expr $use_net && $use_gui]
 set build_components {
 	drivers/framebuffer
 	server/report_rom
+	core lib/ld
 }
 
 append build_components virtualbox6
@@ -268,7 +269,7 @@ set boot_modules { test.iso test.vbox }
 append boot_modules $virtualbox_binary
 
 # platform-specific modules
-lappend_if [expr         $use_usb] boot_modules usb_drv
+lappend_if [expr        $use_usb] boot_modules usb_drv
 lappend_if [expr         $use_ps2] boot_modules ps2_drv
 lappend_if [have_spec framebuffer] boot_modules vesa_fb_drv
 lappend_if [have_spec       linux] boot_modules fb_sdl
@@ -277,6 +278,7 @@ lappend_if [expr         $use_top] boot_modules top
 lappend_if [expr         $use_gui] boot_modules report_rom
 
 append boot_modules {
+	core ld.lib.so
 	libc.lib.so vfs.lib.so libm.lib.so
 	libiconv.lib.so stdcxx.lib.so
 	qemu-usb.lib.so
