@@ -261,6 +261,18 @@ static int ioctl_page_alloc_ex(SUPPAGEALLOCEX &request)
 }
 
 
+static int ioctl_set_vm_for_fast(SUPSETVMFORFAST &request)
+{
+	warning(__PRETTY_FUNCTION__
+	       , " pVMR0=", request.u.In.pVMR0
+	       );
+
+	request.Hdr.rc = VINF_SUCCESS;
+
+	return VINF_SUCCESS;
+}
+
+
 /*********************************
  ** VirtualBox suplib interface **
  *********************************/
@@ -298,6 +310,7 @@ int suplibOsIOCtl(PSUPLIBDATA pThis, uintptr_t opcode, void *req, size_t len)
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_UCODE_REV):            return ioctl_ucode_rev(*(SUPUCODEREV *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_PAGING_MODE):      return ioctl_get_paging_mode(*(SUPGETPAGINGMODE *)req);
 	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_PAGE_ALLOC_EX):        return ioctl_page_alloc_ex(*(SUPPAGEALLOCEX *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_SET_VM_FOR_FAST):      return ioctl_set_vm_for_fast(*(SUPSETVMFORFAST *)req);
 
 	default:
 
