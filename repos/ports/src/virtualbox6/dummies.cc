@@ -345,12 +345,12 @@ HRESULT Console::i_teleporterTrg(PUVM, IMachine *, Utf8Str *, bool, Progress *, 
 
 #include <DBGFInternal.h>
 
-int dbgfR3BpInit(VM*) STOP
+int dbgfR3BpInit(VM*) TRACE(VINF_SUCCESS)
 
 
 /* DBGFR3BugCheck.cpp */
 
-int dbgfR3BugCheckInit(VM*) STOP
+int dbgfR3BugCheckInit(VM*) TRACE(VINF_SUCCESS)
 
 
 /* dbgcfg.cpp */
@@ -368,3 +368,19 @@ const char * RTDbgAsName(RTDBGAS hDbgAs) { return "RTDbgAsName dummy"; }
 
 uint32_t RTDbgAsRetain(RTDBGAS)  { return 1; /* fake handle - UINT32_MAX is invalid */ }
 uint32_t RTDbgAsRelease(RTDBGAS) { return 1; /* fake reference counter */ }
+
+
+/* DBGFAddrSpace.cpp */
+
+int  dbgfR3AsInit(PUVM) TRACE(VINF_SUCCESS)
+void dbgfR3AsTerm(PUVM) { }
+void dbgfR3AsRelocate(PUVM, RTGCUINTPTR) STOP
+
+int DBGFR3AsSymbolByAddr(PUVM, RTDBGAS, PCDBGFADDRESS, uint32_t,
+                         PRTGCINTPTR, PRTDBGSYMBOL, PRTDBGMOD) STOP
+
+PRTDBGSYMBOL DBGFR3AsSymbolByAddrA(PUVM, RTDBGAS, PCDBGFADDRESS, uint32_t,
+                                   PRTGCINTPTR, PRTDBGMOD) STOP
+
+PRTDBGLINE DBGFR3AsLineByAddrA(PUVM, RTDBGAS, PCDBGFADDRESS,
+                               PRTGCINTPTR, PRTDBGMOD) STOP
