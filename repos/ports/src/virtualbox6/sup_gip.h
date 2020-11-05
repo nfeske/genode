@@ -138,6 +138,10 @@ class Sup::Gip
 			/* evaluated by rtTimeNanoTSInternalRediscover in Runtime/common/time/timesup.cpp */
 			_gip.fGetGipCpu            = SUPGIPGETCPU_APIC_ID;
 
+			/* from SUPDrvGip.cpp */
+			for (unsigned i = 0; i < RT_ELEMENTS(_gip.aiCpuFromCpuSetIdx); ++i)
+				_gip.aiCpuFromCpuSetIdx[i] = UINT16_MAX;
+
 			SUPGIPCPU *cpu = _gip.aCPUs;
 
 			/* XXX in SUPGIPMODE_SYNC_TSC only the first CPU's TSC is updated */
