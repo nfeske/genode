@@ -17,6 +17,7 @@
 
 /* VirtualBox includes */
 #include <PGMInternal.h>
+#include <NEMInternal.h>
 #include <VBox/vmm/gvm.h>
 
 /* local includes */
@@ -54,6 +55,7 @@ struct Sup::Vm : GVM
 		VM::cbVCpu           = sizeof(VMCPU);
 		VM::cCpus            = cpu_count.value;
 		VM::uCpuExecutionCap = 100;  /* expected by 'vmR3CreateU()' */
+		VM::nem.s.fEnabled   = true;
 
 		for (uint32_t i = 0; i < cpu_count.value; ++i) {
 			VMCPU &cpu = GVM::aCpus[i];

@@ -86,13 +86,17 @@ static int ioctl_gip_map(SUPGIPMAP &request)
 
 static int ioctl_vt_caps(SUPVTCAPS &request)
 {
+	/*
+	 * Return VERR_VMX_NO_VMX and VERR_SVM_NO_SVM to trigger the use of
+	 * the native execution manager (follow NEMR3Init).
+	 */
 	switch (sup_drv->cpu_virt()) {
 	case Sup::Drv::Cpu_virt::VMX:
-		request.Hdr.rc      = VINF_SUCCESS;
+		request.Hdr.rc      = VERR_VMX_NO_VMX;
 		request.u.Out.fCaps = SUPVTCAPS_VT_X | SUPVTCAPS_NESTED_PAGING;
 		break;
 	case Sup::Drv::Cpu_virt::SVM:
-		request.Hdr.rc      = VINF_SUCCESS;
+		request.Hdr.rc      = VERR_SVM_NO_SVM;
 		request.u.Out.fCaps = SUPVTCAPS_AMD_V | SUPVTCAPS_NESTED_PAGING;
 		break;
 	case Sup::Drv::Cpu_virt::NONE:
