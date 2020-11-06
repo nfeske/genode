@@ -18,6 +18,47 @@
 * PGM_WITHOUT_MAPPINGS is unconditionally defined in pgm.h
   Hence, we can ignore all code wrapped by '#ifndef PGM_WITHOUT_MAPPINGS'
 
+* Call trace for NEMR0MapPages
+    nemR0WinMapPages (HV_INPUT_MAP_GPA_PAGES)
+    - GCPhysSrc/GCPhysDst together with PageList[iPage]=HCPhys
+    - HCPhys returned by PGMPhysGCPhys2HCPhys(GCPhysSrc)
+
+  NEM_WIN_USE_HYPERCALLS_FOR_PAGES only defined on RT_OS_WINDOWS
+
+  nemHCNativeSetPhysPage
+
+  RAMRANGE is initialized PGM_PAGE_INIT_ZERO()
+   leads in pgmPhysPageMakeWritable to
+     pgmPhysAllocPage
+       GMMPAGEDESC : HCPhysGCPhys (in GC, out HC)
+
+* Call trace for instruction emulation on "memory intercept"
+  nemHCWinHandleMessageMemory
+    IEMExecOne
+      iemInitDecoderAndPrefetchOpcodes prefetches bytes until end of page
+        iemInitDecoder
+        PGMGstGetPage(pVCpu, GCPtrPC, &fFlags, &GCPhys)
+        ? !fBypassHandlers
+        - PGMPhysRead
+            pgmPhysReadHandler
+              pgmPhysGCPhys2CCPtrInternalReadOnly
+                pgmPhysPageQueryTlbeWithPage
+                  pgmPhysPageLoadIntoTlbWithPage
+                    pgmPhysPageMapCommon
+                      ? PGM_PAGE_GET_CHUNKID(pPage) == NIL_GMM_CHUNKID
+                      - zero-page handling
+                      - make chunk TLB entry
+                        pMap = pgmR3PhysChunkMap()
+                          VMMR0_DO_GMM_MAP_UNMAP_CHUNK
+                          RTAvlU32Insert(ChunkR3Map.pTree, chunk)
+                        pv = pMap->pv + off
+                (void *)((uintptr_t)pTlbe->pv | (uintptr_t)(GCPhys & PAGE_OFFSET_MASK))
+        - PGMPhysSimpleReadGCPhys
+      iemExecOneInner
+        starts emulation and also does fetching of additional instruction bytes
+        (maybe beyond page)
+
+
 
 
 LogRel(("\033[38;5;33m▶▶▶▶▶▶ %s:%u ◀◀◀◀◀◀ \033[0m\n", __func__, __LINE__));
