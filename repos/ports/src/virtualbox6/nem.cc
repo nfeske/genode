@@ -41,7 +41,7 @@ VMM_INT_DECL(int) NEMHCResumeCpuTickOnAll(PVMCC pVM, PVMCPUCC pVCpu,
 
 void nemHCNativeNotifyHandlerPhysicalRegister(PVMCC pVM,
                                               PGMPHYSHANDLERKIND enmKind,
-                                              RTGCPHYS GCPhys, RTGCPHYS cb) STOP
+                                              RTGCPHYS GCPhys, RTGCPHYS cb) TRACE()
 
 
 int nemR3NativeInit(PVM pVM, bool fFallback, bool fForced)
@@ -96,7 +96,7 @@ int nemR3NativeNotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
 
 
 int nemR3NativeNotifyPhysRomRegisterEarly(PVM pVM, RTGCPHYS GCPhys,
-                                          RTGCPHYS cb, ::uint32_t fFlags) STOP
+                                          RTGCPHYS cb, ::uint32_t fFlags) TRACE(VINF_SUCCESS)
 
 
 int nemR3NativeNotifyPhysRomRegisterLate(PVM pVM, RTGCPHYS GCPhys,
@@ -124,7 +124,7 @@ int nemHCNativeNotifyPhysPageAllocated(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPh
 
 void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPhys,
                                           ::uint32_t fPageProt, PGMPAGETYPE enmType,
-                                          ::uint8_t *pu2State) STOP
+                                          ::uint8_t *pu2State) TRACE()
 
 
 void nemHCNativeNotifyPhysPageChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPhysPrev,

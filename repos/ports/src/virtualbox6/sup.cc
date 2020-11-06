@@ -172,6 +172,17 @@ static int vmmr0_gmm_initial_reservation(PVMR0 pvmr0)
 }
 
 
+static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
+{
+	warning(__PRETTY_FUNCTION__, " cPages=", request.cPages);
+
+	for (unsigned i = 0; i < request.cPages; i++)
+		warning(" for guest phys ", Hex(request.aPages[i].HCPhysGCPhys));
+
+	return VINF_SUCCESS;
+}
+
+
 static int vmmr0_iom_grow_io_ports(PVMR0 pvmr0, ::uint64_t min_entries)
 {
 	warning(__PRETTY_FUNCTION__, " min_entries=", min_entries);
@@ -231,6 +242,10 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:
 		request.Hdr.rc = vmmr0_gmm_initial_reservation(request.u.In.pVMR0);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_GMM_ALLOCATE_PAGES:
+		request.Hdr.rc = vmmr0_gmm_allocate_pages(*(GMMALLOCATEPAGESREQ *)request.abReqPkt);
 		return VINF_SUCCESS;
 
 	case VMMR0_DO_IOM_GROW_IO_PORTS:
