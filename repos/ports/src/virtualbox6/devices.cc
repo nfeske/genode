@@ -65,6 +65,7 @@ extern "C" int VBoxDevicesRegister(PPDMDEVREGCB pCallbacks, uint32_t u32Version)
 	REGISTER(DeviceDMA);
 	REGISTER(DeviceFloppyController);
 	REGISTER(DeviceSerialPort);
+	REGISTER(DeviceParallelPort);
 #ifdef VBOX_WITH_AHCI
 	REGISTER(DeviceAHCI);
 #endif
