@@ -20,6 +20,7 @@
 #include <VBox/vmm/vmm.h>
 #include <VBox/vmm/gvmm.h>
 #include <SUPLibInternal.h>
+#include <IOMInternal.h>
 #include <SUPDrvIOC.h>
 
 /* local includes */
@@ -171,6 +172,43 @@ static int vmmr0_gmm_initial_reservation(PVMR0 pvmr0)
 }
 
 
+static int vmmr0_iom_grow_io_ports(PVMR0 pvmr0, ::uint64_t min_entries)
+{
+	warning(__PRETTY_FUNCTION__, " min_entries=", min_entries);
+
+	/* satisfy IOMR3IoPortCreate */
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
+	unsigned const old_bound = vm.iom.s.cIoPortAlloc;
+	unsigned const new_bound = max(min_entries, old_bound);
+
+	IOMIOPORTENTRYR3     *r3_entries     = new IOMIOPORTENTRYR3    [new_bound] { };
+	IOMIOPORTLOOKUPENTRY *lookup_entries = new IOMIOPORTLOOKUPENTRY[new_bound] { };
+
+	/* preserve content of the existing arrays */
+	for (unsigned i = 0; i < old_bound; i++) {
+		r3_entries    [i] = vm.iom.s.paIoPortRegs[i];
+		lookup_entries[i] = vm.iom.s.paIoPortLookup[i];
+	}
+
+	/* initialize new array elements */
+	for (unsigned i = old_bound; i < new_bound; i++) {
+		r3_entries[i].idxSelf  = (uint16_t)i;
+		r3_entries[i].idxStats = UINT16_MAX;
+	}
+
+	/* replace old arrays with new ones */
+	delete vm.iom.s.paIoPortLookup;
+	delete vm.iom.s.paIoPortRegs;
+
+	vm.iom.s.paIoPortRegs   = r3_entries;
+	vm.iom.s.paIoPortLookup = lookup_entries;
+	vm.iom.s.cIoPortAlloc   = min_entries;
+
+	return VINF_SUCCESS;
+}
+
+
 static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 {
 	warning(__PRETTY_FUNCTION__
@@ -193,6 +231,11 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:
 		request.Hdr.rc = vmmr0_gmm_initial_reservation(request.u.In.pVMR0);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_IOM_GROW_IO_PORTS:
+		request.Hdr.rc = vmmr0_iom_grow_io_ports(request.u.In.pVMR0,
+		                                         request.u.In.u64Arg);
 		return VINF_SUCCESS;
 
 	default:
