@@ -163,11 +163,16 @@ static int vmmr0_pgm_pool_grow(PVMR0 pvmr0)
 }
 
 
-static int vmmr0_gmm_initial_reservation(PVMR0 pvmr0)
+static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 {
 	warning(__PRETTY_FUNCTION__
-	       , " pvmr0=", (void*)pvmr0
+	       , " cBasePages=",   request.cBasePages
+	       , " cShadowPages=", request.cShadowPages
+	       , " cFixedPages=",  request.cFixedPages
+	       , " enmPolicy=",    (int)request.enmPolicy
+	       , " enmPriority=",  (int)request.enmPriority
 	       );
+
 	return VINF_SUCCESS;
 }
 
@@ -241,7 +246,7 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 		return VINF_SUCCESS;
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:
-		request.Hdr.rc = vmmr0_gmm_initial_reservation(request.u.In.pVMR0);
+		request.Hdr.rc = vmmr0_gmm_initial_reservation(*(GMMINITIALRESERVATIONREQ *)request.abReqPkt);
 		return VINF_SUCCESS;
 
 	case VMMR0_DO_GMM_ALLOCATE_PAGES:
