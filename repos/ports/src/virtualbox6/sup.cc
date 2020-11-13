@@ -134,35 +134,6 @@ static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 }
 
 
-static int vmmr0_pgm_pool_grow(PVMR0 pvmr0)
-{
-	error(__PRETTY_FUNCTION__
-	       , " pvmr0=", (void*)pvmr0
-//	       , " PGMPOOL_CFG_MAX_GROW=", PGMPOOL_CFG_MAX_GROW
-	       );
-
-	Sup::Vm     &vm   = *(Sup::Vm *)pvmr0;
-	PGMPOOL     &pool = *vm.pgm.s.pPoolR3;
-	PGMPOOLPAGE &page = pool.aPages[PGMPOOL_IDX_FIRST];
-
-	/* XXX */ void *a_page = RTMemPageAllocZ(4096);
-
-	page.pvPageR3  = (R3PTRTYPE(void *))a_page;
-	page.pvPageR0  = (R0PTRTYPE(void *))a_page;
-	page.enmKind   = PGMPOOLKIND_FREE;
-	pool.iFreeHead = PGMPOOL_IDX_FIRST;
-
-	error("-----"
-	     , " vm.pgm.s.pPoolR3=", vm.pgm.s.pPoolR3
-	     , " cMaxPages=", pool.cMaxPages
-	     , " page.enmKind=", page.enmKind
-	     , " iFreeHead=", pool.iFreeHead
-	     );
-
-	return VINF_SUCCESS;
-}
-
-
 static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 {
 	warning(__PRETTY_FUNCTION__
@@ -239,10 +210,6 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 	switch (operation) {
 	case VMMR0_DO_GVMM_CREATE_VM:
 		request.Hdr.rc = vmmr0_gvmm_create_vm(*(GVMMCREATEVMREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
-
-	case VMMR0_DO_PGM_POOL_GROW:
-		request.Hdr.rc = vmmr0_pgm_pool_grow(request.u.In.pVMR0);
 		return VINF_SUCCESS;
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:
