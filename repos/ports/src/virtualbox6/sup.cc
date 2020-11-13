@@ -41,6 +41,9 @@ void Sup::init(Env &env)
 }
 
 
+static bool before_first_call_of_ioctl_query_funcs = true;
+
+
 /*******************************
  ** Ioctl interface functions **
  *******************************/
@@ -69,6 +72,8 @@ static int ioctl_query_funcs(SUPQUERYFUNCS &request)
 
 	request.Hdr.rc = VINF_SUCCESS;
 	request.u.Out.cFunctions = 0;
+
+	before_first_call_of_ioctl_query_funcs = false;
 
 	return VINF_SUCCESS;
 }
@@ -105,6 +110,18 @@ static int ioctl_vt_caps(SUPVTCAPS &request)
 		request.u.Out.fCaps = 0;
 		break;
 	}
+
+	/*
+	 * Prevent returning an erroneous rc value when VT caps are queried during
+	 * the early initialization path of Host::init, i_updateProcessorFeatures.
+	 * Otherwise, the assertions in i_updateProcessorFeatures would trigger.
+	 *
+	 * Later, when called during the VM initialization via vmR3InitRing3,
+	 * HMR3Init, we have to return VERR_VMX_NO_VMX or VERR_SVM_NO_SVM to force
+	 * the call of NEMR3Init.
+	 */
+	if (before_first_call_of_ioctl_query_funcs)
+		request.Hdr.rc = VINF_SUCCESS;
 
 	/*
 	 * XXX are the following interesting?
