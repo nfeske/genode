@@ -136,7 +136,7 @@ static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 
 static int vmmr0_pgm_pool_grow(PVMR0 pvmr0)
 {
-	warning(__PRETTY_FUNCTION__
+	error(__PRETTY_FUNCTION__
 	       , " pvmr0=", (void*)pvmr0
 //	       , " PGMPOOL_CFG_MAX_GROW=", PGMPOOL_CFG_MAX_GROW
 	       );
