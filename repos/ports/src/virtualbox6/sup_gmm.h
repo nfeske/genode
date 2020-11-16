@@ -150,6 +150,11 @@ class Sup::Gmm
 		Page_id page_id(Vmm_addr);
 
 		/**
+		 * Get VMM address inside linear area for PAGEID
+		 */
+		Vmm_addr vmm_addr(Page_id);
+
+		/**
 		 * Make VMM memory available to the guest-physical address space
 		 *
 		 * \throw Out_of_range

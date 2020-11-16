@@ -99,10 +99,26 @@ Sup::Gmm::Page_id Sup::Gmm::page_id(Vmm_addr addr)
 	if (!inside_map)
 		throw Out_of_range();
 
-	uint32_t page_index = (uint32_t) (addr.value - _map.base.value) >> PAGE_SHIFT;
+	uint32_t const page_index = (uint32_t) (addr.value - _map.base.value) >> PAGE_SHIFT;
 
 	/* NIL_GMM_CHUNKID kept unused - so offset 0 is chunk ID 1 */
-	return { page_index + 1u << GMM_CHUNKID_SHIFT };
+	return { page_index + (1u << GMM_CHUNKID_SHIFT) };
+}
+
+
+Sup::Gmm::Vmm_addr Sup::Gmm::vmm_addr(Page_id page_id)
+{
+	/* NIL_GMM_CHUNKID kept unused - so offset 0 is chunk ID 1 */
+	addr_t const addr = _map.base.value
+	                  + ((page_id.value - (1u << GMM_CHUNKID_SHIFT)) << PAGE_SHIFT);
+
+	bool const inside_map = (addr >= _map.base.value)
+	                         && (addr <= _map.end.value);
+
+	if (!inside_map)
+		throw Out_of_range();
+
+	return { addr };
 }
 
 

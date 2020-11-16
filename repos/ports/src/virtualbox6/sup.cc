@@ -192,11 +192,30 @@ static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
 		Vmm_addr const page_addr { vmm_addr.value + i*PAGE_SIZE };
 
 		warning(" for guest phys ", Hex(page.HCPhysGCPhys),
-		        " page_addr=", Hex(page_addr.value));
+		        " page_addr=", Hex(page_addr.value),
+		        " page_id=", Hex(sup_drv->gmm().page_id(page_addr).value));
 
 		page.HCPhysGCPhys = page_addr.value;
 		page.idPage       = sup_drv->gmm().page_id(page_addr).value;
 		page.idSharedPage = NIL_GMM_PAGEID;
+	}
+
+	return VINF_SUCCESS;
+}
+
+
+static int vmmr0_gmm_map_unmap_chunk(GMMMAPUNMAPCHUNKREQ &request)
+{
+	warning(__PRETTY_FUNCTION__
+	       , " idChunkMap=", request.idChunkMap
+	       , " idChunkUnmap=", request.idChunkUnmap
+	       , " pvR3=", request.pvR3
+	       );
+
+	if (request.idChunkMap != NIL_GMM_CHUNKID) {
+		Sup::Gmm::Page_id const page_id { request.idChunkMap << GMM_CHUNKID_SHIFT };
+
+		request.pvR3 = (RTR3PTR)sup_drv->gmm().vmm_addr(page_id).value;
 	}
 
 	return VINF_SUCCESS;
@@ -263,6 +282,9 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 	case VMMR0_DO_GMM_ALLOCATE_PAGES:
 		request.Hdr.rc = vmmr0_gmm_allocate_pages(*(GMMALLOCATEPAGESREQ *)request.abReqPkt);
 		return VINF_SUCCESS;
+
+	case VMMR0_DO_GMM_MAP_UNMAP_CHUNK:
+		request.Hdr.rc = vmmr0_gmm_map_unmap_chunk(*(GMMMAPUNMAPCHUNKREQ *)request.abReqPkt);
 
 	case VMMR0_DO_IOM_GROW_IO_PORTS:
 		request.Hdr.rc = vmmr0_iom_grow_io_ports(request.u.In.pVMR0,
