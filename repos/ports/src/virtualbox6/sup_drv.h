@@ -19,6 +19,7 @@
 /* local includes */
 #include <sup.h>
 #include <sup_gip.h>
+#include <sup_gmm.h>
 
 /* Genode includes */
 #include <base/env.h>
@@ -80,12 +81,15 @@ class Sup::Drv
 		Cpu_virt const _cpu_virt { _cpu_virt_from_rom() };
 
 		Gip _gip { _env, _cpu_count_from_env(), _cpu_freq_khz_from_rom() };
+		Gmm _gmm { _env };
 
 	public:
 
 		Drv(Env &env) : _env(env) { }
 
 		SUPGLOBALINFOPAGE *gip() { return _gip.gip(); }
+
+		Gmm &gmm() { return _gmm; }
 
 		Cpu_virt cpu_virt() { return _cpu_virt; }
 };

@@ -161,16 +161,42 @@ static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 	       , " enmPriority=",  (int)request.enmPriority
 	       );
 
+	Sup::Gmm::Pages pages { request.cBasePages
+	                      + request.cShadowPages
+	                      + request.cFixedPages };
+
+	sup_drv->gmm().pool_size(pages);
+
 	return VINF_SUCCESS;
 }
 
 
 static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
 {
-	warning(__PRETTY_FUNCTION__, " cPages=", request.cPages);
+	warning(__PRETTY_FUNCTION__
+	       , " cPages=", request.cPages
+	       , " enmAccount=", (int)request.enmAccount
+	       );
 
-	for (unsigned i = 0; i < request.cPages; i++)
-		warning(" for guest phys ", Hex(request.aPages[i].HCPhysGCPhys));
+	Sup::Gmm::Pages pages { request.cPages };
+
+	using Vmm_addr = Sup::Gmm::Vmm_addr;
+
+	Vmm_addr const vmm_addr = sup_drv->gmm().alloc(pages);
+
+	for (unsigned i = 0; i < request.cPages; i++) {
+
+		GMMPAGEDESC &page = request.aPages[i];
+
+		Vmm_addr const page_addr { vmm_addr.value + i*PAGE_SIZE };
+
+		warning(" for guest phys ", Hex(page.HCPhysGCPhys),
+		        " page_addr=", Hex(page_addr.value));
+
+		page.HCPhysGCPhys = page_addr.value;
+		page.idPage       = sup_drv->gmm().page_id(page_addr).value;
+		page.idSharedPage = NIL_GMM_PAGEID;
+	}
 
 	return VINF_SUCCESS;
 }

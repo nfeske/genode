@@ -82,10 +82,12 @@ Sup::Gmm::Vmm_addr Sup::Gmm::alloc(Pages pages)
 
 	Alloc_return result = _alloc.alloc_aligned(alloc_size, &out_addr, alloc_size);
 
-	if (result.error())
-		return Vmm_addr { 0 };
-	else
-		return Vmm_addr { (addr_t) out_addr };
+	if (result.error()) {
+		error("Gmm allocation failed");
+		throw Allocation_failed();
+	}
+
+	return Vmm_addr { _map.base.value + (addr_t)out_addr };
 }
 
 

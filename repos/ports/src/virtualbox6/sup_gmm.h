@@ -69,20 +69,18 @@ class Sup::Gmm
 
 		struct Map
 		{
+			Env &env;
+
 			Bytes const size;
 
-			Rm_connection connection;
+			Rm_connection connection { env };
 
 			Region_map_client rm { connection.create(size.value) };
 
-			Attached_dataspace ds;
-
-			Vmm_addr const base { (addr_t)ds.local_addr<void>() };
+			Vmm_addr const base { (addr_t)env.rm().attach(rm.dataspace()) };
 			Vmm_addr const end  { base.value + size.value - 1 };
 
-			Map(Env &env, Bytes size)
-			: size(size), connection(env), ds(env.rm(), rm.dataspace())
-			{ }
+			Map(Env &env, Bytes size) : env(env), size(size) { }
 
 		} _map { _env, _map_size };
 
@@ -104,6 +102,7 @@ class Sup::Gmm
 	public:
 
 		struct Out_of_range : Exception { };
+		struct Allocation_failed : Exception { };
 
 		Gmm(Env &env);
 
