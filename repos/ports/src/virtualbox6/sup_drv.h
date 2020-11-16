@@ -80,8 +80,10 @@ class Sup::Drv
 
 		Cpu_virt const _cpu_virt { _cpu_virt_from_rom() };
 
+		Vm_connection _vm_connection { _env };
+
 		Gip _gip { _env, _cpu_count_from_env(), _cpu_freq_khz_from_rom() };
-		Gmm _gmm { _env };
+		Gmm _gmm { _env, _vm_connection };
 
 	public:
 

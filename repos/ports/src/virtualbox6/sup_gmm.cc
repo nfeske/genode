@@ -106,4 +106,37 @@ Sup::Gmm::Page_id Sup::Gmm::page_id(Vmm_addr addr)
 }
 
 
-Sup::Gmm::Gmm(Env &env) : _env(env) { }
+void Sup::Gmm::map_to_guest(Vmm_addr from, Guest_addr to, Pages pages, Protection prot)
+{
+	/* revoke existing mappings to avoid overmap */
+	_vm_connection.detach(to.value, pages.value << PAGE_SHIFT);
+
+	Vmm_addr const from_end { from.value + (pages.value << PAGE_SHIFT) - 1 };
+
+	for (unsigned i = _slice_index(from); i <= _slice_index(from_end); i++) {
+
+		addr_t const slice_start = i*_slice_size.value;
+
+		addr_t const first_byte_within_slice =
+			max(_offset(from).value, slice_start);
+
+		addr_t const last_byte_within_slice =
+			min(_offset(from_end).value, slice_start + _slice_size.value -  1);
+
+		Vm_session::Attach_attr const attr
+		{
+			.offset     = first_byte_within_slice - slice_start,
+			.size       = last_byte_within_slice - first_byte_within_slice + 1,
+			.executable = prot.executable,
+			.writeable  = prot.writeable
+		};
+
+		_vm_connection.attach(_slices[i], to.value + (i << PAGE_SHIFT), attr);
+	}
+}
+
+
+Sup::Gmm::Gmm(Env &env, Vm_connection &vm_connection)
+:
+	_env(env), _vm_connection(vm_connection)
+{ }

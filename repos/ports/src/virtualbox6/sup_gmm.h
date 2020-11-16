@@ -19,6 +19,7 @@
 #include <base/allocator_avl.h>
 #include <base/attached_dataspace.h>
 #include <rm_session/connection.h>
+#include <vm_session/connection.h>
 #include <region_map/client.h>
 #include <libc/allocator.h>
 
@@ -49,15 +50,24 @@ class Sup::Gmm
 {
 	public:
 
-		struct Vmm_addr { addr_t value; };
-		struct Offset   { addr_t value; };
-		struct Bytes    { size_t value; };
-		struct Pages    { size_t value; };
-		struct Page_id  { uint32_t value; }; /* CHUNKID | PAGEIDX */
+		struct Vmm_addr   { addr_t   value; };
+		struct Guest_addr { addr_t   value; };
+		struct Offset     { addr_t   value; };
+		struct Bytes      { size_t   value; };
+		struct Pages      { size_t   value; };
+		struct Page_id    { uint32_t value; }; /* CHUNKID | PAGEIDX */
+
+		struct Protection
+		{
+			bool executable;
+			bool writeable;
+		};
 
 	private:
 
 		Env &_env;
+
+		Vm_connection &_vm_connection;
 
 		static constexpr Bytes _slice_size {     128*1024*1024ul };
 		static constexpr Bytes _map_size   { 32*1024*1024*1024ul };
@@ -86,7 +96,15 @@ class Sup::Gmm
 
 		void _add_one_slice();
 
-		unsigned _slice_index(Offset offset)
+		Offset _offset(Vmm_addr addr) const
+		{
+			if (addr.value < _map.base.value || addr.value > _map.end.value)
+				throw Out_of_range();
+
+			return Offset { addr.value - _map.base.value };
+		}
+
+		unsigned _slice_index(Offset offset) const
 		{
 			unsigned const index = offset.value / _slice_size.value;
 
@@ -96,15 +114,20 @@ class Sup::Gmm
 			return index;
 		}
 
+		unsigned _slice_index(Vmm_addr addr) const
+		{
+			return _slice_index(_offset(addr));
+		}
+
 		Libc::Allocator _md_alloc;
 		Allocator_avl   _alloc { &_md_alloc };
 
 	public:
 
-		struct Out_of_range : Exception { };
+		struct Out_of_range      : Exception { };
 		struct Allocation_failed : Exception { };
 
-		Gmm(Env &env);
+		Gmm(Env &env, Vm_connection &);
 
 		/**
 		 * Update the size of max  backing store allocations
@@ -125,6 +148,13 @@ class Sup::Gmm
 		 * Get PAGEID for VMM address inside linear area
 		 */
 		Page_id page_id(Vmm_addr);
+
+		/**
+		 * Make VMM memory available to the guest-physical address space
+		 *
+		 * \throw Out_of_range
+		 */
+		void map_to_guest(Vmm_addr, Guest_addr, Pages, Protection);
 };
 
 #endif /* _SUP_GMM_H_ */
