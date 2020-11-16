@@ -61,6 +61,7 @@ static int ioctl_cookie(SUPCOOKIE &request)
 
 	request.Hdr.rc = VINF_SUCCESS;
 	request.u.Out.u32SessionVersion = SUPDRV_IOC_VERSION;
+	request.u.Out.cFunctions = 0;
 
 	return VINF_SUCCESS;
 }
