@@ -181,7 +181,8 @@ Session_capability Child::session(Parent::Client::Id id,
 	Service &service = route.service;
 
 	/* propagate diag flag */
-	Arg_string::set_arg(argbuf, sizeof(argbuf), "diag", route.diag.enabled);
+	if (route.diag.enabled)
+		Arg_string::set_arg(argbuf, sizeof(argbuf), "diag", route.diag.enabled);
 
 	Session_state &session =
 		create_session(_policy.name(), service, route.label, route.diag,
