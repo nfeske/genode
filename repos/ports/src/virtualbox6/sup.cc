@@ -283,6 +283,43 @@ static int vmmr0_iom_grow_io_ports(PVMR0 pvmr0, ::uint64_t min_entries)
 }
 
 
+static int vmmr0_iom_grow_mmio_regs(PVMR0 pvmr0, ::uint64_t min_entries)
+{
+	warning(__PRETTY_FUNCTION__, " min_entries=", min_entries);
+
+	/* satisfy IOMR3MmioCreate */
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
+	unsigned const old_bound = vm.iom.s.cMmioAlloc;
+	unsigned const new_bound = max(min_entries, old_bound);
+
+	IOMMMIOENTRYR3     *r3_entries     = new IOMMMIOENTRYR3    [new_bound] { };
+	IOMMMIOLOOKUPENTRY *lookup_entries = new IOMMMIOLOOKUPENTRY[new_bound] { };
+
+	/* preserve content of the existing arrays */
+	for (unsigned i = 0; i < old_bound; i++) {
+		r3_entries    [i] = vm.iom.s.paMmioRegs[i];
+		lookup_entries[i] = vm.iom.s.paMmioLookup[i];
+	}
+
+	/* initialize new array elements */
+	for (unsigned i = old_bound; i < new_bound; i++) {
+		r3_entries[i].idxSelf  = (uint16_t)i;
+		r3_entries[i].idxStats = UINT16_MAX;
+	}
+
+	/* replace old arrays with new ones */
+	delete vm.iom.s.paMmioLookup;
+	delete vm.iom.s.paMmioRegs;
+
+	vm.iom.s.paMmioRegs   = r3_entries;
+	vm.iom.s.paMmioLookup = lookup_entries;
+	vm.iom.s.cMmioAlloc   = new_bound;
+
+	return VINF_SUCCESS;
+}
+
+
 static int vmmr0_pdm_device_create(PDMDEVICECREATEREQ &request)
 {
 	warning("PDMDEVICECREATEREQ for ", Cstring(request.szDevName));
@@ -388,6 +425,10 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_IOM_GROW_IO_PORTS:
 		request.Hdr.rc = vmmr0_iom_grow_io_ports(request.u.In.pVMR0, request.u.In.u64Arg);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_IOM_GROW_MMIO_REGS:
+		request.Hdr.rc = vmmr0_iom_grow_mmio_regs(request.u.In.pVMR0, request.u.In.u64Arg);
 		return VINF_SUCCESS;
 
 	case VMMR0_DO_PDM_DEVICE_CREATE:
