@@ -254,6 +254,7 @@ append_if [expr $use_bridge] config {
 append config {
 			<service name="Report" label="shape"> <child name="pointer" label="gui_fb1 -> shape"/> </service>
 			<service name="Report"> <child name="report_rom"/> </service>
+			<service name="VM"> <parent diag="yes"/> </service>
 			<any-service> <parent /> <any-child /> </any-service>
 		</route>
 	</start>
