@@ -11,6 +11,7 @@ INC_DIR += $(call select_from_repositories,src/lib/libc)
 
 INC_DIR += $(VIRTUALBOX_DIR)/VBoxAPIWrap
 INC_DIR += $(VBOX_DIR)/HostDrivers/Support
+INC_DIR += $(VBOX_DIR)/Devices/Bus
 INC_DIR += $(REP_DIR)/src/virtualbox6
 
 INC_DIR += $(VBOX_DIR)/Main/xml

@@ -272,12 +272,12 @@ void SELMR3Relocate(PVM)                TRACE()
 void SELMR3Reset(PVM)                   TRACE()
 
 /* module loader of pluggable device manager */
-int  pdmR3LdrInitU(PUVM)                            TRACE(VINF_SUCCESS)
-int  PDMR3LdrLoadVMMR0U(PUVM)                       TRACE(VINF_SUCCESS)
-void PDMR3LdrRelocateU(PUVM, RTGCINTPTR)            TRACE()
-int  pdmR3LoadR3U(PUVM, const char *, const char *) TRACE(VINF_SUCCESS)
-void pdmR3LdrTermU(PUVM)                            TRACE()
-int  PDMR3LdrLoadR0(PUVM, const char *, const char *) TRACE(VERR_NOT_IMPLEMENTED)
+int  pdmR3LdrInitU(PUVM)                              TRACE(VINF_SUCCESS)
+int  PDMR3LdrLoadVMMR0U(PUVM)                         TRACE(VINF_SUCCESS)
+void PDMR3LdrRelocateU(PUVM, RTGCINTPTR)              TRACE()
+int  pdmR3LoadR3U(PUVM, const char *, const char *)   TRACE(VINF_SUCCESS)
+void pdmR3LdrTermU(PUVM)                              TRACE()
+int  PDMR3LdrLoadR0(PUVM, const char *, const char *) TRACE(VINF_SUCCESS)
 
 char *pdmR3FileR3(const char * file, bool)
 {

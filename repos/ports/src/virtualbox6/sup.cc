@@ -21,6 +21,10 @@
 #include <VBox/vmm/gvmm.h>
 #include <SUPLibInternal.h>
 #include <IOMInternal.h>
+#define PDMPCIDEV_INCLUDE_PRIVATE   /* needed for PDMPCIDEVINT_DECLARED */
+#define VBOX_IN_VMM                 /* needed for definition of PDMTASKTYPE */
+#include <PDMInternal.h>
+#undef VBOX_IN_VMM
 #include <SUPDrvIOC.h>
 
 /* local includes */
@@ -279,6 +283,77 @@ static int vmmr0_iom_grow_io_ports(PVMR0 pvmr0, ::uint64_t min_entries)
 }
 
 
+static int vmmr0_pdm_device_create(PDMDEVICECREATEREQ &request)
+{
+	warning("PDMDEVICECREATEREQ for ", Cstring(request.szDevName));
+
+	/*
+	 * PDMDevHlp.cpp tests for certain allocation patterns, e.g., in
+	 * pdmR3DevHlp_SetDeviceCritSect, there is the following assertion:
+	 *
+	 *   Assert((uintptr_t)pOldCritSect - (uintptr_t)pDevIns < pDevIns->cbRing3);
+	 *
+	 * The 'Allocation' object is used to satisfy the pattern.
+	 */
+	struct Allocation
+	{
+		PDMDEVINSR3 pdmdev   { };
+		PDMCRITSECT critsect { };
+
+		enum { NUM_PCI_DEVS = sizeof(pdmdev.apPciDevs) /
+		                      sizeof(pdmdev.apPciDevs[0]) };
+
+		PDMPCIDEV pcidevs[NUM_PCI_DEVS] { };
+
+		Allocation()
+		{
+			pdmdev.pvInstanceDataForR3 = &pdmdev.achInstanceData[0];
+			pdmdev.pCritSectRoR3       = &critsect;
+			pdmdev.cbRing3             = sizeof(Allocation);
+
+			/* needed for PDMDEV_CALC_PPCIDEV */
+			pdmdev.cPciDevs = NUM_PCI_DEVS;
+			pdmdev.cbPciDev = sizeof(PDMPCIDEV);
+
+			for (size_t i = 0; i < NUM_PCI_DEVS; i++) {
+
+				PDMPCIDEV &pcidev = pcidevs[i];
+
+				pcidev.Int.s.idxSubDev = i;
+				pcidev.idxSubDev       = i;
+				pcidev.u32Magic        = PDMPCIDEV_MAGIC;
+
+				pdmdev.apPciDevs[i] = &pcidev;
+			}
+		}
+
+	} &allocation = *new Allocation { };
+
+	PDMDEVINSR3 &pdmdev = allocation.pdmdev;
+
+	/*
+	 * The 'pvInstanceDataForR3' backing store is used for the R3 device state,
+	 * e.g., DEVPCIROOT for the PCI bus, or KBDSTATE for the PS2 keyboard
+	 */
+	pdmdev.pvInstanceDataR3     = RTMemAllocZ(request.cbInstanceShared);
+	pdmdev.fR0Enabled           = true;
+	pdmdev.Internal.s.fIntFlags = PDMDEVINSINT_FLAGS_R0_ENABLED;
+	pdmdev.u32Version           = PDM_DEVINS_VERSION;
+
+	request.pDevInsR3 = &pdmdev;
+
+	return VINF_SUCCESS;
+}
+
+
+static int vmmr0_pdm_device_gen_call(PDMDEVICEGENCALLREQ &request)
+{
+	warning("PDMDEVICEGENCALLREQ PDMDEVICEGENCALL=", (int)request.enmCall, " not implemented");
+
+	return VINF_SUCCESS;
+}
+
+
 static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 {
 	warning(__PRETTY_FUNCTION__
@@ -309,10 +384,18 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_GMM_MAP_UNMAP_CHUNK:
 		request.Hdr.rc = vmmr0_gmm_map_unmap_chunk(*(GMMMAPUNMAPCHUNKREQ *)request.abReqPkt);
+		return VINF_SUCCESS;
 
 	case VMMR0_DO_IOM_GROW_IO_PORTS:
-		request.Hdr.rc = vmmr0_iom_grow_io_ports(request.u.In.pVMR0,
-		                                         request.u.In.u64Arg);
+		request.Hdr.rc = vmmr0_iom_grow_io_ports(request.u.In.pVMR0, request.u.In.u64Arg);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_PDM_DEVICE_CREATE:
+		request.Hdr.rc = vmmr0_pdm_device_create(*(PDMDEVICECREATEREQ *)request.abReqPkt);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_PDM_DEVICE_GEN_CALL:
+		request.Hdr.rc = vmmr0_pdm_device_gen_call(*(PDMDEVICEGENCALLREQ *)request.abReqPkt);
 		return VINF_SUCCESS;
 
 	default:
