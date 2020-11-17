@@ -61,6 +61,12 @@ class Sup::Gmm
 		{
 			bool executable;
 			bool writeable;
+
+			bool operator == (Protection const &other) const
+			{
+				return executable == other.executable
+				    && writeable  == other.writeable;
+			}
 		};
 
 	private:

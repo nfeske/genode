@@ -23,6 +23,9 @@ namespace Sup {
 
 	struct Cpu_count    { unsigned value; };
 	struct Cpu_freq_khz { unsigned value; };
+
+	struct Gmm;
+	void nem_init(Gmm &);
 }
 
 #endif /* _SUP_H_ */

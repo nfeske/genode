@@ -38,6 +38,8 @@ static Sup::Drv *sup_drv;
 void Sup::init(Env &env)
 {
 	sup_drv = new Sup::Drv(env);
+
+	nem_init(sup_drv->gmm());
 }
 
 
