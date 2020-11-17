@@ -80,8 +80,8 @@ Sup::Gmm::Vmm_addr Sup::Gmm::alloc(Pages pages)
 
 	size_t const alloc_size = pages.value << PAGE_SHIFT;
 
-	Alloc_return result = _alloc.alloc_aligned(alloc_size, &out_addr, alloc_size);
-
+	Alloc_return const result = _alloc.alloc_aligned(alloc_size, &out_addr,
+	                                                 log2(alloc_size));
 	if (result.error()) {
 		error("Gmm allocation failed");
 		throw Allocation_failed();
