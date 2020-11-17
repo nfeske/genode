@@ -174,6 +174,24 @@ static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 }
 
 
+static int vmmr0_gmm_update_reservation(GMMUPDATERESERVATIONREQ &request)
+{
+	warning(__PRETTY_FUNCTION__
+	       , " cBasePages=",   request.cBasePages
+	       , " cShadowPages=", request.cShadowPages
+	       , " cFixedPages=",  request.cFixedPages
+	       );
+
+	Sup::Gmm::Pages pages { request.cBasePages
+	                      + request.cShadowPages
+	                      + request.cFixedPages };
+
+	sup_drv->gmm().pool_size(pages);
+
+	return VINF_SUCCESS;
+}
+
+
 static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
 {
 	warning(__PRETTY_FUNCTION__
@@ -279,6 +297,10 @@ static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:
 		request.Hdr.rc = vmmr0_gmm_initial_reservation(*(GMMINITIALRESERVATIONREQ *)request.abReqPkt);
+		return VINF_SUCCESS;
+
+	case VMMR0_DO_GMM_UPDATE_RESERVATION:
+		request.Hdr.rc = vmmr0_gmm_update_reservation(*(GMMUPDATERESERVATIONREQ *)request.abReqPkt);
 		return VINF_SUCCESS;
 
 	case VMMR0_DO_GMM_ALLOCATE_PAGES:

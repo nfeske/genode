@@ -41,7 +41,12 @@ int SUPSemEventClose(PSUPDRVSESSION pSession, SUPSEMEVENT hEvent)
 }
 
 
-int SUPSemEventSignal(PSUPDRVSESSION pSession, SUPSEMEVENT hEvent) STOP
+int SUPSemEventSignal(PSUPDRVSESSION pSession, SUPSEMEVENT hEvent)
+{
+	Assert (hEvent);
+
+	return RTSemEventSignal((RTSEMEVENT)hEvent);
+}
 
 
 int SUPSemEventWaitNoResume(PSUPDRVSESSION pSession,
