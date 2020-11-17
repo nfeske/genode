@@ -277,7 +277,7 @@ static int vmmr0_iom_grow_io_ports(PVMR0 pvmr0, ::uint64_t min_entries)
 
 	vm.iom.s.paIoPortRegs   = r3_entries;
 	vm.iom.s.paIoPortLookup = lookup_entries;
-	vm.iom.s.cIoPortAlloc   = min_entries;
+	vm.iom.s.cIoPortAlloc   = new_bound;
 
 	return VINF_SUCCESS;
 }
