@@ -16,11 +16,17 @@
 #include <base/service.h>
 
 /* core includes */
+#include <core_env.h>
 #include <platform_services.h>
+#include <vm_root.h>
 
 
-void Genode::platform_add_local_services(Rpc_entrypoint         &,
-                                         Sliced_heap            &,
-                                         Registry<Service>      &,
-                                         Trace::Source_registry &)
-{ }
+void Genode::platform_add_local_services(Rpc_entrypoint         &ep,
+                                         Sliced_heap            &heap,
+                                         Registry<Service>      &services,
+                                         Trace::Source_registry &trace_sources)
+{
+	static Vm_root vm_root(ep, heap, core_env().ram_allocator(),
+	                       core_env().local_rm(), trace_sources);
+	static Core_service<Vm_session_component> vm(services, vm_root);
+}
