@@ -54,6 +54,36 @@ static bool before_first_call_of_ioctl_query_funcs = true;
  ** Ioctl interface functions **
  *******************************/
 
+/*
+ * Helper to remove aliasing between request.u.In and request.u.Out
+ *
+ * The request structures pass IN and OUT parameters in a union, which
+ * creates two problems.
+ *
+ * - OUT are not initialized to zero by default. Instead, they contain
+ *   bits of IN parameters.
+ *
+ * - IN parameters cannot safely be consumed after assigning any OUT
+ *   parameter.
+ *
+ * This utility solves these issues by copying-out IN parameters first,
+ * resetting the OUT parameters to zero, and calling 'fn' with separate
+ * IN and OUT arguments.
+ */
+template <typename T, typename FN>
+static void with_inout_ioctl(T &request, FN const &fn)
+{
+	auto const in  = request.u.In;
+	auto      &out = request.u.Out;
+	auto      &rc  = request.Hdr.rc;
+
+	out = { };
+	rc  = VINF_SUCCESS;
+
+	fn(in, out, request.Hdr.rc);
+}
+
+
 /* XXX init in COOKIE */
 struct SUPDRVSESSION
 {
@@ -61,82 +91,82 @@ struct SUPDRVSESSION
 };
 
 
-static int ioctl_cookie(SUPCOOKIE &request)
+static void ioctl(SUPCOOKIE &request)
 {
-	warning(__PRETTY_FUNCTION__, " misses session-object creation");
+	warning("SUPCOOKIE misses session-object creation");
 
-	request.Hdr.rc = VINF_SUCCESS;
-	request.u.Out.u32SessionVersion = SUPDRV_IOC_VERSION;
-	request.u.Out.cFunctions = 0;
+	with_inout_ioctl(request, [&] (auto const &, auto &out, auto &) {
 
-	return VINF_SUCCESS;
+		out.u32SessionVersion = SUPDRV_IOC_VERSION;
+	});
 }
 
 
-static int ioctl_query_funcs(SUPQUERYFUNCS &request)
+static void ioctl(SUPQUERYFUNCS &request)
 {
-	warning(__PRETTY_FUNCTION__, " reports zero functions");
+	warning("SUPQUERYFUNCS reports zero functions");
 
+	request.u.Out  = { };
 	request.Hdr.rc = VINF_SUCCESS;
-	request.u.Out.cFunctions = 0;
 
 	before_first_call_of_ioctl_query_funcs = false;
-
-	return VINF_SUCCESS;
 }
 
 
-static int ioctl_gip_map(SUPGIPMAP &request)
+static void ioctl(SUPGIPMAP &request)
 {
-	request.Hdr.rc = VINF_SUCCESS;
-	request.u.Out.HCPhysGip = 0;
-	request.u.Out.pGipR3    = sup_drv->gip();
-	request.u.Out.pGipR0    = 0;
-
-	return VINF_SUCCESS;
+	request.u.Out        = { };
+	request.u.Out.pGipR3 = sup_drv->gip();
+	request.Hdr.rc       = VINF_SUCCESS;
 }
 
 
-static int ioctl_vt_caps(SUPVTCAPS &request)
+static void ioctl(SUPVTCAPS &request)
 {
+
+	auto &out = request.u.Out;
+	auto &rc  = request.Hdr.rc;
+
+	out = { };
+	rc  = VINF_SUCCESS;
+
 	/*
 	 * Return VERR_VMX_NO_VMX and VERR_SVM_NO_SVM to trigger the use of
 	 * the native execution manager (follow NEMR3Init).
 	 */
 	switch (sup_drv->cpu_virt()) {
 	case Sup::Drv::Cpu_virt::VMX:
-		request.Hdr.rc      = VERR_VMX_NO_VMX;
-		request.u.Out.fCaps = SUPVTCAPS_VT_X | SUPVTCAPS_NESTED_PAGING;
+		rc        = VERR_VMX_NO_VMX;
+		out.fCaps = SUPVTCAPS_VT_X | SUPVTCAPS_NESTED_PAGING;
 		break;
 	case Sup::Drv::Cpu_virt::SVM:
-		request.Hdr.rc      = VERR_SVM_NO_SVM;
-		request.u.Out.fCaps = SUPVTCAPS_AMD_V | SUPVTCAPS_NESTED_PAGING;
+		rc        = VERR_SVM_NO_SVM;
+		out.fCaps = SUPVTCAPS_AMD_V | SUPVTCAPS_NESTED_PAGING;
 		break;
 	case Sup::Drv::Cpu_virt::NONE:
-		request.Hdr.rc      = VERR_UNSUPPORTED_CPU;
-		request.u.Out.fCaps = 0;
+		rc        = VERR_UNSUPPORTED_CPU;
+		out.fCaps = 0;
 		break;
 	}
 
 	/*
-	 * Prevent returning an erroneous rc value when VT caps are queried during
-	 * the early initialization path of Host::init, i_updateProcessorFeatures.
-	 * Otherwise, the assertions in i_updateProcessorFeatures would trigger.
+	 * Prevent returning an erroneous rc value when VT caps are queried
+	 * during the early initialization path of Host::init,
+	 * i_updateProcessorFeatures. Otherwise, the assertions in
+	 * i_updateProcessorFeatures would trigger.
 	 *
 	 * Later, when called during the VM initialization via vmR3InitRing3,
-	 * HMR3Init, we have to return VERR_VMX_NO_VMX or VERR_SVM_NO_SVM to force
-	 * the call of NEMR3Init.
+	 * HMR3Init, we have to return VERR_VMX_NO_VMX or VERR_SVM_NO_SVM to
+	 * force the call of NEMR3Init.
 	 */
 	if (before_first_call_of_ioctl_query_funcs)
-		request.Hdr.rc = VINF_SUCCESS;
+		rc = VINF_SUCCESS;
 
 	/*
 	 * XXX are the following interesting?
 	 * SUPVTCAPS_VTX_VMCS_SHADOWING
 	 * SUPVTCAPS_VTX_UNRESTRICTED_GUEST
 	 */
-
-	return VINF_SUCCESS;
 }
 
 
@@ -391,133 +421,121 @@ static int vmmr0_pdm_device_gen_call(PDMDEVICEGENCALLREQ &request)
 }
 
 
-static int ioctl_call_vmmr0(SUPCALLVMMR0 &request)
+static void ioctl(SUPCALLVMMR0 &request)
 {
-	warning(__PRETTY_FUNCTION__
-	       , " cbIn=", request.Hdr.cbIn
-	       , " uOperation=", request.u.In.uOperation
-	       , " u64Arg=", request.u.In.u64Arg
+	auto &rc = request.Hdr.rc;
+
+	warning("SUPCALLVMMR0 "
+	       , " uOperation=",   request.u.In.uOperation
+	       , " u64Arg=",       request.u.In.u64Arg
 	       , " pVMR0=", (void*)request.u.In.pVMR0
 	       );
 
 	VMMR0OPERATION const operation = VMMR0OPERATION(request.u.In.uOperation);
 
 	switch (operation) {
+
 	case VMMR0_DO_GVMM_CREATE_VM:
-		request.Hdr.rc = vmmr0_gvmm_create_vm(*(GVMMCREATEVMREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
+		rc = vmmr0_gvmm_create_vm(*(GVMMCREATEVMREQ *)request.abReqPkt);
+		return;
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:
-		request.Hdr.rc = vmmr0_gmm_initial_reservation(*(GMMINITIALRESERVATIONREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
+		rc = vmmr0_gmm_initial_reservation(*(GMMINITIALRESERVATIONREQ *)request.abReqPkt);
+		return;
 
 	case VMMR0_DO_GMM_UPDATE_RESERVATION:
-		request.Hdr.rc = vmmr0_gmm_update_reservation(*(GMMUPDATERESERVATIONREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
+		rc = vmmr0_gmm_update_reservation(*(GMMUPDATERESERVATIONREQ *)request.abReqPkt);
+		return;
 
 	case VMMR0_DO_GMM_ALLOCATE_PAGES:
-		request.Hdr.rc = vmmr0_gmm_allocate_pages(*(GMMALLOCATEPAGESREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
+		rc = vmmr0_gmm_allocate_pages(*(GMMALLOCATEPAGESREQ *)request.abReqPkt);
+		return;
 
 	case VMMR0_DO_GMM_MAP_UNMAP_CHUNK:
-		request.Hdr.rc = vmmr0_gmm_map_unmap_chunk(*(GMMMAPUNMAPCHUNKREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
+		rc = vmmr0_gmm_map_unmap_chunk(*(GMMMAPUNMAPCHUNKREQ *)request.abReqPkt);
+		return;
 
 	case VMMR0_DO_IOM_GROW_IO_PORTS:
-		request.Hdr.rc = vmmr0_iom_grow_io_ports(request.u.In.pVMR0, request.u.In.u64Arg);
-		return VINF_SUCCESS;
+		rc = vmmr0_iom_grow_io_ports(request.u.In.pVMR0, request.u.In.u64Arg);
+		return;
 
 	case VMMR0_DO_IOM_GROW_MMIO_REGS:
-		request.Hdr.rc = vmmr0_iom_grow_mmio_regs(request.u.In.pVMR0, request.u.In.u64Arg);
-		return VINF_SUCCESS;
+		rc = vmmr0_iom_grow_mmio_regs(request.u.In.pVMR0, request.u.In.u64Arg);
+		return;
 
 	case VMMR0_DO_PDM_DEVICE_CREATE:
-		request.Hdr.rc = vmmr0_pdm_device_create(*(PDMDEVICECREATEREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
+		rc = vmmr0_pdm_device_create(*(PDMDEVICECREATEREQ *)request.abReqPkt);
+		return;
 
 	case VMMR0_DO_PDM_DEVICE_GEN_CALL:
-		request.Hdr.rc = vmmr0_pdm_device_gen_call(*(PDMDEVICEGENCALLREQ *)request.abReqPkt);
-		return VINF_SUCCESS;
+		rc = vmmr0_pdm_device_gen_call(*(PDMDEVICEGENCALLREQ *)request.abReqPkt);
+		return;
 
 	default:
 		error(__func__, " operation=", (int)operation);
-		request.Hdr.rc = VERR_NOT_IMPLEMENTED;
+		rc = VERR_NOT_IMPLEMENTED;
 		STOP
 	}
-
-	return VERR_NOT_IMPLEMENTED;
 }
 
 
-static int ioctl_get_hmvirt_msrs(SUPGETHWVIRTMSRS &request)
+static void ioctl(SUPGETHWVIRTMSRS &request)
 {
-	warning(__PRETTY_FUNCTION__
-	       , " fForce=", request.u.In.fForce
-	       );
+	with_inout_ioctl(request, [&] (auto const &in, auto &, auto &) {
 
-	request.Hdr.rc = VINF_SUCCESS;
-	::memset(&request.u.Out, 0, sizeof(request.u.Out));
-
-	return VINF_SUCCESS;
+		warning("SUPGETHWVIRTMSRS fForce=", in.fForce);
+	});
 }
 
 
-static int ioctl_ucode_rev(SUPUCODEREV &request)
+static void ioctl(SUPUCODEREV &request)
 {
-	warning(__PRETTY_FUNCTION__);
-
-	/* fake most recent revision possible */
+	warning("SUPUCODEREV");
 
 	request.Hdr.rc = VINF_SUCCESS;
+	request.u.Out = { };
 	request.u.Out.MicrocodeRev = ~0u;
-
-	return VINF_SUCCESS;
 }
 
 
-static int ioctl_get_paging_mode(SUPGETPAGINGMODE &request)
+static void ioctl(SUPGETPAGINGMODE &request)
 {
-	warning(__PRETTY_FUNCTION__);
+	warning("SUPGETPAGINGMODE");
 
 	request.Hdr.rc = VINF_SUCCESS;
+	request.u.Out = { };
 	request.u.Out.enmMode = sizeof(long) == 32 ? SUPPAGINGMODE_32_BIT_GLOBAL
 	                                           : SUPPAGINGMODE_AMD64_GLOBAL_NX;
-
-	return VINF_SUCCESS;
 }
 
 
-static int ioctl_page_alloc_ex(SUPPAGEALLOCEX &request)
+static void ioctl(SUPPAGEALLOCEX &request)
 {
-	warning(__PRETTY_FUNCTION__
-	       , " cPages=", request.u.In.cPages
-	       , " fKernelMapping=", request.u.In.fKernelMapping
-	       , " fUserMapping=", request.u.In.fUserMapping
-	       );
+	with_inout_ioctl(request, [&] (auto const &in, auto &out, auto &) {
 
-	size_t const cPages = request.u.In.cPages;
-	void * const base   = RTMemPageAllocZ(cPages*PAGE_SIZE);
+		warning("SUPPAGEALLOCEX"
+		       , " cPages=",         in.cPages
+		       , " fKernelMapping=", in.fKernelMapping
+		       , " fUserMapping=",   in.fUserMapping
+		       );
 
-	request.Hdr.rc = VINF_SUCCESS;
-	request.u.Out.pvR3 = (R3PTRTYPE(void *))base;
-	request.u.Out.pvR0 = (R0PTRTYPE(void *))base;
+		size_t const cPages = in.cPages;
+		void * const base   = RTMemPageAllocZ(cPages*PAGE_SIZE);
 
-	for (size_t i = 0; i < cPages; ++i)
-		request.u.Out.aPages[i] = (RTHCPHYS)base + i*PAGE_SIZE;
+		out.pvR3 = (R3PTRTYPE(void *))base;
+		out.pvR0 = (R0PTRTYPE(void *))base;
 
-	return VINF_SUCCESS;
+		for (size_t i = 0; i < cPages; ++i)
+			out.aPages[i] = (RTHCPHYS)base + i*PAGE_SIZE;
+	});
 }
 
 
-static int ioctl_set_vm_for_fast(SUPSETVMFORFAST &request)
+static void ioctl(SUPSETVMFORFAST &request)
 {
-	warning(__PRETTY_FUNCTION__
-	       , " pVMR0=", request.u.In.pVMR0
-	       );
+	warning("SUPSETVMFORFAST pVMR0=", request.u.In.pVMR0);
 
 	request.Hdr.rc = VINF_SUCCESS;
-
-	return VINF_SUCCESS;
 }
 
 
@@ -547,18 +565,20 @@ int suplibOsUninstall(void) TRACE(VERR_NOT_IMPLEMENTED)
 
 int suplibOsIOCtl(PSUPLIBDATA pThis, uintptr_t opcode, void *req, size_t len)
 {
+	bool not_implemented = false;
+
 	switch (SUP_CTL_CODE_NO_SIZE(opcode)) {
 
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_COOKIE):               return ioctl_cookie(*(SUPCOOKIE *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_QUERY_FUNCS()):        return ioctl_query_funcs(*(SUPQUERYFUNCS *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GIP_MAP):              return ioctl_gip_map(*(SUPGIPMAP *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_VT_CAPS):              return ioctl_vt_caps(*(SUPVTCAPS *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_CALL_VMMR0_NO_SIZE()): return ioctl_call_vmmr0(*(SUPCALLVMMR0 *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_HWVIRT_MSRS):      return ioctl_get_hmvirt_msrs(*(SUPGETHWVIRTMSRS *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_UCODE_REV):            return ioctl_ucode_rev(*(SUPUCODEREV *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_PAGING_MODE):      return ioctl_get_paging_mode(*(SUPGETPAGINGMODE *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_PAGE_ALLOC_EX):        return ioctl_page_alloc_ex(*(SUPPAGEALLOCEX *)req);
-	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_SET_VM_FOR_FAST):      return ioctl_set_vm_for_fast(*(SUPSETVMFORFAST *)req);
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_COOKIE):               ioctl(*(SUPCOOKIE        *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_QUERY_FUNCS()):        ioctl(*(SUPQUERYFUNCS    *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GIP_MAP):              ioctl(*(SUPGIPMAP        *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_VT_CAPS):              ioctl(*(SUPVTCAPS        *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_CALL_VMMR0_NO_SIZE()): ioctl(*(SUPCALLVMMR0     *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_HWVIRT_MSRS):      ioctl(*(SUPGETHWVIRTMSRS *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_UCODE_REV):            ioctl(*(SUPUCODEREV      *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_GET_PAGING_MODE):      ioctl(*(SUPGETPAGINGMODE *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_PAGE_ALLOC_EX):        ioctl(*(SUPPAGEALLOCEX   *)req); break;
+	case SUP_CTL_CODE_NO_SIZE(SUP_IOCTL_SET_VM_FOR_FAST):      ioctl(*(SUPSETVMFORFAST  *)req); break;
 
 	default:
 
@@ -567,10 +587,14 @@ int suplibOsIOCtl(PSUPLIBDATA pThis, uintptr_t opcode, void *req, size_t len)
 		 * opcode number in lowest 7 bits
 		 */
 		error(__func__, " function=", opcode & 0x7f);
+		not_implemented = true;
 		STOP
 	}
 
-	return VERR_NOT_IMPLEMENTED;
+	if (((SUPREQHDR *)req)->rc == VERR_NOT_IMPLEMENTED)
+		not_implemented = true;
+
+	return not_implemented ? VERR_NOT_IMPLEMENTED : VINF_SUCCESS;
 }
 
 
