@@ -253,7 +253,13 @@ void nemHCNativeNotifyHandlerPhysicalModify(PVMCC pVM, PGMPHYSHANDLERKIND enmKin
 
 int nemHCNativeNotifyPhysPageAllocated(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPhys,
                                        ::uint32_t fPageProt, PGMPAGETYPE enmType,
-                                       ::uint8_t *pu2State) STOP
+                                       ::uint8_t *pu2State)
+{
+	warning(__PRETTY_FUNCTION__, " GCPhys=", (void *)GCPhys,
+	        " HCPhys=", (void *)HCPhys, " fPageProt=", Hex(fPageProt));
+
+	return VINF_SUCCESS;
+}
 
 
 void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPhys,
