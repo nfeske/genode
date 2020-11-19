@@ -504,14 +504,26 @@ static int vmmr0_vmmr0_init(PVMR0 pvmr0)
 	return VINF_SUCCESS;
 }
 
+
+static int vmmr0_vmmr0_init_emt(PVMR0 pvmr0, uint32_t cpu)
+{
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
+	warning(__PRETTY_FUNCTION__, " cpu=", cpu);
+
+	return VINF_SUCCESS;
+}
+
+
 static void ioctl(SUPCALLVMMR0 &request)
 {
 	auto &rc = request.Hdr.rc;
 
 	warning("SUPCALLVMMR0 "
+	       , " pVMR0=", (void*)request.u.In.pVMR0
+	       , " idCpu=",        request.u.In.idCpu
 	       , " uOperation=",   request.u.In.uOperation
 	       , " u64Arg=",   Hex(request.u.In.u64Arg)
-	       , " pVMR0=", (void*)request.u.In.pVMR0
 	       );
 
 	VMMR0OPERATION const operation = VMMR0OPERATION(request.u.In.uOperation);
@@ -560,6 +572,10 @@ static void ioctl(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_VMMR0_INIT:
 		rc = vmmr0_vmmr0_init(request.u.In.pVMR0);
+		return;
+
+	case VMMR0_DO_VMMR0_INIT_EMT:
+		rc = vmmr0_vmmr0_init_emt(request.u.In.pVMR0, request.u.In.idCpu);
 		return;
 
 	default:

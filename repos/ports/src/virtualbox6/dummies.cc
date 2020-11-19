@@ -375,7 +375,7 @@ uint32_t RTDbgAsRelease(RTDBGAS) { return 1; /* fake reference counter */ }
 
 int  dbgfR3AsInit(PUVM) TRACE(VINF_SUCCESS)
 void dbgfR3AsTerm(PUVM) { }
-void dbgfR3AsRelocate(PUVM, RTGCUINTPTR) STOP
+void dbgfR3AsRelocate(PUVM, RTGCUINTPTR) TRACE()
 
 int DBGFR3AsSymbolByAddr(PUVM, RTDBGAS, PCDBGFADDRESS, uint32_t,
                          PRTGCINTPTR, PRTDBGSYMBOL, PRTDBGMOD) STOP
