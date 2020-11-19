@@ -180,7 +180,7 @@ int nemR3NativeInit(PVM pVM, bool fFallback, bool fForced)
 int nemR3NativeInitAfterCPUM(PVM pVM) TRACE(VINF_SUCCESS)
 
 
-int nemR3NativeInitCompleted(PVM pVM, VMINITCOMPLETED enmWhat) STOP
+int nemR3NativeInitCompleted(PVM pVM, VMINITCOMPLETED enmWhat) TRACE(VINF_SUCCESS)
 
 
 int nemR3NativeTerm(PVM pVM) STOP
