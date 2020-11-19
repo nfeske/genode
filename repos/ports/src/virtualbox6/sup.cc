@@ -454,10 +454,30 @@ static int vmmr0_pdm_device_gen_call(PDMDEVICEGENCALLREQ &request)
 
 static int vmmr0_pgm_allocate_handly_pages(PVMR0 pvmr0)
 {
-	/* satisfy IOMR3IoPortCreate */
+	/* satisfy IOMR3IoPortCreate ? */
 	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
 
-	warning("vmmr0_pgm_allocate_handly_pages cHandyPages=", vm.pgm.s.cHandyPages);
+	uint32_t const start_idx = vm.pgm.s.cHandyPages;
+	uint32_t const stop_idx  = RT_ELEMENTS(vm.pgm.s.aHandyPages);
+
+	Sup::Gmm::Pages pages { stop_idx - start_idx };
+
+	using Vmm_addr = Sup::Gmm::Vmm_addr;
+
+	Vmm_addr const vmm_addr = sup_drv->gmm().alloc_from_reservation(pages);
+
+	for (unsigned i = start_idx; i < stop_idx; ++i) {
+
+		GMMPAGEDESC &page = vm.pgm.s.aHandyPages[i];
+
+		Vmm_addr const page_addr { vmm_addr.value + i*PAGE_SIZE };
+
+		page.HCPhysGCPhys = page_addr.value;
+		page.idPage       = sup_drv->gmm().page_id(page_addr).value;
+		page.idSharedPage = NIL_GMM_PAGEID;
+	}
+
+	vm.pgm.s.cHandyPages = stop_idx;
 
 	return VINF_SUCCESS;
 }
