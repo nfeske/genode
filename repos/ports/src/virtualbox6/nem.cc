@@ -98,6 +98,10 @@ struct Sup::Nem
 
 	void commit_range()
 	{
+		/* ignore commit of empty ranges */
+		if (!host_range.size())
+			return;
+
 		log(__PRETTY_FUNCTION__, " host=", host_range , " guest=", guest_range);
 
 		/* commit the current range to GMM */
@@ -159,7 +163,10 @@ VMM_INT_DECL(int) NEMHCResumeCpuTickOnAll(PVMCC pVM, PVMCPUCC pVCpu,
 
 void nemHCNativeNotifyHandlerPhysicalRegister(PVMCC pVM,
                                               PGMPHYSHANDLERKIND enmKind,
-                                              RTGCPHYS GCPhys, RTGCPHYS cb) TRACE()
+                                              RTGCPHYS GCPhys, RTGCPHYS cb)
+{
+	nem_ptr->commit_range();
+}
 
 
 int nemR3NativeInit(PVM pVM, bool fFallback, bool fForced)
@@ -232,6 +239,7 @@ int nemR3NativeNotifyPhysRomRegisterLate(PVM pVM, RTGCPHYS GCPhys,
 void nemR3NativeNotifySetA20(PVMCPU pVCpu, bool fEnabled) STOP
 
 
+
 void nemHCNativeNotifyHandlerPhysicalDeregister(PVMCC pVM, PGMPHYSHANDLERKIND enmKind,
                                                 RTGCPHYS GCPhys, RTGCPHYS cb,
                                                 int fRestoreAsRAM,
@@ -252,9 +260,12 @@ void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS H
                                           ::uint32_t fPageProt, PGMPAGETYPE enmType,
                                           ::uint8_t *pu2State)
 {
-	/* could be unswet? bool const r { fPageProt & NEM_PAGE_PROT_READ }; */
+	bool const r { fPageProt & NEM_PAGE_PROT_READ };
 	bool const w { fPageProt & NEM_PAGE_PROT_WRITE };
 	bool const x { fPageProt & NEM_PAGE_PROT_EXECUTE };
+
+	if (!r)
+		warning(__PRETTY_FUNCTION__, ": unreadable mapping requested");
 
 	nem_ptr->map_page_to_guest(HCPhys, GCPhys, Sup::Nem::Protection { x, w });
 }
