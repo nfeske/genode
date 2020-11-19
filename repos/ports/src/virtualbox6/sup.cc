@@ -452,6 +452,17 @@ static int vmmr0_pdm_device_gen_call(PDMDEVICEGENCALLREQ &request)
 }
 
 
+static int vmmr0_pgm_allocate_handly_pages(PVMR0 pvmr0)
+{
+	/* satisfy IOMR3IoPortCreate */
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
+	warning("vmmr0_pgm_allocate_handly_pages cHandyPages=", vm.pgm.s.cHandyPages);
+
+	return VINF_SUCCESS;
+}
+
+
 static void ioctl(SUPCALLVMMR0 &request)
 {
 	auto &rc = request.Hdr.rc;
@@ -500,6 +511,10 @@ static void ioctl(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_PDM_DEVICE_GEN_CALL:
 		rc = vmmr0_pdm_device_gen_call(*(PDMDEVICEGENCALLREQ *)request.abReqPkt);
+		return;
+
+	case VMMR0_DO_PGM_ALLOCATE_HANDY_PAGES:
+		rc = vmmr0_pgm_allocate_handly_pages(request.u.In.pVMR0);
 		return;
 
 	default:
