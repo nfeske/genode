@@ -350,60 +350,95 @@ static int vmmr0_pdm_device_create(PDMDEVICECREATEREQ &request)
 {
 	warning("PDMDEVICECREATEREQ for ", Cstring(request.szDevName));
 
+	warning("cbInstanceShared=", request.cbInstanceShared);
+	warning("cbInstanceR3=", request.cbInstanceR3);
+
 	/*
+	 * Allocate all PDM device ingredients as a single contiguous memory block.
+	 *
+	 * 1. The actual PDMDEVINSR3 structure (Head)
+	 *
+	 * 2. The CC (current context) size is passed as 'cbInstanceR3'
+	 *    request argument. Its backing store must immediately follow the
+	 *    PDMDEVINSR3 structure because the PDMDEVINSR3 last member
+	 *    'achInstanceData[0]' is expected to correspond to the InstanceCC
+	 *    object.
+	 *
+	 * 3. The shared state of the device instance. The size of this
+	 *    object is known only by the respective device model and passed as
+	 *    'cbInstanceShared' request argument.
+	 *
+	 * 4. Backing store of the objects referenced by the 'PDMDEVINSR3' (Tail)
+	 *
 	 * PDMDevHlp.cpp tests for certain allocation patterns, e.g., in
 	 * pdmR3DevHlp_SetDeviceCritSect, there is the following assertion:
 	 *
 	 *   Assert((uintptr_t)pOldCritSect - (uintptr_t)pDevIns < pDevIns->cbRing3);
-	 *
-	 * The 'Allocation' object is used to satisfy the pattern.
 	 */
-	struct Allocation
+	struct Head
 	{
-		PDMDEVINSR3 pdmdev   { };
-		PDMCRITSECT critsect { };
+		PDMDEVINSR3 pdmdev { };
+	};
 
-		enum { NUM_PCI_DEVS = sizeof(pdmdev.apPciDevs) /
-		                      sizeof(pdmdev.apPciDevs[0]) };
-
-		PDMPCIDEV pcidevs[NUM_PCI_DEVS] { };
-
-		Allocation()
-		{
-			pdmdev.pvInstanceDataForR3 = &pdmdev.achInstanceData[0];
-			pdmdev.pCritSectRoR3       = &critsect;
-			pdmdev.cbRing3             = sizeof(Allocation);
-
-			/* needed for PDMDEV_CALC_PPCIDEV */
-			pdmdev.cPciDevs = NUM_PCI_DEVS;
-			pdmdev.cbPciDev = sizeof(PDMPCIDEV);
-
-			for (size_t i = 0; i < NUM_PCI_DEVS; i++) {
-
-				PDMPCIDEV &pcidev = pcidevs[i];
-
-				pcidev.Int.s.idxSubDev = i;
-				pcidev.idxSubDev       = i;
-				pcidev.u32Magic        = PDMPCIDEV_MAGIC;
-
-				pdmdev.apPciDevs[i] = &pcidev;
-			}
-		}
-
-	} &allocation = *new Allocation { };
-
-	PDMDEVINSR3 &pdmdev = allocation.pdmdev;
+	size_t const r3_size = request.cbInstanceR3;
 
 	/*
 	 * The 'pvInstanceDataForR3' backing store is used for the R3 device state,
-	 * e.g., DEVPCIROOT for the PCI bus, or KBDSTATE for the PS2 keyboard
+	 * e.g., DEVPCIROOT for the PCI bus, or KBDSTATE for the PS2 keyboard.
 	 */
-	pdmdev.pvInstanceDataR3     = RTMemAllocZ(request.cbInstanceShared);
-	pdmdev.fR0Enabled           = true;
-	pdmdev.Internal.s.fIntFlags = PDMDEVINSINT_FLAGS_R0_ENABLED;
-	pdmdev.u32Version           = PDM_DEVINS_VERSION;
+	size_t const shared_size = request.cbInstanceShared;
 
-	request.pDevInsR3 = &pdmdev;
+	struct Tail
+	{
+		PDMCRITSECT critsect { };
+
+		enum { NUM_PCI_DEVS = sizeof(PDMDEVINSR3::apPciDevs) /
+		                      sizeof(PDMDEVINSR3::apPciDevs[0]) };
+
+		PDMPCIDEV pcidevs[NUM_PCI_DEVS] { };
+	};
+
+	size_t const alloc_size = sizeof(Head) + r3_size + shared_size + sizeof(Tail);
+	char * const alloc_ptr  = (char *)RTMemPageAllocZ(alloc_size);
+
+	/* define placement of head, r3 instance object, and tail */
+	Head &head = *(Head *)alloc_ptr;
+
+	char * const r3_instance_ptr     = (char *)&head.pdmdev.achInstanceData[0];
+	char * const shared_instance_ptr = (char *)&head + sizeof(Head) + r3_size;
+
+	Tail &tail = *(Tail *)(shared_instance_ptr + shared_size);
+
+	/* initialize PDMDEVINSR3 */
+	{
+		PDMDEVINSR3 &pdmdev = head.pdmdev;
+
+		pdmdev.pvInstanceDataForR3 = r3_instance_ptr;
+		pdmdev.pvInstanceDataR3    = shared_instance_ptr;
+		pdmdev.pCritSectRoR3       = &tail.critsect;
+		pdmdev.cbRing3             = alloc_size;
+
+		/* needed for PDMDEV_CALC_PPCIDEV */
+		pdmdev.cPciDevs = Tail::NUM_PCI_DEVS;
+		pdmdev.cbPciDev = sizeof(PDMPCIDEV);
+
+		for (size_t i = 0; i < Tail::NUM_PCI_DEVS; i++) {
+
+			PDMPCIDEV &pcidev = tail.pcidevs[i];
+
+			pcidev.Int.s.idxSubDev = i;
+			pcidev.idxSubDev       = i;
+			pcidev.u32Magic        = PDMPCIDEV_MAGIC;
+
+			pdmdev.apPciDevs[i] = &pcidev;
+		}
+
+		pdmdev.fR0Enabled           = true;
+		pdmdev.Internal.s.fIntFlags = PDMDEVINSINT_FLAGS_R0_ENABLED;
+		pdmdev.u32Version           = PDM_DEVINS_VERSION;
+
+		request.pDevInsR3 = &pdmdev;
+	}
 
 	return VINF_SUCCESS;
 }
