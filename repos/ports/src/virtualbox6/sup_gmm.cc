@@ -49,7 +49,7 @@ void Sup::Gmm::_add_one_slice()
 }
 
 
-void Sup::Gmm::pool_size(Pages const new_size)
+void Sup::Gmm::_real_pool_size(Pages const new_size)
 {
 	size_t const new_size_pages = new_size.value;
 
@@ -74,7 +74,7 @@ void Sup::Gmm::pool_size(Pages const new_size)
 }
 
 
-Sup::Gmm::Vmm_addr Sup::Gmm::alloc(Pages pages)
+Sup::Gmm::Vmm_addr Sup::Gmm::_alloc_pages(Pages pages)
 {
 	void *out_addr = nullptr;
 
@@ -88,6 +88,28 @@ Sup::Gmm::Vmm_addr Sup::Gmm::alloc(Pages pages)
 	}
 
 	return Vmm_addr { _map.base.value + (addr_t)out_addr };
+}
+
+
+void Sup::Gmm::reservation_pool_size(Pages new_size)
+{
+	_real_pool_size(Pages { new_size.value + _alloc_ex_pages.value });
+}
+
+
+Sup::Gmm::Vmm_addr Sup::Gmm::alloc_ex(Pages pages)
+{
+	_alloc_ex_pages = { _alloc_ex_pages.value + pages.value };
+
+	_real_pool_size(Pages { _alloc_ex_pages.value + _size.value });
+
+	return _alloc_pages(pages);
+}
+
+
+Sup::Gmm::Vmm_addr Sup::Gmm::alloc_from_reservation(Pages pages)
+{
+	return _alloc_pages(pages);
 }
 
 

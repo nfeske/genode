@@ -202,7 +202,7 @@ static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 	                      + request.cShadowPages
 	                      + request.cFixedPages };
 
-	sup_drv->gmm().pool_size(pages);
+	sup_drv->gmm().reservation_pool_size(pages);
 
 	return VINF_SUCCESS;
 }
@@ -220,7 +220,7 @@ static int vmmr0_gmm_update_reservation(GMMUPDATERESERVATIONREQ &request)
 	                      + request.cShadowPages
 	                      + request.cFixedPages };
 
-	sup_drv->gmm().pool_size(pages);
+	sup_drv->gmm().reservation_pool_size(pages);
 
 	return VINF_SUCCESS;
 }
@@ -237,17 +237,13 @@ static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
 
 	using Vmm_addr = Sup::Gmm::Vmm_addr;
 
-	Vmm_addr const vmm_addr = sup_drv->gmm().alloc(pages);
+	Vmm_addr const vmm_addr = sup_drv->gmm().alloc_from_reservation(pages);
 
 	for (unsigned i = 0; i < request.cPages; i++) {
 
 		GMMPAGEDESC &page = request.aPages[i];
 
 		Vmm_addr const page_addr { vmm_addr.value + i*PAGE_SIZE };
-
-		warning(" for guest phys ", Hex(page.HCPhysGCPhys),
-		        " page_addr=", Hex(page_addr.value),
-		        " page_id=", Hex(sup_drv->gmm().page_id(page_addr).value));
 
 		page.HCPhysGCPhys = page_addr.value;
 		page.idPage       = sup_drv->gmm().page_id(page_addr).value;
@@ -511,6 +507,13 @@ static void ioctl(SUPGETPAGINGMODE &request)
 
 static void ioctl(SUPPAGEALLOCEX &request)
 {
+	/*
+	 * PGMR3PhysMMIORegister() allocates RAM pages for use as MMIO pages in
+	 * guests via MMHyperAlloc(). The actual guest mappings are created via
+	 * nemHCNativeNotifyPhysPageProtChanged(). Therefore, we allocate also
+	 * MMHyper page allocations from GMM.
+	 */
+
 	with_inout_ioctl(request, [&] (auto const &in, auto &out, auto &) {
 
 		warning("SUPPAGEALLOCEX"
@@ -519,14 +522,17 @@ static void ioctl(SUPPAGEALLOCEX &request)
 		       , " fUserMapping=",   in.fUserMapping
 		       );
 
-		size_t const cPages = in.cPages;
-		void * const base   = RTMemPageAllocZ(cPages*PAGE_SIZE);
+		Sup::Gmm::Pages pages { in.cPages };
 
-		out.pvR3 = (R3PTRTYPE(void *))base;
-		out.pvR0 = (R0PTRTYPE(void *))base;
+		using Vmm_addr = Sup::Gmm::Vmm_addr;
 
-		for (size_t i = 0; i < cPages; ++i)
-			out.aPages[i] = (RTHCPHYS)base + i*PAGE_SIZE;
+		Vmm_addr const vmm_addr = sup_drv->gmm().alloc_ex(pages);
+
+		out.pvR3 = (R3PTRTYPE(void *))vmm_addr.value;
+		out.pvR0 = (R0PTRTYPE(void *))vmm_addr.value;
+
+		for (unsigned i = 0; i < pages.value; i++)
+			out.aPages[i] = vmm_addr.value + i*PAGE_SIZE;
 	});
 }
 
