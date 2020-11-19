@@ -51,7 +51,12 @@ int SUPSemEventSignal(PSUPDRVSESSION pSession, SUPSEMEVENT hEvent)
 
 int SUPSemEventWaitNoResume(PSUPDRVSESSION pSession,
                             SUPSEMEVENT hEvent,
-                            uint32_t cMillies) STOP
+                            uint32_t cMillies)
+{
+	Assert (hEvent);
+
+	return RTSemEventWaitNoResume((RTSEMEVENT)hEvent, cMillies);
+}
 
 
 int SUPSemEventWaitNsAbsIntr(PSUPDRVSESSION pSession,
