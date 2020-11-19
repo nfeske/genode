@@ -21,6 +21,9 @@
 #include <VBoxDD.h>
 #include <KeyboardImpl.h>
 #include <MouseImpl.h>
+#include <VMMDev.h>
+#include <ConsoleImpl.h>
+#include <DisplayImpl.h>
 
 #include "vmm.h"
 
@@ -56,6 +59,9 @@ extern "C" DECLEXPORT(int) VBoxDriversRegister(PCPDMDRVREGCB pCallbacks, uint32_
 
 	REGISTER(Keyboard::DrvReg);
 	REGISTER(Mouse::DrvReg);
+	REGISTER(VMMDev::DrvReg);
+	REGISTER(Console::DrvStatusReg);
+	REGISTER(Display::DrvReg);
 
 	return VINF_SUCCESS;
 }
