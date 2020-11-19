@@ -16,16 +16,17 @@
 #include <base/log.h>
 
 /* VirtualBox includes */
+#define PDMPCIDEV_INCLUDE_PRIVATE   /* needed for PDMPCIDEVINT_DECLARED */
+#define VBOX_IN_VMM                 /* needed for definition of PDMTASKTYPE */
+#include <PDMInternal.h>
+#include <IOMInternal.h>
+#include <VMMInternal.h>
+#undef VBOX_IN_VMM
+#include <SUPDrvIOC.h>
 #include <VBox/err.h>
 #include <VBox/vmm/vmm.h>
 #include <VBox/vmm/gvmm.h>
 #include <SUPLibInternal.h>
-#include <IOMInternal.h>
-#define PDMPCIDEV_INCLUDE_PRIVATE   /* needed for PDMPCIDEVINT_DECLARED */
-#define VBOX_IN_VMM                 /* needed for definition of PDMTASKTYPE */
-#include <PDMInternal.h>
-#undef VBOX_IN_VMM
-#include <SUPDrvIOC.h>
 
 /* local includes */
 #include <init.h>
@@ -483,13 +484,33 @@ static int vmmr0_pgm_allocate_handly_pages(PVMR0 pvmr0)
 }
 
 
+static int vmmr0_vmmr0_init(PVMR0 pvmr0)
+{
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
+	warning(__PRETTY_FUNCTION__);
+
+	/* produces
+	 *
+	 * [init -> vbox1] EMT      VMM: Thread-context hooks unavailable
+	 * [init -> vbox1] EMT      VMM: Warning! RTThreadPreemptIsPending() cannot be trusted!  Need to update kernel info?
+	 * [init -> vbox1] EMT      VMM: Kernel preemption is not possible it seems
+	 */
+
+	warning("  ", (bool)vm.vmm.s.fUsePeriodicPreemptionTimers);
+	warning("  ", (bool)vm.vmm.s.fIsPreemptPendingApiTrusty);
+	warning("  ", (bool)vm.vmm.s.fIsPreemptPossible);
+
+	return VINF_SUCCESS;
+}
+
 static void ioctl(SUPCALLVMMR0 &request)
 {
 	auto &rc = request.Hdr.rc;
 
 	warning("SUPCALLVMMR0 "
 	       , " uOperation=",   request.u.In.uOperation
-	       , " u64Arg=",       request.u.In.u64Arg
+	       , " u64Arg=",   Hex(request.u.In.u64Arg)
 	       , " pVMR0=", (void*)request.u.In.pVMR0
 	       );
 
@@ -535,6 +556,10 @@ static void ioctl(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_PGM_ALLOCATE_HANDY_PAGES:
 		rc = vmmr0_pgm_allocate_handly_pages(request.u.In.pVMR0);
+		return;
+
+	case VMMR0_DO_VMMR0_INIT:
+		rc = vmmr0_vmmr0_init(request.u.In.pVMR0);
 		return;
 
 	default:
