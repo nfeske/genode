@@ -81,9 +81,9 @@ class Sup::Gmm
 
 		Dataspace_capability _slices[_num_slices];
 
-		Bytes _size { 0 }; /* current size of backing-store allocations */
-
-		Pages _alloc_ex_pages { 0 }; /* current SUPPAGEALLOCEX allocations */
+		Pages _size_pages        { 0 }; /* current backing-store allocations */
+		Pages _reservation_pages { 0 }; /* current VMMR0_DO_GMM_UPDATE_RESERVATION pages */
+		Pages _alloc_ex_pages    { 0 }; /* current SUPPAGEALLOCEX pages */
 
 		struct Map
 		{
@@ -104,7 +104,7 @@ class Sup::Gmm
 
 		void _add_one_slice();
 
-		void _real_pool_size(Pages);
+		void _update_pool_size();
 
 		Vmm_addr _alloc_pages(Pages);
 
@@ -142,10 +142,9 @@ class Sup::Gmm
 		Gmm(Env &env, Vm_connection &);
 
 		/**
-		 * Update the size of max backing store allocations according to
-		 * VMMR0_DO_GMM_UPDATE_RESERVATION
+		 * Extend pool according to VMMR0_DO_GMM_UPDATE_RESERVATION
 		 */
-		void reservation_pool_size(Pages);
+		void reservation_pages(Pages);
 
 		/**
 		 * Allocate pages from reservation pool

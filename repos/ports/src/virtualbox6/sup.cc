@@ -202,7 +202,7 @@ static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 	                      + request.cShadowPages
 	                      + request.cFixedPages };
 
-	sup_drv->gmm().reservation_pool_size(pages);
+	sup_drv->gmm().reservation_pages(pages);
 
 	return VINF_SUCCESS;
 }
@@ -220,7 +220,7 @@ static int vmmr0_gmm_update_reservation(GMMUPDATERESERVATIONREQ &request)
 	                      + request.cShadowPages
 	                      + request.cFixedPages };
 
-	sup_drv->gmm().reservation_pool_size(pages);
+	sup_drv->gmm().reservation_pages(pages);
 
 	return VINF_SUCCESS;
 }

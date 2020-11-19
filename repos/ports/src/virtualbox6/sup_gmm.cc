@@ -28,8 +28,8 @@ void Sup::Gmm::_add_one_slice()
 {
 	/* attach new region behind previous region */
 	size_t const slice_size  = _slice_size.value;
-	addr_t const attach_base = _size.value;
-	addr_t const attach_end  = _size.value + (slice_size - 1);
+	addr_t const attach_base = _size_pages.value << PAGE_SHIFT;
+	addr_t const attach_end  = attach_base + (slice_size - 1);
 
 	bool const fits_into_map = attach_end <= _map.end.value;
 
@@ -45,19 +45,19 @@ void Sup::Gmm::_add_one_slice()
 
 	_alloc.add_range(attach_base, slice_size);
 
-	_size = { attach_base + slice_size }; /* update allocation size */
+	/* update allocation size */
+	_size_pages = { (attach_base + slice_size) >> PAGE_SHIFT };
 }
 
 
-void Sup::Gmm::_real_pool_size(Pages const new_size)
+void Sup::Gmm::_update_pool_size()
 {
-	size_t const new_size_pages = new_size.value;
+	size_t const size_pages     = _size_pages.value;
+	size_t const new_size_pages = _reservation_pages.value + _alloc_ex_pages.value;
 
-	auto curr_size_pages = [&] () { return _size.value >> PAGE_SHIFT; };
-
-	if (new_size_pages <= curr_size_pages()) {
+	if (new_size_pages <= size_pages) {
 		warning("Can't shrink guest memory pool from ",
-		        curr_size_pages(), " to ", new_size_pages, " pages");
+		        size_pages, " to ", new_size_pages, " pages");
 		return;
 	}
 
@@ -69,7 +69,8 @@ void Sup::Gmm::_real_pool_size(Pages const new_size)
 		return;
 	}
 
-	while (curr_size_pages() < new_size.value)
+	/* grow backing-store allocations to accomodate requirements */
+	while (_size_pages.value < new_size_pages)
 		_add_one_slice();
 }
 
@@ -91,9 +92,11 @@ Sup::Gmm::Vmm_addr Sup::Gmm::_alloc_pages(Pages pages)
 }
 
 
-void Sup::Gmm::reservation_pool_size(Pages new_size)
+void Sup::Gmm::reservation_pages(Pages pages)
 {
-	_real_pool_size(Pages { new_size.value + _alloc_ex_pages.value });
+	_reservation_pages = pages;
+
+	_update_pool_size();
 }
 
 
@@ -101,7 +104,7 @@ Sup::Gmm::Vmm_addr Sup::Gmm::alloc_ex(Pages pages)
 {
 	_alloc_ex_pages = { _alloc_ex_pages.value + pages.value };
 
-	_real_pool_size(Pages { _alloc_ex_pages.value + _size.value });
+	_update_pool_size();
 
 	return _alloc_pages(pages);
 }
