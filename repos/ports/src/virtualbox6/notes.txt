@@ -17,6 +17,8 @@
   implement sup_sem.cc API
 * PGM_WITHOUT_MAPPINGS is unconditionally defined in pgm.h
   Hence, we can ignore all code wrapped by '#ifndef PGM_WITHOUT_MAPPINGS'
+* VMHALTMETHOD is currently VMHALTMETHOD_GLOBAL_1 after VMMR0_DO_VMMR0_INIT_EMT
+  maybe worthwhile to check
 
 * Call trace for NEMR0MapPages
     nemR0WinMapPages (HV_INPUT_MAP_GPA_PAGES)

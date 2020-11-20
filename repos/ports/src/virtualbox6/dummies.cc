@@ -110,7 +110,7 @@ USBProxyService::~USBProxyService() { }
 
 HRESULT       USBProxyService::init() { return VINF_SUCCESS; }
 RWLockHandle *USBProxyService::lockHandle() const                                  STOP
-HRESULT       USBProxyService::autoCaptureDevicesForVM(SessionMachine *)           STOP
+HRESULT       USBProxyService::autoCaptureDevicesForVM(SessionMachine *)           TRACE(S_OK)
 HRESULT       USBProxyService::captureDeviceForVM(SessionMachine *, IN_GUID,
                                                   com::Utf8Str const&)             STOP
 HRESULT       USBProxyService::detachAllDevicesFromVM(SessionMachine*, bool, bool) STOP
