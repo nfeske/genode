@@ -198,6 +198,64 @@ static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 }
 
 
+static int vmmr0_gvmm_register_vcpu(PVMR0 pvmr0, uint32_t cpu)
+{
+	warning(__PRETTY_FUNCTION__, " cpu=", cpu);
+
+	/*
+	 * EMT threads for additional CPUs are registered on initialization.
+	 * The EMT-0 thread does not register via this function.
+	 *
+	 * GVMMR0RegisterVCpu() does the following...
+	 *
+	 * pGVM->aCpus[idCpu].hNativeThreadR0 = pGVM->aCpus[idCpu].hEMT = RTThreadNativeSelf();
+	 */
+
+	return VINF_SUCCESS;
+}
+
+
+static int vmmr0_gvmm_sched_halt(PVMR0 pvmr0, ::uint32_t cpu, ::uint64_t expire_timestamp)
+{
+	::uint64_t const now_timestamp = RTTimeNanoTS();
+
+	::uint64_t ns_diff = expire_timestamp > now_timestamp
+	                   ? expire_timestamp - now_timestamp : 0;
+
+	warning(__PRETTY_FUNCTION__, " cpu=", cpu, " ns_diff=", ns_diff);
+
+	if (!ns_diff)
+		return VINF_SUCCESS;
+
+	if (ns_diff > RT_NS_1SEC) {
+		warning(" clamping halt duration of ", ns_diff, " ns to 1 s");
+		ns_diff = RT_NS_1SEC;
+	}
+
+//	Vcpu_handler *vcpu_handler = lookup_vcpu_handler(idCpu);
+//	Assert(vcpu_handler);
+//	vcpu_handler->halt(ns_diff);
+
+	static int max_runs = 10;
+	if (--max_runs < 0)
+		STOP
+
+	/*
+	 * returns VINF_SUCCESS      on normal wakeup (timeout or kicked by other thread)
+	 *         VERR_INTERRUPTED  if a signal was scheduled for the thread
+	 */
+	return VERR_INTERRUPTED;
+}
+
+
+static int vmmr0_gvmm_wake_up(PVMR0 pvmr0, uint32_t cpu)
+{
+	warning(__PRETTY_FUNCTION__, " cpu=", cpu);
+
+	return VINF_SUCCESS;
+}
+
+
 static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 {
 	warning(__PRETTY_FUNCTION__
@@ -537,6 +595,18 @@ static void ioctl(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_GVMM_CREATE_VM:
 		rc = vmmr0_gvmm_create_vm(*(GVMMCREATEVMREQ *)request.abReqPkt);
+		return;
+
+	case VMMR0_DO_GVMM_REGISTER_VMCPU:
+		rc = vmmr0_gvmm_register_vcpu(request.u.In.pVMR0, request.u.In.idCpu);
+		return;
+
+	case VMMR0_DO_GVMM_SCHED_HALT:
+		rc = vmmr0_gvmm_sched_halt(request.u.In.pVMR0, request.u.In.idCpu, request.u.In.u64Arg);
+		return;
+
+	case VMMR0_DO_GVMM_SCHED_WAKE_UP:
+		rc = vmmr0_gvmm_wake_up(request.u.In.pVMR0, request.u.In.idCpu);
 		return;
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:
