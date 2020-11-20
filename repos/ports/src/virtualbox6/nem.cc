@@ -192,13 +192,27 @@ void nemR3NativeReset(PVM pVM) STOP
 void nemR3NativeResetCpu(PVMCPU pVCpu, bool fInitIpi) STOP
 
 
-VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu) STOP
+VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
+{
+	warning(__PRETTY_FUNCTION__, " pVM=", pVM, " pVCpu=", pVCpu);
+
+	/* handle interrupt injection */
+	warning(__PRETTY_FUNCTION__, " 1 VMCPU_FF_IS_ANY_SET=",
+	        VMCPU_FF_IS_ANY_SET(pVCpu, VMCPU_FF_INTERRUPT_APIC | VMCPU_FF_UPDATE_APIC | VMCPU_FF_INTERRUPT_PIC
+                                     | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI));
+	warning(__PRETTY_FUNCTION__, " 2 VM_FF_IS_ANY_SET=",
+	        VM_FF_IS_ANY_SET(pVM, VM_FF_EMT_RENDEZVOUS | VM_FF_TM_VIRTUAL_SYNC),
+	        " VMCPU_FF_IS_ANY_SET=",
+	        VMCPU_FF_IS_ANY_SET(pVCpu, VMCPU_FF_HM_TO_R3_MASK));
+
+	return VINF_SUCCESS;
+}
 
 
-bool nemR3NativeCanExecuteGuest(PVM pVM, PVMCPU pVCpu) STOP
+bool nemR3NativeCanExecuteGuest(PVM pVM, PVMCPU pVCpu) TRACE(true)
 
 
-bool nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable) STOP
+bool nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable) TRACE(false)
 
 
 void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags) STOP
@@ -206,7 +220,7 @@ void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags) STOP
 
 int nemR3NativeNotifyPhysRamRegister(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb)
 {
-	log(__PRETTY_FUNCTION__, " GCPhys=", Hex(GCPhys), " cb=", Hex(cb));
+	warning(__PRETTY_FUNCTION__, " GCPhys=", Hex(GCPhys), " cb=", Hex(cb));
 
 	return VINF_SUCCESS;
 }
