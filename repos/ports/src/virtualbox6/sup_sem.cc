@@ -69,7 +69,10 @@ int SUPSemEventWaitNsRelIntr(PSUPDRVSESSION pSession,
                              uint64_t       cNsTimeout) STOP
 
 
-uint32_t SUPSemEventGetResolution(PSUPDRVSESSION pSession) STOP
+uint32_t SUPSemEventGetResolution(PSUPDRVSESSION pSession)
+{
+	return 10'000'000; /* nanoseconds */
+}
 
 
 int SUPSemEventMultiCreate(PSUPDRVSESSION pSession,
@@ -113,5 +116,8 @@ int SUPSemEventMultiWaitNsRelIntr(PSUPDRVSESSION   pSession,
                                   uint64_t         cNsTimeout) STOP
 
 
-uint32_t SUPSemEventMultiGetResolution(PSUPDRVSESSION pSession) STOP
+uint32_t SUPSemEventMultiGetResolution(PSUPDRVSESSION pSession)
+{
+	return 10'000'000; /* nanoseconds */
+}
 
