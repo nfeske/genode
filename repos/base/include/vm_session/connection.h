@@ -64,6 +64,12 @@ struct Genode::Vm_connection : Connection<Vm_session>, Vm_session_client
 			[&] () { this->upgrade_ram(4096); }
 		);
 	}
+
+	void attach(Dataspace_capability ds, addr_t vm_addr, Attach_attr attr) override
+	{
+		with_upgrade([&] () {
+			Vm_session_client::attach(ds, vm_addr, attr); });
+	}
 };
 
 #endif /* _INCLUDE__VM_SESSION__CONNECTION_H_ */

@@ -42,11 +42,7 @@ struct Genode::Vm_session_client : Rpc_client<Vm_session>
 	void run(Vcpu_id);
 	void pause(Vcpu_id);
 
-	void attach(Dataspace_capability ds, addr_t vm_addr,
-	            Attach_attr attr = { .offset = 0,
-	                                 .size = 0,
-	                                 .executable = true,
-	                                 .writeable = true } ) override
+	void attach(Dataspace_capability ds, addr_t vm_addr, Attach_attr attr) override
 	{
 		call<Rpc_attach>(ds, vm_addr, attr);
 	}
