@@ -18,6 +18,8 @@
 /* VirtualBox includes */
 #include <VBox/sup.h>
 
+namespace Genode { }
+
 namespace Sup {
 	using namespace Genode;
 

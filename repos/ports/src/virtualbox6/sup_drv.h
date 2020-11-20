@@ -45,38 +45,9 @@ class Sup::Drv
 			return Cpu_count { _env.cpu().affinity_space().total() };
 		}
 
-		Cpu_freq_khz _cpu_freq_khz_from_rom()
-		{
-			unsigned khz = 0;
+		Cpu_freq_khz _cpu_freq_khz_from_rom();
 
-			_platform_info_rom.xml().with_sub_node("hardware", [&] (Xml_node const &node) {
-				node.with_sub_node("tsc", [&] (Xml_node const &node) {
-					khz = node.attribute_value("freq_khz", khz); });
-			});
-
-			if (khz == 0) {
-				error("could not read CPU frequency");
-				sleep_forever();
-			}
-
-			return Cpu_freq_khz { khz };
-		}
-
-		Cpu_virt _cpu_virt_from_rom()
-		{
-			Cpu_virt virt = Cpu_virt::NONE;
-
-			_platform_info_rom.xml().with_sub_node("hardware", [&] (Xml_node const &node) {
-				node.with_sub_node("features", [&] (Xml_node const &node) {
-					if (node.attribute_value("vmx", false))
-						virt = Cpu_virt::VMX;
-					else if (node.attribute_value("svm", false))
-						virt = Cpu_virt::SVM;
-				});
-			});
-
-			return virt;
-		}
+		Cpu_virt _cpu_virt_from_rom();
 
 		Cpu_virt const _cpu_virt { _cpu_virt_from_rom() };
 
