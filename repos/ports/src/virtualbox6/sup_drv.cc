@@ -12,8 +12,13 @@
  * version 2.
  */
 
+/* Virtualbox includes */
+#include <NEMInternal.h>
+
 /* local includes */
 #include <sup_drv.h>
+#include <vcpu_vmx.h>
+#include <vcpu_svm.h>
 
 
 Sup::Cpu_freq_khz Sup::Drv::_cpu_freq_khz_from_rom()
@@ -48,4 +53,39 @@ Sup::Drv::Cpu_virt Sup::Drv::_cpu_virt_from_rom()
 	});
 
 	return virt;
+}
+
+
+Vcpu_handler &Sup::Drv::create_vcpu_handler(Cpu_index cpu_index)
+{
+	Libc::Allocator alloc { };
+
+	Affinity::Location const location =
+		_affinity_space.location_of_index(cpu_index.value);
+
+	size_t const stack_size = 64*1024;
+
+	switch (_cpu_virt) {
+
+	case Cpu_virt::VMX:
+		return *new Vcpu_handler_vmx(_env,
+		                             stack_size,
+		                             location,
+		                             cpu_index.value,
+		                             _vm_connection,
+		                             alloc);
+
+	case Cpu_virt::SVM:
+		return *new Vcpu_handler_svm(_env,
+		                             stack_size,
+		                             location,
+		                             cpu_index.value,
+		                             _vm_connection,
+		                             alloc);
+
+	case Cpu_virt::NONE:
+		break;
+	}
+
+	throw Virtualization_support_missing();
 }

@@ -32,6 +32,7 @@
 #include <VBox/vmm/vm.h>
 #include <VBox/vmm/hm_svm.h>
 #include <VBox/vmm/apic.h>
+#include <VBox/vmm/em.h>
 #include <VBox/err.h>
 
 #include <VBox/vmm/pdmapi.h>
@@ -134,9 +135,6 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 
 	protected:
 
-		int map_memory(Genode::Vm_connection &vm_session,
-		               RTGCPHYS GCPhys, RTGCUINT vbox_fault_reason);
-
 		Genode::addr_t     _vm_exits    = 0;
 		Genode::addr_t     _recall_skip = 0;
 		Genode::addr_t     _recall_req  = 0;
@@ -196,13 +194,6 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 					while (true) {
 						_blockade_emt.block();
 					}
-				}
-
-				Genode::addr_t const gp_map_addr = npt_ept_exit_addr & ~((1UL << 12) - 1);
-				int res = attach_memory_to_vm(gp_map_addr, npt_ept_errorcode);
-				if (res == VINF_SUCCESS) {
-					*_state = Genode::Vm_state {}; /* reset */
-					goto again;
 				}
 			}
 
@@ -673,8 +664,6 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 		virtual int vm_exit_requires_instruction_emulation(PCPUMCTX) = 0;
 
 		virtual void pause_vm() = 0;
-		virtual int attach_memory_to_vm(RTGCPHYS const,
-		                                RTGCUINT vbox_fault_reason) = 0;
 
 	public:
 

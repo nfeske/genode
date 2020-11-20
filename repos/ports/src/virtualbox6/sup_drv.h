@@ -20,6 +20,7 @@
 #include <sup.h>
 #include <sup_gip.h>
 #include <sup_gmm.h>
+#include <vcpu.h>
 
 /* Genode includes */
 #include <base/env.h>
@@ -34,16 +35,17 @@ class Sup::Drv
 
 		enum class Cpu_virt { NONE, VMX, SVM };
 
+		class Virtualization_support_missing : Exception { };
+
 	private:
 
 		Env &_env;
 
 		Attached_rom_dataspace const _platform_info_rom { _env, "platform_info" };
 
-		Cpu_count _cpu_count_from_env()
-		{
-			return Cpu_count { _env.cpu().affinity_space().total() };
-		}
+		Affinity::Space const _affinity_space { _env.cpu().affinity_space() };
+
+		Cpu_count const _cpu_count { _affinity_space.total() };
 
 		Cpu_freq_khz _cpu_freq_khz_from_rom();
 
@@ -53,7 +55,7 @@ class Sup::Drv
 
 		Vm_connection _vm_connection { _env };
 
-		Gip _gip { _env, _cpu_count_from_env(), _cpu_freq_khz_from_rom() };
+		Gip _gip { _env, _cpu_count, _cpu_freq_khz_from_rom() };
 		Gmm _gmm { _env, _vm_connection };
 
 	public:
@@ -65,6 +67,11 @@ class Sup::Drv
 		Gmm &gmm() { return _gmm; }
 
 		Cpu_virt cpu_virt() { return _cpu_virt; }
+
+		/*
+		 * \throw Virtualization_support_missing
+		 */
+		Vcpu_handler &create_vcpu_handler(Cpu_index);
 };
 
 #endif /* _SUP_DRV_H_ */

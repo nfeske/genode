@@ -186,12 +186,6 @@ class Vcpu_handler_vmx : public Vcpu_handler
 		void run_vm()   { _vm_session.run(_vcpu); }
 		void pause_vm() { _vm_session.pause(_vcpu); }
 
-		int attach_memory_to_vm(RTGCPHYS const gp_attach_addr,
-		                        RTGCUINT vbox_errorcode)
-		{
-			return map_memory(_vm_session, gp_attach_addr, vbox_errorcode);
-		}
-
 		void _exit_config(Genode::Vm_state &state, unsigned exit)
 		{
 			switch (exit) {

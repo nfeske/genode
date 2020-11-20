@@ -24,6 +24,7 @@ namespace Sup {
 	using namespace Genode;
 
 	struct Cpu_count    { unsigned value; };
+	struct Cpu_index    { unsigned value; };
 	struct Cpu_freq_khz { unsigned value; };
 
 	struct Gmm;

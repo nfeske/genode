@@ -21,6 +21,7 @@
 #include <PDMInternal.h>
 #include <IOMInternal.h>
 #include <VMMInternal.h>
+#include <NEMInternal.h>
 #undef VBOX_IN_VMM
 #include <SUPDrvIOC.h>
 #include <VBox/err.h>
@@ -191,7 +192,18 @@ static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 
 	Sup::Cpu_count cpu_count { request.cCpus };
 
-	request.pVMR3 = &Sup::Vm::create(request.pSession, cpu_count);
+	Sup::Vm &new_vm = Sup::Vm::create(request.pSession, cpu_count);
+
+	for (unsigned i = 0; i < cpu_count.value; i++) {
+
+		Sup::Cpu_index const index { i };
+
+		Vcpu_handler &handler = sup_drv->create_vcpu_handler(index);
+
+		new_vm.register_vcpu_handler(index, handler);
+	}
+
+	request.pVMR3 = &new_vm;
 	request.pVMR0 = (PVMR0)request.pVMR3;
 
 	return VINF_SUCCESS;
