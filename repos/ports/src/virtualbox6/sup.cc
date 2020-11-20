@@ -85,6 +85,19 @@ static void with_inout_ioctl(T &request, FN const &fn)
 }
 
 
+template <typename T, typename FN>
+static void with_out_ioctl(T &request, FN const &fn)
+{
+	auto &out = request.u.Out;
+	auto &rc  = request.Hdr.rc;
+
+	out = { };
+	rc  = VINF_SUCCESS;
+
+	fn(out, request.Hdr.rc);
+}
+
+
 /* XXX init in COOKIE */
 struct SUPDRVSESSION
 {
@@ -107,8 +120,7 @@ static void ioctl(SUPQUERYFUNCS &request)
 {
 	warning("SUPQUERYFUNCS reports zero functions");
 
-	request.u.Out  = { };
-	request.Hdr.rc = VINF_SUCCESS;
+	with_out_ioctl(request, [&] (auto &out, auto &) { });
 
 	before_first_call_of_ioctl_query_funcs = false;
 }
@@ -116,58 +128,55 @@ static void ioctl(SUPQUERYFUNCS &request)
 
 static void ioctl(SUPGIPMAP &request)
 {
-	request.u.Out        = { };
-	request.u.Out.pGipR3 = sup_drv->gip();
-	request.Hdr.rc       = VINF_SUCCESS;
+	with_out_ioctl(request, [&] (auto &out, auto &) {
+
+		request.u.Out.pGipR3 = sup_drv->gip();
+	});
 }
 
 
 static void ioctl(SUPVTCAPS &request)
 {
+	with_out_ioctl(request, [&] (auto &out, auto &rc) {
 
-	auto &out = request.u.Out;
-	auto &rc  = request.Hdr.rc;
+		/*
+		 * Return VERR_VMX_NO_VMX and VERR_SVM_NO_SVM to trigger the use of
+		 * the native execution manager (follow NEMR3Init).
+		 */
+		switch (sup_drv->cpu_virt()) {
+		case Sup::Drv::Cpu_virt::VMX:
+			rc        = VERR_VMX_NO_VMX;
+			out.fCaps = SUPVTCAPS_VT_X | SUPVTCAPS_NESTED_PAGING;
+			break;
+		case Sup::Drv::Cpu_virt::SVM:
+			rc        = VERR_SVM_NO_SVM;
+			out.fCaps = SUPVTCAPS_AMD_V | SUPVTCAPS_NESTED_PAGING;
+			break;
+		case Sup::Drv::Cpu_virt::NONE:
+			rc        = VERR_UNSUPPORTED_CPU;
+			out.fCaps = 0;
+			break;
+		}
 
-	out = { };
-	rc  = VINF_SUCCESS;
+		/*
+		 * Prevent returning an erroneous rc value when VT caps are queried
+		 * during the early initialization path of Host::init,
+		 * i_updateProcessorFeatures. Otherwise, the assertions in
+		 * i_updateProcessorFeatures would trigger.
+		 *
+		 * Later, when called during the VM initialization via vmR3InitRing3,
+		 * HMR3Init, we have to return VERR_VMX_NO_VMX or VERR_SVM_NO_SVM to
+		 * force the call of NEMR3Init.
+		 */
+		if (before_first_call_of_ioctl_query_funcs)
+			rc = VINF_SUCCESS;
 
-	/*
-	 * Return VERR_VMX_NO_VMX and VERR_SVM_NO_SVM to trigger the use of
-	 * the native execution manager (follow NEMR3Init).
-	 */
-	switch (sup_drv->cpu_virt()) {
-	case Sup::Drv::Cpu_virt::VMX:
-		rc        = VERR_VMX_NO_VMX;
-		out.fCaps = SUPVTCAPS_VT_X | SUPVTCAPS_NESTED_PAGING;
-		break;
-	case Sup::Drv::Cpu_virt::SVM:
-		rc        = VERR_SVM_NO_SVM;
-		out.fCaps = SUPVTCAPS_AMD_V | SUPVTCAPS_NESTED_PAGING;
-		break;
-	case Sup::Drv::Cpu_virt::NONE:
-		rc        = VERR_UNSUPPORTED_CPU;
-		out.fCaps = 0;
-		break;
-	}
-
-	/*
-	 * Prevent returning an erroneous rc value when VT caps are queried
-	 * during the early initialization path of Host::init,
-	 * i_updateProcessorFeatures. Otherwise, the assertions in
-	 * i_updateProcessorFeatures would trigger.
-	 *
-	 * Later, when called during the VM initialization via vmR3InitRing3,
-	 * HMR3Init, we have to return VERR_VMX_NO_VMX or VERR_SVM_NO_SVM to
-	 * force the call of NEMR3Init.
-	 */
-	if (before_first_call_of_ioctl_query_funcs)
-		rc = VINF_SUCCESS;
-
-	/*
-	 * XXX are the following interesting?
-	 * SUPVTCAPS_VTX_VMCS_SHADOWING
-	 * SUPVTCAPS_VTX_UNRESTRICTED_GUEST
-	 */
+		/*
+		 * XXX are the following interesting?
+		 * SUPVTCAPS_VTX_VMCS_SHADOWING
+		 * SUPVTCAPS_VTX_UNRESTRICTED_GUEST
+		 */
+	});
 }
 
 
@@ -351,9 +360,6 @@ static int vmmr0_pdm_device_create(PDMDEVICECREATEREQ &request)
 {
 	warning("PDMDEVICECREATEREQ for ", Cstring(request.szDevName));
 
-	warning("cbInstanceShared=", request.cbInstanceShared);
-	warning("cbInstanceR3=", request.cbInstanceR3);
-
 	/*
 	 * Allocate all PDM device ingredients as a single contiguous memory block.
 	 *
@@ -455,7 +461,6 @@ static int vmmr0_pdm_device_gen_call(PDMDEVICEGENCALLREQ &request)
 
 static int vmmr0_pgm_allocate_handly_pages(PVMR0 pvmr0)
 {
-	/* satisfy IOMR3IoPortCreate ? */
 	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
 
 	uint32_t const start_idx = vm.pgm.s.cHandyPages;
@@ -599,9 +604,10 @@ static void ioctl(SUPUCODEREV &request)
 {
 	warning("SUPUCODEREV");
 
-	request.Hdr.rc = VINF_SUCCESS;
-	request.u.Out = { };
-	request.u.Out.MicrocodeRev = ~0u;
+	with_out_ioctl(request, [&] (auto &out, auto &) {
+
+		out.MicrocodeRev = ~0u;
+	});
 }
 
 
@@ -609,10 +615,11 @@ static void ioctl(SUPGETPAGINGMODE &request)
 {
 	warning("SUPGETPAGINGMODE");
 
-	request.Hdr.rc = VINF_SUCCESS;
-	request.u.Out = { };
-	request.u.Out.enmMode = sizeof(long) == 32 ? SUPPAGINGMODE_32_BIT_GLOBAL
-	                                           : SUPPAGINGMODE_AMD64_GLOBAL_NX;
+	with_out_ioctl(request, [&] (auto &out, auto &) {
+
+		out.enmMode = sizeof(long) == 32 ? SUPPAGINGMODE_32_BIT_GLOBAL
+		                                 : SUPPAGINGMODE_AMD64_GLOBAL_NX;
+	});
 }
 
 
