@@ -229,6 +229,8 @@ static int vmmr0_gvmm_register_vcpu(PVMR0 pvmr0, uint32_t cpu)
 
 static int vmmr0_gvmm_sched_halt(PVMR0 pvmr0, ::uint32_t cpu, ::uint64_t expire_timestamp)
 {
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
 	::uint64_t const now_timestamp = RTTimeNanoTS();
 
 	::uint64_t ns_diff = expire_timestamp > now_timestamp
@@ -244,25 +246,27 @@ static int vmmr0_gvmm_sched_halt(PVMR0 pvmr0, ::uint32_t cpu, ::uint64_t expire_
 		ns_diff = RT_NS_1SEC;
 	}
 
-//	Vcpu_handler *vcpu_handler = lookup_vcpu_handler(idCpu);
-//	Assert(vcpu_handler);
-//	vcpu_handler->halt(ns_diff);
-
-	static int max_runs = 10;
-	if (--max_runs < 0)
-		STOP
+	vm.with_vcpu_handler(Sup::Cpu_index { cpu }, [&] (Vcpu_handler &handler) {
+		handler.halt(ns_diff);
+	});
 
 	/*
 	 * returns VINF_SUCCESS      on normal wakeup (timeout or kicked by other thread)
 	 *         VERR_INTERRUPTED  if a signal was scheduled for the thread
 	 */
-	return VERR_INTERRUPTED;
+	return VINF_SUCCESS;
 }
 
 
 static int vmmr0_gvmm_wake_up(PVMR0 pvmr0, uint32_t cpu)
 {
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
 	warning(__PRETTY_FUNCTION__, " cpu=", cpu);
+
+	vm.with_vcpu_handler(Sup::Cpu_index { cpu }, [&] (Vcpu_handler &handler) {
+		handler.wake_up();
+	});
 
 	return VINF_SUCCESS;
 }

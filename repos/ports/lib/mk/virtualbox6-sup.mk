@@ -2,7 +2,7 @@ include $(REP_DIR)/lib/mk/virtualbox6-common.inc
 
 LIBS  += stdcxx
 
-SRC_CC := sup.cc sup_sem.cc sup_gmm.cc sup_drv.cc
+SRC_CC := sup.cc sup_sem.cc sup_gmm.cc sup_drv.cc sup_vm.cc
 
 SRC_CC += HostDrivers/Support/SUPLib.cpp
 SRC_CC += HostDrivers/Support/SUPLibLdr.cpp
@@ -18,9 +18,6 @@ INC_DIR += $(VBOX_DIR)/Main/xml
 INC_DIR += $(VBOX_DIR)/Main/include
 INC_DIR += $(VBOX_DIR)/VMM/include
 
-vpath sup.cc     $(REP_DIR)/src/virtualbox6
-vpath sup_sem.cc $(REP_DIR)/src/virtualbox6
-vpath sup_gmm.cc $(REP_DIR)/src/virtualbox6
-vpath sup_drv.cc $(REP_DIR)/src/virtualbox6
+vpath %.cc $(REP_DIR)/src/virtualbox6
 
 CC_CXX_WARN_STRICT =
