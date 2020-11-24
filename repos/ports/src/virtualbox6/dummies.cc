@@ -378,10 +378,17 @@ void dbgfR3AsTerm(PUVM) { }
 void dbgfR3AsRelocate(PUVM, RTGCUINTPTR) TRACE()
 
 int DBGFR3AsSymbolByAddr(PUVM, RTDBGAS, PCDBGFADDRESS, uint32_t,
-                         PRTGCINTPTR, PRTDBGSYMBOL, PRTDBGMOD) STOP
+                         PRTGCINTPTR, PRTDBGSYMBOL, PRTDBGMOD) TRACE(VERR_NOT_IMPLEMENTED)
 
 PRTDBGSYMBOL DBGFR3AsSymbolByAddrA(PUVM, RTDBGAS, PCDBGFADDRESS, uint32_t,
-                                   PRTGCINTPTR, PRTDBGMOD) STOP
+                                   PRTGCINTPTR, PRTDBGMOD)
+{
+	return nullptr;
+}
 
 PRTDBGLINE DBGFR3AsLineByAddrA(PUVM, RTDBGAS, PCDBGFADDRESS,
-                               PRTGCINTPTR, PRTDBGMOD) STOP
+                               PRTGCINTPTR, PRTDBGMOD)
+{
+	return nullptr;
+}
+

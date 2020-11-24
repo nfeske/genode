@@ -15,9 +15,10 @@
 #include <base/log.h>
 
 /* VirtualBox includes */
-#include <NEMInternal.h>
-#include <HMInternal.h>
-#include <CPUMInternal.h>
+#include <VBox/vmm/cpum.h> /* must be included before CPUMInternal.h */
+#include <CPUMInternal.h>  /* enable access to cpum.s.* */
+#include <HMInternal.h>    /* enable access to hm.s.* */
+#include <NEMInternal.h>   /* enable access to nem.s.* */
 #include <VBox/vmm/nem.h>
 #include <VBox/vmm/vmcc.h>
 #include <VBox/err.h>
@@ -204,15 +205,6 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 
 	warning(__PRETTY_FUNCTION__, " pVM=", pVM, " pVCpu=", pVCpu, " ", pVCpu->idCpu);
 
-	/* handle interrupt injection - move to Vcpu_handler */
-	warning(__PRETTY_FUNCTION__, " 1 VMCPU_FF_IS_ANY_SET=",
-	        VMCPU_FF_IS_ANY_SET(pVCpu, VMCPU_FF_INTERRUPT_APIC | VMCPU_FF_UPDATE_APIC | VMCPU_FF_INTERRUPT_PIC
-                                     | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI));
-	warning(__PRETTY_FUNCTION__, " 2 VM_FF_IS_ANY_SET=",
-	        VM_FF_IS_ANY_SET(pVM, VM_FF_EMT_RENDEZVOUS | VM_FF_TM_VIRTUAL_SYNC),
-	        " VMCPU_FF_IS_ANY_SET=",
-	        VMCPU_FF_IS_ANY_SET(pVCpu, VMCPU_FF_HM_TO_R3_MASK));
-
 	VBOXSTRICTRC result = 0;
 	vm.with_vcpu_handler(Cpu_index { pVCpu->idCpu }, [&] (Vcpu_handler &handler) {
 		result = handler.run_hw(vm);
@@ -240,7 +232,8 @@ bool nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable) TRACE(
  */
 void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags)
 {
-	STOP
+	/* nemHCWinCancelRunVirtualProcessor(pVM, pVCpu); */
+	TRACE()
 }
 
 
@@ -298,6 +291,16 @@ int nemHCNativeNotifyPhysPageAllocated(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPh
 	warning(__PRETTY_FUNCTION__, " GCPhys=", (void *)GCPhys,
 	        " HCPhys=", (void *)HCPhys, " fPageProt=", Hex(fPageProt));
 
+	bool const r { fPageProt & NEM_PAGE_PROT_READ };
+	bool const w { fPageProt & NEM_PAGE_PROT_WRITE };
+	bool const x { fPageProt & NEM_PAGE_PROT_EXECUTE };
+
+	if (!r)
+		warning(__PRETTY_FUNCTION__, ": unreadable mapping requested");
+
+	nem_ptr->map_page_to_guest(HCPhys, GCPhys, Sup::Nem::Protection { x, w });
+	nem_ptr->commit_range();
+
 	return VINF_SUCCESS;
 }
 
@@ -306,6 +309,9 @@ void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS H
                                           ::uint32_t fPageProt, PGMPAGETYPE enmType,
                                           ::uint8_t *pu2State)
 {
+	warning(__PRETTY_FUNCTION__, " GCPhys=", (void *)GCPhys,
+	        " HCPhys=", (void *)HCPhys, " fPageProt=", Hex(fPageProt));
+
 	bool const r { fPageProt & NEM_PAGE_PROT_READ };
 	bool const w { fPageProt & NEM_PAGE_PROT_WRITE };
 	bool const x { fPageProt & NEM_PAGE_PROT_EXECUTE };

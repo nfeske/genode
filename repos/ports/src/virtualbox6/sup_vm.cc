@@ -16,9 +16,10 @@
 #include <base/log.h>
 
 /* VirtualBox includes */
-#include <NEMInternal.h>
-#include <HMInternal.h>
-#include <CPUMInternal.h>
+#include <VBox/vmm/cpum.h> /* must be included before CPUMInternal.h */
+#include <CPUMInternal.h>  /* enable access to cpum.s.* */
+#include <HMInternal.h>    /* enable access to hm.s.* */
+#include <NEMInternal.h>   /* enable access to nem.s.* */
 #include <iprt/mem.h>
 
 /* local includes */

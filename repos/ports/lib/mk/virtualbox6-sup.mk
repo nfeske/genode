@@ -2,7 +2,7 @@ include $(REP_DIR)/lib/mk/virtualbox6-common.inc
 
 LIBS  += stdcxx
 
-SRC_CC := sup.cc sup_sem.cc sup_gmm.cc sup_drv.cc sup_vm.cc
+SRC_CC := sup.cc sup_sem.cc sup_gmm.cc sup_drv.cc sup_vm.cc vcpu.cc
 
 SRC_CC += HostDrivers/Support/SUPLib.cpp
 SRC_CC += HostDrivers/Support/SUPLibLdr.cpp

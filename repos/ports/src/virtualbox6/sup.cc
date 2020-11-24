@@ -16,12 +16,13 @@
 #include <base/log.h>
 
 /* VirtualBox includes */
+#include <IOMInternal.h> /* enable access to iom.s.* */
+#include <NEMInternal.h> /* enable access to nem.s.* */
+#include <PGMInternal.h> /* enable access to pgm.s.* */
+#include <VMMInternal.h> /* enable access to vmm.s.* */
 #define PDMPCIDEV_INCLUDE_PRIVATE   /* needed for PDMPCIDEVINT_DECLARED */
 #define VBOX_IN_VMM                 /* needed for definition of PDMTASKTYPE */
 #include <PDMInternal.h>
-#include <IOMInternal.h>
-#include <VMMInternal.h>
-#include <NEMInternal.h>
 #undef VBOX_IN_VMM
 #include <SUPDrvIOC.h>
 #include <VBox/err.h>
@@ -198,7 +199,7 @@ static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 
 		Sup::Cpu_index const index { i };
 
-		Vcpu_handler &handler = sup_drv->create_vcpu_handler(index);
+		Sup::Vcpu_handler &handler = sup_drv->create_vcpu_handler(index);
 
 		new_vm.register_vcpu_handler(index, handler);
 	}
@@ -246,7 +247,7 @@ static int vmmr0_gvmm_sched_halt(PVMR0 pvmr0, ::uint32_t cpu, ::uint64_t expire_
 		ns_diff = RT_NS_1SEC;
 	}
 
-	vm.with_vcpu_handler(Sup::Cpu_index { cpu }, [&] (Vcpu_handler &handler) {
+	vm.with_vcpu_handler(Sup::Cpu_index { cpu }, [&] (Sup::Vcpu_handler &handler) {
 		handler.halt(ns_diff);
 	});
 
@@ -264,7 +265,7 @@ static int vmmr0_gvmm_wake_up(PVMR0 pvmr0, uint32_t cpu)
 
 	warning(__PRETTY_FUNCTION__, " cpu=", cpu);
 
-	vm.with_vcpu_handler(Sup::Cpu_index { cpu }, [&] (Vcpu_handler &handler) {
+	vm.with_vcpu_handler(Sup::Cpu_index { cpu }, [&] (Sup::Vcpu_handler &handler) {
 		handler.wake_up();
 	});
 

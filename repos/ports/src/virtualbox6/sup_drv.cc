@@ -13,12 +13,11 @@
  */
 
 /* Virtualbox includes */
-#include <NEMInternal.h>
+#include <NEMInternal.h> /* enable access to nem.s.* */
 
 /* local includes */
 #include <sup_drv.h>
-#include <vcpu_vmx.h>
-#include <vcpu_svm.h>
+#include <vcpu.h>
 
 
 Sup::Cpu_freq_khz Sup::Drv::_cpu_freq_khz_from_rom()
@@ -56,7 +55,7 @@ Sup::Drv::Cpu_virt Sup::Drv::_cpu_virt_from_rom()
 }
 
 
-Vcpu_handler &Sup::Drv::create_vcpu_handler(Cpu_index cpu_index)
+Sup::Vcpu_handler &Sup::Drv::create_vcpu_handler(Cpu_index cpu_index)
 {
 	Libc::Allocator alloc { };
 

@@ -1,12 +1,12 @@
 /*
- * \brief  Genode VirtualBox SUPLib supplements
+ * \brief  SUPLib vCPU utility
  * \author Alexander Boettcher
  * \author Norman Feske
  * \author Christian Helmuth
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2020 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
@@ -16,68 +16,36 @@
 #define _VIRTUALBOX__VCPU_H_
 
 /* Genode includes */
-#include <base/log.h>
-#include <rom_session/connection.h>
-#include <timer_session/connection.h>
+#include <base/attached_dataspace.h>
 #include <vm_session/connection.h>
+#include <util/noncopyable.h>
 
-#include <cpu/vm_state.h>
+/* local includes */
+#include <sup.h>
 
-/* VirtualBox includes */
-#include "PGMInternal.h" /* enable access to pgm.s.* */
-
-#include "HMInternal.h" /* enable access to hm.s.* */
-#include "CPUMInternal.h" /* enable access to cpum.s.* */
-
-#include <VBox/vmm/vm.h>
-#include <VBox/vmm/hm_svm.h>
-#include <VBox/vmm/apic.h>
-#include <VBox/vmm/em.h>
-#include <VBox/err.h>
-
-#include <VBox/vmm/pdmapi.h>
-
-#include <iprt/time.h>
-
-/* Genode's VirtualBox includes */
-#include "sup.h"
-
-/* Genode libc pthread binding */
-#include <internal/pthread.h>
-
-/*
- * VirtualBox stores segment attributes in Intel format using a 32-bit
- * value. Genode represents the attributes in packed format using a 16-bit
- * value.
- */
-static inline Genode::uint16_t sel_ar_conv_to_genode(Genode::uint32_t v)
-{
-	return (v & 0xff) | ((v & 0x1f000) >> 4);
+namespace Sup {
+	struct Vcpu_handler;
+	struct Vcpu_handler_vmx;
+	struct Vcpu_handler_svm;
 }
 
 
-static inline Genode::uint32_t sel_ar_conv_from_genode(Genode::uint16_t v)
-{
-	return (v & 0xff) | (((uint32_t )v << 4) & 0x1f000);
-}
-
-class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
+class Sup::Vcpu_handler : Genode::Noncopyable
 {
 	protected:
 
-		Genode::Entrypoint             _ep;
-		Genode::Blockade               _blockade_emt { };
-		Genode::Semaphore              _sem_handler;
-		Genode::Vm_state              *_state { nullptr };
+		Genode::Entrypoint  _ep;
+		Genode::Blockade    _blockade_emt { };
+		Genode::Semaphore   _sem_handler;
+		Genode::Vm_state   *_state { nullptr };
 
 		pthread_cond_t  _cond_wait;
 		pthread_mutex_t _mutex;
 
-
 		/* information used for NPT/EPT handling */
-		Genode::addr_t npt_ept_exit_addr { 0 };
-		RTGCUINT       npt_ept_errorcode { 0 };
-		bool           npt_ept_unmap     { false };
+		Genode::addr_t _npt_ept_exit_addr { 0 };
+		RTGCUINT       _npt_ept_errorcode { 0 };
+		bool           _npt_ept_unmap     { false };
 
 		/* state machine between EMT and EP thread of a vCPU */
 		enum { RUNNING, PAUSED, IRQ_WIN, NPT_EPT } _vm_state { PAUSED };
@@ -85,14 +53,14 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 
 	private:
 
-		bool               _irq_win = false;
+		bool           _irq_win = false;
 
-		unsigned const     _cpu_id;
-		PVM                _vm   { nullptr };
-		PVMCPU             _vcpu { nullptr };
+		unsigned const _cpu_id;
+		PVM            _vm   { nullptr };
+		PVMCPU         _vcpu { nullptr };
 
-		unsigned int       _last_inj_info  = 0;
-		unsigned int       _last_inj_error = 0;
+		unsigned int   _last_inj_info  = 0;
+		unsigned int   _last_inj_error = 0;
 
 		enum {
 			REQ_IRQWIN_EXIT      = 0x1000U,
@@ -110,561 +78,49 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 			INTERRUPT_STATE_NONE  = 0U,
 		};
 
-		timespec add_timespec_ns(timespec a, uint64_t ns) const
-		{
-			enum { NSEC_PER_SEC = 1'000'000'000ull };
-
-			long sec = a.tv_sec;
-
-			while (a.tv_nsec >= NSEC_PER_SEC) {
-				a.tv_nsec -= NSEC_PER_SEC;
-				sec++;
-			}
-			while (ns >= NSEC_PER_SEC) {
-				ns -= NSEC_PER_SEC;
-				sec++;
-			}
-
-			long nsec = a.tv_nsec + ns;
-			while (nsec >= NSEC_PER_SEC) {
-				nsec -= NSEC_PER_SEC;
-				sec++;
-			}
-			return timespec { sec, nsec };
-		}
+		timespec _add_timespec_ns(timespec a, ::uint64_t ns) const;
 
 	protected:
 
-		Genode::addr_t     _vm_exits    = 0;
-		Genode::addr_t     _recall_skip = 0;
-		Genode::addr_t     _recall_req  = 0;
-		Genode::addr_t     _recall_inv  = 0;
-		Genode::addr_t     _recall_drop = 0;
-		Genode::addr_t     _irq_request = 0;
-		Genode::addr_t     _irq_inject  = 0;
-		Genode::addr_t     _irq_drop    = 0;
+		Genode::addr_t _vm_exits    = 0;
+		Genode::addr_t _recall_skip = 0;
+		Genode::addr_t _recall_req  = 0;
+		Genode::addr_t _recall_inv  = 0;
+		Genode::addr_t _recall_drop = 0;
+		Genode::addr_t _irq_request = 0;
+		Genode::addr_t _irq_inject  = 0;
+		Genode::addr_t _irq_drop    = 0;
 
 		struct {
 			unsigned intr_state;
 			unsigned ctrl[2];
-		} next_utcb;
+		} _next_utcb;
 
-		unsigned     _ept_fault_addr_type;
+		unsigned _ept_fault_addr_type;
 
-		Genode::uint64_t * pdpte_map(VM *pVM, RTGCPHYS cr3);
+		Genode::uint64_t * _pdpte_map(VM *pVM, RTGCPHYS cr3);
 
-		void switch_to_hw(PCPUMCTX pCtx)
-		{
-			again:
+		void _switch_to_hw(PCPUMCTX pCtx);
 
-			/* write FPU state */
-			_state->fpu.value([&] (uint8_t *fpu, size_t const size) {
-				if (size < sizeof(X86FXSTATE))
-					Genode::error("fpu state too small");
-				Genode::memcpy(fpu, pCtx->pXStateR3, sizeof(X86FXSTATE));
-			});
+		/* VM exit handlers */
+		void _default_handler();
+		bool _recall_handler();
+		void _irq_window();
+		void _npt_ept();
 
-			Assert(_vm_state == IRQ_WIN || _vm_state == PAUSED || _vm_state == NPT_EPT);
-			Assert(_next_state == PAUSE_EXIT || _next_state == RUN);
+		void _irq_window_pthread();
 
-			/* wake up vcpu ep handler */
-			_sem_handler.up();
+		inline bool _vbox_to_state(VM *pVM, PVMCPU pVCpu);
+		inline bool _state_to_vbox(VM *pVM, PVMCPU pVCpu);
+		inline bool _check_to_request_irq_window(PVMCPU pVCpu);
+		inline bool _continue_hw_accelerated();
 
-			/* wait for next exit */
-			_blockade_emt.block();
+		virtual bool _hw_load_state(Genode::Vm_state *, VM *, PVMCPU) = 0;
+		virtual bool _hw_save_state(Genode::Vm_state *, VM *, PVMCPU) = 0;
+		virtual int _vm_exit_requires_instruction_emulation(PCPUMCTX) = 0;
 
-			/* next time run - recall() may change this */
-			_next_state = RUN;
-
-			/* write FPU state of vCPU to pCtx */
-			_state->fpu.value([&] (uint8_t *fpu, size_t const size) {
-				if (size < sizeof(X86FXSTATE))
-					Genode::error("fpu state too small");
-				Genode::memcpy(pCtx->pXStateR3, fpu, sizeof(X86FXSTATE));
-			});
-
-			if (_vm_state == IRQ_WIN) {
-				*_state = Genode::Vm_state {}; /* reset */
-				_irq_window_pthread();
-				goto again;
-			} else
-			if (_vm_state == NPT_EPT) {
-				if (npt_ept_unmap) {
-					Genode::error("NPT/EPT unmap not supported - stop");
-					while (true) {
-						_blockade_emt.block();
-					}
-				}
-			}
-
-			if (!(_vm_state == PAUSED || _vm_state == NPT_EPT))
-				Genode::error("which state we are ? ", (int)_vm_state, " ", Genode::Thread::myself()->name());
-
-			Assert(_vm_state == PAUSED || _vm_state == NPT_EPT);
-		}
-
-		void _default_handler()
-		{
-			if (_vm_state != RUNNING)
-				Genode::error(__func__, " _vm_state=", (int)_vm_state, " exit_reason=", Genode::Hex(_state->exit_reason));
-			Assert(_vm_state == RUNNING);
-
-			Assert(_state->actv_state.value() == ACTIVITY_STATE_ACTIVE);
-			Assert(!(_state->inj_info.value() & IRQ_INJ_VALID_MASK));
-
-			_vm_exits ++;
-
-			_vm_state = PAUSED;
-
-			_blockade_emt.wakeup();
-		}
-
-		bool _recall_handler()
-		{
-			if (_vm_state != RUNNING)
-				Genode::error(__func__, " _vm_state=", (int)_vm_state, " exit_reason=", Genode::Hex(_state->exit_reason));
-			Assert(_vm_state == RUNNING);
-
-			_vm_exits ++;
-			_recall_inv ++;
-
-			Assert(_state->actv_state.value() == ACTIVITY_STATE_ACTIVE);
-
-			if (_state->inj_info.value() & IRQ_INJ_VALID_MASK) {
-
-				Assert(_state->flags.value() & X86_EFL_IF);
-
-				if (_state->intr_state.value() != INTERRUPT_STATE_NONE)
-					Genode::log("intr state ", Genode::Hex(_state->intr_state.value()),
-					            " ", Genode::Hex(_state->intr_state.value() & 0xf));
-
-				Assert(_state->intr_state.value() == INTERRUPT_STATE_NONE);
-
-				if (!continue_hw_accelerated())
-					_recall_drop ++;
-
-				/* got recall during irq injection and the guest is ready for
-				 * delivery of IRQ - just continue */
-				return /* no-wait */ false;
-			}
-
-			/* are we forced to go back to emulation mode ? */
-			if (!continue_hw_accelerated()) {
-				/* go back to emulation mode */
-				_default_handler();
-				return /* wait */ true;
-			}
-
-			/* check whether we have to request irq injection window */
-			if (check_to_request_irq_window(_vcpu)) {
-				*_state = Genode::Vm_state {}; /* reset */
-				_state->inj_info.value(_state->inj_info.value());
-				_irq_win = true;
-				return /* no-wait */ false;
-			}
-
-			_default_handler();
-			return /* wait */ true;
-		}
-
-		inline bool vbox_to_state(VM *pVM, PVMCPU pVCpu)
-		{
-			typedef Genode::Vm_state::Range Range;
-
-			PCPUMCTX pCtx  = CPUMQueryGuestCtxPtr(pVCpu);
-
-			_state->ip.value(pCtx->rip);
-			_state->sp.value(pCtx->rsp);
-
-			_state->ax.value(pCtx->rax);
-			_state->bx.value(pCtx->rbx);
-			_state->cx.value(pCtx->rcx);
-			_state->dx.value(pCtx->rdx);
-
-			_state->bp.value(pCtx->rbp);
-			_state->si.value(pCtx->rsi);
-			_state->di.value(pCtx->rdi);
-
-			_state->r8.value(pCtx->r8);
-			_state->r9.value(pCtx->r9);
-			_state->r10.value(pCtx->r10);
-			_state->r11.value(pCtx->r11);
-			_state->r12.value(pCtx->r12);
-			_state->r13.value(pCtx->r13);
-			_state->r14.value(pCtx->r14);
-			_state->r15.value(pCtx->r15);
-
-			_state->flags.value(pCtx->rflags.u);
-
-			_state->sysenter_cs.value(pCtx->SysEnter.cs);
-			_state->sysenter_sp.value(pCtx->SysEnter.esp);
-			_state->sysenter_ip.value(pCtx->SysEnter.eip);
-
-			_state->dr7.value(pCtx->dr[7]);
-
-			_state->cr0.value(pCtx->cr0);
-			_state->cr2.value(pCtx->cr2);
-			_state->cr3.value(pCtx->cr3);
-			_state->cr4.value(pCtx->cr4);
-
-			_state->idtr.value(Range{pCtx->idtr.pIdt, pCtx->idtr.cbIdt});
-			_state->gdtr.value(Range{pCtx->gdtr.pGdt, pCtx->gdtr.cbGdt});
-
-			_state->efer.value(CPUMGetGuestEFER(pVCpu));
-
-			/*
-			 * Update the PDPTE registers if necessary
-			 *
-			 * Intel manual sections 4.4.1 of Vol. 3A and 26.3.2.4 of Vol. 3C
-			 * indicate the conditions when this is the case. The following
-			 * code currently does not check if the recompiler modified any
-			 * CR registers, which means the update can happen more often
-			 * than really necessary.
-			 */
-			if (pVM->hm.s.vmx.fSupported &&
-				CPUMIsGuestPagingEnabledEx(pCtx) &&
-				CPUMIsGuestInPAEModeEx(pCtx)) {
-
-				Genode::warning("PDPTE updates disabled!");
-//				Genode::uint64_t *pdpte = pdpte_map(pVM, pCtx->cr3);
-//
-//				_state->pdpte_0.value(pdpte[0]);
-//				_state->pdpte_1.value(pdpte[1]);
-//				_state->pdpte_2.value(pdpte[2]);
-//				_state->pdpte_3.value(pdpte[3]);
-			}
-
-			_state->star.value(pCtx->msrSTAR);
-			_state->lstar.value(pCtx->msrLSTAR);
-			_state->fmask.value(pCtx->msrSFMASK);
-			_state->kernel_gs_base.value(pCtx->msrKERNELGSBASE);
-
-			/* from HMVMXR0.cpp */
-			bool interrupt_pending    = false;
-			uint8_t tpr               = 0;
-			uint8_t pending_interrupt = 0;
-			APICGetTpr(pVCpu, &tpr, &interrupt_pending, &pending_interrupt);
-
-			_state->tpr.value(tpr);
-			_state->tpr_threshold.value(0);
-
-			if (interrupt_pending) {
-				const uint8_t pending_priority = (pending_interrupt >> 4) & 0xf;
-				const uint8_t tpr_priority = (tpr >> 4) & 0xf;
-				if (pending_priority <= tpr_priority)
-					_state->tpr_threshold.value(pending_priority);
-				else
-					_state->tpr_threshold.value(tpr_priority);
-			}
-
-			return true;
-		}
-
-
-		inline bool state_to_vbox(VM *pVM, PVMCPU pVCpu)
-		{
-			PCPUMCTX pCtx  = CPUMQueryGuestCtxPtr(pVCpu);
-
-			pCtx->rip = _state->ip.value();
-			pCtx->rsp = _state->sp.value();
-
-			pCtx->rax = _state->ax.value();
-			pCtx->rbx = _state->bx.value();
-			pCtx->rcx = _state->cx.value();
-			pCtx->rdx = _state->dx.value();
-
-			pCtx->rbp = _state->bp.value();
-			pCtx->rsi = _state->si.value();
-			pCtx->rdi = _state->di.value();
-			pCtx->rflags.u = _state->flags.value();
-
-			pCtx->r8  = _state->r8.value();
-			pCtx->r9  = _state->r9.value();
-			pCtx->r10 = _state->r10.value();
-			pCtx->r11 = _state->r11.value();
-			pCtx->r12 = _state->r12.value();
-			pCtx->r13 = _state->r13.value();
-			pCtx->r14 = _state->r14.value();
-			pCtx->r15 = _state->r15.value();
-
-			pCtx->dr[7] = _state->dr7.value();
-
-			if (pCtx->SysEnter.cs != _state->sysenter_cs.value())
-				CPUMSetGuestMsr(pVCpu, MSR_IA32_SYSENTER_CS, _state->sysenter_cs.value());
-
-			if (pCtx->SysEnter.esp != _state->sysenter_sp.value())
-				CPUMSetGuestMsr(pVCpu, MSR_IA32_SYSENTER_ESP, _state->sysenter_sp.value());
-
-			if (pCtx->SysEnter.eip != _state->sysenter_ip.value())
-				CPUMSetGuestMsr(pVCpu, MSR_IA32_SYSENTER_EIP, _state->sysenter_ip.value());
-
-			if (pCtx->idtr.cbIdt != _state->idtr.value().limit ||
-			    pCtx->idtr.pIdt  != _state->idtr.value().base)
-				CPUMSetGuestIDTR(pVCpu, _state->idtr.value().base, _state->idtr.value().limit);
-
-			if (pCtx->gdtr.cbGdt != _state->gdtr.value().limit ||
-			    pCtx->gdtr.pGdt  != _state->gdtr.value().base)
-				CPUMSetGuestGDTR(pVCpu, _state->gdtr.value().base, _state->gdtr.value().limit);
-
-			CPUMSetGuestEFER(pVCpu, _state->efer.value());
-
-			if (pCtx->cr0 != _state->cr0.value())
-				CPUMSetGuestCR0(pVCpu, _state->cr0.value());
-
-			if (pCtx->cr2 != _state->cr2.value())
-				CPUMSetGuestCR2(pVCpu, _state->cr2.value());
-
-			if (pCtx->cr3 != _state->cr3.value()) {
-				CPUMSetGuestCR3(pVCpu, _state->cr3.value());
-				VMCPU_FF_SET(pVCpu, VMCPU_FF_HM_UPDATE_CR3);
-			}
-
-			if (pCtx->cr4 != _state->cr4.value())
-				CPUMSetGuestCR4(pVCpu, _state->cr4.value());
-
-			if (pCtx->msrSTAR != _state->star.value())
-				CPUMSetGuestMsr(pVCpu, MSR_K6_STAR, _state->star.value());
-
-			if (pCtx->msrLSTAR != _state->lstar.value())
-				CPUMSetGuestMsr(pVCpu, MSR_K8_LSTAR, _state->lstar.value());
-
-			if (pCtx->msrSFMASK != _state->fmask.value())
-				CPUMSetGuestMsr(pVCpu, MSR_K8_SF_MASK, _state->fmask.value());
-
-			if (pCtx->msrKERNELGSBASE != _state->kernel_gs_base.value())
-				CPUMSetGuestMsr(pVCpu, MSR_K8_KERNEL_GS_BASE, _state->kernel_gs_base.value());
-
-			const uint32_t tpr = _state->tpr.value();
-
-			/* reset message transfer descriptor for next invocation */
-			Assert (!(_state->inj_info.value() & IRQ_INJ_VALID_MASK));
-			next_utcb.intr_state = _state->intr_state.value();
-			next_utcb.ctrl[0]    = _state->ctrl_primary.value();
-			next_utcb.ctrl[1]    = _state->ctrl_secondary.value();
-
-			if (next_utcb.intr_state & 3) {
-				next_utcb.intr_state &= ~3U;
-			}
-
-			VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_TO_R3);
-
-			pVCpu->cpum.s.fUseFlags |=  (CPUM_USED_FPU_GUEST);
-//			CPUMSetChangedFlags(pVCpu, CPUM_CHANGED_FPU_REM);
-//			pVCpu->cpum.s.fUseFlags |=  (CPUM_USED_FPU_GUEST | CPUM_USED_FPU_SINCE_REM);
-			
-			if (_state->intr_state.value() != 0) {
-				Assert(_state->intr_state.value() == BLOCKING_BY_STI ||
-				       _state->intr_state.value() == BLOCKING_BY_MOV_SS);
-				EMSetInhibitInterruptsPC(pVCpu, pCtx->rip);
-			} else
-				VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS);
-
-			APICSetTpr(pVCpu, tpr);
-
-			return true;
-		}
-
-
-		inline bool check_to_request_irq_window(PVMCPU pVCpu)
-		{
-			if (VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS))
-				return false;
-
-			if (!TRPMHasTrap(pVCpu) &&
-				!VMCPU_FF_IS_SET(pVCpu, (VMCPU_FF_INTERRUPT_APIC |
-				                         VMCPU_FF_INTERRUPT_PIC)))
-				return false;
-
-			_irq_request++;
-
-			unsigned const vector = 0;
-			_state->inj_info.value(REQ_IRQWIN_EXIT | vector);
-
-			return true;
-		}
-
-
-		void _irq_window()
-		{
-			if (_vm_state != RUNNING)
-				Genode::error(__func__, " _vm_state=", (int)_vm_state, " exit_reason=", Genode::Hex(_state->exit_reason));
-			Assert(_vm_state == RUNNING);
-
-			_vm_exits ++;
-
-			_vm_state = IRQ_WIN;
-			_blockade_emt.wakeup();
-		}
-
-		void _npt_ept()
-		{
-			if (_vm_state != RUNNING)
-				Genode::error(__func__, " _vm_state=", (int)_vm_state, " exit_reason=", Genode::Hex(_state->exit_reason));
-			Assert(_vm_state == RUNNING);
-
-			_vm_exits ++;
-
-			_vm_state = NPT_EPT;
-			_blockade_emt.wakeup();
-		}
-
-		void _irq_window_pthread()
-		{
-			PVMCPU   pVCpu = _vcpu;
-
-			Assert(_state->intr_state.value() == INTERRUPT_STATE_NONE);
-			Assert(_state->flags.value() & X86_EFL_IF);
-			Assert(!VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS));
-			Assert(!(_state->inj_info.value() & IRQ_INJ_VALID_MASK));
-
-			Assert(_irq_win);
-
-			_irq_win = false;
-
-			/* request current tpr state from guest, it may block IRQs */
-			APICSetTpr(pVCpu, _state->tpr_threshold.value());
-
-			if (!TRPMHasTrap(pVCpu)) {
-
-				bool res = VMCPU_FF_TEST_AND_CLEAR(pVCpu, VMCPU_FF_INTERRUPT_NMI);
-				if (res)
-					Genode::log("NMI was set");
-
-				if (VMCPU_FF_IS_SET(pVCpu, (VMCPU_FF_INTERRUPT_APIC |
-				                            VMCPU_FF_INTERRUPT_PIC))) {
-
-					uint8_t irq;
-					int rc = PDMGetInterrupt(pVCpu, &irq);
-					Assert(RT_SUCCESS(rc));
-
-					rc = TRPMAssertTrap(pVCpu, irq, TRPM_HARDWARE_INT);
-					Assert(RT_SUCCESS(rc));
-				}
-
-				if (!TRPMHasTrap(pVCpu)) {
-					_irq_drop++;
-					/* happens if APICSetTpr (see above) mask IRQ */
-					_state->inj_info.value(IRQ_INJ_NONE);
-					Genode::error("virq window pthread aaaaaaa while loop");
-					return;
-				}
-			}
-			_irq_inject++;
-
-			/*
-			 * If we have no IRQ for injection, something with requesting the
-			 * IRQ window went wrong. Probably it was forgotten to be reset.
-			 */
-			Assert(TRPMHasTrap(pVCpu));
-
-			/* interrupt can be dispatched */
-			uint8_t     u8Vector;
-			TRPMEVENT   enmType;
-			SVMEVENT    Event;
-			uint32_t    u32ErrorCode;
-			RTGCUINT    cr2;
-
-			Event.u = 0;
-
-			/* If a new event is pending, then dispatch it now. */
-			int rc = TRPMQueryTrapAll(pVCpu, &u8Vector, &enmType, &u32ErrorCode, &cr2, 0, 0);
-			AssertRC(rc);
-			Assert(enmType == TRPM_HARDWARE_INT);
-			Assert(u8Vector != X86_XCPT_NMI);
-
-			/* Clear the pending trap. */
-			rc = TRPMResetTrap(pVCpu);
-			AssertRC(rc);
-
-			Event.n.u8Vector = u8Vector;
-			Event.n.u1Valid  = 1;
-			Event.n.u32ErrorCode = u32ErrorCode;
-
-			Event.n.u3Type = SVM_EVENT_EXTERNAL_IRQ;
-
-			_state->inj_info.value(Event.u);
-			_state->inj_error.value(Event.n.u32ErrorCode);
-
-			_last_inj_info = _state->inj_info.value();
-			_last_inj_error = _state->inj_error.value();
-
-/*
-			Genode::log("type:info:vector ", Genode::Hex(Event.n.u3Type),
-			         Genode::Hex(utcb->inj_info), Genode::Hex(u8Vector),
-			         " intr:actv - ", Genode::Hex(utcb->intr_state),
-			         Genode::Hex(utcb->actv_state), " mtd ",
-			         Genode::Hex(utcb->mtd));
-*/
-		}
-
-
-		inline bool continue_hw_accelerated(bool verbose = false)
-		{
-			uint32_t check_vm = VM_FF_HM_TO_R3_MASK | VM_FF_REQUEST
-			                    | VM_FF_PGM_POOL_FLUSH_PENDING
-			                    | VM_FF_PDM_DMA;
-			uint32_t check_vcpu = VMCPU_FF_HM_TO_R3_MASK
-			                      | VMCPU_FF_PGM_SYNC_CR3
-			                      | VMCPU_FF_PGM_SYNC_CR3_NON_GLOBAL
-			                      | VMCPU_FF_REQUEST;
-
-			if (!VM_FF_IS_SET(_vm, check_vm) &&
-			    !VMCPU_FF_IS_SET(_vcpu, check_vcpu))
-				return true;
-
-			Assert(!(VM_FF_IS_SET(_vm, VM_FF_PGM_NO_MEMORY)));
-
-#define VERBOSE_VM(flag) \
-			do { \
-				if (VM_FF_IS_SET(_vm, flag)) \
-					Genode::log("flag ", flag, " pending"); \
-			} while (0)
-
-#define VERBOSE_VMCPU(flag) \
-			do { \
-				if (VMCPU_FF_IS_SET(_vcpu, flag)) \
-					Genode::log("flag ", flag, " pending"); \
-			} while (0)
-
-			if (verbose) {
-				/*
-				 * VM_FF_HM_TO_R3_MASK
-				 */
-				VERBOSE_VM(VM_FF_TM_VIRTUAL_SYNC);
-				VERBOSE_VM(VM_FF_PGM_NEED_HANDY_PAGES);
-				/* handled by the assertion above */
-				/* VERBOSE_VM(VM_FF_PGM_NO_MEMORY); */
-				VERBOSE_VM(VM_FF_PDM_QUEUES);
-				VERBOSE_VM(VM_FF_EMT_RENDEZVOUS);
-
-				VERBOSE_VM(VM_FF_REQUEST);
-				VERBOSE_VM(VM_FF_PGM_POOL_FLUSH_PENDING);
-				VERBOSE_VM(VM_FF_PDM_DMA);
-
-				/*
-				 * VMCPU_FF_HM_TO_R3_MASK
-				 */
-				VERBOSE_VMCPU(VMCPU_FF_TO_R3);
-				/* when this flag gets set, a recall request follows */
-				/* VERBOSE_VMCPU(VMCPU_FF_TIMER); */
-				VERBOSE_VMCPU(VMCPU_FF_PDM_CRITSECT);
-
-				VERBOSE_VMCPU(VMCPU_FF_PGM_SYNC_CR3);
-				VERBOSE_VMCPU(VMCPU_FF_PGM_SYNC_CR3_NON_GLOBAL);
-				VERBOSE_VMCPU(VMCPU_FF_REQUEST);
-			}
-
-#undef VERBOSE_VMCPU
-#undef VERBOSE_VM
-
-			return false;
-		}
-
-		virtual bool hw_load_state(Genode::Vm_state *, VM *, PVMCPU) = 0;
-		virtual bool hw_save_state(Genode::Vm_state *, VM *, PVMCPU) = 0;
-		virtual int vm_exit_requires_instruction_emulation(PCPUMCTX) = 0;
-
-		virtual void pause_vm() = 0;
+		virtual void _run_vm() = 0;
+		virtual void _pause_vm() = 0;
 
 	public:
 
@@ -678,154 +134,102 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 			RECALL        = 0xff,
 		};
 
-
 		Vcpu_handler(Genode::Env &env, size_t stack_size,
 		             Genode::Affinity::Location location,
-		             unsigned int cpu_id)
-		:
-			_ep(env, stack_size,
-			    Genode::String<12>("EP-EMT-", cpu_id).string(), location),
-			_cpu_id(cpu_id)
-		{
-			pthread_mutexattr_t _attr;
-			pthread_mutexattr_init(&_attr);
+		             unsigned int cpu_id);
 
-			pthread_cond_init(&_cond_wait, nullptr);
+		unsigned int cpu_id() const { return _cpu_id; }
 
-			pthread_mutexattr_settype(&_attr, PTHREAD_MUTEX_ERRORCHECK);
-			pthread_mutex_init(&_mutex, &_attr);
-		}
+		void recall(VM &vm);
 
-		unsigned int cpu_id() { return _cpu_id; }
+		void halt(Genode::uint64_t const wait_ns);
+
+		void wake_up();
+
+		int run_hw(VM &vm);
+};
 
 
-		void recall(PVM vm)
-		{
-			if (!_vm || !_vcpu) {
-				_vm   = vm;
-				_vcpu = vm->apCpusR3[_cpu_id];
-			}
+class Sup::Vcpu_handler_vmx : public Vcpu_handler
+{
+	private:
 
-			if (_vm != vm || _vcpu != vm->apCpusR3[_cpu_id])
-				Genode::error("wrong CPU !?");
+		Genode::Vm_handler<Vcpu_handler_vmx>  _handler;
 
-			_recall_req ++;
+		Genode::Vm_connection                &_vm_session;
+		Genode::Vm_session_client::Vcpu_id    _vcpu;
 
-			if (_irq_win) {
-				_recall_skip ++;
-				return;
-			}
+		Genode::Attached_dataspace            _state_ds;
 
-			asm volatile ("":::"memory");
+		/* VM exit handlers */
+		void _vmx_default();
+		void _vmx_startup();
+		void _vmx_triple();
+		void _vmx_irqwin();
+		void _vmx_mov_crx();
 
-			if (_vm_state != PAUSED)
-				pause_vm();
+		template <unsigned X> void _vmx_ept();
+		__attribute__((noreturn)) void _vmx_invalid();
 
-			_next_state = PAUSE_EXIT;
+		void _handle_vm_exception();
 
-#if 0
-			if (_recall_req % 1000 == 0) {
-				using Genode::log;
+		void _run_vm()   override { _vm_session.run(_vcpu); }
+		void _pause_vm() override { _vm_session.pause(_vcpu); }
 
-				while (other) {
-					log(other->_cpu_id, " exits=", other->_vm_exits,
-					    " req:skip:drop,inv recall=", other->_recall_req, ":",
-					    other->_recall_skip, ":", other->_recall_drop, ":",
-					    other->_recall_inv, " req:inj:drop irq=",
-					    other->_irq_request, ":", other->_irq_inject, ":",
-					    other->_irq_drop);
+		bool _hw_save_state(Genode::Vm_state *state, VM * pVM, PVMCPU pVCpu) override;
+		bool _hw_load_state(Genode::Vm_state * state, VM * pVM, PVMCPU pVCpu) override;
+		int  _vm_exit_requires_instruction_emulation(PCPUMCTX pCtx) override;
 
-					other = other->next();
-				}
-			}
-#endif
-		}
+		void _exit_config(Genode::Vm_state &state, unsigned exit);
 
-		void halt(Genode::uint64_t const wait_ns)
-		{
-			/* calculate timeout */
-			timespec ts { 0, 0 };
-			clock_gettime(CLOCK_REALTIME, &ts);
-			ts = add_timespec_ns(ts, wait_ns);
+	public:
 
-			/* wait for condition or timeout */
-			pthread_mutex_lock(&_mutex);
-			pthread_cond_timedwait(&_cond_wait, &_mutex, &ts);
-			pthread_mutex_unlock(&_mutex);
-		}
+		Vcpu_handler_vmx(Genode::Env &env, size_t stack_size,
+		                 Genode::Affinity::Location location,
+		                 unsigned int cpu_id,
+		                 Genode::Vm_connection &vm_session,
+		                 Genode::Allocator &alloc);
+};
 
-		void wake_up()
-		{
-			pthread_mutex_lock(&_mutex);
-			pthread_cond_signal(&_cond_wait);
-			pthread_mutex_unlock(&_mutex);
-		}
 
-		int run_hw(VM &vm)
-		{
-			VM     * pVM   = &vm;
-			PVMCPU   pVCpu = pVM->apCpusR3[_cpu_id];
-			PCPUMCTX pCtx  = CPUMQueryGuestCtxPtr(pVCpu);
+class Sup::Vcpu_handler_svm : public Vcpu_handler
+{
+	private:
 
-			if (!_vm || !_vcpu) {
-				_vm   = pVM;
-				_vcpu = pVM->apCpusR3[_cpu_id];
-			}
+		Genode::Vm_handler<Vcpu_handler_svm>  _handler;
 
-			if (_vm != pVM || _vcpu != pVM->apCpusR3[_cpu_id])
-				Genode::error("wrong CPU !?");
+		Genode::Vm_connection                &_vm_session;
+		Genode::Vm_session_client::Vcpu_id    _vcpu;
 
-			/* take the utcb state prepared during the last exit */
-			_state->inj_info.value(IRQ_INJ_NONE);
-			_state->intr_state.value(next_utcb.intr_state);
-			_state->actv_state.value(ACTIVITY_STATE_ACTIVE);
-			_state->ctrl_primary.value(next_utcb.ctrl[0]);
-			_state->ctrl_secondary.value(next_utcb.ctrl[1]);
+		Genode::Attached_dataspace            _state_ds;
 
-			/* Transfer vCPU state from vbox to Genode format */
-			if (!vbox_to_state(pVM, pVCpu) ||
-				!hw_load_state(_state, pVM, pVCpu)) {
+		/* VM exit handlers */
+		void _svm_default();
+		void _svm_vintr();
+		void _svm_ioio();
 
-				Genode::error("loading vCPU state failed");
-				return VERR_INTERNAL_ERROR;
-			}
+		template <unsigned X> void _svm_npt();
 
-			/* check whether to request interrupt window for injection */
-			_irq_win = check_to_request_irq_window(pVCpu);
+		void _svm_startup();
 
-			/* mimic state machine implemented in nemHCWinRunGC() etc. */
-			VMCPU_SET_STATE(pVCpu, VMCPUSTATE_STARTED_EXEC_NEM);
+		void _handle_vm_exception();
 
-			/* switch to hardware accelerated mode */
-			switch_to_hw(pCtx);
+		void _run_vm()   override { _vm_session.run(_vcpu); }
+		void _pause_vm() override { _vm_session.pause(_vcpu); }
 
-			Assert(_state->actv_state.value() == ACTIVITY_STATE_ACTIVE);
+		bool _hw_save_state(Genode::Vm_state *state, VM * pVM, PVMCPU pVCpu) override;
+		bool _hw_load_state(Genode::Vm_state *state, VM * pVM, PVMCPU pVCpu) override;
+		int  _vm_exit_requires_instruction_emulation(PCPUMCTX) override;
 
-			/* see hmR0VmxExitToRing3 - sync recompiler state */
-			CPUMSetChangedFlags(pVCpu, CPUM_CHANGED_SYSENTER_MSR |
-			                    CPUM_CHANGED_LDTR | CPUM_CHANGED_GDTR |
-			                    CPUM_CHANGED_IDTR | CPUM_CHANGED_TR |
-			                    CPUM_CHANGED_HIDDEN_SEL_REGS |
-			                    CPUM_CHANGED_GLOBAL_TLB_FLUSH);
+		void _exit_config(Genode::Vm_state &state, unsigned exit);
 
-			VMCPU_SET_STATE(pVCpu, VMCPUSTATE_STARTED);
+	public:
 
-			/* Transfer vCPU state from Genode to vbox format */
-			if (!state_to_vbox(pVM, pVCpu) ||
-				!hw_save_state(_state, pVM, pVCpu)) {
-
-				Genode::error("saving vCPU state failed");
-				return VERR_INTERNAL_ERROR;
-			}
-
-			/* XXX track guest mode changes - see VMM/VMMAll/IEMAllCImpl.cpp.h */
-			PGMChangeMode(pVCpu, pCtx->cr0, pCtx->cr4, pCtx->msrEFER);
-
-			int rc = vm_exit_requires_instruction_emulation(pCtx);
-
-			/* evaluated in VMM/include/EMHandleRCTmpl.h */
-			return rc;
-		}
+		Vcpu_handler_svm(Genode::Env &env, size_t stack_size,
+		                 Genode::Affinity::Location location,
+		                 unsigned int cpu_id,
+		                 Genode::Vm_connection &vm_session,
+		                 Genode::Allocator &alloc);
 };
 
 #endif /* _VIRTUALBOX__VCPU_H_ */

@@ -22,9 +22,10 @@
 /* local includes */
 #include <sup.h>
 
-namespace Sup { struct Vm; }
-
-struct Vcpu_handler;
+namespace Sup {
+	struct Vm;
+	struct Vcpu_handler;
+}
 
 struct Sup::Vm : GVM
 {
