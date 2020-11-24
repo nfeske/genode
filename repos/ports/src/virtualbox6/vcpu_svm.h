@@ -81,6 +81,8 @@ class Vcpu_handler_svm : public Vcpu_handler
 			unsigned const exit = _state->exit_reason;
 			bool recall_wait = true;
 
+			Genode::warning(__PRETTY_FUNCTION__, ": ", HMGetSvmExitName(exit));
+
 			switch (exit) {
 			case SVM_EXIT_IOIO:  _svm_ioio(); break;
 			case SVM_EXIT_VINTR: _svm_vintr(); break;

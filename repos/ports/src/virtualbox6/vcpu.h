@@ -325,12 +325,13 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 				CPUMIsGuestPagingEnabledEx(pCtx) &&
 				CPUMIsGuestInPAEModeEx(pCtx)) {
 
-				Genode::uint64_t *pdpte = pdpte_map(pVM, pCtx->cr3);
-
-				_state->pdpte_0.value(pdpte[0]);
-				_state->pdpte_1.value(pdpte[1]);
-				_state->pdpte_2.value(pdpte[2]);
-				_state->pdpte_3.value(pdpte[3]);
+				Genode::warning("PDPTE updates disabled!");
+//				Genode::uint64_t *pdpte = pdpte_map(pVM, pCtx->cr3);
+//
+//				_state->pdpte_0.value(pdpte[0]);
+//				_state->pdpte_1.value(pdpte[1]);
+//				_state->pdpte_2.value(pdpte[2]);
+//				_state->pdpte_3.value(pdpte[3]);
 			}
 
 			_state->star.value(pCtx->msrSTAR);
@@ -760,9 +761,9 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 			pthread_mutex_unlock(&_mutex);
 		}
 
-		int run_hw(PVMR0 pVMR0)
+		int run_hw(VM &vm)
 		{
-			VM     * pVM   = reinterpret_cast<VM *>(pVMR0);
+			VM     * pVM   = &vm;
 			PVMCPU   pVCpu = pVM->apCpusR3[_cpu_id];
 			PCPUMCTX pCtx  = CPUMQueryGuestCtxPtr(pVCpu);
 
@@ -792,14 +793,8 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 			/* check whether to request interrupt window for injection */
 			_irq_win = check_to_request_irq_window(pVCpu);
 
-			/*
-			 * Flag vCPU to be "pokeable" by external events such as interrupts
-			 * from virtual devices. Only if this flag is set, the
-			 * 'vmR3HaltGlobal1NotifyCpuFF' function calls 'SUPR3CallVMMR0Ex'
-			 * with VMMR0_DO_GVMM_SCHED_POKE as argument to indicate such
-			 * events. This function, in turn, will recall the vCPU.
-			 */
-			VMCPU_SET_STATE(pVCpu, VMCPUSTATE_STARTED_EXEC);
+			/* mimic state machine implemented in nemHCWinRunGC() etc. */
+			VMCPU_SET_STATE(pVCpu, VMCPUSTATE_STARTED_EXEC_NEM);
 
 			/* switch to hardware accelerated mode */
 			switch_to_hw(pCtx);
@@ -823,7 +818,7 @@ class Vcpu_handler : public Genode::List<Vcpu_handler>::Element
 				return VERR_INTERNAL_ERROR;
 			}
 
-			/* track guest mode changes - see VMM/VMMAll/IEMAllCImpl.cpp.h */
+			/* XXX track guest mode changes - see VMM/VMMAll/IEMAllCImpl.cpp.h */
 			PGMChangeMode(pVCpu, pCtx->cr0, pCtx->cr4, pCtx->msrEFER);
 
 			int rc = vm_exit_requires_instruction_emulation(pCtx);

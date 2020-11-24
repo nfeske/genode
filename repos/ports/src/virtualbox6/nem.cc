@@ -15,15 +15,19 @@
 #include <base/log.h>
 
 /* VirtualBox includes */
+#include <NEMInternal.h>
+#include <HMInternal.h>
+#include <CPUMInternal.h>
 #include <VBox/vmm/nem.h>
 #include <VBox/vmm/vmcc.h>
 #include <VBox/err.h>
-#include <NEMInternal.h>
 
 /* local includes */
 #include <stub_macros.h>
 #include <sup.h>
+#include <vcpu.h>
 #include <sup_gmm.h>
+#include <sup_vm.h>
 
 static bool const debug = true;
 
@@ -194,9 +198,13 @@ void nemR3NativeResetCpu(PVMCPU pVCpu, bool fInitIpi) STOP
 
 VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 {
-	warning(__PRETTY_FUNCTION__, " pVM=", pVM, " pVCpu=", pVCpu);
+	using namespace Sup;
 
-	/* handle interrupt injection */
+	Vm &vm = *static_cast<Vm *>(pVM);
+
+	warning(__PRETTY_FUNCTION__, " pVM=", pVM, " pVCpu=", pVCpu, " ", pVCpu->idCpu);
+
+	/* handle interrupt injection - move to Vcpu_handler */
 	warning(__PRETTY_FUNCTION__, " 1 VMCPU_FF_IS_ANY_SET=",
 	        VMCPU_FF_IS_ANY_SET(pVCpu, VMCPU_FF_INTERRUPT_APIC | VMCPU_FF_UPDATE_APIC | VMCPU_FF_INTERRUPT_PIC
                                      | VMCPU_FF_INTERRUPT_NMI  | VMCPU_FF_INTERRUPT_SMI));
@@ -205,7 +213,12 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 	        " VMCPU_FF_IS_ANY_SET=",
 	        VMCPU_FF_IS_ANY_SET(pVCpu, VMCPU_FF_HM_TO_R3_MASK));
 
-	return VINF_SUCCESS;
+	VBOXSTRICTRC result = 0;
+	vm.with_vcpu_handler(Cpu_index { pVCpu->idCpu }, [&] (Vcpu_handler &handler) {
+		result = handler.run_hw(vm);
+	});
+
+	return result;
 }
 
 
@@ -215,7 +228,20 @@ bool nemR3NativeCanExecuteGuest(PVM pVM, PVMCPU pVCpu) TRACE(true)
 bool nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable) TRACE(false)
 
 
-void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags) STOP
+/**
+ * Forced flag notification call from VMEmt.h.
+ *
+ * This is only called when pVCpu is in the VMCPUSTATE_STARTED_EXEC_NEM state.
+ *
+ * @param   pVM             The cross context VM structure.
+ * @param   pVCpu           The cross context virtual CPU structure of the CPU
+ *                          to be notified.
+ * @param   fFlags          Notification flags, VMNOTIFYFF_FLAGS_XXX.
+ */
+void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags)
+{
+	STOP
+}
 
 
 int nemR3NativeNotifyPhysRamRegister(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb)

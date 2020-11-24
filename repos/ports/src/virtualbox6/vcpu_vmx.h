@@ -129,6 +129,8 @@ class Vcpu_handler_vmx : public Vcpu_handler
 			unsigned const exit = _state->exit_reason;
 			bool recall_wait = true;
 
+			Genode::warning(__PRETTY_FUNCTION__, ": ", HMGetVmxExitName(exit));
+
 			switch (exit) {
 			case VMX_EXIT_TRIPLE_FAULT: _vmx_triple(); break;
 			case VMX_EXIT_INIT_SIGNAL: _vmx_default(); break;
