@@ -13,7 +13,6 @@
 
 /* Genode includes */
 #include <base/env.h>
-#include <base/log.h>
 
 /* VirtualBox includes */
 #include <IOMInternal.h> /* enable access to iom.s.* */

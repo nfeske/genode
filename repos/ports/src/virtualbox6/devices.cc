@@ -11,12 +11,6 @@
  * version 2.
  */
 
-/*
- * VirtualBox defines a 'Log' macro, which would interfere with 'Genode::Log'
- * if we didn't include the header here
- */
-#include <base/log.h>
-
 /* VirtualBox includes */
 #include <VBoxDD.h>
 #include <VBoxDD2.h>

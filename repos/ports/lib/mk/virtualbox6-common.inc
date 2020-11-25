@@ -17,6 +17,9 @@ VIRTUALBOX_SDK_DIR := $(call select_from_ports,virtualbox6)/src/virtualbox6_sdk
 
 VBOX_DIR    := $(VIRTUALBOX_DIR)/src/VBox
 
+# enforce some global definitions (e.g., include of base/log.h)
+VBOX_CC_OPT += -include global_defs.h
+
 VBOX_CC_OPT += -DIN_RING3 -DVBOX -DVBOX_OSE
 VBOX_CC_OPT += -D_FILE_OFFSET_BITS=64 -DLOG_ENABLED
 

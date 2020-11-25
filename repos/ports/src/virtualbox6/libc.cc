@@ -18,6 +18,7 @@
 #include <aio.h>
 #include <sched.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 /* local includes */
 #include <stub_macros.h>
@@ -46,3 +47,12 @@ int lio_listio(int mode, struct aiocb *const aiocb_list[],
                int nitems, struct sigevent *sevp) STOP
 
 } /* extern "C" */
+
+
+
+extern "C" char const * vboxsvc_log_default_string()
+{
+	char const *vbox_log_string = getenv("VBOX_LOG");
+
+	return vbox_log_string ? vbox_log_string : "";
+}

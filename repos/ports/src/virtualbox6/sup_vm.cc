@@ -12,9 +12,6 @@
  * version 2.
  */
 
-/* Genode include */
-#include <base/log.h>
-
 /* VirtualBox includes */
 #include <VBox/vmm/cpum.h> /* must be included before CPUMInternal.h */
 #include <CPUMInternal.h>  /* enable access to cpum.s.* */

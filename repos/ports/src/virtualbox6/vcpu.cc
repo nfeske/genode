@@ -13,7 +13,6 @@
  */
 
 /* Genode includes */
-#include <base/log.h>
 #include <cpu/vm_state.h>
 
 /* VirtualBox includes */

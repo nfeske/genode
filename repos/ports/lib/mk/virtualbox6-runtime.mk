@@ -1,5 +1,4 @@
 include $(REP_DIR)/lib/mk/virtualbox6-common.inc
-include $(REP_DIR)/lib/mk/virtualbox6-log.inc
 
 INC_DIR += $(VBOX_DIR)/Runtime/include
 

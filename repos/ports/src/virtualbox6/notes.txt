@@ -4,7 +4,6 @@
 * cd build/x86_64; rm -rf ~/src/genode/contrib/virtualbox6-*/*; ~/src/genode/tool/ports/prepare_port virtualbox6 CHECK_HASH=no; rm -rf var/libcache/virtualbox* ; make virtualbox6
 * Remove busy loops from dummy implementations
 * virtualbox6.port: split additional_steps into multiple rules
-* remove #include <base/log> from headers in virtualbox6/include
 * Assertion ticket: https://www.virtualbox.org/ticket/19939
 * Re-insert RAM-quota sanity checks in main.cc, see occurrences of
   genode_check_memory_config in virtualbox5/main.cc
@@ -19,7 +18,6 @@
   Hence, we can ignore all code wrapped by '#ifndef PGM_WITHOUT_MAPPINGS'
 * VMHALTMETHOD is currently VMHALTMETHOD_GLOBAL_1 after VMMR0_DO_VMMR0_INIT_EMT
   maybe worthwhile to check
-* Why does logging switch to RTLogGroupSettings: "all" during initialization?
 
 * Call trace for NEMR0MapPages
     nemR0WinMapPages (HV_INPUT_MAP_GPA_PAGES)

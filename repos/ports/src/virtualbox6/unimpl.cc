@@ -11,8 +11,6 @@
  * version 2.
  */
 
-#include <base/log.h>
-
 #include <iprt/assert.h>
 
 extern "C" {
