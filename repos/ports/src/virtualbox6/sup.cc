@@ -508,6 +508,8 @@ static int vmmr0_pdm_device_create(PDMDEVICECREATEREQ &request)
 
 			PDMPCIDEV &pcidev = tail.pcidevs[i];
 
+			pcidev.cbConfig        = _4K;
+			/* PDMR0Device.cpp also initializes pcidev.cbMsixState here */
 			pcidev.Int.s.idxSubDev = i;
 			pcidev.idxSubDev       = i;
 			pcidev.u32Magic        = PDMPCIDEV_MAGIC;
