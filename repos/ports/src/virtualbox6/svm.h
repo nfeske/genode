@@ -2,10 +2,11 @@
  * \brief  Genode specific VirtualBox SUPLib supplements
  * \author Norman Feske
  * \author Alexander Boettcher
+ * \author Christian Helmuth
  */
 
 /*
- * Copyright (C) 2013-2019 Genode Labs GmbH
+ * Copyright (C) 2013-2020 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
@@ -66,8 +67,8 @@ static inline bool svm_save_state(Genode::Vm_state * state, VM * pVM, PVMCPU pVC
 #define GENODE_WRITE_SELREG(REG) \
 	Assert(pCtx->REG.fFlags & CPUMSELREG_FLAGS_VALID); \
 	Assert(pCtx->REG.ValidSel == pCtx->REG.Sel); \
-	state->REG.value(Segment{pCtx->REG.Sel, sel_ar_conv_to_genode(pCtx->REG.Attr.u), \
-	                         pCtx->REG.u32Limit, pCtx->REG.u64Base});
+	state->REG.charge(Segment{pCtx->REG.Sel, sel_ar_conv_to_genode(pCtx->REG.Attr.u), \
+	                          pCtx->REG.u32Limit, pCtx->REG.u64Base});
 
 static inline bool svm_load_state(Genode::Vm_state * state, VM * pVM, PVMCPU pVCpu)
 {
@@ -75,11 +76,11 @@ static inline bool svm_load_state(Genode::Vm_state * state, VM * pVM, PVMCPU pVC
 
 	PCPUMCTX pCtx  = CPUMQueryGuestCtxPtr(pVCpu);
 
-	state->efer.value(pCtx->msrEFER | MSR_K6_EFER_SVME);
+	state->efer.charge(pCtx->msrEFER | MSR_K6_EFER_SVME);
 	/* unimplemented */
 	if (CPUMIsGuestInLongModeEx(pCtx))
 		return false;
-	state->efer.value(state->efer.value() & ~MSR_K6_EFER_LME);
+	state->efer.charge(state->efer.value() & ~MSR_K6_EFER_LME);
 
 	GENODE_WRITE_SELREG(es);
 	GENODE_WRITE_SELREG(ds);

@@ -2,6 +2,7 @@
  * \brief  Genode specific VirtualBox SUPLib supplements
  * \author Norman Feske
  * \author Alexander Boettcher
+ * \author Christian Helmuth
  */
 
 /*
@@ -62,10 +63,10 @@ enum { VMCS_SEG_UNUSABLE = 0x10000 };
 #define GENODE_WRITE_SELREG(REG) \
 	Assert(pCtx->REG.fFlags & CPUMSELREG_FLAGS_VALID); \
 	Assert(pCtx->REG.ValidSel == pCtx->REG.Sel); \
-	state->REG.value(Segment{pCtx->REG.Sel, \
-	                         sel_ar_conv_to_genode(pCtx->REG.Attr.u ? : VMCS_SEG_UNUSABLE), \
-	                         pCtx->REG.u32Limit, \
-	                         pCtx->REG.u64Base});
+	state->REG.charge(Segment{pCtx->REG.Sel, \
+	                          sel_ar_conv_to_genode(pCtx->REG.Attr.u ? : VMCS_SEG_UNUSABLE), \
+	                          pCtx->REG.u32Limit, \
+	                          pCtx->REG.u64Base});
 
 static inline bool vmx_load_state(Genode::Vm_state * state, VM * pVM, PVMCPU pVCpu)
 {
@@ -84,16 +85,16 @@ static inline bool vmx_load_state(Genode::Vm_state * state, VM * pVM, PVMCPU pVC
 
 	/* ldtr */
 	if (pCtx->ldtr.Sel == 0) {
-		state->ldtr.value(Segment{0, sel_ar_conv_to_genode(0x82), 0, 0});
+		state->ldtr.charge(Segment{0, sel_ar_conv_to_genode(0x82), 0, 0});
 	} else {
-		state->ldtr.value(Segment{pCtx->ldtr.Sel,
-		                          sel_ar_conv_to_genode(pCtx->ldtr.Attr.u),
-		                          pCtx->ldtr.u32Limit, pCtx->ldtr.u64Base});
+		state->ldtr.charge(Segment{pCtx->ldtr.Sel,
+		                           sel_ar_conv_to_genode(pCtx->ldtr.Attr.u),
+		                           pCtx->ldtr.u32Limit, pCtx->ldtr.u64Base});
 	}
 
 	/* tr */
-	state->tr.value(Segment{pCtx->tr.Sel, sel_ar_conv_to_genode(pCtx->tr.Attr.u),
-	                        pCtx->tr.u32Limit, pCtx->tr.u64Base});
+	state->tr.charge(Segment{pCtx->tr.Sel, sel_ar_conv_to_genode(pCtx->tr.Attr.u),
+	                         pCtx->tr.u32Limit, pCtx->tr.u64Base});
 
 	return true;
 }

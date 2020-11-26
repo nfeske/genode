@@ -72,10 +72,10 @@ class Sup::Vcpu_handler : Genode::Noncopyable
 			 * Volume 3C, Chapter 24.4.2.
 			 * May 2012
 			*/
-			BLOCKING_BY_STI    = 1U << 0,
-			BLOCKING_BY_MOV_SS = 1U << 1,
-			ACTIVITY_STATE_ACTIVE = 0U,
-			INTERRUPT_STATE_NONE  = 0U,
+			ACTIVITY_STATE_ACTIVE              = 0U,
+			INTERRUPT_STATE_NONE               = 0U,
+			INTERRUPT_STATE_BLOCKING_BY_STI    = 1U << 0,
+			INTERRUPT_STATE_BLOCKING_BY_MOV_SS = 1U << 1,
 		};
 
 		timespec _add_timespec_ns(timespec a, ::uint64_t ns) const;
@@ -115,8 +115,8 @@ class Sup::Vcpu_handler : Genode::Noncopyable
 		inline bool _check_to_request_irq_window(PVMCPU pVCpu);
 		inline bool _continue_hw_accelerated();
 
-		virtual bool _hw_load_state(Genode::Vm_state *, VM *, PVMCPU) = 0;
-		virtual bool _hw_save_state(Genode::Vm_state *, VM *, PVMCPU) = 0;
+		virtual bool _hw_load_state(VM *, PVMCPU) = 0;
+		virtual bool _hw_save_state(VM *, PVMCPU) = 0;
 		virtual int _vm_exit_requires_instruction_emulation(PCPUMCTX) = 0;
 
 		virtual void _run_vm() = 0;
@@ -176,8 +176,8 @@ class Sup::Vcpu_handler_vmx : public Vcpu_handler
 		void _run_vm()   override { _vm_session.run(_vcpu); }
 		void _pause_vm() override { _vm_session.pause(_vcpu); }
 
-		bool _hw_save_state(Genode::Vm_state *state, VM * pVM, PVMCPU pVCpu) override;
-		bool _hw_load_state(Genode::Vm_state * state, VM * pVM, PVMCPU pVCpu) override;
+		bool _hw_save_state(VM * pVM, PVMCPU pVCpu) override;
+		bool _hw_load_state(VM * pVM, PVMCPU pVCpu) override;
 		int  _vm_exit_requires_instruction_emulation(PCPUMCTX pCtx) override;
 
 		void _exit_config(Genode::Vm_state &state, unsigned exit);
@@ -217,8 +217,8 @@ class Sup::Vcpu_handler_svm : public Vcpu_handler
 		void _run_vm()   override { _vm_session.run(_vcpu); }
 		void _pause_vm() override { _vm_session.pause(_vcpu); }
 
-		bool _hw_save_state(Genode::Vm_state *state, VM * pVM, PVMCPU pVCpu) override;
-		bool _hw_load_state(Genode::Vm_state *state, VM * pVM, PVMCPU pVCpu) override;
+		bool _hw_save_state(VM * pVM, PVMCPU pVCpu) override;
+		bool _hw_load_state(VM * pVM, PVMCPU pVCpu) override;
 		int  _vm_exit_requires_instruction_emulation(PCPUMCTX) override;
 
 		void _exit_config(Genode::Vm_state &state, unsigned exit);
