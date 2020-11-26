@@ -57,148 +57,148 @@ struct Vcpu {
 			typedef Genode::Vm_state::Segment Segment;
 			typedef Genode::Vm_state::Range Range;
 
-			state = Vm_state {};
+			state.discharge();
 			state.exit_reason = exit_reason;
 
 			if (utcb.mtd & Nova::Mtd::FPU) {
-				state.fpu.value([&] (uint8_t *fpu, size_t const) {
-					asm volatile ("fxsave %0" : "=m" (*fpu) :: "memory");
+				state.fpu.charge([] (Vm_state::Fpu::State &fpu) {
+					asm volatile ("fxsave %0" : "=m" (fpu) :: "memory");
 				});
 				asm volatile ("fxrstor %0" : : "m" (*_fpu_ep) : "memory");
 			}
 
 
 			if (utcb.mtd & Nova::Mtd::ACDB) {
-				state.ax.value(utcb.ax);
-				state.cx.value(utcb.cx);
-				state.dx.value(utcb.dx);
-				state.bx.value(utcb.bx);
+				state.ax.charge(utcb.ax);
+				state.cx.charge(utcb.cx);
+				state.dx.charge(utcb.dx);
+				state.bx.charge(utcb.bx);
 			}
 
 			if (utcb.mtd & Nova::Mtd::EBSD) {
-				state.di.value(utcb.di);
-				state.si.value(utcb.si);
-				state.bp.value(utcb.bp);
+				state.di.charge(utcb.di);
+				state.si.charge(utcb.si);
+				state.bp.charge(utcb.bp);
 			}
 
-			if (utcb.mtd & Nova::Mtd::EFL) state.flags.value(utcb.flags);
-			if (utcb.mtd & Nova::Mtd::ESP) state.sp.value(utcb.sp);
-			if (utcb.mtd & Nova::Mtd::DR)  state.dr7.value(utcb.dr7);
+			if (utcb.mtd & Nova::Mtd::EFL) state.flags.charge(utcb.flags);
+			if (utcb.mtd & Nova::Mtd::ESP) state.sp.charge(utcb.sp);
+			if (utcb.mtd & Nova::Mtd::DR)  state.dr7.charge(utcb.dr7);
 
 			if (utcb.mtd & Nova::Mtd::EIP) {
-				state.ip.value(utcb.ip);
-				state.ip_len.value(utcb.instr_len);
+				state.ip.charge(utcb.ip);
+				state.ip_len.charge(utcb.instr_len);
 			}
 
 			if (utcb.mtd & Nova::Mtd::R8_R15) {
-				state. r8.value(utcb.read_r8());
-				state. r9.value(utcb.read_r9());
-				state.r10.value(utcb.read_r10());
-				state.r11.value(utcb.read_r11());
-				state.r12.value(utcb.read_r12());
-				state.r13.value(utcb.read_r13());
-				state.r14.value(utcb.read_r14());
-				state.r15.value(utcb.read_r15());
+				state. r8.charge(utcb.read_r8());
+				state. r9.charge(utcb.read_r9());
+				state.r10.charge(utcb.read_r10());
+				state.r11.charge(utcb.read_r11());
+				state.r12.charge(utcb.read_r12());
+				state.r13.charge(utcb.read_r13());
+				state.r14.charge(utcb.read_r14());
+				state.r15.charge(utcb.read_r15());
 			}
 
 			if (utcb.mtd & Nova::Mtd::CR) {
-				state.cr0.value(utcb.cr0);
-				state.cr2.value(utcb.cr2);
-				state.cr3.value(utcb.cr3);
-				state.cr4.value(utcb.cr4);
+				state.cr0.charge(utcb.cr0);
+				state.cr2.charge(utcb.cr2);
+				state.cr3.charge(utcb.cr3);
+				state.cr4.charge(utcb.cr4);
 			}
 			if (utcb.mtd & Nova::Mtd::CSSS) {
-				state.cs.value(Segment{utcb.cs.sel, utcb.cs.ar, utcb.cs.limit,
-				                       utcb.cs.base});
-				state.ss.value(Segment{utcb.ss.sel, utcb.ss.ar, utcb.ss.limit,
-				                       utcb.ss.base});
+				state.cs.charge(Segment{utcb.cs.sel, utcb.cs.ar, utcb.cs.limit,
+				                        utcb.cs.base});
+				state.ss.charge(Segment{utcb.ss.sel, utcb.ss.ar, utcb.ss.limit,
+				                        utcb.ss.base});
 			}
 
 			if (utcb.mtd & Nova::Mtd::ESDS) {
-				state.es.value(Segment{utcb.es.sel, utcb.es.ar, utcb.es.limit,
-				                       utcb.es.base});
-				state.ds.value(Segment{utcb.ds.sel, utcb.ds.ar, utcb.ds.limit,
-				                       utcb.ds.base});
+				state.es.charge(Segment{utcb.es.sel, utcb.es.ar, utcb.es.limit,
+				                        utcb.es.base});
+				state.ds.charge(Segment{utcb.ds.sel, utcb.ds.ar, utcb.ds.limit,
+				                        utcb.ds.base});
 			}
 
 			if (utcb.mtd & Nova::Mtd::FSGS) {
-				state.fs.value(Segment{utcb.fs.sel, utcb.fs.ar, utcb.fs.limit,
-				                       utcb.fs.base});
-				state.gs.value(Segment{utcb.gs.sel, utcb.gs.ar, utcb.gs.limit,
-				                       utcb.gs.base});
+				state.fs.charge(Segment{utcb.fs.sel, utcb.fs.ar, utcb.fs.limit,
+				                        utcb.fs.base});
+				state.gs.charge(Segment{utcb.gs.sel, utcb.gs.ar, utcb.gs.limit,
+				                        utcb.gs.base});
 			}
 
 			if (utcb.mtd & Nova::Mtd::TR) {
-				state.tr.value(Segment{utcb.tr.sel, utcb.tr.ar, utcb.tr.limit,
-				                       utcb.tr.base});
+				state.tr.charge(Segment{utcb.tr.sel, utcb.tr.ar, utcb.tr.limit,
+				                        utcb.tr.base});
 			}
 
 			if (utcb.mtd & Nova::Mtd::LDTR) {
-				state.ldtr.value(Segment{utcb.ldtr.sel, utcb.ldtr.ar,
-				                         utcb.ldtr.limit, utcb.ldtr.base});
+				state.ldtr.charge(Segment{utcb.ldtr.sel, utcb.ldtr.ar,
+				                          utcb.ldtr.limit, utcb.ldtr.base});
 			}
 
 			if (utcb.mtd & Nova::Mtd::GDTR) {
-				state.gdtr.value(Range{utcb.gdtr.base, utcb.gdtr.limit});
+				state.gdtr.charge(Range{utcb.gdtr.base, utcb.gdtr.limit});
 			}
 
 			if (utcb.mtd & Nova::Mtd::IDTR) {
-				state.idtr.value(Range{utcb.idtr.base, utcb.idtr.limit});
+				state.idtr.charge(Range{utcb.idtr.base, utcb.idtr.limit});
 			}
 
 			if (utcb.mtd & Nova::Mtd::SYS) {
-				state.sysenter_cs.value(utcb.sysenter_cs);
-				state.sysenter_sp.value(utcb.sysenter_sp);
-				state.sysenter_ip.value(utcb.sysenter_ip);
+				state.sysenter_cs.charge(utcb.sysenter_cs);
+				state.sysenter_sp.charge(utcb.sysenter_sp);
+				state.sysenter_ip.charge(utcb.sysenter_ip);
 			}
 
 			if (utcb.mtd & Nova::Mtd::QUAL) {
-				state.qual_primary.value(utcb.qual[0]);
-				state.qual_secondary.value(utcb.qual[1]);
+				state.qual_primary.charge(utcb.qual[0]);
+				state.qual_secondary.charge(utcb.qual[1]);
 			}
 
 			if (utcb.mtd & Nova::Mtd::CTRL) {
-				state.ctrl_primary.value(utcb.ctrl[0]);
-				state.ctrl_secondary.value(utcb.ctrl[1]);
+				state.ctrl_primary.charge(utcb.ctrl[0]);
+				state.ctrl_secondary.charge(utcb.ctrl[1]);
 			}
 
 			if (utcb.mtd & Nova::Mtd::INJ) {
-				state.inj_info.value(utcb.inj_info);
-				state.inj_error.value(utcb.inj_error);
+				state.inj_info.charge(utcb.inj_info);
+				state.inj_error.charge(utcb.inj_error);
 			}
 
 			if (utcb.mtd & Nova::Mtd::STA) {
-				state.intr_state.value(utcb.intr_state);
-				state.actv_state.value(utcb.actv_state);
+				state.intr_state.charge(utcb.intr_state);
+				state.actv_state.charge(utcb.actv_state);
 			}
 
 			if (utcb.mtd & Nova::Mtd::TSC) {
-				state.tsc.value(utcb.tsc_val);
-				state.tsc_offset.value(utcb.tsc_off);
+				state.tsc.charge(utcb.tsc_val);
+				state.tsc_offset.charge(utcb.tsc_off);
 			}
 
 			if (utcb.mtd & Nova::Mtd::EFER) {
-				state.efer.value(utcb.read_efer());
+				state.efer.charge(utcb.read_efer());
 			}
 
 			if (utcb.mtd & Nova::Mtd::PDPTE) {
-				state.pdpte_0.value(utcb.pdpte[0]);
-				state.pdpte_1.value(utcb.pdpte[1]);
-				state.pdpte_2.value(utcb.pdpte[2]);
-				state.pdpte_3.value(utcb.pdpte[3]);
+				state.pdpte_0.charge(utcb.pdpte[0]);
+				state.pdpte_1.charge(utcb.pdpte[1]);
+				state.pdpte_2.charge(utcb.pdpte[2]);
+				state.pdpte_3.charge(utcb.pdpte[3]);
 			}
 
 			if (utcb.mtd & Nova::Mtd::SYSCALL_SWAPGS) {
-				state.star.value(utcb.read_star());
-				state.lstar.value(utcb.read_lstar());
-				state.cstar.value(utcb.read_cstar());
-				state.fmask.value(utcb.read_fmask());
-				state.kernel_gs_base.value(utcb.read_kernel_gs_base());
+				state.star.charge(utcb.read_star());
+				state.lstar.charge(utcb.read_lstar());
+				state.cstar.charge(utcb.read_cstar());
+				state.fmask.charge(utcb.read_fmask());
+				state.kernel_gs_base.charge(utcb.read_kernel_gs_base());
 			}
 
 			if (utcb.mtd & Nova::Mtd::TPR) {
-				state.tpr.value(utcb.read_tpr());
-				state.tpr_threshold.value(utcb.read_tpr_threshold());
+				state.tpr.charge(utcb.read_tpr());
+				state.tpr_threshold.charge(utcb.read_tpr_threshold());
 			}
 
 		}
@@ -208,8 +208,8 @@ struct Vcpu {
 			utcb.items = 0;
 			utcb.mtd = 0;
 
-			if (state.ax.valid() || state.cx.valid() ||
-			    state.dx.valid() || state.bx.valid()) {
+			if (state.ax.charged() || state.cx.charged() ||
+			    state.dx.charged() || state.bx.charged()) {
 				utcb.mtd |= Nova::Mtd::ACDB;
 				utcb.ax   = state.ax.value();
 				utcb.cx   = state.cx.value();
@@ -217,38 +217,38 @@ struct Vcpu {
 				utcb.bx   = state.bx.value();
 			}
 
-			if (state.bp.valid() || state.di.valid() || state.si.valid()) {
+			if (state.bp.charged() || state.di.charged() || state.si.charged()) {
 				utcb.mtd |= Nova::Mtd::EBSD;
 				utcb.di   = state.di.value();
 				utcb.si   = state.si.value();
 				utcb.bp   = state.bp.value();
 			}
 
-			if (state.flags.valid()) {
+			if (state.flags.charged()) {
 				utcb.mtd |= Nova::Mtd::EFL;
 				utcb.flags = state.flags.value();
 			}
 
-			if (state.sp.valid()) {
+			if (state.sp.charged()) {
 				utcb.mtd |= Nova::Mtd::ESP;
 				utcb.sp = state.sp.value();
 			}
 
-			if (state.ip.valid()) {
+			if (state.ip.charged()) {
 				utcb.mtd |= Nova::Mtd::EIP;
 				utcb.ip = state.ip.value();
 				utcb.instr_len = state.ip_len.value();
 			}
 
-			if (state.dr7.valid()) {
+			if (state.dr7.charged()) {
 				utcb.mtd |= Nova::Mtd::DR;
 				utcb.dr7 = state.dr7.value();
 			}
 
-			if (state.r8.valid()  || state.r9.valid() ||
-			    state.r10.valid() || state.r11.valid() ||
-			    state.r12.valid() || state.r13.valid() ||
-			    state.r14.valid() || state.r15.valid()) {
+			if (state.r8.charged()  || state.r9.charged() ||
+			    state.r10.charged() || state.r11.charged() ||
+			    state.r12.charged() || state.r13.charged() ||
+			    state.r14.charged() || state.r15.charged()) {
 
 				utcb.mtd |= Nova::Mtd::R8_R15;
 				utcb.write_r8 (state.r8.value());
@@ -261,8 +261,8 @@ struct Vcpu {
 				utcb.write_r15(state.r15.value());
 			}
 
-			if (state.cr0.valid() || state.cr2.valid() || state.cr3.valid() ||
-			    state.cr4.valid()) {
+			if (state.cr0.charged() || state.cr2.charged() || state.cr3.charged() ||
+			    state.cr4.charged()) {
 				utcb.mtd |= Nova::Mtd::CR;
 				utcb.cr0 = state.cr0.value();
 				utcb.cr2 = state.cr2.value();
@@ -270,7 +270,7 @@ struct Vcpu {
 				utcb.cr4 = state.cr4.value();
 			}
 
-			if (state.cs.valid() || state.ss.valid()) {
+			if (state.cs.charged() || state.ss.charged()) {
 				utcb.mtd |= Nova::Mtd::CSSS;
 				utcb.cs.sel   = state.cs.value().sel;
 				utcb.cs.ar    = state.cs.value().ar;
@@ -283,7 +283,7 @@ struct Vcpu {
 				utcb.ss.base  = state.ss.value().base;
 			}
 
-			if (state.es.valid() || state.ds.valid()) {
+			if (state.es.charged() || state.ds.charged()) {
 				utcb.mtd     |= Nova::Mtd::ESDS;
 				utcb.es.sel   = state.es.value().sel;
 				utcb.es.ar    = state.es.value().ar;
@@ -296,7 +296,7 @@ struct Vcpu {
 				utcb.ds.base  = state.ds.value().base;
 			}
 
-			if (state.fs.valid() || state.gs.valid()) {
+			if (state.fs.charged() || state.gs.charged()) {
 				utcb.mtd     |= Nova::Mtd::FSGS;
 				utcb.fs.sel   = state.fs.value().sel;
 				utcb.fs.ar    = state.fs.value().ar;
@@ -309,7 +309,7 @@ struct Vcpu {
 				utcb.gs.base  = state.gs.value().base;
 			}
 
-			if (state.tr.valid()) {
+			if (state.tr.charged()) {
 				utcb.mtd     |= Nova::Mtd::TR;
 				utcb.tr.sel   = state.tr.value().sel;
 				utcb.tr.ar    = state.tr.value().ar;
@@ -317,7 +317,7 @@ struct Vcpu {
 				utcb.tr.base  = state.tr.value().base;
 			}
 
-			if (state.ldtr.valid()) {
+			if (state.ldtr.charged()) {
 				utcb.mtd       |= Nova::Mtd::LDTR;
 				utcb.ldtr.sel   = state.ldtr.value().sel;
 				utcb.ldtr.ar    = state.ldtr.value().ar;
@@ -325,57 +325,57 @@ struct Vcpu {
 				utcb.ldtr.base  = state.ldtr.value().base;
 			}
 
-			if (state.gdtr.valid()) {
+			if (state.gdtr.charged()) {
 				utcb.mtd       |= Nova::Mtd::GDTR;
 				utcb.gdtr.limit = state.gdtr.value().limit;
 				utcb.gdtr.base  = state.gdtr.value().base;
 			}
 
-			if (state.idtr.valid()) {
+			if (state.idtr.charged()) {
 				utcb.mtd       |= Nova::Mtd::IDTR;
 				utcb.idtr.limit = state.idtr.value().limit;
 				utcb.idtr.base  = state.idtr.value().base;
 			}
 
-			if (state.sysenter_cs.valid() || state.sysenter_sp.valid() ||
-			    state.sysenter_ip.valid()) {
+			if (state.sysenter_cs.charged() || state.sysenter_sp.charged() ||
+			    state.sysenter_ip.charged()) {
 				utcb.mtd        |= Nova::Mtd::SYS;
 				utcb.sysenter_cs = state.sysenter_cs.value();
 				utcb.sysenter_sp = state.sysenter_sp.value();
 				utcb.sysenter_ip = state.sysenter_ip.value();
 			}
 
-			if (state.ctrl_primary.valid() || state.ctrl_secondary.valid()) {
+			if (state.ctrl_primary.charged() || state.ctrl_secondary.charged()) {
 				utcb.mtd     |= Nova::Mtd::CTRL;
 				utcb.ctrl[0]  = state.ctrl_primary.value();
 				utcb.ctrl[1]  = state.ctrl_secondary.value();
 			}
 
-			if (state.inj_info.valid() || state.inj_error.valid()) {
+			if (state.inj_info.charged() || state.inj_error.charged()) {
 				utcb.mtd      |= Nova::Mtd::INJ;
 				utcb.inj_info  = state.inj_info.value();
 				utcb.inj_error = state.inj_error.value();
 			}
 
-			if (state.intr_state.valid() || state.actv_state.valid()) {
+			if (state.intr_state.charged() || state.actv_state.charged()) {
 				utcb.mtd        |= Nova::Mtd::STA;
 				utcb.intr_state  = state.intr_state.value();
 				utcb.actv_state  = state.actv_state.value();
 			}
 
-			if (state.tsc.valid() || state.tsc_offset.valid()) {
+			if (state.tsc.charged() || state.tsc_offset.charged()) {
 				utcb.mtd     |= Nova::Mtd::TSC;
 				utcb.tsc_val  = state.tsc.value();
 				utcb.tsc_off  = state.tsc_offset.value();
 			}
 
-			if (state.efer.valid()) {
+			if (state.efer.charged()) {
 				utcb.mtd |= Nova::Mtd::EFER;
 				utcb.write_efer(state.efer.value());
 			}
 
-			if (state.pdpte_0.valid() || state.pdpte_1.valid() ||
-			    state.pdpte_2.valid() || state.pdpte_3.valid()) {
+			if (state.pdpte_0.charged() || state.pdpte_1.charged() ||
+			    state.pdpte_2.charged() || state.pdpte_3.charged()) {
 
 				utcb.mtd |= Nova::Mtd::PDPTE;
 				utcb.pdpte[0] = state.pdpte_0.value();
@@ -384,9 +384,9 @@ struct Vcpu {
 				utcb.pdpte[3] = state.pdpte_3.value();
 			}
 
-			if (state.star.valid() || state.lstar.valid() ||
-			    state.cstar.valid() || state.fmask.valid() ||
-			    state.kernel_gs_base.valid()) {
+			if (state.star.charged() || state.lstar.charged() ||
+			    state.cstar.charged() || state.fmask.charged() ||
+			    state.kernel_gs_base.charged()) {
 
 				utcb.mtd  |= Nova::Mtd::SYSCALL_SWAPGS;
 				utcb.write_star(state.star.value());
@@ -396,19 +396,18 @@ struct Vcpu {
 				utcb.write_kernel_gs_base(state.kernel_gs_base.value());
 			}
 
-			if (state.tpr.valid() || state.tpr_threshold.valid()) {
+			if (state.tpr.charged() || state.tpr_threshold.charged()) {
 				utcb.mtd |= Nova::Mtd::TPR;
 				utcb.write_tpr(state.tpr.value());
 				utcb.write_tpr_threshold(state.tpr_threshold.value());
 			}
 
-
 			if (_use_guest_fpu || state.fpu.valid())
 				asm volatile ("fxsave %0" : "=m" (*_fpu_ep) :: "memory");
 
-			if (state.fpu.valid()) {
-				state.fpu.value([&] (uint8_t *fpu, size_t const) {
-					asm volatile ("fxrstor %0" : : "m" (*fpu) : "memory");
+			if (state.fpu.charged()) {
+				state.fpu.with_state([] (Vm_state::Fpu::State const &fpu) {
+					asm volatile ("fxrstor %0" : : "m" (fpu) : "memory");
 				});
 			}
 		}
@@ -593,103 +592,105 @@ struct Vcpu {
 
 		Nova::Mtd portal_mtd(unsigned exit, Vm_handler_base &handler)
 		{
+			/* FIXME requires sane config interface */
+
 			Vm_state &state = *reinterpret_cast<Vm_state *>(_state);
-			state = Vm_state {};
+			state.discharge();
 
 			if (!handler.config_vm_event(state, exit))
 				return Nova::Mtd(Nova::Mtd::ALL);
 
 			Genode::addr_t mtd = 0;
 
-			if (state.ax.valid() || state.cx.valid() ||
-			    state.dx.valid() || state.bx.valid())
+			if (state.ax.charged() || state.cx.charged() ||
+			    state.dx.charged() || state.bx.charged())
 				mtd |= Nova::Mtd::ACDB;
 
-			if (state.bp.valid() || state.di.valid() || state.si.valid())
+			if (state.bp.charged() || state.di.charged() || state.si.charged())
 				mtd |= Nova::Mtd::EBSD;
 
-			if (state.flags.valid())
+			if (state.flags.charged())
 				mtd |= Nova::Mtd::EFL;
 
-			if (state.sp.valid())
+			if (state.sp.charged())
 				mtd |= Nova::Mtd::ESP;
 
-			if (state.ip.valid())
+			if (state.ip.charged())
 				mtd |= Nova::Mtd::EIP;
 
-			if (state.dr7.valid())
+			if (state.dr7.charged())
 				mtd |= Nova::Mtd::DR;
 
-			if (state.r8.valid()  || state.r9.valid() || state.r10.valid() ||
-			    state.r11.valid() || state.r12.valid() || state.r13.valid() ||
-			    state.r14.valid() || state.r15.valid())
+			if (state.r8.charged()  || state.r9.charged() || state.r10.charged() ||
+			    state.r11.charged() || state.r12.charged() || state.r13.charged() ||
+			    state.r14.charged() || state.r15.charged())
 				mtd |= Nova::Mtd::R8_R15;
 
-			if (state.cr0.valid() || state.cr2.valid() || state.cr3.valid() ||
-			    state.cr4.valid())
+			if (state.cr0.charged() || state.cr2.charged() || state.cr3.charged() ||
+			    state.cr4.charged())
 				mtd |= Nova::Mtd::CR;
 
-			if (state.cs.valid() || state.ss.valid())
+			if (state.cs.charged() || state.ss.charged())
 				mtd |= Nova::Mtd::CSSS;
 
-			if (state.es.valid() || state.ds.valid())
+			if (state.es.charged() || state.ds.charged())
 				mtd |= Nova::Mtd::ESDS;
 
-			if (state.fs.valid() || state.gs.valid())
+			if (state.fs.charged() || state.gs.charged())
 				mtd |= Nova::Mtd::FSGS;
 
-			if (state.tr.valid())
+			if (state.tr.charged())
 				mtd |= Nova::Mtd::TR;
 
-			if (state.ldtr.valid())
+			if (state.ldtr.charged())
 				mtd |= Nova::Mtd::LDTR;
 
-			if (state.gdtr.valid())
+			if (state.gdtr.charged())
 				mtd |= Nova::Mtd::GDTR;
 
-			if (state.idtr.valid())
+			if (state.idtr.charged())
 				mtd |= Nova::Mtd::IDTR;
 
-			if (state.sysenter_cs.valid() || state.sysenter_sp.valid() ||
-			    state.sysenter_ip.valid())
+			if (state.sysenter_cs.charged() || state.sysenter_sp.charged() ||
+			    state.sysenter_ip.charged())
 				mtd |= Nova::Mtd::SYS;
 
-			if (state.ctrl_primary.valid() || state.ctrl_secondary.valid())
+			if (state.ctrl_primary.charged() || state.ctrl_secondary.charged())
 				mtd |= Nova::Mtd::CTRL;
 
-			if (state.inj_info.valid() || state.inj_error.valid())
+			if (state.inj_info.charged() || state.inj_error.charged())
 				mtd |= Nova::Mtd::INJ;
 
-			if (state.intr_state.valid() || state.actv_state.valid())
+			if (state.intr_state.charged() || state.actv_state.charged())
 				mtd |= Nova::Mtd::STA;
 
-			if (state.tsc.valid() || state.tsc_offset.valid())
+			if (state.tsc.charged() || state.tsc_offset.charged())
 				mtd |= Nova::Mtd::TSC;
 
-			if (state.efer.valid())
+			if (state.efer.charged())
 				mtd |= Nova::Mtd::EFER;
 
-			if (state.pdpte_0.valid() || state.pdpte_1.valid() ||
-			    state.pdpte_2.valid() || state.pdpte_3.valid())
+			if (state.pdpte_0.charged() || state.pdpte_1.charged() ||
+			    state.pdpte_2.charged() || state.pdpte_3.charged())
 				mtd |= Nova::Mtd::PDPTE;
 
-			if (state.star.valid() || state.lstar.valid() ||
-			    state.cstar.valid() || state.fmask.valid() ||
-			    state.kernel_gs_base.valid())
+			if (state.star.charged() || state.lstar.charged() ||
+			    state.cstar.charged() || state.fmask.charged() ||
+			    state.kernel_gs_base.charged())
 				mtd |= Nova::Mtd::SYSCALL_SWAPGS;
 
-			if (state.tpr.valid() || state.tpr_threshold.valid())
+			if (state.tpr.charged() || state.tpr_threshold.charged())
 				mtd |= Nova::Mtd::TPR;
 
-			if (state.qual_primary.valid() || state.qual_secondary.valid())
+			if (state.qual_primary.charged() || state.qual_secondary.charged())
 				mtd |= Nova::Mtd::QUAL;
 
-			if (state.fpu.valid()) {
+			if (state.fpu.charged()) {
 				_use_guest_fpu = true;
 				mtd |= Nova::Mtd::FPU;
 			}
 
-			state = Vm_state {};
+			state.discharge();
 
 			return Nova::Mtd(mtd);
 		}
@@ -738,7 +739,7 @@ Vm_session_client::create_vcpu(Allocator &alloc, Env &env,
 			if (!dontcare_exit.valid()) {
 				Nova::Mtd mtd_ip(Nova::Mtd::EIP);
 				dontcare_exit = create_exit_handler(env.pd(), handler._rpc_ep,
-		                                            *vcpu, 0x100, mtd_ip);
+				                                    *vcpu, 0x100, mtd_ip);
 			}
 			signal_exit = dontcare_exit;
 		}

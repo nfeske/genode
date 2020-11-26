@@ -26,6 +26,8 @@
 
 class Vm;
 
+enum { VMEXIT_STARTUP = 0xfe, VMEXIT_PAUSED = 0xff };
+
 namespace Intel_exit {
 	enum {
 		CPUID         = 0x0a,
@@ -44,8 +46,8 @@ namespace Amd_exit {
 	};
 }
 
-class Vcpu {
-
+class Vcpu
+{
 	private:
 
 		Vm                                 &_vm;
@@ -85,49 +87,52 @@ class Vcpu {
 			typedef Genode::Vm_state::Segment Segment;
 			typedef Genode::Vm_state::Range   Range;
 
-			_state = Genode::Vm_state {};
-
-			_state.flags.value(2);
-			_state.ip.   value(0xfff0);
-			_state.cr0.  value(0x10);
-			_state.cs.   value(Segment{0xf000, 0x93, 0xffff, 0xffff0000});
-			_state.ss.   value(Segment{0, 0x93, _state.cs.value().limit, 0});
-			_state.dx.   value(0x600);
-			_state.es.   value(Segment{0, _state.ss.value().ar,
-			                           _state.cs.value().limit, 0});
-			_state.ds.   value(Segment{0, _state.ss.value().ar,
-			                           _state.cs.value().limit, 0});
-			_state.fs.   value(Segment{0, _state.ss.value().ar,
-			                           _state.cs.value().limit, 0});
-			_state.gs.   value(Segment{0, _state.ss.value().ar,
-			                           _state.cs.value().limit, 0});
-			_state.tr.   value(Segment{0, 0x8b, 0xffff, 0});
-			_state.ldtr. value(Segment{0, 0x1000, _state.tr.value().limit, 0});
-			_state.gdtr. value(Range  {0, 0xffff});
-			_state.idtr. value(Range  {0, _state.gdtr.value().limit});
-			_state.dr7.  value(0x400);
+			_state.flags.charge(2);
+			_state.ip.   charge(0xfff0);
+			_state.cr0.  charge(0x10);
+			_state.cs.   charge(Segment{0xf000, 0x93, 0xffff, 0xffff0000});
+			_state.ss.   charge(Segment{0, 0x93, _state.cs.value().limit, 0});
+			_state.dx.   charge(0x600);
+			_state.es.   charge(Segment{0, _state.ss.value().ar,
+			                            _state.cs.value().limit, 0});
+			_state.ds.   charge(Segment{0, _state.ss.value().ar,
+			                            _state.cs.value().limit, 0});
+			_state.fs.   charge(Segment{0, _state.ss.value().ar,
+			                            _state.cs.value().limit, 0});
+			_state.gs.   charge(Segment{0, _state.ss.value().ar,
+			                            _state.cs.value().limit, 0});
+			_state.tr.   charge(Segment{0, 0x8b, 0xffff, 0});
+			_state.ldtr. charge(Segment{0, 0x1000, _state.tr.value().limit, 0});
+			_state.gdtr. charge(Range  {0, 0xffff});
+			_state.idtr. charge(Range  {0, _state.gdtr.value().limit});
+			_state.dr7.  charge(0x400);
 
 			if (_vmx) {
-				_state.ctrl_primary.value(INTEL_CTRL_PRIMARY_HLT);
+				_state.ctrl_primary.charge(INTEL_CTRL_PRIMARY_HLT);
 				/* required for seL4 */
-				_state.ctrl_secondary.value(INTEL_CTRL_SECOND_UG);
+				_state.ctrl_secondary.charge(INTEL_CTRL_SECOND_UG);
 			}
 			if (_svm) {
 				/* required for native AMD hardware (!= Qemu) for NOVA */
-				_state.ctrl_secondary.value(AMD_CTRL_SECOND_VMRUN);
+				_state.ctrl_secondary.charge(AMD_CTRL_SECOND_VMRUN);
 			}
 		}
 
 		void _exit_config(Genode::Vm_state &state, unsigned exit)
 		{
 			/* touch the register state required for the specific vm exit */
-			state.ip.value(0);
+			state.ip.charge(0);
 
 			if (exit == Intel_exit::EPT || exit == Amd_exit::NPT ||
-			    exit == Amd_exit::PF)
-			{
-				state.qual_primary.value(0);
-				state.qual_secondary.value(0);
+			    exit == Amd_exit::PF) {
+				state.qual_primary.charge(0);
+				state.qual_secondary.charge(0);
+			}
+
+			/* force FPU-state transfer on pause() exit */
+			if (exit == VMEXIT_PAUSED) {
+				state.fpu.charge([] (Genode::Vm_state::Fpu::State &) {
+					/* don't change state */ });
 			}
 		}
 
@@ -154,8 +159,14 @@ class Vcpu {
 
 		void skip_instruction(unsigned bytes)
 		{
-			_state = Genode::Vm_state {};
-			_state.ip.value(_state.ip.value() + bytes);
+			_state.ip.charge(_state.ip.value() + bytes);
+		}
+
+		void force_fpu_state_transfer()
+		{
+			/* force FPU-state transfer on next entry */
+			_state.fpu.charge([] (Genode::Vm_state::Fpu::State &) {
+				/* don't change state */ });
 		}
 
 		/*
@@ -367,6 +378,8 @@ void Vm::_handle_timer()
 	if (_vcpu1.paused_1st()) {
 		Genode::log(Genode::Thread::myself()->name(), "     : request resume (A) of vcpu ", _vcpu1.id().id);
 
+		_vcpu1.force_fpu_state_transfer();
+
 		/* continue after first paused state */
 		_vm_con.run(_vcpu1.id());
 	} else if (_vcpu1.paused_2nd()) {
@@ -404,11 +417,9 @@ void Vcpu::_handle_vm_exception()
 {
 	using namespace Genode;
 
-	enum { VMEXIT_STARTUP = 0xfe, VMEXIT_PAUSED = 0xff };
-
 	unsigned const exit = _state.exit_reason;
 
-	_state = Vm_state {};
+	_state.discharge();
 
 	_exit_count++;
 
@@ -472,7 +483,7 @@ void Vcpu::_handle_vm_exception()
 			return;
 		}
 
-		_vm_con.attach(cap, guest_map_addr);
+		_vm_con.attach(cap, guest_map_addr, { 0, 0, true, true });
 	}
 
 	if (_exit_count >= 5) {

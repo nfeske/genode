@@ -1,11 +1,12 @@
 /*
  * \brief   CPU context of a virtual machine for x86
  * \author  Alexander Boettcher
+ * \author  Christian Helmuth
  * \date    2018-10-09
  */
 
 /*
- * Copyright (C) 2018 Genode Labs GmbH
+ * Copyright (C) 2018-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -15,157 +16,216 @@
 #define _INCLUDE__SPEC__X86__CPU__VM_STATE_H_
 
 #include <base/stdint.h>
+#include <util/noncopyable.h>
 
-namespace Genode
+namespace Genode { struct Vm_state; }
+
+
+/*
+ * The state of one virtual CPU (vCPU) as available via the VM session for x86
+ *
+ * The state object is designed for bidirectional transfer of register state,
+ * which means it reflects vCPU state on VM exits but also supports loading
+ * updating register state on VM entry. Therefore, each register contains not
+ * only the actual register value but also a 'charged' state.
+ *
+ * The hypervisor charges registers as requested by the VMM on VM exit with the
+ * current virtual CPU state. The VMM for its part charges registers it intends
+ * to update with new values before VM entry (e.g., after I/O emulation). Both
+ * parties are required to 'discharge()' the vCPU state explicitly if registers
+ * charged by the other party should not be considered on return. The common
+ * case is to discharge all registers, charge some updates and transfer
+ * execution to the other party.
+ */
+class Genode::Vm_state
 {
-	struct Vm_state;
-}
+	private:
 
-struct Genode::Vm_state
-{
-	template <typename T>
-	class Register
-	{
-		private:
+		Vm_state & operator = (Vm_state const &) = default;
 
-			bool _valid;
-			T    _value { };
+		Vm_state(Vm_state const&) = delete;
 
-		public:
+	public:
 
-			Register() : _valid(false) { }
-			Register(T value) : _valid(true), _value(value) { }
+		template <typename T>
+		class Register : Noncopyable
+		{
+			private:
 
-			T value() const { return _value; }
-			void value(T value) { _value = value; _valid = true; }
+				friend class Vm_state;
 
-			bool valid() const { return _valid; }
-			void invalid() { _valid = false; }
+				T    _value   { };
+				bool _charged { false };
 
-			Register &operator = (Register const &other)
-			{
-				_valid = other._valid;
-				/* keep original _value if other._valid is not valid */
-				if (_valid)
-					_value = other._value;
+				/*
+				 * Trick used by Vm_state::discharge() to discharge all
+				 * registers at once. Note, the register value is kept intact.
+				 */
+				Register & operator = (Register const &)
+				{
+					_charged = false;
 
-				return *this;
-			}
-	};
+					return *this;
+				}
 
-	struct Range {
-		addr_t   base;
-		uint32_t limit;
-	};
+			public:
 
-	struct Segment {
-		uint16_t sel, ar;
-		uint32_t limit;
-		addr_t   base;
-	};
+				bool charged() const { return _charged; }
 
-	Register<addr_t> ax;
-	Register<addr_t> cx;
-	Register<addr_t> dx;
-	Register<addr_t> bx;
+				T value() const { return _value; }
 
-	Register<addr_t> bp;
-	Register<addr_t> si;
-	Register<addr_t> di;
+				void charge(T const &value)
+				{
+					_charged = true;
+					_value   = value;
+				}
+		};
 
-	Register<addr_t> sp;
-	Register<addr_t> ip;
-	Register<addr_t> ip_len;
-	Register<addr_t> flags;
+		struct Range
+		{
+			addr_t   base;
+			uint32_t limit;
+		};
 
-	Register<Segment> es;
-	Register<Segment> ds;
-	Register<Segment> fs;
-	Register<Segment> gs;
-	Register<Segment> cs;
-	Register<Segment> ss;
-	Register<Segment> tr;
-	Register<Segment> ldtr;
+		struct Segment
+		{
+			uint16_t sel, ar;
+			uint32_t limit;
+			addr_t   base;
+		};
 
-	Register<Range> gdtr;
-	Register<Range> idtr;
+		Register<addr_t> ax;
+		Register<addr_t> cx;
+		Register<addr_t> dx;
+		Register<addr_t> bx;
 
-	Register<addr_t> cr0;
-	Register<addr_t> cr2;
-	Register<addr_t> cr3;
-	Register<addr_t> cr4;
+		Register<addr_t> bp;
+		Register<addr_t> si;
+		Register<addr_t> di;
 
-	Register<addr_t> dr7;
+		Register<addr_t> sp;
+		Register<addr_t> ip;
+		Register<addr_t> ip_len;
+		Register<addr_t> flags;
 
-	Register<addr_t> sysenter_ip;
-	Register<addr_t> sysenter_sp;
-	Register<addr_t> sysenter_cs;
+		Register<Segment> es;
+		Register<Segment> ds;
+		Register<Segment> fs;
+		Register<Segment> gs;
+		Register<Segment> cs;
+		Register<Segment> ss;
+		Register<Segment> tr;
+		Register<Segment> ldtr;
 
-	Register<uint64_t> qual_primary;
-	Register<uint64_t> qual_secondary;
+		Register<Range> gdtr;
+		Register<Range> idtr;
 
-	Register<uint32_t> ctrl_primary;
-	Register<uint32_t> ctrl_secondary;
+		Register<addr_t> cr0;
+		Register<addr_t> cr2;
+		Register<addr_t> cr3;
+		Register<addr_t> cr4;
 
-	Register<uint32_t> inj_info;
-	Register<uint32_t> inj_error;
+		Register<addr_t> dr7;
 
-	Register<uint32_t> intr_state;
-	Register<uint32_t> actv_state;
+		Register<addr_t> sysenter_ip;
+		Register<addr_t> sysenter_sp;
+		Register<addr_t> sysenter_cs;
 
-	Register<uint64_t> tsc;
-	Register<uint64_t> tsc_offset;
+		Register<uint64_t> qual_primary;
+		Register<uint64_t> qual_secondary;
 
-	Register<addr_t>   efer;
+		Register<uint32_t> ctrl_primary;
+		Register<uint32_t> ctrl_secondary;
 
-	Register<uint64_t> pdpte_0;
-	Register<uint64_t> pdpte_1;
-	Register<uint64_t> pdpte_2;
-	Register<uint64_t> pdpte_3;
+		Register<uint32_t> inj_info;
+		Register<uint32_t> inj_error;
 
-	Register<uint64_t> r8;
-	Register<uint64_t> r9;
-	Register<uint64_t> r10;
-	Register<uint64_t> r11;
-	Register<uint64_t> r12;
-	Register<uint64_t> r13;
-	Register<uint64_t> r14;
-	Register<uint64_t> r15;
+		Register<uint32_t> intr_state;
+		Register<uint32_t> actv_state;
 
-	Register<uint64_t> star;
-	Register<uint64_t> lstar;
-	Register<uint64_t> cstar;
-	Register<uint64_t> fmask;
-	Register<uint64_t> kernel_gs_base;
+		Register<uint64_t> tsc;
+		Register<uint64_t> tsc_offset;
 
-	Register<uint32_t> tpr;
-	Register<uint32_t> tpr_threshold;
+		Register<addr_t>   efer;
 
-	unsigned exit_reason;
+		Register<uint64_t> pdpte_0;
+		Register<uint64_t> pdpte_1;
+		Register<uint64_t> pdpte_2;
+		Register<uint64_t> pdpte_3;
 
-	class Fpu {
-		private :
+		Register<uint64_t> r8;
+		Register<uint64_t> r9;
+		Register<uint64_t> r10;
+		Register<uint64_t> r11;
+		Register<uint64_t> r12;
+		Register<uint64_t> r13;
+		Register<uint64_t> r14;
+		Register<uint64_t> r15;
 
-			uint8_t _value[512] { };
-			bool    _valid      { false };
+		Register<uint64_t> star;
+		Register<uint64_t> lstar;
+		Register<uint64_t> cstar;
+		Register<uint64_t> fmask;
+		Register<uint64_t> kernel_gs_base;
 
-		public:
+		Register<uint32_t> tpr;
+		Register<uint32_t> tpr_threshold;
 
-			bool valid() const { return _valid; }
-			void invalid() { _valid = false; }
+		unsigned exit_reason;
 
-			template <typename FUNC>
-			void value(FUNC const &fn) {
-				_valid = true;
-				fn(_value, sizeof(_value));
-			};
+		class Fpu : Noncopyable
+		{
+			public:
 
-			Fpu &operator = (Fpu const &)
-			{
-				_valid = false;
-				return *this;
-			}
-	} fpu __attribute__((aligned(16)));
+				struct State
+				{
+					uint8_t _buffer[512] { };
+				} __attribute__((aligned(16)));
+
+			private:
+
+				friend class Vm_state;
+
+				State _state   { };
+				bool  _charged { false };
+
+				/* see comment for Register::operator=() */
+				Fpu & operator = (Fpu const &)
+				{
+					_charged = false;
+
+					return *this;
+				}
+
+			public:
+
+				bool charged() const { return _charged; }
+
+				template <typename FN>
+				void with_state(FN const &fn) const
+				{
+					fn(_state);
+				}
+
+				template <typename FN>
+				void charge(FN const &fn)
+				{
+					_charged = true;
+					fn(_state);
+				}
+		};
+
+		Fpu fpu __attribute__((aligned(16)));
+
+		/*
+		 * Registers transfered by hypervisor from guest on VM exit are charged.
+		 * Discharged registers are not loaded into guest on VM entry.
+		 */
+		void discharge()
+		{
+			/* invoke operator= for all registers with all charged flags reset */
+			*this = Vm_state { };
+		}
 };
 
 #endif /* _INCLUDE__SPEC__X86__CPU__VM_STATE_H_ */
