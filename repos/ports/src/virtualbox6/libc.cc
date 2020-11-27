@@ -27,6 +27,8 @@ static bool const debug = true;
 
 extern "C" {
 
+int sched_yield() { /* silent dummy */ return 0; }
+
 int sched_get_priority_max(int policy) TRACE(0)
 int sched_get_priority_min(int policy) TRACE(0)
 int pthread_setschedparam(pthread_t thread, int policy,
