@@ -59,13 +59,27 @@ class Sup::Gmm
 
 		struct Protection
 		{
-			bool executable;
+			bool readable;
 			bool writeable;
+			bool executable;
+
+			bool none() const
+			{
+				return !readable && ! writeable && !executable;
+			}
 
 			bool operator == (Protection const &other) const
 			{
-				return executable == other.executable
-				    && writeable  == other.writeable;
+				return readable   == other.readable
+				    && writeable  == other.writeable
+				    && executable == other.executable;
+			}
+
+			void print(Output &o) const
+			{
+				Genode::print(o, readable   ? "r" : "-",
+				                 writeable  ? "w" : "-",
+				                 executable ? "x" : "-");
 			}
 		};
 

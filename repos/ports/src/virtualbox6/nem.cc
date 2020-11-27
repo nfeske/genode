@@ -42,23 +42,27 @@ struct Sup::Nem
 
 	struct Range
 	{
-		addr_t     first_byte { 0 };
-		addr_t     last_byte  { 0 };
-		Protection prot       { false, false };
+		addr_t first_byte { 0 };
+		addr_t last_byte  { 0 };
+
+		Protection prot { false, false, false };
 
 		size_t size() const { return last_byte ? last_byte - first_byte + 1 : 0; }
 
+		/* empty ranges are invalid */
+		bool valid() const { return size() != 0; }
+
 		bool extend(Range const &other)
 		{
-			/* ignore empty-range extension */
-			if (!other.size())
+			/* ignore invalid ranges */
+			if (!other.valid())
 				return true;
 
 			if (!(prot == other.prot))
 				return false;
 
 			/* initialize if uninitialized */
-			if (!size()) {
+			if (!valid()) {
 				first_byte = other.first_byte;
 				last_byte  = other.last_byte;
 				prot       = other.prot;
@@ -86,12 +90,7 @@ struct Sup::Nem
 
 		void print(Output &o) const
 		{
-			using Genode::print;
-
-			print(o, "r");
-			print(o, prot.writeable  ? "w" : "-");
-			print(o, prot.executable ? "x" : "-");
-			print(o, ":", Hex_range(first_byte, size()));
+			Genode::print(o, prot, ":", Hex_range(first_byte, size()));
 		}
 	};
 
@@ -100,8 +99,8 @@ struct Sup::Nem
 
 	void commit_range()
 	{
-		/* ignore commit of empty ranges */
-		if (!host_range.size())
+		/* ignore commit of invalid ranges */
+		if (!host_range.valid())
 			return;
 
 		log(__PRETTY_FUNCTION__, " host=", host_range , " guest=", guest_range);
@@ -188,7 +187,7 @@ int nemR3NativeInitCompleted(PVM pVM, VMINITCOMPLETED enmWhat) TRACE(VINF_SUCCES
 int nemR3NativeTerm(PVM pVM) STOP
 
 
-void nemR3NativeReset(PVM pVM) STOP
+void nemR3NativeReset(PVM pVM) TRACE()
 
 
 void nemR3NativeResetCpu(PVMCPU pVCpu, bool fInitIpi) STOP
@@ -199,8 +198,6 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 	using namespace Sup;
 
 	Vm &vm = *static_cast<Vm *>(pVM);
-
-	warning(__PRETTY_FUNCTION__, " pVM=", pVM, " pVCpu=", pVCpu, " ", pVCpu->idCpu);
 
 	VBOXSTRICTRC result = 0;
 	vm.with_vcpu_handler(Cpu_index { pVCpu->idCpu }, [&] (Vcpu_handler &handler) {
@@ -230,20 +227,32 @@ bool nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable) TRACE(
 void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags)
 {
 	/* nemHCWinCancelRunVirtualProcessor(pVM, pVCpu); */
-	TRACE()
+	Log(("%s: fFlags=%x\n", __PRETTY_FUNCTION__, fFlags));
 }
 
 
 int nemR3NativeNotifyPhysRamRegister(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb)
 {
-	warning(__PRETTY_FUNCTION__, " GCPhys=", Hex(GCPhys), " cb=", Hex(cb));
+	Log(("%s: GCPhys=%p cb=%p\n", __PRETTY_FUNCTION__, (void*)GCPhys, (void*)cb));
 
 	return VINF_SUCCESS;
 }
 
 
 int nemR3NativeNotifyPhysMmioExMap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
-                                   ::uint32_t fFlags, void *pvMmio2) STOP
+                                   ::uint32_t fFlags, void *pvMmio2)
+{
+	/*
+	 * This is called from PGMPhys.cpp with
+	 *
+	 * fFlags = (pFirstMmio->fFlags & PGMREGMMIO2RANGE_F_MMIO2       ? NEM_NOTIFY_PHYS_MMIO_EX_F_MMIO2   : 0)
+	 *        | (pFirstMmio->fFlags & PGMREGMMIO2RANGE_F_OVERLAPPING ? NEM_NOTIFY_PHYS_MMIO_EX_F_REPLACE : 0);
+	 */
+
+	Log(("%s\n", __PRETTY_FUNCTION__));
+
+	return VINF_SUCCESS;
+}
 
 
 int nemR3NativeNotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
@@ -266,8 +275,26 @@ int nemR3NativeNotifyPhysRomRegisterLate(PVM pVM, RTGCPHYS GCPhys,
 }
 
 
-void nemR3NativeNotifySetA20(PVMCPU pVCpu, bool fEnabled) STOP
+/**
+ * Called when the A20 state changes.
+ *
+ * Hyper-V doesn't seem to offer a simple way of implementing the A20 line
+ * features of PCs.  So, we do a very minimal emulation of the HMA to make DOS
+ * happy.
+ *
+ * @param   pVCpu           The CPU the A20 state changed on.
+ * @param   fEnabled        Whether it was enabled (true) or disabled.
+ */
+void nemR3NativeNotifySetA20(PVMCPU pVCpu, bool fEnabled)
+{
+	warning(__PRETTY_FUNCTION__, ": fEnabled=", fEnabled);
 
+//	if (!pVM->nem.s.fA20Fixed) {
+//		pVM->nem.s.fA20Enabled = fEnabled;
+//		for (RTGCPHYS GCPhys = _1M; GCPhys < _1M + _64K; GCPhys += X86_PAGE_SIZE)
+//			nemR3WinUnmapPageForA20Gate(pVM, pVCpu, GCPhys);
+//	}
+}
 
 
 void nemHCNativeNotifyHandlerPhysicalDeregister(PVMCC pVM, PGMPHYSHANDLERKIND enmKind,
@@ -285,17 +312,9 @@ int nemHCNativeNotifyPhysPageAllocated(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPh
                                        ::uint32_t fPageProt, PGMPAGETYPE enmType,
                                        ::uint8_t *pu2State)
 {
-	warning(__PRETTY_FUNCTION__, " GCPhys=", (void *)GCPhys,
-	        " HCPhys=", (void *)HCPhys, " fPageProt=", Hex(fPageProt));
+	nemHCNativeNotifyPhysPageProtChanged(pVM, GCPhys, HCPhys,
+	                                     fPageProt, enmType, pu2State);
 
-	bool const r { fPageProt & NEM_PAGE_PROT_READ };
-	bool const w { fPageProt & NEM_PAGE_PROT_WRITE };
-	bool const x { fPageProt & NEM_PAGE_PROT_EXECUTE };
-
-	if (!r)
-		warning(__PRETTY_FUNCTION__, ": unreadable mapping requested");
-
-	nem_ptr->map_page_to_guest(HCPhys, GCPhys, Sup::Nem::Protection { x, w });
 	nem_ptr->commit_range();
 
 	return VINF_SUCCESS;
@@ -306,17 +325,13 @@ void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS H
                                           ::uint32_t fPageProt, PGMPAGETYPE enmType,
                                           ::uint8_t *pu2State)
 {
-	warning(__PRETTY_FUNCTION__, " GCPhys=", (void *)GCPhys,
-	        " HCPhys=", (void *)HCPhys, " fPageProt=", Hex(fPageProt));
+	Sup::Nem::Protection const prot {
+		.readable   = fPageProt & NEM_PAGE_PROT_READ,
+		.writeable  = fPageProt & NEM_PAGE_PROT_WRITE,
+		.executable = fPageProt & NEM_PAGE_PROT_EXECUTE,
+	};
 
-	bool const r { fPageProt & NEM_PAGE_PROT_READ };
-	bool const w { fPageProt & NEM_PAGE_PROT_WRITE };
-	bool const x { fPageProt & NEM_PAGE_PROT_EXECUTE };
-
-	if (!r)
-		warning(__PRETTY_FUNCTION__, ": unreadable mapping requested");
-
-	nem_ptr->map_page_to_guest(HCPhys, GCPhys, Sup::Nem::Protection { x, w });
+	nem_ptr->map_page_to_guest(HCPhys, GCPhys, prot);
 }
 
 

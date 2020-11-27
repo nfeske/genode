@@ -152,6 +152,9 @@ void Sup::Gmm::map_to_guest(Vmm_addr from, Guest_addr to, Pages pages, Protectio
 	/* revoke existing mappings to avoid overmap */
 	_vm_connection.detach(to.value, pages.value << PAGE_SHIFT);
 
+	if (prot.none())
+		return;
+
 	Vmm_addr const from_end { from.value + (pages.value << PAGE_SHIFT) - 1 };
 
 	for (unsigned i = _slice_index(from); i <= _slice_index(from_end); i++) {
