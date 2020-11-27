@@ -108,8 +108,6 @@ struct SUPDRVSESSION
 
 static void ioctl(SUPCOOKIE &request)
 {
-	warning("SUPCOOKIE misses session-object creation");
-
 	with_inout_ioctl(request, [&] (auto const &, auto &out, auto &) {
 
 		out.u32SessionVersion = SUPDRV_IOC_VERSION;
@@ -119,8 +117,6 @@ static void ioctl(SUPCOOKIE &request)
 
 static void ioctl(SUPQUERYFUNCS &request)
 {
-	warning("SUPQUERYFUNCS reports zero functions");
-
 	with_out_ioctl(request, [&] (auto &out, auto &) { });
 
 	before_first_call_of_ioctl_query_funcs = false;
@@ -183,13 +179,6 @@ static void ioctl(SUPVTCAPS &request)
 
 static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 {
-	warning(__PRETTY_FUNCTION__
-	       , " pSession=", request.pSession
-	       , " cCpus=", request.cCpus
-	       , " pVMR3=", request.pVMR3
-	       , " pVMR0=", request.pVMR0
-	       );
-
 	Sup::Cpu_count cpu_count { request.cCpus };
 
 	Sup::Vm &new_vm = Sup::Vm::create(request.pSession, cpu_count);
@@ -272,6 +261,14 @@ static int vmmr0_gvmm_wake_up(PVMR0 pvmr0, uint32_t cpu)
 }
 
 
+static int vmmr0_gvmm_sched_poll(PVMR0 pvmr0, uint32_t cpu, bool yield)
+{
+	error("VMMR0_DO_GVMM_SCHED_POLL");
+
+	return VERR_NOT_IMPLEMENTED;
+}
+
+
 static int vmmr0_gmm_initial_reservation(GMMINITIALRESERVATIONREQ &request)
 {
 	warning(__PRETTY_FUNCTION__
@@ -312,11 +309,6 @@ static int vmmr0_gmm_update_reservation(GMMUPDATERESERVATIONREQ &request)
 
 static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
 {
-	warning(__PRETTY_FUNCTION__
-	       , " cPages=", request.cPages
-	       , " enmAccount=", (int)request.enmAccount
-	       );
-
 	Sup::Gmm::Pages pages { request.cPages };
 
 	using Vmm_addr = Sup::Gmm::Vmm_addr;
@@ -340,12 +332,6 @@ static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
 
 static int vmmr0_gmm_map_unmap_chunk(GMMMAPUNMAPCHUNKREQ &request)
 {
-	warning(__PRETTY_FUNCTION__
-	       , " idChunkMap=", request.idChunkMap
-	       , " idChunkUnmap=", request.idChunkUnmap
-	       , " pvR3=", request.pvR3
-	       );
-
 	if (request.idChunkMap != NIL_GMM_CHUNKID) {
 		Sup::Gmm::Page_id const page_id { request.idChunkMap << GMM_CHUNKID_SHIFT };
 
@@ -358,8 +344,6 @@ static int vmmr0_gmm_map_unmap_chunk(GMMMAPUNMAPCHUNKREQ &request)
 
 static int vmmr0_iom_grow_io_ports(PVMR0 pvmr0, ::uint64_t min_entries)
 {
-	warning(__PRETTY_FUNCTION__, " min_entries=", min_entries);
-
 	/* satisfy IOMR3IoPortCreate */
 	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
 
@@ -395,8 +379,6 @@ static int vmmr0_iom_grow_io_ports(PVMR0 pvmr0, ::uint64_t min_entries)
 
 static int vmmr0_iom_grow_mmio_regs(PVMR0 pvmr0, ::uint64_t min_entries)
 {
-	warning(__PRETTY_FUNCTION__, " min_entries=", min_entries);
-
 	/* satisfy IOMR3MmioCreate */
 	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
 
@@ -600,12 +582,12 @@ static void ioctl(SUPCALLVMMR0 &request)
 {
 	auto &rc = request.Hdr.rc;
 
-	warning("SUPCALLVMMR0 "
-	       , " pVMR0=", (void*)request.u.In.pVMR0
-	       , " idCpu=",        request.u.In.idCpu
-	       , " uOperation=",   request.u.In.uOperation
-	       , " u64Arg=",   Hex(request.u.In.u64Arg)
-	       );
+//	warning("SUPCALLVMMR0 "
+//	       , " pVMR0=", (void*)request.u.In.pVMR0
+//	       , " idCpu=",        request.u.In.idCpu
+//	       , " uOperation=",   request.u.In.uOperation
+//	       , " u64Arg=",   Hex(request.u.In.u64Arg)
+//	       );
 
 	VMMR0OPERATION const operation = VMMR0OPERATION(request.u.In.uOperation);
 
@@ -625,6 +607,10 @@ static void ioctl(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_GVMM_SCHED_WAKE_UP:
 		rc = vmmr0_gvmm_wake_up(request.u.In.pVMR0, request.u.In.idCpu);
+		return;
+
+	case VMMR0_DO_GVMM_SCHED_POLL:
+		rc = vmmr0_gvmm_sched_poll(request.u.In.pVMR0, request.u.In.idCpu, !!request.u.In.u64Arg);
 		return;
 
 	case VMMR0_DO_GMM_INITIAL_RESERVATION:

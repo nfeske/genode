@@ -18,6 +18,10 @@
   Hence, we can ignore all code wrapped by '#ifndef PGM_WITHOUT_MAPPINGS'
 * VMHALTMETHOD is currently VMHALTMETHOD_GLOBAL_1 after VMMR0_DO_VMMR0_INIT_EMT
   maybe worthwhile to check
+* qemu: When using Qemu/SVM we get an early unexpected VM exit with reason 0
+  accord. to Alex this should not happen with vbox5-generic
+* May we drop FPU-state transfers with VirtualBox 6 ?
+  IEM_CTX_IMPORT_NORET() and CPUMImportGuestStateOnDemand() look promising
 
 * Call trace for NEMR0MapPages
     nemR0WinMapPages (HV_INPUT_MAP_GPA_PAGES)
