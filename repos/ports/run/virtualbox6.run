@@ -238,6 +238,7 @@ append_if [expr $use_serial] config {
 append config {
 				<rom name="test.vbox" />
 				<rom name="test.iso" />
+				<rom name="bootsector.img" />
 			</vfs>
 			<arg value="virtualbox"/>
 			<env key="VBOX_USER_HOME" value="/"/>
@@ -265,7 +266,7 @@ install_config $config
 
 exec cp ${genode_dir}/repos/ports/run/test.vbox bin/.
 
-set boot_modules { test.iso test.vbox }
+set boot_modules { test.iso bootsector.img test.vbox }
 
 append boot_modules $virtualbox_binary
 
