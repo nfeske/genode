@@ -19,8 +19,6 @@
 #include <ConsoleImpl.h>
 #include <DisplayImpl.h>
 
-#include "vmm.h"
-
 #define REGISTER(driver) \
 	do { \
 		rc = pCallbacks->pfnRegister(pCallbacks, &driver); \

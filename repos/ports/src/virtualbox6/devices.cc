@@ -15,8 +15,6 @@
 #include <VBoxDD.h>
 #include <VBoxDD2.h>
 
-#include "vmm.h"
-
 #define REGISTER(device)                                       \
 	do {                                                       \
 		rc = pCallbacks->pfnRegister(pCallbacks, &g_##device); \

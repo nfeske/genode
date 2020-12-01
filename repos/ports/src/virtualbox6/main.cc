@@ -33,15 +33,9 @@
 
 /* Genode port specific includes */
 #include <init.h>
-#include "fb.h"
-#include "vmm.h"
+#include <fb.h>
 
-using Genode::warning;
-using Genode::error;
-using Genode::Xml_node;
-using Genode::Env;
-using Genode::String;
-using Genode::Attached_rom_dataspace;
+using namespace Genode;
 
 
 /*
@@ -116,7 +110,7 @@ struct Main
 		}
 	} _virtualbox { };
 
-	struct Session_instance : ComObjPtr<Session>
+	struct Session_instance : ComObjPtr<::Session>
 	{
 		Session_instance()
 		{
@@ -262,35 +256,12 @@ struct Main
 };
 
 
-static Env *genode_env_ptr = nullptr;
-
-
-Env &genode_env()
-{
-	struct Genode_env_ptr_uninitialized : Genode::Exception { };
-	if (!genode_env_ptr)
-		throw Genode_env_ptr_uninitialized();
-
-	return *genode_env_ptr;
-}
-
-
-Genode::Allocator &vmm_heap()
-{
-	static Genode::Heap heap (genode_env().ram(), genode_env().rm());
-	return heap;
-}
-
-
 /* initial environment for the FreeBSD libc implementation */
 extern char **environ;
 
 
 void Libc::Component::construct(Libc::Env &env)
 {
-	/* make Genode environment accessible via the global 'genode_env()' */
-	genode_env_ptr = &env;
-
 	Libc::with_libc([&] () {
 
 		/* extract args and environment variables from config */
