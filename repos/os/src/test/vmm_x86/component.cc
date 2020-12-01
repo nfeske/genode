@@ -1,12 +1,13 @@
 /*
  * \brief  VM session interface test for x86
  * \author Alexander Boettcher
+ * \author Christian Helmuth
  * \date   2018-09-26
  *
  */
 
 /*
- * Copyright (C) 2018-2019 Genode Labs GmbH
+ * Copyright (C) 2018-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -24,9 +25,13 @@
 
 #include <cpu/vm_state.h>
 
-class Vm;
+namespace {
+	class Vm;
+	class Vcpu;
+	class Vmm;
 
-enum { VMEXIT_STARTUP = 0xfe, VMEXIT_PAUSED = 0xff };
+	enum { VMEXIT_STARTUP = 0xfe, VMEXIT_PAUSED = 0xff };
+}
 
 namespace Intel_exit {
 	enum {
@@ -45,6 +50,7 @@ namespace Amd_exit {
 		NPT          = 0xfc
 	};
 }
+
 
 class Vcpu
 {
@@ -204,8 +210,9 @@ class Vcpu
 		void timer_triggered() { _timer_count ++; }
 };
 
-class Vm {
 
+class Vm
+{
 	private:
 
 		enum { STACK_SIZE = 2*1024*sizeof(long) };
@@ -410,6 +417,7 @@ void Vm::_handle_timer()
 	}
 }
 
+
 /**
  * Handle VM exits ...
  */
@@ -499,8 +507,9 @@ void Vcpu::_handle_vm_exception()
 	_vm_con.run(_vcpu);
 }
 
-class Vmm {
 
+class Vmm
+{
 	private:
 
 		Genode::Signal_handler<Vmm> _destruct_handler;
