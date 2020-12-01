@@ -15,6 +15,7 @@
 /* Genode includes */
 #include <base/attached_rom_dataspace.h>
 #include <base/heap.h>
+#include <base/registry.h>
 #include <libc/component.h>
 #include <libc/args.h>
 
@@ -34,6 +35,7 @@
 /* Genode port specific includes */
 #include <init.h>
 #include <fb.h>
+#include <scan_code.h>
 
 using namespace Genode;
 
@@ -189,6 +191,20 @@ struct Main
 		}
 	} _idisplay { _iconsole };
 
+	Registry<Registered<Gui::Connection>> _gui_connections { };
+
+	Signal_handler<Main> _input_handler { _env.ep(), *this, &Main::_handle_input };
+
+	void _handle_input_event(Input::Event const &);
+
+	void _handle_input()
+	{
+		Libc::with_libc([&] {
+			_gui_connections.for_each([&] (Gui::Connection &gui) {
+				gui.input()->for_each_event([&] (Input::Event const &ev) {
+					_handle_input_event(ev); }); }); });
+	}
+
 	bool const _genode_gui_attached = ( _attach_genode_gui(), true );
 
 	void _attach_genode_gui()
@@ -197,7 +213,9 @@ struct Main
 
 		for (unsigned i = 0; i < num_monitors.value; i++) {
 
-			Gui::Connection &gui = *new Gui::Connection(_env);
+			Gui::Connection &gui = *new Registered<Gui::Connection>(_gui_connections, _env);
+
+			gui.input()->sigh(_input_handler);
 
 			Genodefb *fb = new Genodefb(_env, gui, _idisplay);
 
@@ -254,6 +272,31 @@ struct Main
 
 	Main(Genode::Env &env) : _env(env) { }
 };
+
+
+void Main::_handle_input_event(Input::Event const &ev)
+{
+	auto keyboard_submit = [&] (Input::Keycode key, bool release) {
+
+		Scan_code scan_code(key);
+
+		unsigned char const release_bit = release ? 0x80 : 0;
+
+		if (scan_code.normal())
+			_ikeyboard->PutScancode(scan_code.code() | release_bit);
+
+		if (scan_code.ext()) {
+			_ikeyboard->PutScancode(0xe0);
+			_ikeyboard->PutScancode(scan_code.ext() | release_bit);
+		}
+	};
+
+		ev.handle_press([&] (Input::Keycode key, Genode::Codepoint) {
+			keyboard_submit(key, false); });
+
+		ev.handle_release([&] (Input::Keycode key) {
+			keyboard_submit(key, true); });
+}
 
 
 /* initial environment for the FreeBSD libc implementation */
