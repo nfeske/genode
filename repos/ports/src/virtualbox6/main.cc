@@ -259,6 +259,22 @@ struct Main
 			attempt([&] () { return iconsole->COMGETTER(Mouse)(this->asOutParam()); },
 			        "unable to request mouse interface from console");
 		}
+
+		bool _key_status[Input::KEY_MAX + 1];
+
+		typedef Surface_base::Point Point;
+
+		Point _abs_pos { 0, 0 };
+
+		static bool _mouse_button(Input::Keycode keycode)
+		{
+			return keycode == Input::BTN_LEFT
+			    || keycode == Input::BTN_RIGHT
+			    || keycode == Input::BTN_MIDDLE;
+		}
+
+		void handle_input_event(Input::Event const &);
+
 	} _imouse { _iconsole };
 
 	struct Keyboard_interface : ComPtr<IKeyboard>
@@ -268,14 +284,19 @@ struct Main
 			attempt([&] () { return iconsole->COMGETTER(Keyboard)(this->asOutParam()); },
 			        "unable to request keyboard interface from console");
 		}
+
+		void handle_input_event(Input::Event const &);
+
 	} _ikeyboard { _iconsole };
 
 	Main(Genode::Env &env) : _env(env) { }
 };
 
 
-void Main::_handle_input_event(Input::Event const &ev)
+void Main::Keyboard_interface::handle_input_event(Input::Event const &ev)
 {
+	Keyboard_interface &keyboard = *this;
+
 	auto keyboard_submit = [&] (Input::Keycode key, bool release) {
 
 		Scan_code scan_code(key);
@@ -283,19 +304,62 @@ void Main::_handle_input_event(Input::Event const &ev)
 		unsigned char const release_bit = release ? 0x80 : 0;
 
 		if (scan_code.normal())
-			_ikeyboard->PutScancode(scan_code.code() | release_bit);
+			keyboard->PutScancode(scan_code.code() | release_bit);
 
 		if (scan_code.ext()) {
-			_ikeyboard->PutScancode(0xe0);
-			_ikeyboard->PutScancode(scan_code.ext() | release_bit);
+			keyboard->PutScancode(0xe0);
+			keyboard->PutScancode(scan_code.ext() | release_bit);
 		}
 	};
 
-		ev.handle_press([&] (Input::Keycode key, Genode::Codepoint) {
-			keyboard_submit(key, false); });
+	ev.handle_press([&] (Input::Keycode key, Genode::Codepoint) {
+		keyboard_submit(key, false); });
 
-		ev.handle_release([&] (Input::Keycode key) {
-			keyboard_submit(key, true); });
+	ev.handle_release([&] (Input::Keycode key) {
+		keyboard_submit(key, true); });
+}
+
+
+void Main::Mouse_interface::handle_input_event(Input::Event const &ev)
+{
+	/* obtain bit mask of currently pressed mouse buttons */
+	auto curr_mouse_button_bits = [&] () {
+		return (_key_status[Input::BTN_LEFT]   ? MouseButtonState_LeftButton   : 0)
+		     | (_key_status[Input::BTN_RIGHT]  ? MouseButtonState_RightButton  : 0)
+		     | (_key_status[Input::BTN_MIDDLE] ? MouseButtonState_MiddleButton : 0);
+	};
+
+	unsigned const old_mouse_button_bits = curr_mouse_button_bits();
+	Point    const old_abs_pos           = _abs_pos;
+
+	ev.handle_press([&] (Input::Keycode key, Codepoint) {
+		if (_mouse_button(key))
+			_key_status[key] = true; });
+
+	ev.handle_release([&] (Input::Keycode key) {
+		if (_mouse_button(key))
+			_key_status[key] = false; });
+
+	ev.handle_absolute_motion([&] (int ax, int ay) {
+		_abs_pos = Point(ax, ay); });
+
+	unsigned const mouse_button_bits = curr_mouse_button_bits();
+
+	bool const abs_pos_changed = (old_abs_pos != _abs_pos);
+	bool const buttons_changed = (old_mouse_button_bits != mouse_button_bits);
+
+	Mouse_interface &mouse = *this;
+
+	if (abs_pos_changed || buttons_changed)
+		mouse->PutMouseEventAbsolute(_abs_pos.x(), _abs_pos.y(), 0, 0, mouse_button_bits);
+}
+
+
+void Main::_handle_input_event(Input::Event const &ev)
+{
+	/* present the event to potential consumers */
+	_ikeyboard.handle_input_event(ev);
+	_imouse.handle_input_event(ev);
 }
 
 
