@@ -1,6 +1,7 @@
 /*
  * \brief  Genode backend for VirtualBox native execution manager
  * \author Norman Feske
+ * \author Christian Helmuth
  * \date   2020-11-05
  */
 
@@ -15,7 +16,9 @@
 #include <VBox/vmm/cpum.h> /* must be included before CPUMInternal.h */
 #include <CPUMInternal.h>  /* enable access to cpum.s.* */
 #include <HMInternal.h>    /* enable access to hm.s.* */
+#define RT_OS_WINDOWS      /* needed for definition all nem.s members */
 #include <NEMInternal.h>   /* enable access to nem.s.* */
+#undef RT_OS_WINDOWS
 #include <VBox/vmm/nem.h>
 #include <VBox/vmm/vmcc.h>
 #include <VBox/err.h>
@@ -103,7 +106,7 @@ struct Sup::Nem
 		if (!host_range.valid())
 			return;
 
-		log(__PRETTY_FUNCTION__, " host=", host_range , " guest=", guest_range);
+//		log(__PRETTY_FUNCTION__, " host=", host_range , " guest=", guest_range);
 
 		/* commit the current range to GMM */
 		_gmm.map_to_guest(Gmm::Vmm_addr   { host_range.first_byte },
@@ -187,10 +190,22 @@ int nemR3NativeInitCompleted(PVM pVM, VMINITCOMPLETED enmWhat) TRACE(VINF_SUCCES
 int nemR3NativeTerm(PVM pVM) STOP
 
 
+/**
+ * VM reset notification.
+ *
+ * @param   pVM         The cross context VM structure.
+ */
 void nemR3NativeReset(PVM pVM) TRACE()
 
 
-void nemR3NativeResetCpu(PVMCPU pVCpu, bool fInitIpi) STOP
+/**
+ * Reset CPU due to INIT IPI or hot (un)plugging.
+ *
+ * @param   pVCpu       The cross context virtual CPU structure of the CPU being
+ *                      reset.
+ * @param   fInitIpi    Whether this is the INIT IPI or hot (un)plugging case.
+ */
+void nemR3NativeResetCpu(PVMCPU pVCpu, bool fInitIpi) TRACE()
 
 
 VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
@@ -208,7 +223,10 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 }
 
 
-bool nemR3NativeCanExecuteGuest(PVM pVM, PVMCPU pVCpu) TRACE(true)
+bool nemR3NativeCanExecuteGuest(PVM pVM, PVMCPU pVCpu)
+{
+	return true;
+}
 
 
 bool nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable) TRACE(false)
@@ -278,22 +296,28 @@ int nemR3NativeNotifyPhysRomRegisterLate(PVM pVM, RTGCPHYS GCPhys,
 /**
  * Called when the A20 state changes.
  *
- * Hyper-V doesn't seem to offer a simple way of implementing the A20 line
- * features of PCs.  So, we do a very minimal emulation of the HMA to make DOS
- * happy.
+ * Do a very minimal emulation of the HMA to make DOS happy.
  *
  * @param   pVCpu           The CPU the A20 state changed on.
  * @param   fEnabled        Whether it was enabled (true) or disabled.
  */
 void nemR3NativeNotifySetA20(PVMCPU pVCpu, bool fEnabled)
 {
-	warning(__PRETTY_FUNCTION__, ": fEnabled=", fEnabled);
+	PVM pVM = pVCpu->CTX_SUFF(pVM);
 
-//	if (!pVM->nem.s.fA20Fixed) {
-//		pVM->nem.s.fA20Enabled = fEnabled;
-//		for (RTGCPHYS GCPhys = _1M; GCPhys < _1M + _64K; GCPhys += X86_PAGE_SIZE)
-//			nemR3WinUnmapPageForA20Gate(pVM, pVCpu, GCPhys);
-//	}
+	/* unmap HMA guest memory on A20 change */
+	if (pVM->nem.s.fA20Enabled != fEnabled) {
+		pVM->nem.s.fA20Enabled  = fEnabled;
+
+		Sup::Nem::Protection const prot_none {
+			.readable   = false,
+			.writeable  = false,
+			.executable = false,
+		};
+
+		for (RTGCPHYS GCPhys = _1M; GCPhys < _1M + _64K; GCPhys += X86_PAGE_SIZE)
+			nem_ptr->map_page_to_guest(0, GCPhys | RT_BIT_32(20),  prot_none);
+	}
 }
 
 
