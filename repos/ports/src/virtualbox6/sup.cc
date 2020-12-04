@@ -225,7 +225,7 @@ static int vmmr0_gvmm_sched_halt(PVMR0 pvmr0, ::uint32_t cpu, ::uint64_t expire_
 	::uint64_t ns_diff = expire_timestamp > now_timestamp
 	                   ? expire_timestamp - now_timestamp : 0;
 
-	warning(__PRETTY_FUNCTION__, " cpu=", cpu, " ns_diff=", ns_diff);
+//	warning(__PRETTY_FUNCTION__, " cpu=", cpu, " ns_diff=", ns_diff);
 
 	if (!ns_diff)
 		return VINF_SUCCESS;
@@ -251,7 +251,7 @@ static int vmmr0_gvmm_wake_up(PVMR0 pvmr0, uint32_t cpu)
 {
 	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
 
-	warning(__PRETTY_FUNCTION__, " cpu=", cpu);
+//	warning(__PRETTY_FUNCTION__, " cpu=", cpu);
 
 	vm.with_vcpu_handler(Sup::Cpu_index { cpu }, [&] (Sup::Vcpu_handler &handler) {
 		handler.wake_up();
