@@ -373,9 +373,7 @@ void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS H
 	nem_ptr->map_page_to_guest(HCPhys & ~PAGE_OFFSET_MASK,
 	                           GCPhys & ~PAGE_OFFSET_MASK, prot);
 
-	/* commit unmap of inaccessible page immediately */
-	if (prot.none())
-		nem_ptr->commit_range();
+	nem_ptr->commit_range();
 }
 
 
