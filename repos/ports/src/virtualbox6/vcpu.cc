@@ -115,7 +115,11 @@ void Sup::Vcpu_handler_svm::_handle_vm_exception()
 	case SVM_EXIT_IOIO:  _svm_ioio(); break;
 	case SVM_EXIT_VINTR: _svm_vintr(); break;
 //	case SVM_EXIT_RDTSC: _svm_default(); break;
-	case SVM_EXIT_MSR:   _svm_default(); break;
+	case SVM_EXIT_MSR:
+		/* XXX distiguish write from read */
+		_last_exit_triggered_by_wrmsr = true;
+		_svm_default();
+		break;
 	case SVM_NPT:        _svm_npt<SVM_NPT>(); break;
 	case SVM_EXIT_HLT:   _svm_default(); break;
 	case SVM_EXIT_CPUID: _svm_default(); break;
@@ -329,7 +333,10 @@ void Sup::Vcpu_handler_vmx::_handle_vm_exception()
 	case VMX_EXIT_VMCALL: _vmx_default(); break;
 	case VMX_EXIT_IO_INSTR: _vmx_default(); break;
 	case VMX_EXIT_RDMSR: _vmx_default(); break;
-	case VMX_EXIT_WRMSR: _vmx_default(); break;
+	case VMX_EXIT_WRMSR:
+		_last_exit_triggered_by_wrmsr = true;
+		_vmx_default();
+		break;
 	case VMX_EXIT_ERR_INVALID_GUEST_STATE: _vmx_invalid(); break;
 	case VMX_EXIT_PAUSE: _vmx_default(); break;
 	case VMX_EXIT_WBINVD:  _vmx_default(); break;
@@ -1083,6 +1090,8 @@ int Sup::Vcpu_handler::run_hw(VM &vm)
 //	        " VMCPU_FF_IS_ANY_SET=",
 //	        VMCPU_FF_IS_ANY_SET(pVCpu, VMCPU_FF_HM_TO_R3_MASK));
 
+	_last_exit_triggered_by_wrmsr = false;
+
 	/* check whether to request interrupt window for injection */
 	_irq_win = _check_to_request_irq_window(pVCpu);
 
@@ -1109,6 +1118,16 @@ int Sup::Vcpu_handler::run_hw(VM &vm)
 
 		Genode::error("saving vCPU state failed");
 		return VERR_INTERNAL_ERROR;
+	}
+
+	/*
+	 * Dispatch write to MSR_KVM_SYSTEM_TIME_NEW to emulate
+	 * gimR0KvmUpdateSystemTime before entering the gimKvmWriteMsr function.
+	 */
+	if (_last_exit_triggered_by_wrmsr) {
+		enum { MSR_KVM_SYSTEM_TIME_NEW = 0x4b564d01 };
+		if (pCtx->ecx == MSR_KVM_SYSTEM_TIME_NEW)
+			_update_gim_system_time();
 	}
 
 	/* XXX track guest mode changes - see VMM/VMMAll/IEMAllCImpl.cpp.h */

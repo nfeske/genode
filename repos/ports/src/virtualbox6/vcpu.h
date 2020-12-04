@@ -39,6 +39,8 @@ class Sup::Vcpu_handler : Genode::Noncopyable
 		Genode::Semaphore   _sem_handler;
 		Genode::Vm_state   *_state { nullptr };
 
+		bool _last_exit_triggered_by_wrmsr = false;
+
 		pthread_cond_t  _cond_wait;
 		pthread_mutex_t _mutex;
 
@@ -79,6 +81,8 @@ class Sup::Vcpu_handler : Genode::Noncopyable
 		};
 
 		timespec _add_timespec_ns(timespec a, ::uint64_t ns) const;
+
+		void _update_gim_system_time();
 
 	protected:
 
