@@ -149,10 +149,6 @@ Sup::Gmm::Vmm_addr Sup::Gmm::vmm_addr(Page_id page_id)
 
 void Sup::Gmm::map_to_guest(Vmm_addr from, Guest_addr to, Pages pages, Protection prot)
 {
-//	to.value &= ~(PAGE_SIZE - 1);
-	if (to.value > 0xe0000000)
-		log("attach from ", Hex(from.value), " to ", Hex(to.value), " pages=", pages.value);
-
 	/* revoke existing mappings to avoid overmap */
 	_vm_connection.detach(to.value, pages.value << PAGE_SHIFT);
 
