@@ -263,7 +263,6 @@ static_assert(sizeof(RTR0PTR) == sizeof(RTR3PTR), "pointer transformation bug");
 static_assert(sizeof(RTR0PTR) == sizeof(void *) , "pointer transformation bug");
 static_assert(sizeof(RTR3PTR) == sizeof(RTR0PTR), "pointer transformation bug");
 
-int  pgmR3InitSavedState(PVM, uint64_t) TRACE(VINF_SUCCESS)
 int  emR3InitDbg(PVM)                   TRACE(VINF_SUCCESS)
 int  SELMR3Init(PVM)                    TRACE(VINF_SUCCESS)
 int  SELMR3Term(PVM)                    TRACE(VINF_SUCCESS)
@@ -391,3 +390,20 @@ PRTDBGLINE DBGFR3AsLineByAddrA(PUVM, RTDBGAS, PCDBGFADDRESS,
 	return nullptr;
 }
 
+
+/* PGMMap.cpp */
+
+#include <VBox/vmm/pgm.h>
+
+VMMR3DECL(int) PGMR3MappingsSize(PVM pVM, uint32_t *pcb)
+{
+	*pcb = 0;
+	return VINF_SUCCESS;
+}
+
+
+/* PGMSavedState.cpp */
+
+#include <PGMInternal.h>
+
+int  pgmR3InitSavedState(PVM, uint64_t) TRACE(VINF_SUCCESS)

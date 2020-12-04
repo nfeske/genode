@@ -283,7 +283,7 @@ int nemR3NativeNotifyPhysMmioExMap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
 
 
 int nemR3NativeNotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
-                                     ::uint32_t fFlags) STOP
+                                     ::uint32_t fFlags) TRACE(VINF_SUCCESS)
 
 
 int nemR3NativeNotifyPhysRomRegisterEarly(PVM pVM, RTGCPHYS GCPhys,
@@ -333,7 +333,7 @@ void nemR3NativeNotifySetA20(PVMCPU pVCpu, bool fEnabled)
 void nemHCNativeNotifyHandlerPhysicalDeregister(PVMCC pVM, PGMPHYSHANDLERKIND enmKind,
                                                 RTGCPHYS GCPhys, RTGCPHYS cb,
                                                 int fRestoreAsRAM,
-                                                bool fRestoreAsRAM2) STOP
+                                                bool fRestoreAsRAM2) TRACE()
 
 
 void nemHCNativeNotifyHandlerPhysicalModify(PVMCC pVM, PGMPHYSHANDLERKIND enmKind,
