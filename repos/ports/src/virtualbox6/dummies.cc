@@ -49,8 +49,8 @@ int DisplayMakePNG(uint8_t *, uint32_t, uint32_t, uint8_t **, uint32_t *,
 
 #include "EventImpl.h"
 
-HRESULT VBoxEventDesc::init(IEventSource*, VBoxEventType_T, ...) TRACE(S_OK)
-HRESULT VBoxEventDesc::reinit(VBoxEventType_T, ...)              TRACE(S_OK)
+HRESULT VBoxEventDesc::init(IEventSource*, VBoxEventType_T, ...) { return S_OK; }
+HRESULT VBoxEventDesc::reinit(VBoxEventType_T, ...)              { return S_OK; }
 
 
 /* initterm.cpp */
