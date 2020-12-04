@@ -785,7 +785,7 @@ bool Sup::Vcpu_handler::_state_to_vbox(VM *pVM, PVMCPU pVCpu)
 	const uint32_t tpr = _state->tpr.value();
 
 	/* reset message transfer descriptor for next invocation */
-	Assert (!(_state->inj_info.value() & IRQ_INJ_VALID_MASK));
+//	Assert (!(_state->inj_info.value() & IRQ_INJ_VALID_MASK));
 	_next_utcb.intr_state = _state->intr_state.value();
 	_next_utcb.ctrl[0]    = _state->ctrl_primary.value();
 	_next_utcb.ctrl[1]    = _state->ctrl_secondary.value();
