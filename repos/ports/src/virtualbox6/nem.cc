@@ -13,14 +13,17 @@
  */
 
 /* VirtualBox includes */
-#include <VBox/vmm/cpum.h> /* must be included before CPUMInternal.h */
-#include <CPUMInternal.h>  /* enable access to cpum.s.* */
-#include <HMInternal.h>    /* enable access to hm.s.* */
-#define RT_OS_WINDOWS      /* needed for definition all nem.s members */
-#include <NEMInternal.h>   /* enable access to nem.s.* */
+#include <VBox/vmm/cpum.h>      /* must be included before CPUMInternal.h */
+#define VMCPU_INCL_CPUM_GST_CTX /* needed for cpum.GstCtx */
+#include <CPUMInternal.h>       /* enable access to cpum.s.* */
+#include <HMInternal.h>         /* enable access to hm.s.* */
+#define RT_OS_WINDOWS           /* needed for definition all nem.s members */
+#include <NEMInternal.h>        /* enable access to nem.s.* */
 #undef RT_OS_WINDOWS
 #include <VBox/vmm/nem.h>
 #include <VBox/vmm/vmcc.h>
+#include <VBox/vmm/apic.h>
+#include <VBox/vmm/em.h>
 #include <VBox/err.h>
 
 /* local includes */
@@ -240,12 +243,18 @@ bool nemR3NativeSetSingleInstruction(PVM pVM, PVMCPU pVCpu, bool fEnable) TRACE(
  * @param   pVM             The cross context VM structure.
  * @param   pVCpu           The cross context virtual CPU structure of the CPU
  *                          to be notified.
- * @param   fFlags          Notification flags, VMNOTIFYFF_FLAGS_XXX.
+ * @param   fFlags          Notification flags
+ *                          (VMNOTIFYFF_FLAGS_DONE_REM/VMNOTIFYFF_FLAGS_POKE)
  */
 void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags)
 {
 	/* nemHCWinCancelRunVirtualProcessor(pVM, pVCpu); */
-	Log(("%s: fFlags=%x\n", __PRETTY_FUNCTION__, fFlags));
+	if (fFlags & VMNOTIFYFF_FLAGS_POKE) {
+		Sup::Vm &vm = *(Sup::Vm *)pVM;
+
+		vm.with_vcpu_handler(Sup::Cpu_index { pVCpu->idCpu }, [&] (Sup::Vcpu_handler &handler) {
+			handler.recall(vm); });
+	}
 }
 
 
