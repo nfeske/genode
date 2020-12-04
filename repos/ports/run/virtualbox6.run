@@ -170,13 +170,13 @@ append config {
 append config {
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
-		<config>
+		<config focus="rom">
 			<capture/> <event/>
 
 			<report focus="yes" hover="yes" xray="yes" />
 
-			<domain name="pointer"  layer="1" content="client" label="no" origin="pointer" />
-			<domain name=""         layer="2" content="client" focus="click" hover="always" />
+			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
+			<domain name=""        layer="2" content="client" hover="always" />
 
 			<policy label_prefix="pointer" domain="pointer"/>
 			<default-policy domain=""/>
@@ -265,6 +265,13 @@ append config {
 install_config $config
 
 exec cp ${genode_dir}/repos/ports/run/test.vbox bin/.
+
+#
+# Pin the nitpicker focus to virtualbox by providing a static focus ROM
+#
+set fd [open [run_dir]/genode/focus w]
+puts $fd "<focus label=\"vbox1 -> \"/>"
+close $fd
 
 set boot_modules { test.iso bootsector.img test.vbox }
 
