@@ -364,7 +364,14 @@ void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS H
 		.executable = fPageProt & NEM_PAGE_PROT_EXECUTE,
 	};
 
-	nem_ptr->map_page_to_guest(HCPhys, GCPhys, prot);
+	/*
+	 * The passed host and guest addresses may not be aligned, e.g., when
+	 * called from DevVGA.cpp vgaLFBAccess(). Therefore, we do the alignment
+	 * here explicitly.
+	 */
+
+	nem_ptr->map_page_to_guest(HCPhys & ~PAGE_OFFSET_MASK,
+	                           GCPhys & ~PAGE_OFFSET_MASK, prot);
 }
 
 
