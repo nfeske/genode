@@ -224,7 +224,9 @@ append config {
 		<binary name="} $virtualbox_binary {"/>
 		<resource name="RAM" quantum="448M"/>
 		<config vbox_file="test.vbox" vm_name="TestVM">
-			<libc stdout="/dev/log" stderr="/dev/log" pipe="/pipe" rtc="/dev/rtc"/>
+			<libc stdout="/dev/log" stderr="/dev/log" pipe="/pipe" rtc="/dev/rtc">
+				 <pthread placement="single-cpu"/>
+			</libc>
 			<vfs>
 				<dir name="dev">
 					<log/> <null/>
