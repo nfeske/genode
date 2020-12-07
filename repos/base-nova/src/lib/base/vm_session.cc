@@ -402,7 +402,7 @@ struct Vcpu {
 				utcb.write_tpr_threshold(state.tpr_threshold.value());
 			}
 
-			if (_use_guest_fpu || state.fpu.valid())
+			if (_use_guest_fpu || state.fpu.charged())
 				asm volatile ("fxsave %0" : "=m" (*_fpu_ep) :: "memory");
 
 			if (state.fpu.charged()) {
