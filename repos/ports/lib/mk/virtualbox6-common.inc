@@ -17,9 +17,6 @@ VIRTUALBOX_SDK_DIR := $(call select_from_ports,virtualbox6)/src/virtualbox6_sdk
 
 VBOX_DIR    := $(VIRTUALBOX_DIR)/src/VBox
 
-# enforce some global definitions (e.g., include of base/log.h)
-VBOX_CC_OPT += -include global_defs.h
-
 VBOX_CC_OPT += -DIN_RING3 -DVBOX -DVBOX_OSE
 VBOX_CC_OPT += -D_FILE_OFFSET_BITS=64 -DLOG_ENABLED
 
@@ -92,6 +89,9 @@ VBOX_CC_OPT += -DVBOX_PRIVATE_BUILD_DESC
 CC_WARN += -Wno-trigraphs -Werror
 
 CC_OPT += $(VBOX_CC_OPT)
+
+# enforce some global definitions (e.g., include of base/log.h)
+CC_OPT += -include global_defs.h
 
 # VirtualBox expects wchar_t to be a 16-bit type. yasm does not understand this
 # flag, therefore it gets added to CC_OPT instead of VBOX_CC_OPT.
