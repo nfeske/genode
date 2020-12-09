@@ -58,14 +58,16 @@ struct Sup::Nem
 		/* empty ranges are invalid */
 		bool valid() const { return size() != 0; }
 
-		bool extend(Range const &other)
+		enum class Extend_result { PREPENDED, APPENDED, FAILED };
+
+		Extend_result extend(Range const &other)
 		{
 			/* ignore invalid ranges */
 			if (!other.valid())
-				return true;
+				return Extend_result::APPENDED;
 
 			if (!(prot == other.prot))
-				return false;
+				return Extend_result::FAILED;
 
 			/* initialize if uninitialized */
 			if (!valid()) {
@@ -73,25 +75,25 @@ struct Sup::Nem
 				last_byte  = other.last_byte;
 				prot       = other.prot;
 
-				return true;
+				return Extend_result::APPENDED;
 			}
 
 			/* prepend */
 			if (first_byte == other.last_byte + 1) {
 				first_byte = other.first_byte;
 
-				return true;
+				return Extend_result::PREPENDED;
 			}
 
 			/* append */
 			if (last_byte + 1 == other.first_byte) {
 				last_byte = other.last_byte;
 
-				return true;
+				return Extend_result::APPENDED;
 			}
 
 			/* not contiguous (which includes overlaps) */
-			return false;
+			return Extend_result::FAILED;
 		}
 
 		void print(Output &o) const
@@ -128,9 +130,13 @@ struct Sup::Nem
 		Range new_guest_range { guest_addr, guest_addr + (PAGE_SIZE - 1), prot };
 
 		/* new page just extends the current ranges */
-		if (new_host_range.extend(host_range)
-		 && new_guest_range.extend(guest_range)) {
+		Range::Extend_result const host_extend_result  = new_host_range.extend(host_range);
+		Range::Extend_result const guest_extend_result = new_guest_range.extend(guest_range);
 
+		bool const failed      = (host_extend_result == Range::Extend_result::FAILED);
+		bool const same_result = (host_extend_result == guest_extend_result);
+
+		if (!failed && same_result) {
 			host_range  = new_host_range;
 			guest_range = new_guest_range;
 
@@ -172,7 +178,7 @@ void nemHCNativeNotifyHandlerPhysicalRegister(PVMCC pVM,
                                               PGMPHYSHANDLERKIND enmKind,
                                               RTGCPHYS GCPhys, RTGCPHYS cb)
 {
-	nem_ptr->commit_range();
+//	Log(("%s [%p,%p)\n", __PRETTY_FUNCTION__, (void *)GCPhys, (void *)(GCPhys + cb)));
 }
 
 
@@ -217,6 +223,9 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 
 	Vm &vm = *static_cast<Vm *>(pVM);
 
+	/* XXX commit on VM entry */
+	nem_ptr->commit_range();
+
 	VBOXSTRICTRC result = 0;
 	vm.with_vcpu_handler(Cpu_index { pVCpu->idCpu }, [&] (Vcpu_handler &handler) {
 		result = handler.run_hw(vm);
@@ -260,7 +269,9 @@ void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags)
 
 int nemR3NativeNotifyPhysRamRegister(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb)
 {
-	Log(("%s: GCPhys=%p cb=%p\n", __PRETTY_FUNCTION__, (void*)GCPhys, (void*)cb));
+	Log(("%s [%p,%p)\n", __PRETTY_FUNCTION__, (void *)GCPhys, (void *)(GCPhys + cb)));
+
+	/* TODO map RAM eagerly to prevent only page-size mappings */
 
 	return VINF_SUCCESS;
 }
@@ -276,7 +287,7 @@ int nemR3NativeNotifyPhysMmioExMap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
 	 *        | (pFirstMmio->fFlags & PGMREGMMIO2RANGE_F_OVERLAPPING ? NEM_NOTIFY_PHYS_MMIO_EX_F_REPLACE : 0);
 	 */
 
-	Log(("%s\n", __PRETTY_FUNCTION__));
+//	Log(("%s [%p,%p)\n", __PRETTY_FUNCTION__, (void *)GCPhys, (void *)(GCPhys + cb)));
 
 	return VINF_SUCCESS;
 }
@@ -289,6 +300,8 @@ int nemR3NativeNotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
 int nemR3NativeNotifyPhysRomRegisterEarly(PVM pVM, RTGCPHYS GCPhys,
                                           RTGCPHYS cb, ::uint32_t fFlags)
 {
+//	Log(("%s [%p,%p)\n", __PRETTY_FUNCTION__, (void *)GCPhys, (void *)(GCPhys + cb)));
+
 	return VINF_SUCCESS;
 }
 
@@ -296,7 +309,7 @@ int nemR3NativeNotifyPhysRomRegisterEarly(PVM pVM, RTGCPHYS GCPhys,
 int nemR3NativeNotifyPhysRomRegisterLate(PVM pVM, RTGCPHYS GCPhys,
                                          RTGCPHYS cb, ::uint32_t fFlags)
 {
-	nem_ptr->commit_range();
+//	Log(("%s [%p,%p)\n", __PRETTY_FUNCTION__, (void *)GCPhys, (void *)(GCPhys + cb)));
 
 	return VINF_SUCCESS;
 }
@@ -348,8 +361,6 @@ int nemHCNativeNotifyPhysPageAllocated(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPh
 	nemHCNativeNotifyPhysPageProtChanged(pVM, GCPhys, HCPhys,
 	                                     fPageProt, enmType, pu2State);
 
-	nem_ptr->commit_range();
-
 	return VINF_SUCCESS;
 }
 
@@ -372,8 +383,6 @@ void nemHCNativeNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS H
 
 	nem_ptr->map_page_to_guest(HCPhys & ~PAGE_OFFSET_MASK,
 	                           GCPhys & ~PAGE_OFFSET_MASK, prot);
-
-	nem_ptr->commit_range();
 }
 
 

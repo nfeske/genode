@@ -22,6 +22,12 @@
   accord. to Alex this should not happen with vbox5-generic
 * May we drop FPU-state transfers with VirtualBox 6 ?
   IEM_CTX_IMPORT_NORET() and CPUMImportGuestStateOnDemand() look promising
+* Super-page mappings in pgmPhysAllocPage() are not used without
+  PGM_WITH_LARGE_PAGES (which is defined) and !VM_IS_NEM_ENABLE (argh)
+  and PGM_PAGE_GET_PDE_TYPE(pBasePage) == PGM_PAGE_PDE_TYPE_DONTCARE
+  also: PGMIsUsingLargePages(pVM) which is (pVM)->fUseLargePages
+* RAM pages are not preallocated unless pgm.s.fRamPreAlloc
+  also: VBOX_WITH_PREALLOC_RAM_BY_DEFAULT may change the default
 
 * Call trace for NEMR0MapPages
     nemR0WinMapPages (HV_INPUT_MAP_GPA_PAGES)

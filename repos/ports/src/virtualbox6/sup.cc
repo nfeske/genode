@@ -517,7 +517,7 @@ static int vmmr0_pdm_device_gen_call(PDMDEVICEGENCALLREQ &request)
 }
 
 
-static int vmmr0_pgm_allocate_handly_pages(PVMR0 pvmr0)
+static int vmmr0_pgm_allocate_handy_pages(PVMR0 pvmr0)
 {
 	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
 
@@ -646,7 +646,7 @@ static void ioctl(SUPCALLVMMR0 &request)
 		return;
 
 	case VMMR0_DO_PGM_ALLOCATE_HANDY_PAGES:
-		rc = vmmr0_pgm_allocate_handly_pages(request.u.In.pVMR0);
+		rc = vmmr0_pgm_allocate_handy_pages(request.u.In.pVMR0);
 		return;
 
 	case VMMR0_DO_VMMR0_INIT:
