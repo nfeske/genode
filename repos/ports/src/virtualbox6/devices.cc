@@ -64,6 +64,7 @@ extern "C" int VBoxDevicesRegister(PPDMDEVREGCB pCallbacks, uint32_t u32Version)
 	REGISTER(DevicePCIBridge);
 	REGISTER(DevicePciIch9Bridge);
 	REGISTER(DeviceGIMDev);
+	REGISTER(DeviceLPC);
 
 	return VINF_SUCCESS;
 }

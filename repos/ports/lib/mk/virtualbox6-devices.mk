@@ -58,6 +58,7 @@ SRC_CC += Devices/PC/DevPit-i8254.cpp
 SRC_CC += Devices/PC/DevRTC.cpp
 SRC_CC += Devices/PC/DrvACPI.cpp
 SRC_CC += Devices/PC/DrvAcpiCpu.cpp
+SRC_CC += Devices/PC/DevLpc-new.cpp
 SRC_CC += Devices/Serial/DevSerial.cpp
 SRC_CC += Devices/Serial/DrvChar.cpp
 SRC_CC += Devices/Serial/DrvHostSerial.cpp
