@@ -20,8 +20,10 @@
 #define RT_OS_WINDOWS           /* needed for definition all nem.s members */
 #include <NEMInternal.h>        /* enable access to nem.s.* */
 #undef RT_OS_WINDOWS
+#include <PGMInternal.h>        /* enable access to pgm.s.* */
+#include <VBox/vmm/vmcc.h>      /* must be included before PGMInline.h */
+#include <PGMInline.h>
 #include <VBox/vmm/nem.h>
-#include <VBox/vmm/vmcc.h>
 #include <VBox/vmm/apic.h>
 #include <VBox/vmm/em.h>
 #include <VBox/err.h>
@@ -111,7 +113,8 @@ struct Sup::Nem
 		if (!host_range.valid())
 			return;
 
-//		log(__PRETTY_FUNCTION__, " host=", host_range , " guest=", guest_range);
+//		if (guest_range.last_byte  < 0xe000'0000ul || guest_range.first_byte > 0xffff'fffful)
+//			log(__PRETTY_FUNCTION__, " host=", host_range , " guest=", guest_range);
 
 		/* commit the current range to GMM */
 		_gmm.map_to_guest(Gmm::Vmm_addr   { host_range.first_byte },
@@ -124,10 +127,10 @@ struct Sup::Nem
 		guest_range = { };
 	}
 
-	void map_page_to_guest(addr_t host_addr, addr_t guest_addr, Protection prot)
+	void map_to_guest(addr_t host_addr, addr_t guest_addr, size_t size, Protection prot)
 	{
-		Range new_host_range  { host_addr,  host_addr  + (PAGE_SIZE - 1), prot };
-		Range new_guest_range { guest_addr, guest_addr + (PAGE_SIZE - 1), prot };
+		Range new_host_range  { host_addr,  host_addr  + (size - 1), prot };
+		Range new_guest_range { guest_addr, guest_addr + (size - 1), prot };
 
 		/* new page just extends the current ranges */
 		Range::Extend_result const host_extend_result  = new_host_range.extend(host_range);
@@ -147,9 +150,23 @@ struct Sup::Nem
 		commit_range();
 
 		/* start over with new page */
-		host_range  = { host_addr,  host_addr  + (PAGE_SIZE - 1), prot };
-		guest_range = { guest_addr, guest_addr + (PAGE_SIZE - 1), prot };
+		host_range  = { host_addr,  host_addr  + (size - 1), prot };
+		guest_range = { guest_addr, guest_addr + (size - 1), prot };
 	}
+
+	void map_page_to_guest(addr_t host_addr, addr_t guest_addr, Protection prot)
+	{
+		map_to_guest(host_addr, guest_addr, X86_PAGE_SIZE, prot);
+	}
+
+	Gmm::Vmm_addr alloc_large_page()
+	{
+		Gmm::Pages const pages { X86_PAGE_2M_SIZE/X86_PAGE_4K_SIZE };
+
+		return _gmm.alloc_from_reservation(pages);
+	}
+
+	Gmm & gmm() { return _gmm; }
 
 	Nem(Gmm &gmm) : _gmm(gmm) { }
 };
@@ -223,7 +240,7 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 
 	Vm &vm = *static_cast<Vm *>(pVM);
 
-	/* XXX commit on VM entry */
+	/* commit on VM entry */
 	nem_ptr->commit_range();
 
 	VBOXSTRICTRC result = 0;
@@ -267,11 +284,85 @@ void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags)
 }
 
 
+static void update_pgm_large_page(PVM pVM, addr_t guest_addr, addr_t host_addr,
+                                  uint32_t page_id)
+{
+	/* init all pages in large page (see PGMR3PhysAllocateLargeHandyPage()) */
+	for (unsigned i = 0; i < X86_PAGE_2M_SIZE/X86_PAGE_4K_SIZE; ++i) {
+
+		PPGMPAGE page = nullptr;
+
+		pgmPhysGetPageEx(pVM, guest_addr, &page);
+
+		if (PGM_PAGE_GET_TYPE(page) != PGMPAGETYPE_RAM)
+			error(__func__, ": page is not RAM");
+		if (!PGM_PAGE_IS_ZERO(page))
+			error(__func__, ": page is not zero page");
+
+		pVM->pgm.s.cZeroPages--;
+		pVM->pgm.s.cPrivatePages++;
+		PGM_PAGE_SET_HCPHYS(pVM, page, host_addr);
+		PGM_PAGE_SET_PAGEID(pVM, page, page_id);
+		PGM_PAGE_SET_STATE(pVM, page, PGM_PAGE_STATE_ALLOCATED);
+		PGM_PAGE_SET_PDE_TYPE(pVM, page, PGM_PAGE_PDE_TYPE_PDE);
+		PGM_PAGE_SET_PTE_INDEX(pVM, page, 0);
+		PGM_PAGE_SET_TRACKING(pVM, page, 0);
+
+		page_id++;
+
+		host_addr  += X86_PAGE_4K_SIZE;
+		guest_addr += X86_PAGE_4K_SIZE;
+	}
+}
+
+
+/**
+ * NEM is notified about each RAM range by calling this function repeatedly
+ *
+ * PGMR3PhysRegisterRam() holds the PGM lock while calling.
+ */
 int nemR3NativeNotifyPhysRamRegister(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb)
 {
 	Log(("%s [%p,%p)\n", __PRETTY_FUNCTION__, (void *)GCPhys, (void *)(GCPhys + cb)));
 
-	/* TODO map RAM eagerly to prevent only page-size mappings */
+	/*
+	 * PGM notifies us about each RAM range configured, which means "Base RAM"
+	 * below 4 GiB and "Above 4GB Base RAM" (see MMR3InitPaging()). We eagerly
+	 * map all 2M-aligened "large" pages in the ranges to guest memory and
+	 * initialize PGM to benefit from reduced TLB usage and less backing store
+	 * for many mapped regions. RAM pages outside the large pages are backed on
+	 * demand by PGM by "small" handy pages by default. Unfortunately, the
+	 * configuration of NEM disables automatic use of large pages in PGM.
+	 */
+
+	/* start at first 2M-aligned page in range */
+	addr_t const guest_base = RT_ALIGN(GCPhys, X86_PAGE_2M_SIZE);
+
+	/* iterate over all large pages in range */
+	for (addr_t addr = guest_base; addr + _2M <= GCPhys + cb; addr += _2M ) {
+
+		/*
+		 * We skip the first 2 MiB to prevent errors with ROM mappings below 1
+		 * MiB. Also, a range of 64 KiB at 1 MiB is replaced regularly on A20
+		 * switching. Both facts invalidate our large-page mapping.
+		 */
+		if (addr < _2M) continue;
+
+		/* allocate and map in GMM */
+		Sup::Gmm::Vmm_addr const vmm_addr    = nem_ptr->alloc_large_page();
+		Sup::Gmm::Page_id  const vmm_page_id = nem_ptr->gmm().page_id(vmm_addr);
+		uint32_t           const page_id32   = nem_ptr->gmm().page_id_as_uint32(vmm_page_id);
+
+		Sup::Nem::Protection const prot { true, true, true };
+
+		nem_ptr->map_to_guest(vmm_addr.value, addr, X86_PAGE_2M_SIZE, prot);
+
+		update_pgm_large_page(pVM, addr, vmm_addr.value, page_id32);
+	}
+
+	/* invalidate PGM caches (see pgmPhysAllocPage()) */
+	PGM_INVL_ALL_VCPU_TLBS(pVM);
+	pgmPhysInvalidatePageMapTLB(pVM);
 
 	return VINF_SUCCESS;
 }

@@ -50,12 +50,12 @@ class Sup::Gmm
 {
 	public:
 
-		struct Vmm_addr   { addr_t   value; };
-		struct Guest_addr { addr_t   value; };
-		struct Offset     { addr_t   value; };
-		struct Bytes      { size_t   value; };
-		struct Pages      { size_t   value; };
-		struct Page_id    { uint32_t value; }; /* CHUNKID | PAGEIDX */
+		struct Vmm_addr   { addr_t value; };
+		struct Guest_addr { addr_t value; };
+		struct Offset     { addr_t value; };
+		struct Bytes      { size_t value; };
+		struct Pages      { size_t value; };
+		struct Page_id    { addr_t value; }; /* CHUNKID | PAGEIDX */
 
 		struct Protection
 		{
@@ -176,12 +176,17 @@ class Sup::Gmm
 		void free(Vmm_addr, Pages);
 
 		/**
-		 * Get PAGEID for VMM address inside linear area
+		 * Get page ID for VMM address inside linear area
 		 */
 		Page_id page_id(Vmm_addr);
 
 		/**
-		 * Get VMM address inside linear area for PAGEID
+		 * Get 32-bit PAGEID from page ID
+		 */
+		static uint32_t page_id_as_uint32(Page_id);
+
+		/**
+		 * Get VMM address inside linear area for page ID
 		 */
 		Vmm_addr vmm_addr(Page_id);
 

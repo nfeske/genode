@@ -92,9 +92,11 @@ SRC_CC += VMM/VMMR3/GIMMinimal.cpp
 SRC_CC += VMM/VMMR3/GMM.cpp
 
 SRC_CC += VMM/VMMR3/PGM.cpp
+SRC_CC += VMM/VMMR3/PGMDbg.cpp
 SRC_CC += VMM/VMMR3/PGMHandler.cpp
 SRC_CC += VMM/VMMR3/PGMPhys.cpp
 SRC_CC += VMM/VMMR3/PGMPool.cpp
+SRC_S  += VMM/VMMR3/PGMR3DbgA.asm
 SRC_CC += VMM/VMMAll/PGMAll.cpp
 SRC_CC += VMM/VMMAll/PGMAllHandler.cpp
 SRC_CC += VMM/VMMAll/PGMAllPhys.cpp

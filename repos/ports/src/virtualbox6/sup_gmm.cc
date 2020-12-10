@@ -119,15 +119,24 @@ Sup::Gmm::Vmm_addr Sup::Gmm::alloc_from_reservation(Pages pages)
 Sup::Gmm::Page_id Sup::Gmm::page_id(Vmm_addr addr)
 {
 	bool const inside_map = (addr.value >= _map.base.value)
-	                         && (addr.value <= _map.end.value);
+	                     && (addr.value <= _map.end.value);
 
 	if (!inside_map)
 		throw Out_of_range();
 
-	uint32_t const page_index = (uint32_t) (addr.value - _map.base.value) >> PAGE_SHIFT;
+	addr_t const page_index = (addr.value - _map.base.value) >> PAGE_SHIFT;
 
 	/* NIL_GMM_CHUNKID kept unused - so offset 0 is chunk ID 1 */
 	return { page_index + (1u << GMM_CHUNKID_SHIFT) };
+}
+
+
+uint32_t Sup::Gmm::page_id_as_uint32(Page_id page_id)
+{
+	if (page_id.value << PAGE_SHIFT > PAGE_BASE_MASK)
+		throw Out_of_range();
+
+	return page_id.value;
 }
 
 

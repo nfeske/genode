@@ -28,6 +28,10 @@
   also: PGMIsUsingLargePages(pVM) which is (pVM)->fUseLargePages
 * RAM pages are not preallocated unless pgm.s.fRamPreAlloc
   also: VBOX_WITH_PREALLOC_RAM_BY_DEFAULT may change the default
+* to change a CFGM value see src/VBox/Main/src-client/ConsoleImpl2.cpp:600 ff.
+  pRoot = CFGMR3GetRoot(pVM);
+  CFGMR3RemoveValue(pRoot, "RamPreAlloc");
+  InsertConfigInteger(pRoot, "RamPreAlloc", 1); // CFGMR3InsertInteger()
 
 * Call trace for NEMR0MapPages
     nemR0WinMapPages (HV_INPUT_MAP_GPA_PAGES)
