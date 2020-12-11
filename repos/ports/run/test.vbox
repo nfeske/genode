@@ -24,12 +24,9 @@
       <CPU count="1" hotplug="false">
         <HardwareVirtEx enabled="true"/>
         <HardwareVirtExNestedPaging enabled="true"/>
-        <HardwareVirtExVPID enabled="true"/>
-        <HardwareVirtExUX enabled="false"/>
+        <HardwareVirtExUX enabled="true"/>
         <PAE enabled="false"/>
-        <LongMode enabled="false"/>
-        <HardwareVirtExLargePages enabled="false"/>
-        <HardwareVirtForce enabled="false"/>
+        <LongMode enabled="true"/>
       </CPU>
       <Memory RAMSize="256" PageFusion="false"/>
       <HID Pointing="PS2Mouse" Keyboard="PS2Keyboard"/>
