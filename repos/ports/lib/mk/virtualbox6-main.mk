@@ -66,6 +66,9 @@ SRC_CC += Main/src-server/HostPower.cpp
 # use OS/2 version of 'pm::createHAL()' because it is empty
 SRC_CC += Main/src-server/os2/PerformanceOs2.cpp
 
+# generated from VBox/Main/idl/comimpl.xsl
+SRC_CC += Main/VBoxEvents.cpp
+
 # see comment in virtualbox6-client.mk
 CC_OPT_Main/src-server/MediumImpl = -Wno-enum-compare
 

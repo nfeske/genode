@@ -169,6 +169,10 @@ additional_steps : $(DOWNLOADS)
 	   -o src/virtualbox6/src/VBox/Main/include/VBoxEvents.h \
 	   src/virtualbox6/src/VBox/Main/idl/comimpl.xsl \
 	   src/virtualbox6/VirtualBox_stripped.xidl
+	$(VERBOSE)xsltproc --stringparam G_kind VBoxEvent \
+	   -o src/virtualbox6/src/VBox/Main/VBoxEvents.cpp \
+	   src/virtualbox6/src/VBox/Main/idl/comimpl.xsl \
+	   src/virtualbox6/VirtualBox_stripped.xidl
 	$(VERBOSE)xsltproc --stringparam KBUILD_HOST genode \
 	   --stringparam generating "headers" -o src/virtualbox6/VBoxAPIWrap/apiwrappers-headers \
 	   src/virtualbox6/src/VBox/Main/idl/apiwrap-server.xsl \
