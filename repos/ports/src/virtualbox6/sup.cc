@@ -263,9 +263,16 @@ static int vmmr0_gvmm_wake_up(PVMR0 pvmr0, uint32_t cpu)
 
 static int vmmr0_gvmm_sched_poll(PVMR0 pvmr0, uint32_t cpu, bool yield)
 {
-	error("VMMR0_DO_GVMM_SCHED_POLL");
+//	warning(__PRETTY_FUNCTION__, " cpu=", cpu, " yield=", yield);
 
-	return VERR_NOT_IMPLEMENTED;
+	/*
+	 * GVMMR0SchedPoll() just wakes up waiters on gvmm.s.HaltEventMulti. In our
+	 * case, we could just call vmmr0_gvmm_wake_up(). Note, 'yield' must always
+	 * be false according to comment in GVMMR0SchedPoll().
+	 */
+
+//	return vmmr0_gvmm_wake_up(pvmr0, cpu);
+	return VINF_SUCCESS;
 }
 
 
