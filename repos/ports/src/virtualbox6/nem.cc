@@ -207,10 +207,16 @@ int nemR3NativeInit(PVM pVM, bool fFallback, bool fForced)
 }
 
 
-int nemR3NativeInitAfterCPUM(PVM pVM) TRACE(VINF_SUCCESS)
+int nemR3NativeInitAfterCPUM(PVM pVM)
+{
+	return VINF_SUCCESS;
+}
 
 
-int nemR3NativeInitCompleted(PVM pVM, VMINITCOMPLETED enmWhat) TRACE(VINF_SUCCESS)
+int nemR3NativeInitCompleted(PVM pVM, VMINITCOMPLETED enmWhat)
+{
+	return VINF_SUCCESS;
+}
 
 
 int nemR3NativeTerm(PVM pVM) STOP
@@ -385,7 +391,10 @@ int nemR3NativeNotifyPhysMmioExMap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
 
 
 int nemR3NativeNotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb,
-                                     ::uint32_t fFlags) TRACE(VINF_SUCCESS)
+                                     ::uint32_t fFlags)
+{
+	return VINF_SUCCESS;
+}
 
 
 int nemR3NativeNotifyPhysRomRegisterEarly(PVM pVM, RTGCPHYS GCPhys,
@@ -437,7 +446,9 @@ void nemR3NativeNotifySetA20(PVMCPU pVCpu, bool fEnabled)
 void nemHCNativeNotifyHandlerPhysicalDeregister(PVMCC pVM, PGMPHYSHANDLERKIND enmKind,
                                                 RTGCPHYS GCPhys, RTGCPHYS cb,
                                                 int fRestoreAsRAM,
-                                                bool fRestoreAsRAM2) TRACE()
+                                                bool fRestoreAsRAM2)
+{
+}
 
 
 void nemHCNativeNotifyHandlerPhysicalModify(PVMCC pVM, PGMPHYSHANDLERKIND enmKind,
