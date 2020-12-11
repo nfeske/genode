@@ -75,8 +75,6 @@
 
 * Work items
 
-  * Guest Systems:    Genode/NOVA (demo)
-  * Basics:           Long Mode
   * Basics:           SMP
   * Guest Systems:    Genode/NOVA (SMP)
   * Devices:          ATA / VDI

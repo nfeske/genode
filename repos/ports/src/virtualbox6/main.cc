@@ -24,6 +24,7 @@
 #include <nsCOMPtr.h>
 #include <iprt/initterm.h>
 #include <iprt/err.h>
+#include <VBox/com/listeners.h>
 
 /* Virtualbox includes of generic Main frontend */
 #include "ConsoleImpl.h"
@@ -41,7 +42,41 @@
 using namespace Genode;
 
 
-struct Main
+struct Event_handler : Interface
+{
+	virtual void handle_vbox_event(VBoxEventType_T, IEvent &) = 0;
+};
+
+
+struct Event_listener
+{
+	Event_handler *_handler_ptr = nullptr;
+
+	virtual ~Event_listener() { }
+
+	HRESULT init(Event_handler &handler)
+	{
+		_handler_ptr = &handler;
+		return S_OK;
+	}
+
+	void uninit() { }
+
+	STDMETHOD(HandleEvent)(VBoxEventType_T ev_type, IEvent *ev)
+	{
+		if (_handler_ptr)
+			_handler_ptr->handle_vbox_event(ev_type, *ev);
+
+		return S_OK;
+	}
+};
+
+typedef ListenerImpl<Event_listener, Event_handler &> Event_listener_impl;
+
+VBOX_LISTENER_DECLARE(Event_listener_impl)
+
+
+struct Main : Event_handler
 {
 	Env &_env;
 
@@ -235,6 +270,28 @@ struct Main
 		}
 	}
 
+	void handle_vbox_event(VBoxEventType_T, IEvent &) override;
+
+	bool const _vbox_event_handler_installed = ( _install_vbox_event_handler(), true );
+
+	void _install_vbox_event_handler()
+	{
+		ComObjPtr<Event_listener_impl> listener;
+
+		listener.createObject();
+		listener->init(new Event_listener(), *this);
+
+		ComPtr<IEventSource> ievent_source;
+		_iconsole->COMGETTER(EventSource)(ievent_source.asOutParam());
+
+		com::SafeArray<VBoxEventType_T> event_types;
+		event_types.push_back(VBoxEventType_OnMouseCapabilityChanged);
+		event_types.push_back(VBoxEventType_OnMousePointerShapeChanged);
+		event_types.push_back(VBoxEventType_OnKeyboardLedsChanged);
+
+		ievent_source->RegisterListener(listener, ComSafeArrayAsInParam(event_types), true);
+	}
+
 	Main(Genode::Env &env) : _env(env) { }
 };
 
@@ -242,6 +299,25 @@ struct Main
 void Main::_handle_input_event(Input::Event const &ev)
 {
 	_input_adapter.handle_input_event(ev);
+}
+
+
+void Main::handle_vbox_event(VBoxEventType_T ev_type, IEvent &ev)
+{
+	switch (ev_type) {
+	case VBoxEventType_OnMouseCapabilityChanged:
+		{
+			ComPtr<IMouseCapabilityChangedEvent> cap_ev = &ev;
+			BOOL absolute;
+			cap_ev->COMGETTER(SupportsAbsolute)(&absolute);
+			_input_adapter.mouse_absolute(!!absolute);
+		} break;
+
+	case VBoxEventType_OnMousePointerShapeChanged: break;
+	case VBoxEventType_OnKeyboardLedsChanged:      break;
+
+	default: /* ignore other events */ break;
+	}
 }
 
 

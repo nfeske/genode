@@ -36,6 +36,8 @@ struct Input_adapter
 
 		Point _abs_pos { 0, 0 };
 
+		bool _absolute { false };
+
 		static bool _mouse_button(Input::Keycode keycode)
 		{
 			return keycode == Input::BTN_LEFT
@@ -44,6 +46,8 @@ struct Input_adapter
 		}
 
 		void handle_input_event(Input::Event const &);
+
+		void absolute(bool absolute) { _absolute = absolute; }
 
 	} _mouse;
 
@@ -65,6 +69,8 @@ struct Input_adapter
 	: _mouse(iconsole), _keyboard(iconsole) { }
 
 	void handle_input_event(Input::Event const &);
+
+	void mouse_absolute(bool absolute) { _mouse.absolute(absolute); }
 };
 
 
@@ -121,8 +127,15 @@ void Input_adapter::Mouse::handle_input_event(Input::Event const &ev)
 	bool const abs_pos_changed = (old_abs_pos != _abs_pos);
 	bool const buttons_changed = (old_mouse_button_bits != mouse_button_bits);
 
-	if (abs_pos_changed || buttons_changed)
-		_imouse->PutMouseEventAbsolute(_abs_pos.x(), _abs_pos.y(), 0, 0, mouse_button_bits);
+	if (abs_pos_changed || buttons_changed) {
+		if (_absolute) {
+			_imouse->PutMouseEventAbsolute(_abs_pos.x(), _abs_pos.y(), 0, 0, mouse_button_bits);
+		} else {
+			Point const rel = _abs_pos - old_abs_pos;
+
+			_imouse->PutMouseEvent(rel.x(), rel.y(), 0, 0, mouse_button_bits);
+		}
+	}
 }
 
 
