@@ -73,7 +73,34 @@
         starts emulation and also does fetching of additional instruction bytes
         (maybe beyond page)
 
+* Work items
 
+  * Guest Systems:    Genode/NOVA (demo)
+  * Basics:           Long Mode
+  * Basics:           SMP
+  * Guest Systems:    Genode/NOVA (SMP)
+  * Devices:          ATA / VDI
+  * Devices:          AHCI / VDI (aio?)
+  * Guest Systems:    Ubuntu
+  * Guest Additions:  Display
+  * Guest Additions:  Mouse Integration
+  * Guest Additions:  Shared Folder
+  * Devices:          Networking / TAP or custom VFS-based ?
+  * Basics:           ACPI Reset/Shutdown/PowerOff
+  * Guest Systems:    Win10
+  * Guest Additions:  Clipboard (investigate truncated data, interplay with file manager)
+  * Guest Additions:  Caps Lock
+  * Devices:          USB raw
 
+  * Basics:           halt in TinyCore (mwait?)
+  * Basics:           sched_yield and why is it used ?
+  * Basics:           do we need to re-add prios ?
+  * Upstream merges:  Vm_state/Vcpu_state
+  * Cleanups:         vcpu.cc
+  * Optimizations:    Comparison to Linux-native VirtualBox 6
+  * Optimizations:    NEM Unmap Merging (ignore host range)
+  * Optimizations:    Norman's VGA ideas
 
-LogRel(("\033[38;5;33m▶▶▶▶▶▶ %s:%u ◀◀◀◀◀◀ \033[0m\n", __func__, __LINE__));
+  * Devices:          Sound / OSS ?
+  * Basics:           VBOX_WITH_EFI
+  * Devices:          Touchscreen
