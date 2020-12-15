@@ -55,10 +55,13 @@ VBOX_CC_OPT += -DVBOX_WITH_MULTI_CORE
 VBOX_CC_OPT += -DVBOX_WITH_AUDIO_OSS
 VBOX_CC_OPT += -DVBOX_WITH_INTEL_HDA
 
-# Required for guest additions 5++
+# required for guest additions 5++
 VBOX_CC_OPT += -DVBOX_WITH_GUEST_PROPS
 
+# prevent access to port content at the dependency stage of the build system
+ifeq ($(called_from_lib_mk),yes)
 include $(VIRTUALBOX_DIR)/Version.kmk
+endif
 
 VIRTUALBOX_PACKAGE_STRING_x86_32 = GenodeOS_32BIT_GENERIC
 VIRTUALBOX_PACKAGE_STRING_x86_64 = GenodeOS_64BIT_GENERIC
