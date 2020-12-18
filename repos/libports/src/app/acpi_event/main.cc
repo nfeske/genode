@@ -39,15 +39,12 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 	private:
 
 		const Input::Keycode _code;
-		const long           _acpi_value;
-		unsigned long        _acpi_count = 0;
+		const uint64_t       _acpi_value;
+		uint64_t             _acpi_count = 0;
 		bool                 _first = true;
 		Type                 _type;
 
-		static Avl_tree<Keys> _map_ec;
-		static Avl_tree<Keys> _map_special;
-
-		Keys *_find_by_acpi_value(long acpi_value)
+		Keys *_find_by_acpi_value(uint64_t acpi_value)
 		{
 			if (acpi_value == _acpi_value) return this;
 			Keys *key = this->child(acpi_value > _acpi_value);
@@ -56,7 +53,11 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 
 	public:
 
-		Keys(Input::Keycode code, long acpi_value, Type type)
+		static Avl_tree<Keys> _map_ec;
+		static Avl_tree<Keys> _map_hid;
+		static Avl_tree<Keys> _map_special;
+
+		Keys(Input::Keycode code, uint64_t acpi_value, Type type)
 		: _code(code), _acpi_value(acpi_value), _type(type) { }
 
 		Input::Keycode key_code() const { return _code; }
@@ -65,9 +66,9 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 
 		Type type() const { return _type; }
 
-		unsigned long update_count(unsigned long acpi_count)
+		uint64_t update_count(uint64_t acpi_count)
 		{
-			unsigned long diff = acpi_count > _acpi_count ?
+			uint64_t diff = acpi_count > _acpi_count ?
 			                     acpi_count - _acpi_count : 0;
 
 			/*
@@ -84,16 +85,16 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 			return diff;
 		}
 
-		static Keys * find_by_ec(long acpi_code)
+		static Keys * find_by(Avl_tree<Keys> &map, uint64_t acpi_code)
 		{
-			Keys * head = _map_ec.first();
+			Keys * head = map.first();
 			if (!head)
 				return head;
 
 			return head->_find_by_acpi_value(acpi_code);
 		}
 
-		static Keys * find_by_fixed(long acpi_code)
+		static Keys * find_by_fixed(uint64_t acpi_code)
 		{
 			Keys * head = _map_special.first();
 			if (!head)
@@ -103,11 +104,13 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 		}
 
 		static void insert_ec(Keys * key) { _map_ec.insert(key); }
+		static void insert_hid(Keys * key) { _map_hid.insert(key); }
 		static void insert_special(Keys * key) { _map_special.insert(key); }
 };
 
 
 Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_ec;
+Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_hid;
 Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_special;
 
 
@@ -126,12 +129,14 @@ struct Transform::Main {
 	Attached_rom_dataspace _acpi_ec;
 	Attached_rom_dataspace _acpi_fixed;
 	Attached_rom_dataspace _acpi_lid;
+	Attached_rom_dataspace _acpi_hid;
 
 	Signal_handler<Main> _dispatch_acpi_ac;
 	Signal_handler<Main> _dispatch_acpi_battery;
 	Signal_handler<Main> _dispatch_acpi_ec;
 	Signal_handler<Main> _dispatch_acpi_fixed;
 	Signal_handler<Main> _dispatch_acpi_lid;
+	Signal_handler<Main> _dispatch_acpi_hid;
 
 	Event::Connection _event;
 
@@ -144,17 +149,19 @@ struct Transform::Main {
 		_acpi_ec(env, "acpi_ec"),
 		_acpi_fixed(env, "acpi_fixed"),
 		_acpi_lid(env, "acpi_lid"),
+		_acpi_hid(env, "acpi_hid"),
 		_dispatch_acpi_ac(env.ep(), *this, &Main::check_acpi_ac),
 		_dispatch_acpi_battery(env.ep(), *this, &Main::check_acpi_battery),
 		_dispatch_acpi_ec(env.ep(), *this, &Main::check_acpi_ec),
 		_dispatch_acpi_fixed(env.ep(), *this, &Main::check_acpi_fixed),
 		_dispatch_acpi_lid(env.ep(), *this, &Main::check_acpi_lid),
+		_dispatch_acpi_hid(env.ep(), *this, &Main::check_acpi_hid),
 		_event(env)
 	{
 		Xml_node config(_config.local_addr<char>(), _config.size());
 		config.for_each_sub_node("map", [&] (Xml_node map_node) {
 			try {
-				long acpi_value = 0;
+				uint64_t acpi_value = 0;
 				String<8> acpi_type;
 				String<8> acpi_value_string;
 				String<32> to_key;
@@ -211,6 +218,8 @@ struct Transform::Main {
 					key_code = Input::Keycode::KEY_BRIGHTNESSUP;
 				else if (to_key == "KEY_BRIGHTNESSDOWN")
 					key_code = Input::Keycode::KEY_BRIGHTNESSDOWN;
+				else if (to_key == "KEY_FN_F4")
+					key_code = Input::Keycode::KEY_FN_F4;
 
 				if (key_code == Input::Keycode::KEY_UNKNOWN)
 					throw 4;
@@ -229,6 +238,9 @@ struct Transform::Main {
 					Keys::insert_special(new (_heap) Keys(key_code,
 					                                      ACPI_BATTERY,
 					                                      press_release));
+				else if (acpi_type == "hid")
+					Keys::insert_hid(new (_heap) Keys(key_code, acpi_value,
+					                                  press_release));
 				else
 					throw 5;
 			} catch (...) {
@@ -252,6 +264,7 @@ struct Transform::Main {
 		_acpi_ec.sigh(_dispatch_acpi_ec);
 		_acpi_fixed.sigh(_dispatch_acpi_fixed);
 		_acpi_lid.sigh(_dispatch_acpi_lid);
+		_acpi_hid.sigh(_dispatch_acpi_hid);
 
 		/* check for initial valid ACPI data */
 		check_acpi_ac();
@@ -259,26 +272,28 @@ struct Transform::Main {
 		check_acpi_ec();
 		check_acpi_fixed();
 		check_acpi_lid();
+		check_acpi_hid();
 	}
 
-	void check_acpi_ec()
+	void _check_acpi(Attached_rom_dataspace &rom, Avl_tree<Keys> &map,
+	                 char const * const name)
 	{
-		_acpi_ec.update();
+		rom.update();
 
-		if (!_acpi_ec.valid()) return;
+		if (!rom.valid()) return;
 
-		Xml_node ec_event(_acpi_ec.local_addr<char>(), _acpi_ec.size());
+		Xml_node event(rom.local_addr<char>(), rom.size());
 
-		ec_event.for_each_sub_node("ec", [&] (Xml_node ec_node) {
-			ec_node.for_each_sub_node("data", [&] (Xml_node data_node) {
+		event.for_each_sub_node(name, [&] (Xml_node const &node) {
+			node.for_each_sub_node("data", [&] (Xml_node const &data_node) {
 				try {
-					long acpi_value = 0;
-					unsigned long acpi_count = 0;
+					uint64_t acpi_value = 0;
+					uint64_t acpi_count = 0;
 
 					data_node.attribute("value").value(acpi_value);
 					data_node.attribute("count").value(acpi_count);
 
-					Keys * key = Keys::find_by_ec(acpi_value);
+					Keys * key = Keys::find_by(map, acpi_value);
 					if (!key)
 						return;
 
@@ -289,6 +304,16 @@ struct Transform::Main {
 				} catch (...) { /* be robust - ignore ill-formated ACPI data */ }
 			});
 		});
+	}
+
+	void check_acpi_ec()
+	{
+		_check_acpi(_acpi_ec, Keys::_map_ec, "ec");
+	}
+
+	void check_acpi_hid()
+	{
+		_check_acpi(_acpi_hid, Keys::_map_hid, "hid");
 	}
 
 	void submit_input(Keys * key)
@@ -319,7 +344,7 @@ struct Transform::Main {
 		fixed_event.for_each_sub_node("power_button", [&] (Xml_node pw_node) {
 			try {
 				bool pressed = false;
-				unsigned long acpi_count = 0;
+				uint64_t acpi_count = 0;
 
 				pw_node.attribute("value").value(pressed);
 				pw_node.attribute("count").value(acpi_count);
@@ -376,8 +401,8 @@ struct Transform::Main {
 	{
 		xml_node.for_each_sub_node(sub_name, [&] (Xml_node node) {
 			try {
-				unsigned acpi_value = 0;
-				unsigned long acpi_count = 0;
+				uint64_t acpi_value = 0;
+				uint64_t acpi_count = 0;
 
 				node.attribute("value").value(acpi_value);
 				node.attribute("count").value(acpi_count);
