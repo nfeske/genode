@@ -251,10 +251,12 @@ void Acpica::Main::init_acpica(Wait_acpi_ready wait_acpi_ready,
 	Acpica::init(env, heap, wait_acpi_ready, act_as_acpi_drv);
 
 	/* enable debugging: */
-	/* AcpiDbgLevel |= ACPI_LV_IO | ACPI_LV_INTERRUPTS | ACPI_LV_INIT_NAMES; */
-	/* AcpiDbgLayer |= ACPI_TABLES; */
-	Genode::log("debugging level=", Genode::Hex(AcpiDbgLevel),
-	            " layers=", Genode::Hex(AcpiDbgLayer));
+	if (false) {
+		AcpiDbgLevel |= ACPI_LV_IO | ACPI_LV_INTERRUPTS | ACPI_LV_INIT_NAMES;
+		AcpiDbgLayer |= ACPI_TABLES;
+		Genode::log("debugging level=", Genode::Hex(AcpiDbgLevel),
+		            " layers=", Genode::Hex(AcpiDbgLayer));
+	}
 
 	ACPI_STATUS status = AcpiInitializeSubsystem();
 	if (status != AE_OK) {

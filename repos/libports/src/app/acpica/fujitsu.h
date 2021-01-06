@@ -1,7 +1,7 @@
 /*
  * \brief  Support some Fujitsu ACPI devices
  * \author Alexander Boettcher
- *
+ * \date   2021-01-06
  */
 
 /*
@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-class Fuj02e3 : public Acpica::Reporter, Acpica::Callback<Fuj02e3> {
-
+class Fuj02e3 : public Acpica::Reporter, Acpica::Callback<Fuj02e3>
+{
 	private:
 
 		enum {
@@ -34,10 +34,11 @@ class Fuj02e3 : public Acpica::Reporter, Acpica::Callback<Fuj02e3> {
 			HID_FUJITSU_FUNC_BUTTON = HID_FUJITSU_FUNC_FLAGS | 2,
 		};
 
-		Acpica::Reportstate * _report;
-		Genode::uint64_t      _features { 0 };
+		Acpica::Reportstate *_report;
+		Genode::uint64_t     _features { 0 };
 
-		struct Data {
+		struct Data
+		{
 			Genode::uint64_t count;
 			Genode::uint64_t data;
 			bool triggered;
@@ -95,7 +96,7 @@ class Fuj02e3 : public Acpica::Reporter, Acpica::Callback<Fuj02e3> {
 
 	public:
 
-		Fuj02e3(void * report)
+		Fuj02e3(void *report)
 		: _report(reinterpret_cast<Acpica::Reportstate *>(report))
 		{
 			if (_report)
@@ -145,13 +146,13 @@ class Fuj02e3 : public Acpica::Reporter, Acpica::Callback<Fuj02e3> {
 			}
 		}
 
-		static ACPI_STATUS detect(ACPI_HANDLE hid, UINT32, void * m, void **)
+		static ACPI_STATUS detect(ACPI_HANDLE hid, UINT32, void *m, void **)
 		{
-			Acpica::Main * main = reinterpret_cast<Acpica::Main *>(m);
-			Fuj02e3 * obj = new (main->heap) Fuj02e3(main->report);
+			Acpica::Main *main = reinterpret_cast<Acpica::Main *>(m);
+			Fuj02e3 *obj = new (main->heap) Fuj02e3(main->report);
 
-			ACPI_STATUS res = AcpiInstallNotifyHandler (hid, ACPI_DEVICE_NOTIFY,
-			                                            handler, obj);
+			ACPI_STATUS res = AcpiInstallNotifyHandler(hid, ACPI_DEVICE_NOTIFY,
+			                                           handler, obj);
 			if (ACPI_FAILURE(res)) {
 				Genode::log("failed   - ", __func__, " "
 				            "res=", Genode::Hex(res), " Fujitsu adapter");
