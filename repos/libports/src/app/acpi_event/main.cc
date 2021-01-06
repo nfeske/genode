@@ -69,7 +69,7 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 		uint64_t update_count(uint64_t acpi_count)
 		{
 			uint64_t diff = acpi_count > _acpi_count ?
-			                     acpi_count - _acpi_count : 0;
+			                acpi_count - _acpi_count : 0;
 
 			/*
 			 * If we get the first time this ACPI event, than we don't
@@ -114,7 +114,8 @@ Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_hid;
 Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_special;
 
 
-struct Transform::Main {
+struct Transform::Main
+{
 
 	enum {
 		ACPI_POWER_BUTTON, ACPI_LID_OPEN, ACPI_LID_CLOSED,
