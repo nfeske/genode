@@ -23,15 +23,16 @@
 #include <event_session/connection.h>
 
 namespace Transform {
+
 	using namespace Genode;
 
 	struct Main;
 	class Keys;
-};
+}
 
 
-class Transform::Keys : public Avl_node<Transform::Keys> {
-
+class Transform::Keys : public Avl_node<Transform::Keys>
+{
 	public:
 
 		enum Type { PRESS_RELEASE, PRESS, RELEASE };
@@ -52,10 +53,6 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 		}
 
 	public:
-
-		static Avl_tree<Keys> _map_ec;
-		static Avl_tree<Keys> _map_hid;
-		static Avl_tree<Keys> _map_special;
 
 		Keys(Input::Keycode code, uint64_t acpi_value, Type type)
 		: _code(code), _acpi_value(acpi_value), _type(type) { }
@@ -93,30 +90,11 @@ class Transform::Keys : public Avl_node<Transform::Keys> {
 
 			return head->_find_by_acpi_value(acpi_code);
 		}
-
-		static Keys * find_by_fixed(uint64_t acpi_code)
-		{
-			Keys * head = _map_special.first();
-			if (!head)
-				return head;
-
-			return head->_find_by_acpi_value(acpi_code);
-		}
-
-		static void insert_ec(Keys * key) { _map_ec.insert(key); }
-		static void insert_hid(Keys * key) { _map_hid.insert(key); }
-		static void insert_special(Keys * key) { _map_special.insert(key); }
 };
-
-
-Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_ec;
-Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_hid;
-Genode::Avl_tree<Transform::Keys> Transform::Keys::_map_special;
 
 
 struct Transform::Main
 {
-
 	enum {
 		ACPI_POWER_BUTTON, ACPI_LID_OPEN, ACPI_LID_CLOSED,
 		ACPI_AC_ONLINE, ACPI_AC_OFFLINE, ACPI_BATTERY
@@ -140,6 +118,10 @@ struct Transform::Main
 	Signal_handler<Main> _dispatch_acpi_hid;
 
 	Event::Connection _event;
+
+	Avl_tree<Keys> _map_ec      { };
+	Avl_tree<Keys> _map_hid     { };
+	Avl_tree<Keys> _map_special { };
 
 	Main(Env &env)
 	:
@@ -226,22 +208,22 @@ struct Transform::Main
 					throw 4;
 
 				if (acpi_type == "ec")
-					Keys::insert_ec(new (_heap) Keys(key_code, acpi_value,
-					                                 press_release));
+					_map_ec.insert(new (_heap) Keys(key_code, acpi_value,
+					                                press_release));
 				else if (acpi_type == "fixed")
-					Keys::insert_special(new (_heap) Keys(key_code,
-					                                      ACPI_POWER_BUTTON,
-					                                      press_release));
+					_map_special.insert(new (_heap) Keys(key_code,
+					                                     ACPI_POWER_BUTTON,
+					                                     press_release));
 				else if (acpi_type == "lid" || acpi_type == "ac")
-					Keys::insert_special(new (_heap) Keys(key_code, acpi_value,
-					                                      press_release));
+					_map_special.insert(new (_heap) Keys(key_code, acpi_value,
+					                                     press_release));
 				else if (acpi_type == "battery")
-					Keys::insert_special(new (_heap) Keys(key_code,
-					                                      ACPI_BATTERY,
-					                                      press_release));
+					_map_special.insert(new (_heap) Keys(key_code,
+					                                     ACPI_BATTERY,
+					                                     press_release));
 				else if (acpi_type == "hid")
-					Keys::insert_hid(new (_heap) Keys(key_code, acpi_value,
-					                                  press_release));
+					_map_hid.insert(new (_heap) Keys(key_code, acpi_value,
+					                                 press_release));
 				else
 					throw 5;
 			} catch (...) {
@@ -307,15 +289,9 @@ struct Transform::Main
 		});
 	}
 
-	void check_acpi_ec()
-	{
-		_check_acpi(_acpi_ec, Keys::_map_ec, "ec");
-	}
+	void check_acpi_ec() { _check_acpi(_acpi_ec, _map_ec, "ec"); }
 
-	void check_acpi_hid()
-	{
-		_check_acpi(_acpi_hid, Keys::_map_hid, "hid");
-	}
+	void check_acpi_hid() { _check_acpi(_acpi_hid, _map_hid, "hid"); }
 
 	void submit_input(Keys * key)
 	{
@@ -350,7 +326,7 @@ struct Transform::Main
 				pw_node.attribute("value").value(pressed);
 				pw_node.attribute("count").value(acpi_count);
 
-				Keys * key = Keys::find_by_fixed(ACPI_POWER_BUTTON);
+				Keys * key = Keys::find_by(_map_special, ACPI_POWER_BUTTON);
 				if (!key)
 					return;
 
@@ -372,7 +348,7 @@ struct Transform::Main
 		Xml_node battery_node(_acpi_battery.local_addr<char>(),
 		                      _acpi_battery.size());
 
-		submit_input(Keys::find_by_fixed(ACPI_BATTERY));
+		submit_input(Keys::find_by(_map_special, ACPI_BATTERY));
 	}
 
 	void check_acpi_ac()
@@ -412,9 +388,9 @@ struct Transform::Main
 
 				Keys * key = nullptr;
 				if (acpi_value == STATE_O)
-					key = Keys::find_by_fixed(state_o);
+					key = Keys::find_by(_map_special, state_o);
 				if (acpi_value == STATE_C)
-					key = Keys::find_by_fixed(state_c);
+					key = Keys::find_by(_map_special, state_c);
 				if (!key)
 					return;
 
@@ -432,10 +408,5 @@ struct Transform::Main
 };
 
 
-void Component::construct(Genode::Env &env)
-{
-	/* XXX execute constructors of global statics */
-	env.exec_static_constructors();
-
-	static Transform::Main main(env);
-}
+void Component::construct(Genode::Env &env) {
+	static Transform::Main main(env); }
