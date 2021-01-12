@@ -345,29 +345,14 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 			    && node.has_attribute("function");
 		}
 
-		struct Bdf
+		static Pci::Bdf _bdf_from_xml(Xml_node node)
 		{
-			unsigned b, d, f;
-
-			bool equals(Bdf const &other) const
-			{
-				return other.b == b && other.d == d && other.f == f;
-			}
-
-			void print(Genode::Output &out) const
-			{
-				Genode::print(out, Genode::Hex(b), ":", Genode::Hex(d), ".", f);
-			}
-		};
-
-		static Bdf _bdf_from_xml(Xml_node node)
-		{
-			return Bdf { .b = node.attribute_value("bus",      0U),
-			             .d = node.attribute_value("device",   0U),
-			             .f = node.attribute_value("function", 0U) };
+			return Pci::Bdf { .bus      = node.attribute_value("bus",      0U),
+			                  .device   = node.attribute_value("device",   0U),
+			                  .function = node.attribute_value("function", 0U) };
 		}
 
-		static bool _bdf_attributes_in_valid_range(Xml_node node)
+		static bool _bdf_attributes_in_valid_range(Xml_node const &node)
 		{
 			return _bdf_exactly_specified(node)
 			    && (node.attribute_value("bus",      0U) < Device_config::MAX_BUSES)
@@ -375,15 +360,15 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 			    && (node.attribute_value("function", 0U) < Device_config::MAX_FUNCTIONS);
 		}
 
-		static bool _bdf_matches(Xml_node node, Bdf bdf)
+		static bool _bdf_matches(Xml_node const &node, Pci::Bdf const &bdf)
 		{
-			return _bdf_from_xml(node).equals(bdf);
+			return _bdf_from_xml(node) == bdf;
 		}
 
 		/**
 		 * Check according session policy device usage
 		 */
-		bool permit_device(Bdf const bdf, unsigned class_code)
+		bool permit_device(Pci::Bdf const bdf, unsigned const class_code)
 		{
 			using namespace Genode;
 
@@ -447,7 +432,7 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 		/**
 		 * Lookup a given device name.
 		 */
-		bool find_dev_in_policy(Bdf const bdf, bool once = true)
+		bool find_dev_in_policy(Pci::Bdf const bdf, bool once = true)
 		{
 			using namespace Genode;
 
@@ -574,7 +559,7 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 						throw Genode::Service_denied();
 					}
 
-					Bdf const bdf = _bdf_from_xml(node);
+					Pci::Bdf const bdf = _bdf_from_xml(node);
 
 					enum { DOUBLET = false };
 					if (find_dev_in_policy(bdf, DOUBLET)) {
@@ -689,9 +674,9 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 						continue;
 
 					/* check that policy permit access to the matched device */
-					if (permit_device(Bdf { (unsigned)bus,
-					                        (unsigned)device,
-					                        (unsigned)function },
+					if (permit_device(Pci::Bdf { (unsigned)bus,
+					                             (unsigned)device,
+					                             (unsigned)function },
 					                  config.class_code()))
 						break;
 				}
