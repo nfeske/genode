@@ -39,6 +39,11 @@ if {[have_spec foc] || [have_spec rpi3] ||
 	exit 0
 }
 
+if {[get_cmd_switch --autopilot] && [have_spec linux]} {
+	puts "Run script does not support autopilot on Linux."
+	exit 0
+}
+
 set on_linux_with_dst_ip ""
 catch {set on_linux_with_dst_ip $::env(ON_LINUX_WITH_DST_IP)}
 set on_linux [expr ![string equal $on_linux_with_dst_ip ""]]
