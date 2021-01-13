@@ -11,7 +11,7 @@ if {[have_include "power_on/qemu"] || [have_include "power_on/linux"]} {
 	exit 0
 }
 
-if { [have_spec muen] } {
+if { [have_board muen] } {
 	puts "Run script does not support Muen."
 	exit 0
 }

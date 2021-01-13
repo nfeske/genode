@@ -1,5 +1,5 @@
 TARGET          = muen
-REQUIRES        = x86_64 muen
+REQUIRES        = x86_64
 MUEN_SRC_DIR    = $(call select_from_ports,muen)/src/kernel/muen
 MUEN_BUILD_DIR  = $(BUILD_BASE_DIR)/kernel
 MUEN_CONF_FILE  = $(MUEN_BUILD_DIR)/muen.conf
