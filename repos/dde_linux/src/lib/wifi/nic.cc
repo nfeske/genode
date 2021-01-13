@@ -345,20 +345,19 @@ class Root : public Genode::Root_component<Wifi_session_component,
 
 			session = new (md_alloc())
 			          Wifi_session_component(tx_buf_size, rx_buf_size,
-			                                *md_alloc(), _env, device);
+			                                *md_alloc(), _env, &Wifi_nic::device());
 			return session;
 		}
 
 		void _destroy_session(Wifi_session_component *session)
 		{
 			/* stop rx */
-			Root::instance->session = nullptr;
+			session = nullptr;
 			Genode::Root_component<Wifi_session_component, Genode::Single_client>::_destroy_session(session);
 		}
 
 	public:
 
-		net_device             *device  = nullptr;
 		Wifi_session_component *session = nullptr;
 		static Root            *instance;
 
@@ -391,9 +390,6 @@ class Root : public Genode::Root_component<Wifi_session_component,
 			}
 		}
 };
-
-
-Root *Root::instance;
 
 
 namespace Genode { class Wifi_uplink; }
@@ -542,7 +538,8 @@ void Lx::nic_init(Genode::Env             &env,
 	case Genode::Nic_driver_mode::NIC_SERVER:
 
 		Genode::log("Acting as NIC server");
-		Wifi_nic::instance(*new (alloc) Root(env, alloc));
+		static Root root(env, alloc);
+		Wifi_nic::instance(root);
 		break;
 
 	case Genode::Nic_driver_mode::UPLINK_CLIENT:
@@ -814,8 +811,7 @@ extern "C" int dev_parse_header(const struct sk_buff *skb, unsigned char *haddr)
 
 extern "C" int dev_queue_xmit(struct sk_buff *skb)
 {
-	struct net_device *dev           = skb->dev;
-	struct net_device_ops const *ops = dev->netdev_ops;
+	struct net_device *dev = skb->dev;
 
 	if (skb->next) {
 		Genode::warning("more skb's queued");
