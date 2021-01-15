@@ -115,7 +115,7 @@ February - Release 21.02
 * Sculpt: basic UI for the consistent block encrypter (CBE)
 * 64-bit ARM
   * VirtIO block-device support for virtual machines
-  * Base platform support for Pine64 (kernel base framework)
+  * Base platform support for the Pine A64 board (kernel base framework)
 
 
 May - Release 21.05
@@ -125,7 +125,7 @@ May - Release 21.05
 * GPU support
   * MESA update
   * Experiments on ARM (e.g., Vivante on i.MX8, or Mali-400 on A64)
-* Sculpt OS on Pine64 (USB, input, framebuffer, SD-card, networking)
+* Sculpt OS on Pine A64 (USB, input, framebuffer, SD-card, networking)
 * 64-bit ARM
   * Platform-driver consolidation between ARM and x86
   * PCI-express support for MNT Reform (i.MX8)
