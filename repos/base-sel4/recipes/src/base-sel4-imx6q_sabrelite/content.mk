@@ -28,8 +28,15 @@ src/tool/sel4_tools: src/kernel/sel4
 	mkdir -p $@
 	cp -r $(ELFLOADER_PORT_DIR)/src/tool/sel4_tools/* $@
 
+content: etc/board.conf
+
+etc/board.conf:
+	echo "BOARD = imx6q_sabrelite" > etc/board.conf
+
 content:
 	mv lib/mk/spec/arm/ld-sel4.mk lib/mk/spec/arm/ld.mk;
 	sed -i "s/ld-sel4/ld/"          src/lib/ld/sel4/target.mk
 	sed -i "s/imx6_timer_drv/timer/" src/timer/epit/imx6/target.inc
+	find lib/mk/spec -name kernel-sel4-*.mk -o -name syscall-sel4-*.mk |\
+		grep -v "sel4-imx6q_sabrelite.mk" | xargs rm -rf
 

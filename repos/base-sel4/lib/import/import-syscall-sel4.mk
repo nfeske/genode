@@ -1,4 +1,6 @@
-SEL4_INCLUDE_DIR := $(LIB_CACHE_DIR)/syscall-sel4/include
+include $(REP_DIR)/etc/board.conf
+
+SEL4_INCLUDE_DIR := $(LIB_CACHE_DIR)/syscall-sel4-$(BOARD)/include
 
 #
 # Access kernel-interface headers that were installed when building the

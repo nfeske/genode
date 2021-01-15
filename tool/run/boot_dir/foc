@@ -37,7 +37,7 @@ proc reset_target { {spawn_id_arg -1} } {
 }
 
 
-proc l4_build_dir { } { return "[pwd]/var/libcache/syscall-foc/[board]-build" }
+proc l4_build_dir { } { return "[pwd]/var/libcache/syscall-foc-[board]/build" }
 
 
 proc kernel_binary { } { return "[pwd]/bin/foc-[board]" }
