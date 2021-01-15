@@ -4,7 +4,7 @@
                                ===========
 
 
-Road Map for 2021 | 2020-01-15
+Road Map for 2021 | 2021-01-15
 ##############################
 
 | In 2021, we plan to bring Genode to the Pinephone, advance the framework's
