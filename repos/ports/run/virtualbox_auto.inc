@@ -350,7 +350,7 @@ append_if [expr $use_usb] config {
 	</start>
 }
 
-append_if [[have_board pc] || [have_board muen]] config {
+append_if [expr [have_board pc] || [have_board muen]] config {
 	<start name="fb_drv" priority="-1" caps="150">
 		<binary name="vesa_fb_drv"/>
 		<resource name="RAM" quantum="32M"/>
