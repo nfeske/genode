@@ -66,7 +66,7 @@ platforms. The following key aspects of our road map for 2021 reflect that.
 :Linux-device-driver environment re-imagined:
   We are convinced that we have to dramatically reduce the engineering
   effort needed to port device drivers from the Linux kernel to Genode. With
-  many years of driver-porting experience under our belt, we plan to condense
+  many years of driver-porting experience under our belts, we plan to condense
   the lessons learned in the form of new tooling and documentation. This, in
   turn, will hopefully pave the ground for more and more developers
   contributing to Genode's device-driver coverage in the future.
@@ -94,7 +94,7 @@ platforms. The following key aspects of our road map for 2021 reflect that.
   feature. We already
   [https://genode.org/documentation/release-notes/17.08#Hardware-accelerated_graphics_for_Intel_Gen-8_GPUs - wetted our toes]
   in the past. But GPU support has not yet become routinely supported in
-  system scenarios like Sculpt OS. In 2020, we want to change that, making GPU
+  system scenarios like Sculpt OS. In 2021, we want to change that, making GPU
   support a feature that can be relied on. We will primarily address Intel
   graphics first but also explore GPUs on ARM-based devices.
 
