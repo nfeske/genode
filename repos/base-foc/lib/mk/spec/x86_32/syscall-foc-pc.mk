@@ -1,5 +1,5 @@
 override BOARD := pc
-L4_ARCH        := amd64_K8
+L4_ARCH        := x86_586
 L4_CONFIG      := $(call select_from_repositories,config/x86_32.user)
 
 L4_INC_TARGETS := x86/l4/sys x86/l4f/l4/sys x86/l4/vcpu
