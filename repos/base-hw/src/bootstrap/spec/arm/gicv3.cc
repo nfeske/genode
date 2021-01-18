@@ -1,5 +1,5 @@
 /*
- * \brief  GICv3 interrupt controller for core
+ * \brief  GICv3 interrupt controller initialization
  * \author Sebastian Sumpf
  * \date   2019-07-08
  */

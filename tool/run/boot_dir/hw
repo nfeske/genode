@@ -23,7 +23,7 @@ proc bootstrap_link_address { } {
 	if {[have_board "nit6_solox"]}      { return "0x88000000" }
 	if {[have_board "virt_qemu"]}       { return "0x40000000" }
 
-	puts "unknown platform no linker address known"
+	puts "unknown platform, no linker address known"
 	exit -1
 }
 
@@ -62,7 +62,7 @@ proc run_boot_dir {binaries} {
 	set build_args "$bootstrap_arg $core_arg $ld_arg"
 	if {[llength $build_args]} { build $build_args }
 
-	if {$ld_arg        != ""} { file copy -force bin/ld-hw.lib.so   [run_dir]/genode/ld.lib.so }
+	if {$ld_arg        != ""} { file copy -force bin/ld-hw.lib.so           [run_dir]/genode/ld.lib.so }
 	if {$core_arg      != ""} { file copy -force bin/core-hw-[board].o      [run_dir]/genode/core-hw.o }
 	if {$bootstrap_arg != ""} { file copy -force bin/bootstrap-hw-[board].o [run_dir]/genode/bootstrap-hw.o }
 

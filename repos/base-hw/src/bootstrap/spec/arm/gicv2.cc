@@ -1,5 +1,5 @@
 /*
- * \brief  Programmable interrupt controller for core
+ * \brief  Programmable interrupt controller initialization
  * \author Stefan Kalkowski
  * \date   2012-10-24
  */
