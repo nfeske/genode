@@ -1,4 +1,4 @@
-include $(REP_DIR)/etc/board.conf
+include $(call select_from_repositories,etc/board.conf)
 
 SEL4_INCLUDE_DIR := $(LIB_CACHE_DIR)/syscall-sel4-$(BOARD)/include
 

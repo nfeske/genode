@@ -1,4 +1,4 @@
-include $(REP_DIR)/etc/board.conf
+include $(call select_from_repositories,etc/board.conf)
 
 L4_INCLUDE_DIR := $(LIB_CACHE_DIR)/syscall-foc-$(BOARD)/build/include
 
