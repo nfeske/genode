@@ -84,6 +84,7 @@ struct Vfs_pipe::Pipe_handle : Vfs::Vfs_handle, private Pipe_handle_registry_ele
 
 struct Vfs_pipe::Pipe
 {
+	Genode::Env &env;
 	Genode::Allocator &alloc;
 	Pipe_space::Element space_elem;
 	Pipe_buffer buffer { };
@@ -93,13 +94,20 @@ struct Vfs_pipe::Pipe
 	unsigned num_writers { 0 };
 	bool waiting_for_writers { true };
 
-	Genode::Signal_context_capability &notify_sigh;
+	Genode::Io_signal_handler<Pipe> _read_notify_handler
+		{ env.ep(), *this, &Pipe::notify_read };
+	Genode::Signal_context_capability _read_notify_cap { _read_notify_handler };
+	Genode::Io_signal_handler<Pipe> _write_notify_handler
+		{ env.ep(), *this, &Pipe::notify_write };
+	Genode::Signal_context_capability _write_notify_cap { _write_notify_handler };
+
 
 	bool new_handle_active { true };
 
-	Pipe(Genode::Allocator &alloc, Pipe_space &space,
-	     Genode::Signal_context_capability &notify_sigh)
-	: alloc(alloc), space_elem(*this, space), notify_sigh(notify_sigh) { }
+	Pipe(Genode::Env &env, Genode::Allocator &alloc, Pipe_space &space)
+	: 
+		env(env), alloc(alloc), space_elem(*this, space) 
+	{ }
 
 	~Pipe() = default;
 
@@ -107,6 +115,28 @@ struct Vfs_pipe::Pipe
 	Name name() const
 	{
 		return Name(space_elem.id().value);
+	}
+
+	void notify_read()
+	{
+		read_ready_waiters.dequeue_all([] (Handle_element &elem) {
+			elem.object().read_ready_response(); });
+	}
+
+	void notify_write()
+	{
+		io_progress_waiters.dequeue_all([] (Handle_element &elem) {
+			elem.object().io_progress_response(); });
+	}
+
+	void submit_read_signal()
+	{
+		Genode::Signal_transmitter(_read_notify_cap).submit();
+	}
+
+	void submit_write_signal()
+	{
+		Genode::Signal_transmitter(_write_notify_cap).submit();
 	}
 
 	/**
@@ -151,11 +181,11 @@ struct Vfs_pipe::Pipe
 
 			if (0 == num_writers) {
 				/* flush buffer */
-				if (!buffer.empty()) {
+				if (!buffer.empty())
 					Genode::warning("flushing non-empty buffer. capacity=", buffer.avail_capacity());
-				}
+
 				buffer.reset();
-				io_progress_waiters.dequeue_all([] (Handle_element /*&elem*/) { });
+				io_progress_waiters.dequeue_all([] (Handle_element &/*elem*/) { });
 			}
 			*handle = new (alloc)
 				Pipe_handle(fs, alloc, Directory_service::OPEN_MODE_WRONLY, registry, *this);
@@ -177,24 +207,6 @@ struct Vfs_pipe::Pipe
 		return Open_result::OPEN_ERR_UNACCESSIBLE;
 	}
 
-	/**
-	 * Use a signal as a hack to defer notifications
-	 * until the "io_progress_handler".
-	 */
-	void submit_signal() {
-		Genode::Signal_transmitter(notify_sigh).submit(); }
-
-	/**
-	 * Notify handles waiting for activity
-	 */
-	void notify()
-	{
-		io_progress_waiters.dequeue_all([] (Handle_element &elem) {
-			elem.object().io_progress_response(); });
-		read_ready_waiters.dequeue_all([] (Handle_element &elem) {
-			elem.object().read_ready_response(); });
-	}
-
 	Write_result write(Pipe_handle &handle,
 	                   const char *buf, file_size count,
 	                   file_size &out_count)
@@ -212,7 +224,7 @@ struct Vfs_pipe::Pipe
 			io_progress_waiters.enqueue(handle.io_progress_elem);
 
 		if (notify)
-			submit_signal();
+			submit_read_signal();
 
 		return Write_result::WRITE_OK;
 	}
@@ -241,7 +253,7 @@ struct Vfs_pipe::Pipe
 		}
 
 		if (notify)
-			submit_signal();
+			submit_write_signal();
 
 		return Read_result::READ_OK;
 	}
@@ -285,12 +297,13 @@ struct Vfs_pipe::New_pipe_handle : Vfs::Vfs_handle
 	Pipe &pipe;
 
 	New_pipe_handle(Vfs::File_system &fs,
+	                Genode::Env &env,
 	                Genode::Allocator &alloc,
 	                unsigned flags,
-	                Pipe_space &pipe_space,
-	                Genode::Signal_context_capability &notify_sigh)
-	: Vfs::Vfs_handle(fs, fs, alloc, flags),
-	  pipe(*(new (alloc) Pipe(alloc, pipe_space, notify_sigh)))
+	                Pipe_space &pipe_space)
+	: 
+		Vfs::Vfs_handle(fs, fs, alloc, flags),
+		pipe(*(new (alloc) Pipe(env, alloc, pipe_space)))
 	{ }
 
 	~New_pipe_handle()
@@ -317,20 +330,9 @@ class Vfs_pipe::File_system : public Vfs::File_system
 {
 	protected:
 
+		Vfs::Env  &_env;
+
 		Pipe_space _pipe_space { };
-
-		/*
-		 * XXX: a hack to defer cross-thread notifications at
-		 * the libc until the io_progress handler
-		 */
-		Genode::Io_signal_handler<File_system> _notify_handler;
-		Genode::Signal_context_capability _notify_cap { _notify_handler };
-
-		void _notify_any()
-		{
-			_pipe_space.for_each<Pipe&>([] (Pipe &pipe) {
-				pipe.notify(); });
-		}
 
 		/*
 		 * verifies if a path meets access control requirements
@@ -350,7 +352,7 @@ class Vfs_pipe::File_system : public Vfs::File_system
 
 		File_system(Vfs::Env &env)
 		:
-			_notify_handler(env.env().ep(), *this, &File_system::_notify_any)
+			_env(env)
 		{ }
 
 		const char* type() override { return "pipe"; }
@@ -451,7 +453,7 @@ class Vfs_pipe::File_system : public Vfs::File_system
 
 					/* trigger reattempt of read to deliver EOF */
 					if (pipe->num_writers == 0)
-						pipe->submit_signal();
+						pipe->submit_read_signal();
 				}
 			} else
 			if (New_pipe_handle *handle = dynamic_cast<New_pipe_handle*>(vfs_handle))
@@ -650,7 +652,7 @@ class Vfs_pipe::Pipe_file_system : public Vfs_pipe::File_system
 				if ((OPEN_MODE_ACCMODE & mode) == OPEN_MODE_WRONLY)
 					return OPEN_ERR_NO_PERM;
 				*handle = new (alloc)
-					New_pipe_handle(*this, alloc, mode, _pipe_space, _notify_cap);
+					New_pipe_handle(*this, _env.env(), alloc, mode, _pipe_space);
 				return OPEN_OK;
 			}
 
@@ -725,7 +727,6 @@ class Vfs_pipe::Fifo_file_system : public Vfs_pipe::File_system
 			{ }
 		};
 
-		Vfs::Env                    &_env;
 		Genode::Registry<Fifo_item>  _items { };
 
 	protected:
@@ -793,13 +794,13 @@ class Vfs_pipe::Fifo_file_system : public Vfs_pipe::File_system
 
 		Fifo_file_system(Vfs::Env &env, Genode::Xml_node const &config)
 		:
-			File_system(env), _env(env)
+			File_system(env)
 		{
 			config.for_each_sub_node("fifo", [&env, this] (Xml_node const &fifo) {
 				Path const path { fifo.attribute_value("name", String<MAX_PATH_LENGTH>()) };
 
 				Pipe* pipe = new (env.alloc())
-					Pipe(env.alloc(), _pipe_space, _notify_cap);
+					Pipe(env.env(), env.alloc(), _pipe_space);
 				if (pipe) {
 					auto item = new (env.alloc())
 						Fifo_item(_items, path, pipe->space_elem.id());
