@@ -96,17 +96,15 @@ struct Vfs_pipe::Pipe
 
 	Genode::Io_signal_handler<Pipe> _read_notify_handler
 		{ env.ep(), *this, &Pipe::notify_read };
-	Genode::Signal_context_capability _read_notify_cap { _read_notify_handler };
+
 	Genode::Io_signal_handler<Pipe> _write_notify_handler
 		{ env.ep(), *this, &Pipe::notify_write };
-	Genode::Signal_context_capability _write_notify_cap { _write_notify_handler };
-
 
 	bool new_handle_active { true };
 
 	Pipe(Genode::Env &env, Genode::Allocator &alloc, Pipe_space &space)
-	: 
-		env(env), alloc(alloc), space_elem(*this, space) 
+	:
+		env(env), alloc(alloc), space_elem(*this, space)
 	{ }
 
 	~Pipe() = default;
@@ -131,12 +129,12 @@ struct Vfs_pipe::Pipe
 
 	void submit_read_signal()
 	{
-		Genode::Signal_transmitter(_read_notify_cap).submit();
+		Genode::Signal_transmitter(_read_notify_handler).submit();
 	}
 
 	void submit_write_signal()
 	{
-		Genode::Signal_transmitter(_write_notify_cap).submit();
+		Genode::Signal_transmitter(_write_notify_handler).submit();
 	}
 
 	/**
@@ -301,7 +299,7 @@ struct Vfs_pipe::New_pipe_handle : Vfs::Vfs_handle
 	                Genode::Allocator &alloc,
 	                unsigned flags,
 	                Pipe_space &pipe_space)
-	: 
+	:
 		Vfs::Vfs_handle(fs, fs, alloc, flags),
 		pipe(*(new (alloc) Pipe(env, alloc, pipe_space)))
 	{ }
