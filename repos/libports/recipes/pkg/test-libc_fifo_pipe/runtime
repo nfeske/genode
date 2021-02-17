@@ -1,7 +1,7 @@
 <runtime ram="64M" caps="1000" binary="init">
 
 	<events>
-		<timeout meaning="failed" sec="60" />
+		<timeout meaning="failed" sec="120" />
 		<log meaning="succeeded">--- test succeeded ---</log>
 		<log meaning="failed">Error: </log>
 	</events>
@@ -68,11 +68,11 @@
 								<service name="ROM"/>
 								<service name="Timer"/>
 							</parent-provides>
-							<default caps="100"/>
+							<default caps="110"/>
 
 							<start name="echo">
 								<binary name="test-libc_fifo_pipe"/>
-								<resource name="RAM" quantum="2M"/>
+								<resource name="RAM" quantum="3M"/>
 								<config type="echo">
 									<vfs>
 										<dir name="dev">
@@ -120,7 +120,7 @@
 		<start name="fifo-pipe-test">
 			<binary name="test-libc_fifo_pipe"/>
 			<resource name="RAM" quantum="8M"/>
-			<config iterations="20">
+			<config iterations="15">
 				<vfs>
 					<dir name="ro">
 						<rom name="test-data.bin"/>
