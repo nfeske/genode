@@ -94,7 +94,8 @@ BASE_HW_DIR := $(GENODE_DIR)/repos/base-hw
 SRC_TIMER := target.inc include hw main.cc
 
 SRC_INCLUDE_HW += $(notdir $(wildcard $(BASE_HW_DIR)/src/include/hw/*.h)) \
-                  $(addprefix spec/,${SRC_INCLUDE_HW_SPECS(${ARCH})})
+                  $(addprefix spec/,${SRC_INCLUDE_HW_SPECS(${ARCH})}) \
+                  uart
 
 SRC_BOOTSTRAP += hw env.cc init.cc lock.cc log.cc thread.cc \
                  platform.cc platform.h \
