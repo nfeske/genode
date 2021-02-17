@@ -86,6 +86,13 @@ BASE_DIR     := $(realpath $(shell echo $(BASE_DIR)))
 export SHELL := $(shell which bash)
 
 #
+# Discharge variables evaluated by ccache mechanism that may be inherited when
+# using the build system in a nested fashion.
+#
+undefine CUSTOM_CXX
+undefine CUSTOM_CC
+
+#
 # Fetch SPECS configuration from all source repositories and the build directory
 #
 SPECS :=
