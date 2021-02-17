@@ -107,7 +107,7 @@ SRC_LIB_BASE += $(notdir $(wildcard $(BASE_HW_DIR)/src/lib/base/*.cc)) \
                 ${SRC_LIB_BASE_SPECS(${ARCH})}
 
 SRC_LIB_STARTUP += init_main_thread.cc _main.cc \
-                   ${SRC_LIB_STARTUP_SPECS(${ARCH})}
+                   $(addprefix spec/,${SRC_LIB_STARTUP_SPECS(${ARCH})})
 
 SRC_CORE += $(notdir $(wildcard $(BASE_HW_DIR)/src/core/*.cc)) \
             $(notdir $(wildcard $(BASE_HW_DIR)/src/core/*.h)) \
@@ -125,7 +125,7 @@ CONTENT += $(addprefix src/timer/,$(SRC_TIMER)) \
            $(addprefix src/bootstrap/,$(SRC_BOOTSTRAP)) \
            $(addprefix lib/mk/,$(LIB_MK)) \
            $(addprefix src/lib/base/,$(SRC_LIB_BASE)) \
-           $(addprefix src/lib/base/,$(SRC_LIB_STARTUP)) \
+           $(addprefix src/lib/startup/,$(SRC_LIB_STARTUP)) \
            $(addprefix src/core/,$(SRC_CORE)) \
            src/lib/hw src/lib/ld src/lib/cxx \
            src/include/base/internal src/include/pager \
