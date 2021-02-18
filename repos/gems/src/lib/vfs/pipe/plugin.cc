@@ -211,6 +211,12 @@ struct Vfs_pipe::Pipe
 		file_size out = 0;
 		bool notify = buffer.empty();
 
+		if (buffer.avail_capacity() == 0) {
+			submit_read_signal();
+			out_count = 0;
+			return Write_result::WRITE_ERR_WOULD_BLOCK;
+		}
+
 		while (out < count && 0 < buffer.avail_capacity()) {
 			buffer.add(*(buf++));
 			++out;
