@@ -3,7 +3,7 @@ block_session
 os
 vfs
 aes_cbc_4k
-libcrypto
+openssl
 so
 spark
 libsparkcrypto
