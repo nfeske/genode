@@ -451,6 +451,9 @@ class Vfs_pipe::File_system : public Vfs::File_system
 					/* trigger reattempt of read to deliver EOF */
 					if (pipe->num_writers == 0)
 						pipe->submit_read_signal();
+				} else {
+					/* a close() may arrive before read() - make sure we deliver EOF */
+					pipe->waiting_for_writers = false;
 				}
 			} else
 			if (New_pipe_handle *handle = dynamic_cast<New_pipe_handle*>(vfs_handle))
