@@ -1,4 +1,4 @@
-build "core init timer server/cpu_balancer app/cpu_burner app/top"
+build "core init timer server/cpu_balancer app/cpu_burner app/top app/shim"
 
 if {![have_include "power_on/qemu"]} {
 	puts "Run script is not supported on this platform"
@@ -93,11 +93,13 @@ append config {
 	</start>
 
 	<start name="cpu_burner" priority="-1">
+		<binary name="shim"/>
 		<affinity xpos="1" ypos="0" width="2" height="1"/>
 		<resource name="RAM" quantum="2M"/>
 		<route>
-			<service name="PD">  <child name="cpu_balancer"/> </service>
-			<service name="CPU"> <child name="cpu_balancer"/> </service>
+			<service name="PD"  label="child">  <child name="cpu_balancer"/> </service>
+			<service name="CPU" label="child">  <child name="cpu_balancer"/> </service>
+			<service name="ROM" label="binary"> <parent label="cpu_burner"/> </service>
 			<service name="Timer"> <child name="timer"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
@@ -149,7 +151,7 @@ append config {
 
 install_config $config
 
-build_boot_image { core ld.lib.so init timer cpu_balancer cpu_burner top }
+build_boot_image { core ld.lib.so init timer cpu_balancer cpu_burner top shim }
 
 append qemu_args " -nographic"
 append qemu_args " -smp [expr $cpu_width * $cpu_height],cores=$cpu_width,threads=$cpu_height"
