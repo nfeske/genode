@@ -30,6 +30,7 @@
 #include <view/activatable_item.h>
 #include <depot_query.h>
 
+#include <view/pd_route_dialog.h>
 #include <view/resource_dialog.h>
 
 namespace Sculpt { struct Popup_dialog; }
@@ -116,6 +117,7 @@ struct Sculpt::Popup_dialog : Dialog
 	Hoverable_item   _route_item   { };
 
 	Constructible<Resource_dialog> _resources { };
+	Constructible<Pd_route_dialog> _pd_route_dialog { };
 
 	enum State { TOP_LEVEL, DEPOT_REQUESTED, DEPOT_SHOWN, DEPOT_SELECTION,
 	             INDEX_REQUESTED, INDEX_SHOWN,
@@ -197,6 +199,9 @@ struct Sculpt::Popup_dialog : Dialog
 			_action_item .match(hover, "frame", "vbox", "button", "name"),
 			_install_item.match(hover, "frame", "vbox", "float", "vbox", "float", "button", "name"),
 			_route_item  .match(hover, "frame", "vbox", "frame", "vbox", "hbox", "name"));
+
+		if (_pd_route_dialog.constructed())
+			_pd_route_dialog->hover(hover, "frame", "vbox", "frame", "vbox", "hbox", "name");
 
 		if (_resources.constructed() &&
 		    hover_result == Dialog::Hover_result::UNMODIFIED)
@@ -407,6 +412,7 @@ struct Sculpt::Popup_dialog : Dialog
 		_selected_route.destruct();
 		_menu._level = 0;
 		_resources.destruct();
+		_pd_route_dialog.destruct();
 	}
 
 	Popup_dialog(Env &env, Refresh &refresh,
@@ -460,6 +466,9 @@ struct Sculpt::Popup_dialog : Dialog
 		if (!_resources.constructed())
 			_resources.construct(construction.affinity_space,
 			                     construction.affinity_location);
+
+		if (!_pd_route_dialog.constructed())
+			_pd_route_dialog.construct(_runtime_config);
 
 		_pkg_rom_missing = blueprint_rom_missing(blueprint, construction.path);
 		_pkg_missing     = blueprint_missing    (blueprint, construction.path);

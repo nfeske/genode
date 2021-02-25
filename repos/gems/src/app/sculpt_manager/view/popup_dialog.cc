@@ -85,6 +85,9 @@ void Popup_dialog::_gen_pkg_elements(Xml_generator &xml,
 		});
 	});
 
+	if (_pd_route_dialog.constructed())
+		_pd_route_dialog->generate(xml);
+
 	if (_resources.constructed() && component.affinity_space.total() > 1) {
 		xml.node("frame", [&] {
 			xml.node("vbox", [&] () {
@@ -441,6 +444,8 @@ void Popup_dialog::click(Action &action)
 				_state = PKG_SHOWN;
 				_selected_route.destruct();
 
+				if (_pd_route_dialog.constructed())
+					_pd_route_dialog->reset();
 			} else {
 
 				bool clicked_on_selected_route = false;
@@ -488,6 +493,12 @@ void Popup_dialog::click(Action &action)
 				if (_resources.constructed()) {
 					action.apply_to_construction([&] (Component &component) {
 						_resources->click(component);
+					});
+				}
+
+				if (_pd_route_dialog.constructed()) {
+					action.apply_to_construction([&] (Component &component) {
+						_pd_route_dialog->click(component);
 					});
 				}
 			}
