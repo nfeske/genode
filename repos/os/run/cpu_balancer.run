@@ -76,7 +76,7 @@ append config {
 <!--
 			<component label="subinit -> cpu_burner" default_policy="none">
 -->
-			<component label="cpu_burner" default_policy="none">
+			<component label="cpu_burner -> child" default_policy="none">
 <!--
 				<thread name="signal handler" policy="pin" xpos="1" ypos="0"/>
 -->
