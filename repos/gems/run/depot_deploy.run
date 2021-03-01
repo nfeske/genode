@@ -19,7 +19,8 @@ create_tar_from_depot_binaries [run_dir]/genode/depot.tar \
                                [depot_user]/pkg/window_layouter \
                                [depot_user]/pkg/motif_decorator \
                                [depot_user]/pkg/themed_decorator \
-                               [depot_user]/pkg/sticks_blue_backdrop
+                               [depot_user]/pkg/sticks_blue_backdrop \
+                               [depot_user]/pkg/cpu_balancer
 
 proc current_pkg { pkg } { return $pkg/[_current_depot_archive_version pkg $pkg] }
 
@@ -34,6 +35,7 @@ install_config {
 		<service name="RM"/>
 		<service name="CPU"/>
 		<service name="LOG"/>
+		<service name="TRACE"/>
 	</parent-provides>
 
 	<default-route>
@@ -148,6 +150,7 @@ install_config {
 					<service name="Gui"/>
 					<service name="File_system"/>
 					<service name="Report"/>
+					<service name="TRACE"/>
 				</parent-provides>
 			</static>
 			<common_routes>
@@ -237,6 +240,14 @@ install_config {
 
 			<!-- vbox, nic_router, acpica -->
 
+			<start name="cpu_balancer" pkg="} [depot_user]/pkg/[current_pkg cpu_balancer] {">
+				<provides> <service name="PD"/> <service name="CPU"/> </provides>
+				<route>
+					<service name="TRACE"> <parent/> </service>
+					<service name="Report"> <parent/> </service>
+				</route>
+			</start>
+
 		</config>
 		<route>
 			<service name="ROM" label="blueprint"> <child name="report_rom"/> </service>
@@ -248,7 +259,7 @@ install_config {
 	</start>
 
 	<start name="dynamic" caps="8000">
-		<resource name="RAM" quantum="180M"/>
+		<resource name="RAM" quantum="220M"/>
 		<binary name="init"/>
 		<route>
 			<service name="ROM" label_last="ld.lib.so"> <parent/> </service>
@@ -274,6 +285,7 @@ build { app/depot_query app/depot_deploy }
 file copy -force [genode_dir]/repos/gems/run/sculpt/fonts.config [run_dir]/genode/
 file copy -force [genode_dir]/repos/ports/recipes/raw/system_shell/system_shell.config [run_dir]/genode/
 
+append qemu_args " -m 512 "
 #
 # Pin the nitpicker focus to the window manager by providing a static focus ROM
 #
