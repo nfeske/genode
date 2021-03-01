@@ -248,6 +248,14 @@ install_config {
 				</route>
 			</start>
 
+			<start name="fonts_fs.2" pkg="} [depot_user]/pkg/[current_pkg fonts_fs] {">
+				<route>
+					<service name="PD">  <child name="cpu_balancer"/> </service>
+					<service name="CPU"> <child name="cpu_balancer"/> </service>
+					<service name="ROM" label="config"> <parent label="fonts.config"/> </service>
+				</route>
+			</start>
+
 		</config>
 		<route>
 			<service name="ROM" label="blueprint"> <child name="report_rom"/> </service>
