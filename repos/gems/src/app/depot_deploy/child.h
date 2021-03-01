@@ -347,7 +347,22 @@ void Depot_deploy::Child::gen_start_node(Xml_generator &xml, Xml_node common,
 		if (version.valid())
 			xml.attribute("version", version);
 
-		xml.node("binary", [&] () { xml.attribute("name", _binary_name); });
+		bool shim_reroute = false;
+
+		/* lookup if PD/CPU service is configured and use shim in such cases */
+		if (_start_xml->xml().has_sub_node("route")) {
+			Xml_node const route = _start_xml->xml().sub_node("route");
+
+			route.for_each_sub_node("service", [&] (Xml_node const &service) {
+				if (service.attribute_value("name", Name()) == "PD" ||
+				    service.attribute_value("name", Name()) == "CPU")
+					shim_reroute = true; });
+		}
+
+		Binary_name const binary = shim_reroute ? Binary_name("shim")
+		                                        : _binary_name;
+
+		xml.node("binary", [&] () { xml.attribute("name", binary); });
 
 		Number_of_bytes ram = _pkg_ram_quota;
 		if (_defined_by_launcher())
@@ -456,6 +471,8 @@ void Depot_deploy::Child::_gen_routes(Xml_generator &xml, Xml_node common,
                                       Depot_rom_server const &cached_depot_rom,
                                       Depot_rom_server const &uncached_depot_rom) const
 {
+	bool binary_reroute = false;
+
 	if (!_pkg_xml.constructed())
 		return;
 
@@ -466,8 +483,24 @@ void Depot_deploy::Child::_gen_routes(Xml_generator &xml, Xml_node common,
 	 */
 	if (_start_xml->xml().has_sub_node("route")) {
 		Xml_node const route = _start_xml->xml().sub_node("route");
-		route.with_raw_content([&] (char const *start, size_t length) {
-			xml.append(start, length); });
+
+		/* rewrite routes for the shim service */
+		route.for_each_sub_node("service", [&] (Xml_node const &service) {
+			Name const service_name = service.attribute_value("name", Name());
+
+			if (service_name == "PD" || service_name == "CPU") {
+				binary_reroute = true;
+				/* routes used by the shim component */
+				xml.node("service", [&] () {
+					xml.attribute("name", service_name);
+					xml.attribute("unscoped_label", _name);
+					xml.node("parent", [&] () { });
+				});
+			}
+
+			service.with_raw_node([&] (char const *start, size_t length) {
+				xml.append(start, length); });
+		});
 	}
 
 	/*
@@ -545,7 +578,11 @@ void Depot_deploy::Child::_gen_routes(Xml_generator &xml, Xml_node common,
 
 		xml.node("service", [&] () {
 			xml.attribute("name", "ROM");
-			xml.attribute("label_last", label);
+
+			if (binary_reroute && label == _binary_name) {
+				xml.attribute("label", "binary");
+			} else
+				xml.attribute("label_last", label);
 
 			if (cached_depot_rom.valid()) {
 				xml.node("child", [&] () {
