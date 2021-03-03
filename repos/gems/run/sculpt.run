@@ -243,7 +243,7 @@ install_config {
 		<resource name="CPU" quantum="40"/>
 		<binary name="init"/>
 		<route>
-			<service name="LOG"> <child name="log"/> </service>
+			<!-- <service name="LOG"> <child name="log"/> </service> -->
 			<service name="ROM" label="config">
 				<child name="config_fs_rom" label="drivers"/> </service>
 			<service name="ROM" label_last="capslock"> <child name="report_rom"/> </service>
@@ -412,7 +412,7 @@ install_config {
 			<service name="Report"/>      <!-- view hover reports -->
 		</provides>
 		<route>
-			<service name="LOG"> <child name="log"/> </service>
+			<!-- <service name="LOG"> <child name="log"/> </service> -->
 			<service name="ROM" label="config">
 				<child name="leitzentrale_config"/> </service>
 			<service name="ROM" label_prefix="report -> ">
@@ -488,7 +488,7 @@ install_config {
 				<child name="leitzentrale" label="fonts"/> </service>
 			<service name="Report"> <child name="fs_report"/> </service>
 			<service name="LOG" label="unlogged"> <parent/> </service>
-			<service name="LOG"> <child name="log"/> </service>
+			<!-- <service name="LOG"> <child name="log"/> </service> -->
 			<service name="ROM" label="nic_drv"> <parent label="} [nic_drv] {"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
