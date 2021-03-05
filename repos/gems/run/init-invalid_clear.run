@@ -1,0 +1,162 @@
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src]
+import_from_depot [depot_user]/src/chroot
+import_from_depot [depot_user]/src/dynamic_rom
+import_from_depot [depot_user]/src/init
+import_from_depot [depot_user]/src/vfs
+
+
+set runtime_config {
+<config verbose="no">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="Timer"/>
+		<service name="File_system"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<start name="file_watcher">
+		<resource name="RAM" quantum="8M"/>
+		<config>
+			<vfs> <fs/> </vfs>
+		</config>
+	</start>
+</config>
+}
+
+
+set dynamic_config_1 {
+<config verbose="no">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="Timer"/>
+		<service name="File_system"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<start name="chroot">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<default-policy writeable="no"/>
+		</config>
+	</start>
+</config>
+}
+
+
+set dynamic_config_2 {
+<config verbose="no">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="Timer"/>
+		<service name="File_system"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<start name="chroot" caps="100">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<default-policy writeable="no"/>
+		</config>
+	</start>
+	<start name="init" caps="550">
+		<resource name="RAM" quantum="40M"/>}
+append dynamic_config_2 $runtime_config
+append dynamic_config_2 {<route>
+			<service name="File_system"> <child name="chroot"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+
+set config {
+<config verbose="no">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+	</parent-provides>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+
+	<start name="dynamic_rom">
+		<resource name="RAM" quantum="240M"/>
+		<provides> <service name="ROM"/> </provides>
+		<config>
+			<rom name="config">
+				<inline>}
+append config $dynamic_config_1
+append config {</inline>
+				<sleep milliseconds="50"/>
+				<inline>}
+append config $dynamic_config_2
+append config {</inline>
+				<sleep milliseconds="190"/>
+			</rom>
+		</config>
+	</start>
+
+	<start name="vfs" caps="150">
+		<resource name="RAM" quantum="4M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<vfs> <ram/> </vfs>
+			<default-policy root="/" writeable="yes"/>
+		</config>
+	</start>
+
+	<start name="dynamic" caps="1500">
+		<binary name="init"/>
+		<resource name="RAM" quantum="340M"/>
+		<route>
+			<service name="ROM" label="config"> <child name="dynamic_rom"/> </service>
+			<service name="File_system"> <child name="vfs"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+install_config $config
+
+build { test/file_watcher }
+
+build_boot_image { file_watcher }
+
+append qemu_args " -m 512 -nographic "
+
+run_genode_until forever
