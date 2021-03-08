@@ -467,7 +467,6 @@ Child::Close_result Child::_close(Session_state &session)
 
 	_policy.session_state_changed();
 
-	session.discard_id_at_client();
 	session.service().wakeup();
 
 	return CLOSE_PENDING;
@@ -927,6 +926,7 @@ void Child::close_all_sessions()
 		session.closed_callback = nullptr;
 		session.ready_callback  = nullptr;
 		(void)_close(session);
+		session.discard_id_at_client();
 	};
 
 	while (_id_space.apply_any<Session_state>(close_fn));
