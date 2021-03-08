@@ -43,7 +43,7 @@ class File_watcher::Component final
 			log("started");
 
 			_timer.sigh(_timer_handler);
-			_timer.trigger_once(150 * 1000);
+			_timer.trigger_once(1000);
 		}
 };
 

@@ -153,9 +153,9 @@ append config {</inline>
 
 install_config $config
 
-build { test/file_watcher }
+build { init core lib/ld test/file_watcher }
 
-build_boot_image { file_watcher }
+build_boot_image { init core ld.lib.so file_watcher }
 
 append qemu_args " -m 512 -nographic "
 
