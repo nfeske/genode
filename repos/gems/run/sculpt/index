@@ -18,7 +18,8 @@
   </index>
 
   <index name="Demos">
-    <pkg path="nano3d" info="simple software-rendering demo"/>
+    <pkg path="nano3d"       info="simple software-rendering demo"/>
+    <pkg path="test-capture" info="screen capturing test"/>
   </index>
 
   <index name="Virtual machines">
