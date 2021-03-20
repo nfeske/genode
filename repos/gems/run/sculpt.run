@@ -111,6 +111,7 @@ install_config {
 						<rom name="de_de"   label="de_de.chargen"/>
 						<rom name="fr_ch"   label="fr_ch.chargen"/>
 						<rom name="fr_fr"   label="fr_fr.chargen"/>
+						<rom name="it_it"   label="it_it.chargen"/>
 						<rom name="special" label="special.chargen"/>
 					</dir>
 					<rom name="fb_drv"        label="fb_drv.config"/>
@@ -518,7 +519,8 @@ file copy -force [genode_dir]/repos/gems/recipes/pkg/sculpt/README [run_dir]/gen
 
 file copy -force [genode_dir]/repos/gems/run/sculpt/vimrc [run_dir]/genode/
 
-foreach file { en_us.chargen de_ch.chargen de_de.chargen fr_ch.chargen fr_fr.chargen special.chargen } {
+foreach file { en_us.chargen de_ch.chargen de_de.chargen fr_ch.chargen
+               it_it.chargen fr_fr.chargen special.chargen } {
 	file copy -force [genode_dir]/repos/os/src/server/event_filter/$file \
 		[run_dir]/genode/$file }
 
