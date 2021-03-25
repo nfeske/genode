@@ -51,7 +51,7 @@ set config  {
 			<config>
 
 				<device name="i2c2">
-					<!-- i2c ctl register -->
+					<!-- I2C ctl register -->
 					<io_mem address="0x30a30000" size="0x10000"/>
 
 					<irq number="68"/>

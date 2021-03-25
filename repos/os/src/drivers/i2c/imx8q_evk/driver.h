@@ -1,5 +1,5 @@
 /*
- * \brief  Platform specific i2c's driver for imx8q_evk
+ * \brief  Platform specific I2C's driver for imx8q_evk
  * \author Jean-Adrien Domage <jean-adrien.domage@gapfruit.com>
  * \date   2021-02-08
  */
@@ -21,6 +21,8 @@
 #include <base/log.h>
 #include <base/mutex.h>
 #include <timer_session/connection.h>
+#include <platform_session/connection.h>
+#include <irq_session/client.h>
 
 /* Local include */
 #include <i2c_interface.h>
@@ -31,21 +33,22 @@ namespace I2c {
 	class Driver;
 }
 
+
 class I2c::Driver: public I2c::Driver_base
 {
 	private:
 
-		Platform::Connection                      _platform_connection { _env };
-		Constructible<I2c::Mmio>                  _mmio {};
-		Constructible<Genode::Attached_dataspace> _i2c_ctl_ds {};
-		Constructible<Genode::Irq_session_client> _irq {};
-		Io_signal_handler<Driver>                 _irq_handler;
-		volatile unsigned                         _sem_cnt = 1;
-		Mutex                                     _bus_mutex {};
-		Timer::Connection                         _timer { _env };
+		Platform::Connection              _platform_connection { _env };
+		Constructible<I2c::Mmio>          _mmio {};
+		Constructible<Attached_dataspace> _i2c_ctl_ds {};
+		Constructible<Irq_session_client> _irq {};
+		Io_signal_handler<Driver>         _irq_handler;
+		unsigned volatile                 _sem_cnt = 1;
+		Mutex                             _bus_mutex {};
+		Timer::Connection                 _timer { _env };
 
-		bool          _is_verbose = false;
-		Genode::off_t _bus_no = 0;
+		bool  _verbose = false;
+		off_t _bus_no = 0;
 
 		void _init_driver();
 		void _bus_reset();
@@ -59,8 +62,7 @@ class I2c::Driver: public I2c::Driver_base
 
 	public:
 
-		Driver(Env            &env,
-		       Xml_node const &config)
+		Driver(Env &env, Xml_node const &config)
 		:
 			Driver_base(env, config),
 			_irq_handler(_env.ep(), *this, &Driver::_irq_handle)
@@ -72,8 +74,8 @@ class I2c::Driver: public I2c::Driver_base
 
 		virtual ~Driver() = default;
 
-		void write(uint8_t address, const uint8_t *buffer_in, const size_t buffer_size) override;
-		void read(uint8_t address, uint8_t *buffer_out, const size_t buffer_size) override;
+		void write(uint8_t, uint8_t const *, size_t) override;
+		void read(uint8_t, uint8_t *, size_t) override;
 };
 
 #endif /* _I2C_DRIVER__IMX8Q_EVK_H_ */

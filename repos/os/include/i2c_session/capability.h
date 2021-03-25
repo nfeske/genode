@@ -4,8 +4,8 @@
  * \date   2021-02-26
  */
 
-/*                                                                              
- * Copyright (C) 2013-2021 Genode Labs GmbH                                     
+/*
+ * Copyright (C) 2013-2021 Genode Labs GmbH
  * Copyright (C) 2021 gapfruit AG
  *
  * This file is part of the Genode OS framework, which is distributed

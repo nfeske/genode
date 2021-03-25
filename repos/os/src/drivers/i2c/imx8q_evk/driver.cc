@@ -1,5 +1,5 @@
 /*
- * \brief  Platform specific i2c's driver for imx8q_evk
+ * \brief  Platform specific I2C's driver for imx8q_evk
  * \author Jean-Adrien Domage <jean-adrien.domage@gapfruit.com>
  * \date   2021-02-08
  */
@@ -18,20 +18,19 @@
 
 void I2c::Driver::_init_driver()
 {
-	if (_i2c_ctl_ds.constructed()) return;
+	if (_i2c_ctl_ds.constructed())
+		return;
 
-	I2c::DeviceName device_name;
-	device_name = _config.attribute_value("device_name", device_name);
+	I2c::Device_name const device_name = _config.attribute_value("device_name", device_name);
 
-	_is_verbose = _config.attribute_value("verbose", false);
-	
+	_verbose = _config.attribute_value("verbose", false);
+
 	_bus_no = _config.attribute_value("bus_no", _bus_no);
 
-	Platform::Device_capability cap;
-	Platform::Device_client     device { _platform_connection.device_by_index(0) };
+	Platform::Device_client device { _platform_connection.device_by_index(0) };
 
-	/* iomem region for i2c control register */
-	Genode::Io_mem_dataspace_capability i2c_ctl_mmio_cap  { device.io_mem_dataspace(0) };
+	/* iomem region for I2C control register */
+	Io_mem_dataspace_capability i2c_ctl_mmio_cap  { device.io_mem_dataspace(0) };
 
 	_i2c_ctl_ds.construct(_env.rm(), i2c_ctl_mmio_cap);
 	_irq.construct(device.irq());
@@ -44,9 +43,10 @@ void I2c::Driver::_wait_for_irq()
 	_sem_cnt++;
 	while (_sem_cnt > 0)
 		_env.ep().wait_and_dispatch_one_io_signal();
+
 	if (_mmio->read<Mmio::Control::Master_slave_select>() == 0) {
 		_bus_stop();
-		if (_is_verbose) {
+		if (_verbose) {
 			error("Arbitrationtion lost on bus ", _bus_no);
 		}
 		throw I2c::Session::Bus_error();
@@ -56,12 +56,12 @@ void I2c::Driver::_wait_for_irq()
 
 void I2c::Driver::_bus_busy()
 {
-	const uint64_t start_time = _timer.elapsed_ms();
+	uint64_t const start_time = _timer.elapsed_ms();
 	while (!_mmio->read<Mmio::Status::Busy>()) {
-		const uint64_t current = _timer.elapsed_ms();
+		uint64_t const current = _timer.elapsed_ms();
 		if (current - start_time > 1000) {
 			_bus_stop();
-			if (_is_verbose) {
+			if (_verbose) {
 				error("Timeout on bus ", _bus_no);
 			}
 			throw I2c::Session::Bus_error();
@@ -86,12 +86,12 @@ void I2c::Driver::_bus_start()
 	_mmio->write<Mmio::Status>(0);
 	_mmio->write<Mmio::Control>(Mmio::Control::Enable::bits(1));
 
-	const uint64_t start_time = _timer.elapsed_ms();
+	uint64_t const start_time = _timer.elapsed_ms();
 	while (!_mmio->read<Mmio::Control::Enable>()) {
-		const uint64_t current = _timer.elapsed_ms();
+		uint64_t const current = _timer.elapsed_ms();
 		if (current - start_time > 1000) {
 			_bus_stop();
-			if (_is_verbose) {
+			if (_verbose) {
 				error("Timeout on bus ", _bus_no);
 			}
 			throw I2c::Session::Bus_error();
@@ -130,7 +130,7 @@ void I2c::Driver::_bus_write(uint8_t data)
 
 	if (_mmio->read<Mmio::Status::Rcv_ack>()) {
 		_bus_stop();
-		if (_is_verbose) {
+		if (_verbose) {
 			error("Slave did not acknoledge on bus ", _bus_no);
 		}
 		throw I2c::Session::Bus_error();
@@ -138,11 +138,12 @@ void I2c::Driver::_bus_write(uint8_t data)
 }
 
 
-void I2c::Driver::write(uint8_t address, const uint8_t *buffer_in, const size_t buffer_size)
+void I2c::Driver::write(uint8_t address, uint8_t const *buffer_in, size_t const buffer_size)
 {
-	const Mutex::Guard _guard(_bus_mutex);
+	Mutex::Guard _guard(_bus_mutex);
 
 	_bus_start();
+
 	/* LSB must be 0 for writing on the bus, address is on the 7 hightest bits */
 	_bus_write(address << 1);
 	for (size_t idx = 0; idx < buffer_size; ++idx) {
@@ -152,9 +153,10 @@ void I2c::Driver::write(uint8_t address, const uint8_t *buffer_in, const size_t 
 }
 
 
-void I2c::Driver::read(uint8_t address, uint8_t *buffer_out, const size_t buffer_size)
+void I2c::Driver::read(uint8_t address, uint8_t *buffer_out, size_t const buffer_size)
 {
-	const Mutex::Guard _guard(_bus_mutex);
+	Mutex::Guard _guard(_bus_mutex);
+
 	_bus_start();
 
 	/* LSB must be 1 for reading on the bus, address is on the 7 hightest bits */

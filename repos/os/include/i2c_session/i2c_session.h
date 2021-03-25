@@ -4,8 +4,8 @@
  * \date   2021-02-25
  */
 
-/*                                                                              
- * Copyright (C) 2013-2021 Genode Labs GmbH                                     
+/*
+ * Copyright (C) 2013-2021 Genode Labs GmbH
  * Copyright (C) 2021 gapfruit AG
  *
  * This file is part of the Genode OS framework, which is distributed
@@ -20,28 +20,27 @@
 
 namespace I2c {
 	using namespace Genode;
-	class Session;
+	struct Session;
 }
 
-class I2c::Session : public Genode::Session
-{
-public:
 
+struct I2c::Session : public Genode::Session
+{
 	/**
 	 * \noapi
 	 */
-	static const char *service_name() { return "I2c"; }
+	static char const *service_name() { return "I2c"; }
 
 	enum { CAP_QUOTA = 2 };
 
 
-	/****************
+	/***************
 	 ** Exception **
-	 ****************/
+	 ***************/
 
 	/**
 	 * Execption thrown in case of a bus error
-	 * 
+	 *
 	 * This exception is thrown by the driver incase of a timeout, device missing
 	 * acknoledgement and bus arbitration lost. The driver can be configured in the run script
 	 * to log descriptive messages incase of errors.
@@ -55,16 +54,16 @@ public:
 
 	/**
 	 * Write 8 bits on the bus
-	 * 
+	 *
 	 * \param byte The 8 bits to be sent
-	 * 
+	 *
 	 * \throw I2c::Session::Bus_error An error occured while performing an operation on the bus
 	 */
-	virtual void    write_8bits(const uint8_t byte) = 0;
+	virtual void write_8bits(uint8_t byte) = 0;
 
 	/**
 	 * Read 8 bits from the bus
-	 * 
+	 *
 	 * \throw I2c::Session::Bus_error An error occured while performing an operation on the bus
 	 *
 	 * \return The 8 received bits
@@ -73,16 +72,16 @@ public:
 
 	/**
 	 * Write 16 bits on the bus
-	 * 
+	 *
 	 * \param word The 16 bits to be sent
-	 * 
+	 *
 	 * \throw I2c::Session::Bus_error An error occured while performing an operation on the bus
 	 */
-	virtual void     write_16bits(const uint16_t word) = 0;
+	virtual void write_16bits(uint16_t word) = 0;
 
 	/**
 	 * Read 16 bits from the bus
-	 * 
+	 *
 	 * \throw I2c::Session::Bus_error An error occured while performing an operation on the bus
 	 *
 	 * \return The 16 received bits
@@ -91,13 +90,12 @@ public:
 
 	GENODE_RPC_THROW(Rpc_write_8bits, void, write_8bits,
 	                 GENODE_TYPE_LIST(Bus_error),
-	                 const uint8_t);
+	                 uint8_t);
 	GENODE_RPC_THROW(Rpc_read_8bits, uint8_t, read_8bits,
 	                 GENODE_TYPE_LIST(Bus_error));
-
 	GENODE_RPC_THROW(Rpc_write_16bits, void, write_16bits,
 	                 GENODE_TYPE_LIST(Bus_error),
-	                 const uint16_t);
+	                 uint16_t);
 	GENODE_RPC_THROW(Rpc_read_16bits, uint16_t, read_16bits,
 	                 GENODE_TYPE_LIST(Bus_error));
 

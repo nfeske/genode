@@ -1,25 +1,25 @@
-This directory contains the implementation of the I2c driver component.
+This directory contains the implementation of the I2C driver component.
 
 Brief
 =====
 
-The driver supports I2c bus controller for imx8q_evk only for master mode.
+The driver supports I2C bus controller for imx8q_evk only for master mode.
 A platform connection is used to retrieve device's capabilities.
 The platform driver must provide a device with the following configuration:
 
-!<!-- I2c controller bus 2 -->
+!<!-- I2C controller bus 2 -->
 !<device name="i2c2">
 !
-!  <!-- i2c bus 2 ctl register -->
+!  <!-- I2C bus 2 ctl register -->
 !  <io_mem address="0x30a30000" size="0x10000"/>
 !
-!  <!-- iomux's i2c config register and iomux's pull-up resistor config -->
+!  <!-- iomux's I2C config register and iomux's pull-up resistor config -->
 !  <io_mem address="0x30330000" size="0x1000"/>
 !
 !  <!-- irq number as the controller is interrupt driven -->
 !  <irq number="68"/>
 !
-!  <!-- i2c bus 2 clock -->
+!  <!-- I2C bus 2 clock -->
 !  <clock  name="i2c2_clk_root"
 !          driver_name="i2c2_root_clk"
 !          parent="system_pll3_clk"/>
@@ -29,9 +29,9 @@ The platform driver must provide a device with the following configuration:
 !
 !<policy label_prefix="imx8q_evk_i2c_drv"> <device name="i2c2"/> </policy>
 
-The io_mem address, irq number and clock might change from one I2c bus
+The io_mem address, irq number and clock might change from one I2C bus
 controller to another. The io_mem address for iomux configuration may
-remain the same across I2c bus controllers. 
+remain the same across I2C bus controllers.
 
 The driver can be extended to another platform. An 'I2c::Driver_base'
 interface is provided in 'i2c_interface.h'. The specific platform
@@ -68,5 +68,5 @@ if you want the driver to log error messages.
 Example
 =======
 
-An example of how to use the I2c component can be found in the test
+An example of how to use the I2C driver can be found in the test
 script 'os/run/i2c_mcp9808.run'.

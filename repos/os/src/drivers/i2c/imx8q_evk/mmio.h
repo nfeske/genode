@@ -1,5 +1,5 @@
 /*
- * \brief  I2c mmio region for platform imx8q_evk
+ * \brief  I2C mmio region for platform imx8q_evk
  * \author Jean-Adrien Domage <jean-adrien.domage@gapfruit.com>
  * \date   2021-02-08
  */
@@ -19,9 +19,9 @@
 
 namespace I2c { struct Mmio; }
 
+
 struct I2c::Mmio: Genode::Mmio
 {
-
 	struct Address : Mmio::Register<0x0, 16> {
 		struct Adr : Mmio::Register<0x0, 16>::Bitfield<1, 7> {};
 	};
@@ -49,11 +49,7 @@ struct I2c::Mmio: Genode::Mmio
 
 	struct Data : Mmio::Register<0x10, 16> {};
 
-	Mmio(Genode::addr_t base)
-	:
-		Genode::Mmio { base }
-	{}
-
+	Mmio(Genode::addr_t base) : Genode::Mmio { base } { }
 };
 
 #endif /* _I2C_MMIO_H_ */
