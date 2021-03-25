@@ -36,60 +36,42 @@ namespace I2c {
  * It is the responsability of the component interacting with
  * a slave device on the bus to figure out how to interpret the data. 
  */
-class I2c::Driver_base
+struct I2c::Driver_base
 {
-	protected:
+	class Bad_bus_no: Exception {};
 
-		Env           &_env;
-		Xml_node const _config;
+	virtual ~Driver_base() = default;
 
-	public:
+	/**
+	 * Write to the I2C bus
+	 *
+	 * \param address     device address
+	 * \param buffer_in   buffer containing data to be send
+	 * \param buffer_size size of the buffer to be send
+	 *
+	 * \throw I2c::Session::Bus_error An error occured while performing an operation on the bus
+	 */
+	virtual void write(uint8_t address, uint8_t const *buffer_in, size_t buffer_size) = 0;
 
-		class Bad_bus_no: Exception {};
+	/**
+	 * Read from the I2C bus
+	 *
+	 * \param address     device address
+	 * \param buffer_out  preallocated buffer to store the data in
+	 * \param buffer_size size of the buffer and to be read
+	 *
+	 * \throw I2c::Session::Bus_error An error occure while performing an operation on the bus
+	 */
+	virtual void read(uint8_t address, uint8_t *buffer_out, size_t buffer_size) = 0;
 
-		/**
-		 * The ctor the Driver_base saves the env and config for you.
-		 *
-		 * Notes: your specific platform driver MUST have the same ctor signature. You can 
-		 * have a look at src/drivers/i2c/main.cc to see how it is meant to be used.
-		 */
-		Driver_base(Env &env, Xml_node const &config)
-		:
-			_env(env), _config(config)
-		{ }
-
-		virtual ~Driver_base() = default;
-
-		/**
-		 * Write to the I2C bus
-		 *
-		 * \param address     device address
-		 * \param buffer_in   buffer containing data to be send
-		 * \param buffer_size size of the buffer to be send
-		 *
-		 * \throw I2c::Session::Bus_error An error occured while performing an operation on the bus
-		 */
-		virtual void write(uint8_t address, uint8_t const *buffer_in, size_t buffer_size) = 0;
-
-		/**
-		 * Read from the I2C bus
-		 *
-		 * \param address     device address
-		 * \param buffer_out  preallocated buffer to store the data in
-		 * \param buffer_size size of the buffer and to be read
-		 *
-		 * \throw I2c::Session::Bus_error An error occure while performing an operation on the bus
-		 */
-		virtual void read(uint8_t address, uint8_t *buffer_out, size_t buffer_size) = 0;
-
-		/**
-		 * Driver name getter
-		 *
-		 * \return Driver name string
-		 *
-		 * Details this method is overridable to customise the name based on the platform.
-		 */
-		virtual char const *name() const { return "i2c driver"; }
+	/**
+	 * Driver name getter
+	 *
+	 * \return Driver name string
+	 *
+	 * Details this method is overridable to customise the name based on the platform.
+	 */
+	virtual char const *name() const { return "i2c driver"; }
 };
 
 #endif /* _I2C_INTERFACE_H_ */

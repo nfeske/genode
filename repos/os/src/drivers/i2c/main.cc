@@ -30,12 +30,23 @@ struct I2c::Main
 {
 	private:
 
-		Env                   &_env;
-		Sliced_heap            _sliced_heap { _env.ram(), _env.rm() };
+		Env         &_env;
+		Sliced_heap  _sliced_heap { _env.ram(), _env.rm() };
+
 		Attached_rom_dataspace _config { _env, "config" };
-		I2c::Driver            _driver { _env, _config.xml() };
-		I2c::Root              _root { _env.ep().rpc_ep(), _sliced_heap,
-		                               _driver, _config.xml() };
+
+		static I2c::Driver::Args _driver_args_from_config(Xml_node config)
+		{
+			return {
+				.verbose     = config.attribute_value("verbose", false),
+				.bus_no      = config.attribute_value("bus_no", 0u),
+				.device_name = config.attribute_value("device_name", Device_name())
+			};
+		}
+
+		I2c::Driver _driver { _env, _driver_args_from_config(_config.xml()) };
+		I2c::Root   _root { _env.ep().rpc_ep(), _sliced_heap,
+		                    _driver, _config.xml() };
 
 	public:
 

@@ -36,21 +36,35 @@ namespace I2c {
 
 class I2c::Driver: public I2c::Driver_base
 {
+	public:
+
+		struct Args
+		{
+			bool        verbose;
+			unsigned    bus_no;
+			Device_name device_name;
+		};
+
 	private:
 
-		Platform::Connection              _platform_connection { _env };
-		Constructible<I2c::Mmio>          _mmio {};
-		Constructible<Attached_dataspace> _i2c_ctl_ds {};
-		Constructible<Irq_session_client> _irq {};
-		Io_signal_handler<Driver>         _irq_handler;
-		unsigned volatile                 _sem_cnt = 1;
-		Mutex                             _bus_mutex {};
-		Timer::Connection                 _timer { _env };
+		Env       &_env;
+		Args const _args;
 
-		bool  _verbose = false;
-		off_t _bus_no = 0;
+		Platform::Connection    _platform_connection { _env };
+		Platform::Device_client _device { _platform_connection.device_by_index(0) };
 
-		void _init_driver();
+		/* iomem region for I2C control register */
+		Attached_dataspace _i2c_ctl_ds { _env.rm(), _device.io_mem_dataspace(0) };
+		I2c::Mmio          _mmio { reinterpret_cast<addr_t>(_i2c_ctl_ds.local_addr<uint16_t>()) };
+
+		/* interrupt handler */
+		Irq_session_client        _irq { _device.irq() };
+		Io_signal_handler<Driver> _irq_handler;
+
+		unsigned volatile _sem_cnt = 1;
+		Mutex             _bus_mutex {};
+		Timer::Connection _timer { _env };
+
 		void _bus_reset();
 		void _bus_start();
 		void _bus_stop();
@@ -62,14 +76,13 @@ class I2c::Driver: public I2c::Driver_base
 
 	public:
 
-		Driver(Env &env, Xml_node const &config)
+		Driver(Env &env, Args const &args)
 		:
-			Driver_base(env, config),
+			_env(env), _args(args),
 			_irq_handler(_env.ep(), *this, &Driver::_irq_handle)
 		{
-			_init_driver();
-			_irq->sigh(_irq_handler);
-			_irq->ack_irq();
+			_irq.sigh(_irq_handler);
+			_irq.ack_irq();
 		}
 
 		virtual ~Driver() = default;
