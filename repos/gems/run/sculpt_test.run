@@ -26,4 +26,12 @@ if {$use_nvme} {
 	append qemu_args " -device nvme,drive=nvme0,serial=NVMe_666,id=nvme0n1 "
 }
 
-run_genode_until forever
+set start_time [clock milliseconds]
+
+run_genode_until ".*child \"depot\" announces service \"File_system\".*\n" 1000
+
+set end_time [clock milliseconds]
+
+set boot_duration_seconds [expr ($end_time - $start_time) / 1000]
+
+puts "\nboot time: $boot_duration_seconds seconds\n"
