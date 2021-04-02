@@ -681,7 +681,7 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 # Create boot image
 #
 
-build { init timer server/nitpicker app/sculpt_manager }
-append boot_modules { init timer nitpicker sculpt_manager }
+build { core lib/ld init timer server/nitpicker app/sculpt_manager }
+append boot_modules { core ld.lib.so init timer nitpicker sculpt_manager }
 
 build_boot_image $boot_modules
