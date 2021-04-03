@@ -68,7 +68,7 @@ struct Trace_subject_registry
 			return nullptr;
 		}
 
-		enum { MAX_CPUS_X = 16, MAX_CPUS_Y = 4, MAX_ELEMENTS_PER_CPU = 6};
+		enum { MAX_CPUS_X = 16, MAX_CPUS_Y = 4, MAX_ELEMENTS_PER_CPU = 60};
 
 		/* accumulated execution time on all CPUs */
 		unsigned long long total_first [MAX_CPUS_X][MAX_CPUS_Y];
@@ -286,7 +286,7 @@ struct App::Main
 		PARENT_LEVELS = 0
 	};
 
-	size_t arg_buffer_ram  { 12 * 4096 }; /* ~ 190 trace Subject_info objects */
+	size_t arg_buffer_ram  { 200 * 4096 }; /* ~ 190 trace Subject_info objects */
 	size_t trace_ram_quota { arg_buffer_ram + 4 * 4096 };
 
 	Reconstructible<Trace::Connection> _trace { _env,
