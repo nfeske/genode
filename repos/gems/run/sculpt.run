@@ -49,6 +49,12 @@ install_config {
 
 	<resource name="RAM" preserve="2M"/>
 
+	<start name="top" priority="0">
+		<resource name="RAM" quantum="10M"/>
+		<resource name="CPU" quantum="10"/>
+		<config period_ms="30000"/>
+	</start>
+
 	<start name="timer" priority="0">
 		<resource name="RAM" quantum="1M"/>
 		<resource name="CPU" quantum="10"/>
@@ -681,7 +687,7 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 # Create boot image
 #
 
-build { core lib/ld init timer server/nitpicker app/sculpt_manager }
-append boot_modules { core ld.lib.so init timer nitpicker sculpt_manager }
+build { drivers/rtc app/top core lib/ld init timer server/nitpicker app/sculpt_manager }
+append boot_modules { rtc_drv top core ld.lib.so init timer nitpicker sculpt_manager }
 
 build_boot_image $boot_modules
