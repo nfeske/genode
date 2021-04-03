@@ -133,38 +133,48 @@ Rtc::Timestamp Rtc::Driver::read_timestamp()
 
 	/* read RTC exactly on falling edge of update flag */
 
-	unsigned const POLL_RATE_MS   = 5,
-	               TIMEOUT_MS     = 10000, /* give up after 10 seconds */
-	               MAX_ITERATIONS = TIMEOUT_MS / POLL_RATE_MS;
-	unsigned i;
-	for (i = 0; i < MAX_ITERATIONS; i++) {
-		if (_cmos_read(RTC_FREQ_SELECT) & RTC_UIP)
-			break;
-
-		_timer.msleep(POLL_RATE_MS);
-	}
-	if (i == MAX_ITERATIONS)
-		warning("polling of RTC_UIP failed");
-
-	for (i = 0; i < MAX_ITERATIONS; i++) {
-		if (!(_cmos_read(RTC_FREQ_SELECT) & RTC_UIP))
-			break;
-
-		_timer.msleep(5);
-	}
-	if (i == MAX_ITERATIONS)
-		warning("polling of !RTC_UIP failed");
+//	unsigned const POLL_RATE_MS   = 1,
+//	               TIMEOUT_MS     = 10000, /* give up after 10 seconds */
+//	               MAX_ITERATIONS = TIMEOUT_MS / POLL_RATE_MS;
+//	unsigned i;
+//	for (i = 0; i < MAX_ITERATIONS; i++) {
+//		{
+//			GENODE_LOG_TSC_NAMED(50, "poll UIP");
+//			if (_cmos_read(RTC_FREQ_SELECT) & RTC_UIP)
+//				break;
+//		}
+//
+//		_timer.msleep(POLL_RATE_MS);
+//	}
+//	if (i == MAX_ITERATIONS)
+//		warning("polling of RTC_UIP failed");
+//
+//	for (i = 0; i < MAX_ITERATIONS; i++) {
+//		{
+//			GENODE_LOG_TSC_NAMED(50, "poll !UIP");
+//			if (!(_cmos_read(RTC_FREQ_SELECT) & RTC_UIP))
+//				break;
+//		}
+//
+//		_timer.msleep(POLL_RATE_MS);
+//	}
+//	if (i == MAX_ITERATIONS)
+//		warning("polling of !RTC_UIP failed");
 
 	unsigned year, mon, day, hour, min, sec;
 
-	do {
-		sec  = _cmos_read(RTC_SECONDS);
-		min  = _cmos_read(RTC_MINUTES);
-		hour = _cmos_read(RTC_HOURS);
-		day  = _cmos_read(RTC_DAY_OF_MONTH);
-		mon  = _cmos_read(RTC_MONTH);
-		year = _cmos_read(RTC_YEAR);
-	} while (sec != _cmos_read(RTC_SECONDS));
+
+	{
+		GENODE_LOG_TSC_NAMED(1, "rtc time values");
+		do {
+			sec  = _cmos_read(RTC_SECONDS);
+			min  = _cmos_read(RTC_MINUTES);
+			hour = _cmos_read(RTC_HOURS);
+			day  = _cmos_read(RTC_DAY_OF_MONTH);
+			mon  = _cmos_read(RTC_MONTH);
+			year = _cmos_read(RTC_YEAR);
+		} while (sec != _cmos_read(RTC_SECONDS));
+	}
 
 	/* convert BCD to binary format if needed */
 	if (!(_cmos_read(RTC_CONTROL) & RTC_DM_BINARY) || RTC_ALWAYS_BCD) {
@@ -184,6 +194,7 @@ Rtc::Timestamp Rtc::Driver::read_timestamp()
 
 void Rtc::Driver::write_timestamp(Timestamp ts)
 {
+	GENODE_LOG_TSC(1);
 	unsigned const ctl  = _cmos_read(RTC_CONTROL);
 	unsigned const freq = _cmos_read(RTC_FREQ_SELECT);
 	bool     const bcd  = (!(ctl & RTC_DM_BINARY) || RTC_ALWAYS_BCD);
