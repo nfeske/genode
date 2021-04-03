@@ -244,7 +244,7 @@ install_config {
 		<resource name="CPU" quantum="40"/>
 		<binary name="init"/>
 		<route>
-			<service name="LOG"> <child name="log"/> </service>
+			<!-- <service name="LOG"> <child name="log"/> </service> -->
 			<service name="ROM" label="config">
 				<child name="config_fs_rom" label="drivers"/> </service>
 			<service name="ROM" label_last="capslock"> <child name="report_rom"/> </service>
