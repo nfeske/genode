@@ -49,6 +49,12 @@ install_config {
 
 	<resource name="RAM" preserve="2M"/>
 
+	<start name="top" priority="0">
+		<resource name="RAM" quantum="10M"/>
+		<resource name="CPU" quantum="10"/>
+		<config period_ms="30000"/>
+	</start>
+
 	<start name="timer" priority="0">
 		<resource name="RAM" quantum="1M"/>
 		<resource name="CPU" quantum="10"/>
@@ -681,6 +687,8 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 # Create boot image
 #
 
-append boot_modules { }
+build { app/top }
+
+append boot_modules { top  }
 
 build_boot_image $boot_modules
