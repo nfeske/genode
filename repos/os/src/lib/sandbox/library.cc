@@ -14,6 +14,7 @@
 /* Genode includes */
 #include <base/attached_rom_dataspace.h>
 #include <os/sandbox.h>
+#include <debug/log.h>
 
 /* local includes */
 #include <child.h>
@@ -356,6 +357,8 @@ void Genode::Sandbox::Library::update_child(Child &child, Xml_node const &start)
 
 void Genode::Sandbox::Library::apply_config(Xml_node const &config)
 {
+	GENODE_LOG_TSC_NAMED(1, "Library::apply_config");
+
 	_server_appeared_or_disappeared = false;
 	_state_report_outdated          = false;
 
