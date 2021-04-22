@@ -637,14 +637,27 @@ struct Wifi::Frontend
 	Timer::Connection                      _scan_timer;
 	Genode::Signal_handler<Wifi::Frontend> _scan_timer_sigh;
 
+	bool _scan_suspended { false };
+
 	void _handle_scan_timer()
 	{
 		/*
-		 * If we are blocked or currently trying to join a network
-		 * suspend scanning.
+		 * If we are blocked, do not try to scan further.
 		 */
-		if (_rfkilled || _connecting.length() > 1) {
-			if (_verbose) { Genode::log("Suspend scan timer"); }
+		if (_rfkilled) {
+			if (_verbose) { Genode::log("Rfkilled - suspend scan timer"); }
+			return;
+		}
+
+		/*
+		 * If we are already trying to join a network suspend scanning.
+		 */
+		if (!_scan_suspended && _connecting.length() > 1) {
+			if (_verbose) {
+				Genode::log("Suspend scan timer, attempting to join ",
+				            _connecting);
+			}
+			_scan_suspended = true;
 			return;
 		}
 
@@ -1475,10 +1488,40 @@ struct Wifi::Frontend
 				_submit_cmd(Cmd_str("SCAN_RESULTS"));
 			}
 
+			bool report_not_found = false;
+
+			/*
+			 * In case were are trying to auto connect to a single
+			 * network, try at least MAX_ATTEMPTS times before reporting
+			 * a failure.
+			 */
 			if (_single_autoconnect && ++_scan_attempts >= MAX_ATTEMPTS) {
 				_scan_attempts = 0;
 				_single_autoconnect = false;
 
+				report_not_found = true;
+
+			} else {
+
+				/*
+				 * Otherwise report the not-found state immediately
+				 * and allow for scanning to resume.
+				 */
+				report_not_found = true;
+
+				if (_scan_suspended) {
+					if (_verbose) {
+						Genode::log("Network ", _connecting,
+						            " not found, re-enable scan timer");
+					}
+
+					_connecting = Accesspoint::Bssid();
+					_scan_suspended = false;
+					_arm_scan_timer(false);
+				}
+			}
+
+			if (report_not_found) {
 				Genode::Reporter::Xml_generator xml(*_state_reporter, [&] () {
 					xml.node("accesspoint", [&] () {
 						xml.attribute("state", "disconnected");
