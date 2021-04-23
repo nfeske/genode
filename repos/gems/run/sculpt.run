@@ -154,7 +154,7 @@ install_config {
 
 	<start name="report_fs">
 		<binary name="vfs"/>
-		<resource name="RAM" quantum="16M"/>
+		<resource name="RAM" quantum="160M"/>
 		<provides> <service name="File_system"/> </provides>
 		<config>
 			<vfs>
