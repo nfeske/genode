@@ -72,7 +72,12 @@ struct Terminal::Main : Character_consumer
 
 	void _handle_glyphs_changed()
 	{
-		_config_handler.local_submit();
+		/*
+		 * Prevent call of '_handle_config' when the watch handler triggers
+		 * at construction time.
+		 */
+		if (_font.constructed())
+			_config_handler.local_submit();
 	}
 
 	Watch_handler<Main> _glyphs_changed_handler {
