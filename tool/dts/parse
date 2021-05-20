@@ -74,65 +74,6 @@ proc extract {newtype subexpr typelist} {
 }
 
 
-##
-# Extract operations
-#
-# \param op_name  name of operator
-# \param op_type  type of operator, can be "binary", "pre", or "post"
-# \param op_dir   direction of application, can be "ltr" (left to
-#                 right) or "trl" (right to left)
-##
-proc extract_op {newtype op_name op_type op_dir typelist} {
-	global num txt typ stop
-	set old_num $num
-
-	if {$stop} { return }
-
-	# Extracting operators is context-sensitive. In particular,
-	# unary operators must not be applied if they have an
-	# operand as neighbor. Hence, we construct a pattern with
-	# three subpatterns, one for the leading context, one for
-	# the new operand sub token, and one for the trailing context.
-
-	if {$op_dir == "ltr"} {
-		set lpattern ""
-	} else {
-		set lpattern ".*"
-	}
-
-	set repl_left {\1}
-	if {$op_type == "pre"} {
-		set pattern "(^|$lpattern\(?:\[^i\]er|\[^e\]r|\[^r\\d\]\)\\d+°\\s*)(§$op_name\\d+°\\s*§identifier\\d+°)" }
-		set repl_right {}
-	if {$op_type == "post"} {
-		set pattern "($lpattern)(§identifier\\d+°\\s*§$op_name\\d+°\\s*)((§(\[^i\]|i\[^d\]|id\[^e\]))|;|\$)" }
-		set repl_right {\3}
-	if {$op_type == "binary"} {
-		set pattern "($lpattern)(§identifier\\d+°\\s*§$op_name\\d+°\\s*§identifier\\d+°)"
-		set repl_right {}
-	}
-
-	for {set i 0} {$i < $old_num} {incr i} {
-		if {[lsearch $typelist $typ($i)] > -1} {
-
-			while {[regexp $pattern $txt($i) dummy lcontext match rcontext]} {
-
-				# new sub text #
-				set typ($num) $newtype
-				set txt($num) $match
-
-				set old_txt $txt($i)
-
-				# substitute expression by a reference #
-				regsub $pattern $txt($i)  "$repl_left§$newtype$num°$repl_right" txt($i)
-
-				incr num
-			}
-		}
-	}
-}
-
-
 #####################################################
 ## Rules for splitting the input into its elements ##
 #####################################################

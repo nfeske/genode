@@ -80,24 +80,27 @@ set input_source [lindex $argv end]
 if {[catch {
 		set tokens [exec [parse_file] $input_source]
 }]} {
-	puts stderr ""
-	puts stderr "Extract subtree from device-tree source"
-	puts stderr "\n  usage: extract \[options\] <dts_file>"
-	puts stderr ""
-	puts stderr "Supported options are:"
-	puts stderr ""
-	puts stderr " --labels          Print list of labels with their DTS paths"
-	puts stderr " --references      Print referenced labels for each DTS node"
-	puts stderr " --dot-graph       Generate dot file for graphviz"
-	puts stderr " --select <label>  Print DTS related to specified label,"
-	puts stderr "                   can be specified multiple times"
-	puts stderr ""
-	puts stderr "Alternatively to specifying a dts file as argument, the input"
-	puts stderr "data can be passed via standard input by specifying '-' as"
-	puts stderr "file name."
-	puts stderr ""
-	puts stderr "The result of the conversion will be written to stdout."
-	puts stderr ""
+	foreach line {
+	        ""
+	        "Extract subtree from device-tree source"
+	        "\n  usage: extract \[options\] <dts_file>"
+	        ""
+	        "Supported options are:"
+	        ""
+	        " --nodes           Print list of DTS nodes"
+	        " --labels          Print list of labels with their DTS paths"
+	        " --references      Print referenced labels for each DTS node"
+	        " --dot-graph       Generate dot file for graphviz"
+	        " --select <label>  Print DTS related to specified label,"
+	        "                   can be specified multiple times"
+	        ""
+	        "Alternatively to specifying a dts file as argument, the input"
+	        "data can be passed via standard input by specifying '-' as"
+	        "file name."
+	        ""
+	        "The result of the conversion will be written to stdout."
+	        ""
+	} { puts stderr $line }
 	exit -1;
 }
 
@@ -330,7 +333,7 @@ proc select_children {parent_path} {
 	global selected
 
 	foreach path [children $parent_path] {
-		set selected($path) 1 }
+		select $path }
 }
 
 
@@ -364,13 +367,27 @@ proc select {path} {
 collect_labels_and_references
 
 
-foreach selected_label [get_cmd_arg --select {}] {
+foreach arg [get_cmd_arg --select {}] {
 
-	if {![info exists labels($selected_label)]} {
-		puts stderr "Error: label '$selected_label' not present in device-tree source"
-		exit -1
+	# distinguish DTS path argument (starting with /) from label argument
+	if {[string match "/*" $arg]} {
+
+		if {![info exists selected($arg)]} {
+			puts stderr "Error: path '$arg' not present in device-tree source"
+			exit -1
+		}
+		set path $arg
+
+	} else {
+
+		if {![info exists labels($arg)]} {
+			puts stderr "Error: label '$arg' not present in device-tree source"
+			exit -1
+		}
+		set path $labels($arg)
 	}
-	select $labels($selected_label)
+
+	select $path
 }
 
 
@@ -389,13 +406,18 @@ foreach path [array names selected] {
 
 
 if {[get_cmd_switch --labels]} {
-	foreach n [array names labels] {
-		puts "$n $labels($n)" } }
+	foreach n [lsort [array names labels]] {
+		puts "$n\t$labels($n)" } }
+
+
+if {[get_cmd_switch --nodes]} {
+	foreach n [lsort [array names selected]] {
+		puts "$n" } }
 
 
 if {[get_cmd_switch --references]} {
-	foreach n [array names references] {
-		puts "$n $references($n)" } }
+	foreach n [lsort [array names references]] {
+		puts "$n\t$references($n)" } }
 
 
 if {[get_cmd_switch --dot-graph]} {
