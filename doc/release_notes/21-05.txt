@@ -15,7 +15,7 @@ Webcam support
 ##############
 
 During 2020, the amount of home office and remote work took an unexpected turn.
-Video conferences and video chats have become the norm, on which people and
+Video conferences and video chats have become the norm, which people and
 companies rely upon. Even though, not to be found on our
 [https://genode.org/about/road-map - road map] for 2021, this development
 prompted the Genode team to explore the field of webcam and video chat support
@@ -463,7 +463,7 @@ The API is covered in detail by the following article.
 It goes without saying that this change touches most ARM-specific drivers.
 Closely related, we also revised the concept of the XML based device-info
 mechanism provided by the platform driver to accommodate both complex drivers
-operating on multiple device simultaneously such as driver stacks ported from
+operating on multiple devices simultaneously such as driver stacks ported from
 Linux as well as low-complexity drivers for simple devices. In the new
 version, the device XML-information dataspace is only provided if the client's
 session policy states 'info="yes"'. The format of the XML information got
@@ -518,7 +518,7 @@ The USB-driver system has received quite a few refinements, performance
 improvements, and robustness handling efforts during the current release cycle.
 The HID subsystem is now capable of handling devices where the HID USB interface
 is at an arbitrary location within the device descriptors - as opposed to the
-assumption that the HID interface is always at the first position in interface
+assumption that the HID interface is always at the first position in the interface
 list of the device. Also, the HID driver now handles session destruction more
 gracefully and supports unlimited plug and unplug events of an associated HID
 device.
@@ -542,7 +542,7 @@ NIC drivers
 Drivers for iPXE-supported Ethernet devices, Wifi adapters, and Linux
 TAP devices now support the reporting of the MAC address of detected
 adapters. The feature can be enabled by a '<report>' node in the driver
-configuration as follows, prompting the driver to requests a report session
+configuration as follows, prompting the driver to request a report session
 with the label _devices_.
 
 ! <config>
@@ -648,7 +648,7 @@ Feature-wise, changes are not as significant this time as with the
 [https://genode.org/documentation/release-notes/19.05#Tool_chain_based_on_GCC_8.3.0_and_binutils_2.32 - previous update],
 nevertheless we had to overcome some hurdles worth noting.
 
-* The version of the _gprbuild_ tool, which is needed to build the _ali2dep_
+* The _gprbuild_ tool, which is needed to build the _ali2dep_
   tool had a bug in the version provided by Ubuntu 18.04, which prevented it
   from building _ali2dep_ with GCC/GNAT 10. To still be able to build the
   tool chain on Ubuntu 18.04, the _gprbuild_ tool is now built from
