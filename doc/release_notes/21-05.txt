@@ -56,15 +56,15 @@ Jitsi or Skype.
 
 [image webcam]
 
-Our USB support for our VirtualBox port is based on the ported Qemu USB XHCI
-model. Since no USB webcam model is available for Qemu, we were required
-to develop a model from scratch. The new USB webcam model is attached to the
-QEMU USB XHCI model and operates as a bulk endpoint. In contrast to an
+Our USB host-controller support for VirtualBox is based on the ported Qemu USB
+3.0 (XHCI) controller model. Since no USB webcam device model is available for Qemu, we were required
+to develop a one from scratch. The new USB webcam model is attached to the
+QEMU USB XHCI controller and operates as a bulk endpoint. In contrast to an
 isochronous endpoint, the model causes less CPU load and fewer virtual
-interrupts. The announced supported formats to the guest are YUV2 and BGR3.
-By enabling the USB webcam model in the Genode VirtualBox configuration,
+interrupts. The supported formats offered to the guest are YUV2 and BGR3.
+By enabling the USB webcam model within the Genode VirtualBox configuration,
 a _Capture_ session is used to capture pictures at the
-rate of the configured _fps_ value. The following snippet shows the
+rate of a configured _fps_ value. The following snippet shows the
 default values of the supported configuration attributes.
 
 !<config ...>
@@ -78,11 +78,11 @@ If the _screen_size_ attribute is set to _true_, the device model determines the
 resolution from the established capture session. Otherwise, the specified
 _width_ and _height_ values are used. The _vertical_flip_ attribute is useful
 for the BGR3 format, which is - when interpreted by Linux guests - flipped
-vertically and can be re-flipped by setting the attribute to _true_.
+vertically and can be flipped back by setting the attribute to _true_.
 
 If the _report_ attribute is set to _true_, a report will be generated
-whenever the guest changes the state of the capturing, either switching
-capturing on/off or changing the format.
+whenever the guest changes the state of the webcam model, either by switching
+capturing on/off or by changing the pixel format.
 
 ! <capture enabled="true/false" format="YUV2/BGR3"/>
 
@@ -90,8 +90,8 @@ capturing on/off or changing the format.
 
 Finally, our developers, croc and lion, setup the Webcam scenario in Sculpt
 and test drive the new feature fascinated. The picture shows a session via Jitsi,
-on the right side lion participates at the meeting via a Win10 VM on Sculpt and
-croc sitting left joined via an Android tablet.
+on the right side croc participates at the meeting via a Win10 VM on Sculpt and
+lion sitting left joined via an Android tablet.
 
 
 Performance optimizations
@@ -162,7 +162,7 @@ consulted for each session route, the costs for the rule evaluations stack up.
 Init optimizations
 ------------------
 
-These realizations motivated us to replace the hand-crafted config processing
+These realizations motivated us to replace the hand-crafted configuration processing
 by the use of Genode's generic 'List_model' utility. This way, the parsing
 follows a common formalism that makes the code easier to maintain and to
 understand while reducing the XML parsing to a single pass. The increased
@@ -306,7 +306,7 @@ the event sink (typically the GUI server). In between, it performs low-level
 key remapping and applies character mapping rules. Character mapping rules are
 essential for supporting different keyboard layouts (including dead-key
 sequences). Low-level key remapping is, for instance, used for changing the
-emitted key codes of the numpad keys according to the numlock state. The
+emitted key codes of the Num Pad keys according to the Num Lock state. The
 different filter functionalities can be arbitrarily assembled into a filter
 chain and provided as a dynamic config ROM to the event filter component. The
 event sink then receives and processes the filtered events.
@@ -349,7 +349,7 @@ The
 [https://genode.org/documentation/release-notes/18.08#New_component_for_querying_information_from_a_file_system - fs_query]
 component is a simple helper to query information from a file system. E.g., it
 is used by the file browser of Sculpt OS to obtain the directory structure.
-The component received two welcome improvements. First, directory content is
+The component received two welcomed improvements. First, directory content is
 now reported in alphabetic order. Thereby, all consumers of the reports become
 able to rely on deterministic output. For example, the file browser of
 Sculpt OS, the launcher menu items, and the depot-selection items will appear
@@ -363,7 +363,7 @@ component fs_tool is able to perform file-system modifications. The new
 version adds a '<new-file path="...">' operation, which writes the content of
 the XML node into the file specified as 'path' attribute. The directory
 structure leading to the file is implicitly created if needed. Should a file
-with the specified name already exist, the original file gets overwritten.
+with the specified name already exist, the original file will be overwritten.
 
 
 Applications
@@ -380,11 +380,11 @@ Over several releases
 we persistently worked at a native solution for modern block encryption - the
 SPARK-based CBE-library - and its integration into Genode's VFS. Even though,
 this work was already suitable for real-world scenarios like
-[https://genodians.org/m-stein/2020-06-12-cbe-linux-vm - hosting a Linux VM on top of the encrypted block device],
+[https://genodians.org/m-stein/2020-06-12-cbe-linux-vm - hosting a Linux VM on top of an encrypted block device],
 it still lacked stress-testing by a regular user base because its integration
-into an end-user system like Sculpt required tedious low-level wizardry.
+into an end-user system - like Sculpt - required tedious low-level wizardry.
 
-This had to change because we want to encourage as many people as possible to
+This situation had to change because we want to encourage as many people as possible to
 expose the codebase around the CBE to their workflows and let it mature.
 Therefore, we came up with a new package called file vault that can be readily
 deployed on Sculpt OS. It is a graphical front end that aims at making the
@@ -410,13 +410,13 @@ presented through a simple and guiding UI that
 also provides you with the most relevant status information of your vault.
 
 The file vault package is accompanied by some notable improvements regarding
-the CBE key management. Whereas in the previous release, this aspect was still merely a
+CBE's key management. Whereas in the previous release, this aspect was still merely a
 prototype with almost no protective value, the current implementation embraces
-well-known algorithms to generate and encrypt the keys used in the CBE
-respectively the file vault. This is explained in detail in the above-mentioned
+well-known algorithms to generate and encrypt the keys used within the CBE
+respectively the file vault. This is explained in detail in the aforementioned
 article.
 
-As a note of caution, as already indicated, the primary purpose of the current
+As a note of caution, the primary purpose of the current
 version of the file vault is to lift native block encryption in Genode from
 the development stage to product quality. At the current stage, it is neither
 time-tested nor reviewed by independent cryptography experts. Consequently,
@@ -480,7 +480,7 @@ It can handle the configuration of reset-pins now. Analogously to the already
 existent power domains, one can assign reset domains per device. Whenever a
 device with a reset domain gets acquired, its reset-pins are de-asserted. When the
 device gets released again, its reset-pins are asserted to put it into reset
-state. A sample configuration looks like the following:
+state. A sample configuration looks as follows:
 
 ! <device name="mipi_dsi>
 !   <reset-domain name="mipi_dsi_pclk"/>
@@ -497,7 +497,7 @@ I2C driver for i.MX8
 ====================
 
 Thanks to Jean-Adrien Domage from [https://www.gapfruit.com - gapfruit], an
-API for I2C bus transactions, and a new I2C bus driver for the i.MX8 SoC entered
+API for I2C bus transactions and a new I2C bus driver for the i.MX8 SoC entered
 our framework.
 Coincidentally, the need to use the new I2C API more intensively arose
 soon after his initial contribution. As a consequence, the API got extended a
@@ -571,7 +571,7 @@ passing a TLS pointer.
 
 Expecting that the 64-bit Genode/Linux version will remain a niche
 use case of Genode in the foreseeable future, we do not provide a pre-built
-tool chain. Hence, as a preparatory step of using this version of Genode, the
+tool chain. Hence, as a preparatory step for using this version of Genode, the
 tool chain must be built manually via Genode's _tool/tool_chain_ script.
 
 As a known limitation, Genode's 'Trace::timestamp' function is not available
@@ -663,15 +663,15 @@ nevertheless we had to overcome some hurdles worth noting.
   effect that the _mpc_ and _mpfr_ Genode ports were not needed anymore
   and got removed.
 
-* GCC 10 reports more compile errors, which had to be fixed, most commonly
-  related to narrowing conversions and potential unaligned pointers from
+* GCC 10 reports more compile errors, which had to be fixed. The most common
+  errors related to narrowing conversions and potential unaligned pointers from
   packed members.
 
 * GCC 10 has the _-fno-common_ option set by default, which caused link
   errors especially with some 3rd party ports.
 
 * GCC 10 generated 'memset()' calls in implementations of 'memset()',
-  which caused stack overflows from the recursion.
+  which caused stack overflows from this recursion.
 
 * The ARM compiler generates more VFP instructions now, especially
   when building for armv6, so we had to update the 'setjmp()' and
@@ -732,8 +732,8 @@ Device-tree source processing
 
 Device-tree source files as featured in the source tree of the Linux kernel
 contain valuable information about the structure and parameters of SoCs and
-boards. The porting and implementing of device drivers for Genode calls for
-tooling that is able to extract and convert this information to digestible
+boards. The porting and implementation of device drivers for Genode calls for
+tooling that is able to extract and convert this information into digestible
 forms. The current release introduces the first version of a new tool set at
 _tools/dts/_ for this purpose.
 
@@ -757,7 +757,7 @@ Cache for downloaded ports
 When working with ports, it is not uncommon that a
 port hash is changed due to some minor change like the addition of a patch.
 A subsequent call of 'prepare_port' would download the same files
-that were already downloaded while preparing a previous version of port even if
+that were already downloaded while preparing a previous version of the port even if
 the downloaded content remains the same. This wastes internet bandwidth
 and developer time. The current release introduces a simple cache for
 downloaded archives, which alleviates these costs.
