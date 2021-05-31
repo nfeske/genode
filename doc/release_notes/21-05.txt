@@ -8,7 +8,41 @@
 
 
 
-; intro -> @nfeske
+The most prominent user-visible features of Genode 21.05 are the support for
+webcams and an easy-to-use component for file encryption on
+[https://genode.org/download/sculpt - Sculpt OS]. Both topics greatly benefit
+from Genode's component architecture. The video-conferencing scenario
+described in Section [Webcam support] sandboxes the webcam driver in a
+disposable Genode component while using a second instance of the nitpicker GUI
+server as a video bridge. This design strikes a beautiful combination of
+simplicity, robustness, and flexibility.
+
+The new file vault described in Section
+[File vault based on the CBE block encrypter] leverages Genode's dynamic
+sandboxing capabilities to manage the creation and operation of an encrypted
+file store. Even though the underpinnings can be described as nothing less
+than sophisticated machinery, the package presented to the user combines ease
+of use with a great sense of control.
+
+The second focus of the current release are the manifold improvements of
+Genode's driver and platform support as described in Sections [Device drivers]
+and [Platforms]. Our USB support received the attention needed to accommodate
+the webcam scenario, the arsenal of i.MX8 drivers got enriched with I2C and
+power-domain control, the Pine-A64 board support is growing, Genode has become
+able to run on 64-bit ARM Linux, and we enabled principle networking for
+RISC-V.
+
+Speaking of platforms, this release features the first version of a new
+"Genode Platforms" documentation (Section [Updated and new documentation])
+that aids the porting of Genode to new ARM SoCs. With this document, we share
+our former in-house know-how and methodology about the porting and development
+of drivers with developers outside of Genode Labs.
+
+The release is rounded up by several performance optimizations
+(Section [Performance optimizations]) to the benefit of most Genode system
+scenarios. Furthermore, it is accompanied with an updated tool chain,
+following our established two-years rhythm
+(Section [Tool-chain update to GCC 10.3 and binutils 2.36]).
 
 
 Webcam support
@@ -23,7 +57,7 @@ on Genode.
 
 Webcams are generally connected via USB to a host device and implement the USB
 video device class
-([https://www.usb.org/sites/default/files/USB_Video_Class_1_5.zip - UVC]).
+([https://www.usb.org/sites/default/files/USB_Video_Class_1_5.zip - UVC spec]).
 Therefore, it is possible to drive many different webcam devices using the
 same USB interface. To support this protocol, we enabled
 [https://ken.tossell.net/libuvc/doc - libuvc], which offers fine-grained control
