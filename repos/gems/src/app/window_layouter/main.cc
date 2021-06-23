@@ -148,7 +148,20 @@ struct Window_layouter::Main : Operations,
 	/**
 	 * Window_list::Change_handler interface
 	 */
-	void window_list_changed() override { _update_window_layout(); }
+	void window_list_changed() override
+	{
+		/*
+		 * Discharge the enforced top-most position of the most recently
+		 * manually topped window (see '_gen_rules_with_frontmost_screen').
+		 * If a window re-appears in front of the currently top-most window,
+		 * the re-appeared window should stay on top.
+		 *
+		 * https://github.com/genodelabs/genode/issues/4195
+		 */
+		_to_front_cnt++;
+
+		_update_window_layout();
+	}
 
 	void _handle_config()
 	{
@@ -367,8 +380,7 @@ struct Window_layouter::Main : Operations,
 		_gen_rules_with_frontmost_screen(Target::Name());
 	}
 
-	template <typename FN>
-	void _gen_rules_assignments(Xml_generator &, FN const &);
+	void _gen_rules_assignments(Xml_generator &) const;
 
 	/**
 	 * Constructor
@@ -444,8 +456,7 @@ void Window_layouter::Main::_gen_focus()
 }
 
 
-template <typename FN>
-void Window_layouter::Main::_gen_rules_assignments(Xml_generator &xml, FN const &filter)
+void Window_layouter::Main::_gen_rules_assignments(Xml_generator &xml) const
 {
 	auto gen_window_geometry = [] (Xml_generator &xml,
 	                               Assign const &assign, Window const &window) {
@@ -456,12 +467,86 @@ void Window_layouter::Main::_gen_rules_assignments(Xml_generator &xml, FN const 
 		                                .maximized = window.maximized() });
 	};
 
-	/* turn wildcard assignments into exact assignments */
-	auto fn = [&] (Assign const &assign, Assign::Member const &member) {
-
-		if (!filter(member.window))
+	auto gen_window_assign_node = [&] (Xml_generator &xml, Assign const &assign)
+	{
+		if (assign.wildcard())
 			return;
 
+		xml.node("assign", [&] () {
+
+			assign.gen_assign_attr(xml);
+
+			/*
+			 * Determine current geometry of window. If multiple windows
+			 * are present with the same label, use the geometry of any of
+			 * them as they cannot be distinguished based on their label.
+			 */
+			bool geometry_generated = false;
+			assign.for_each_member([&] (Assign::Member const &member) {
+
+				if (geometry_generated)
+					return;
+
+				gen_window_geometry(xml, assign, member.window);
+				geometry_generated = true;
+			});
+
+			/* assign node with no window */
+			if (!geometry_generated && assign.floating())
+				assign.gen_geometry_attr(xml);
+		});
+	};
+
+	auto gen_wildcard_assign_node = [&] (Xml_generator &xml, Assign const &assign)
+	{
+		if (!assign.wildcard())
+			return;
+
+		xml.node("assign", [&] () {
+			assign.gen_assign_attr(xml);
+			assign.gen_geometry_attr(xml);
+		});
+	};
+
+	auto used_by_present_window = [] (Assign const &assign)
+	{
+		bool used = false;
+		assign.for_each_member([&] (Assign::Member const &) {
+			used = true; });
+		return used;
+	};
+
+	auto used_by_topped_window = [&] (Assign const &assign)
+	{
+		bool topped = false;
+		assign.for_each_member([&] (Assign::Member const &member) {
+			if (member.window.to_front_cnt() == _to_front_cnt)
+				topped = true; });
+		return topped;
+	};
+
+	/*
+	 * Generate all unused assign nodes in front of the first used assign node.
+	 * Those assignments belong to disappeared windows such as confirmed alert
+	 * boxes that should be placed in front once they re-appear.
+	 */
+	{
+		bool before_first_used_assign = true;
+		_assign_list.for_each([&] (Assign const &assign) {
+
+			if (used_by_present_window(assign))
+				before_first_used_assign = false;
+
+			if (before_first_used_assign)
+				gen_window_assign_node(xml, assign);
+		});
+	}
+
+	/*
+	 * Turn wildcard assignments into exact assignments. This covers new
+	 * appearing windows, which are expected to be placed in front.
+	 */
+	auto fn = [&] (Assign const &assign, Assign::Member const &member) {
 		xml.node("assign", [&] () {
 			xml.attribute("label",  member.window.label());
 			xml.attribute("target", assign.target_name());
@@ -471,33 +556,40 @@ void Window_layouter::Main::_gen_rules_assignments(Xml_generator &xml, FN const 
 	_assign_list.for_each_wildcard_member(fn);
 
 	/*
-	 * Generate existing exact assignments of floating windows,
-	 * update attributes according to the current window state.
+	 * Generate assign node for the most recently interactively topped window.
 	 */
 	_assign_list.for_each([&] (Assign const &assign) {
+		if (used_by_topped_window(assign))
+			gen_window_assign_node(xml, assign); });
 
-		if (assign.wildcard())
-			return;
+	/*
+	 * Generate all remaining assign nodes, in particular for all present
+	 * windows other than the topped window.
+	 */
+	{
+		bool before_first_used_assign = true;
+		_assign_list.for_each([&] (Assign const &assign) {
 
-		/*
-		 * Determine current geometry of window. If multiple windows
-		 * are present with the same label, use the geometry of any of
-		 * them as they cannot be distinguished based on their label.
-		 */
-		bool geometry_generated = false;
+			if (used_by_present_window(assign))
+				before_first_used_assign = false;
 
-		assign.for_each_member([&] (Assign::Member const &member) {
-
-			if (geometry_generated || !filter(member.window))
+			if (before_first_used_assign)
 				return;
 
-			xml.node("assign", [&] () {
-				assign.gen_assign_attr(xml);
-				gen_window_geometry(xml, assign, member.window);
-			});
-			geometry_generated = true;
+			if (used_by_topped_window(assign))
+				return;
+
+			gen_window_assign_node(xml, assign);
 		});
-	});
+	}
+
+	/*
+	 * Preserve wildcard nodes. The wildcards come last because they should
+	 * be considered only when no other concrete assign node matches.
+	 */
+	_assign_list.for_each([&] (Assign const &assign) {
+		if (assign.wildcard())
+			gen_wildcard_assign_node(xml, assign); });
 }
 
 
@@ -507,46 +599,8 @@ void Window_layouter::Main::_gen_rules_with_frontmost_screen(Target::Name const 
 		return;
 
 	_rules_reporter->generate([&] (Xml_generator &xml) {
-
 		_target_list.gen_screens(xml, screen);
-
-		/*
-		 * Generate exact <assign> nodes for present windows.
-		 *
-		 * The nodes are generated such that front-most windows appear
-		 * before all other windows. The change of the stacking order
-		 * is applied when the generated rules are imported the next time.
-		 */
-		auto front_most = [&] (Window const &window) {
-			return (window.to_front_cnt() == _to_front_cnt); };
-
-		auto behind_front = [&] (Window const &window) {
-			return !front_most(window); };
-
-		_gen_rules_assignments(xml, front_most);
-		_gen_rules_assignments(xml, behind_front);
-
-		/* keep attributes of wildcards and (currently) unused assignments */
-		_assign_list.for_each([&] (Assign const &assign) {
-
-			bool no_window_assigned = true;
-			assign.for_each_member([&] (Assign::Member const &) {
-				no_window_assigned = false; });
-
-			/*
-			 * If a window is present that matches the assignment, the <assign>
-			 * node was already generated by '_gen_rules_assignments' above.
-			 */
-			if (assign.wildcard() || no_window_assigned) {
-
-				xml.node("assign", [&] () {
-					assign.gen_assign_attr(xml);
-
-					if (assign.floating())
-						assign.gen_geometry_attr(xml);
-				});
-			}
-		});
+		_gen_rules_assignments(xml);
 	});
 }
 
