@@ -91,7 +91,10 @@ install_config $config
 # Boot modules
 #
 
+build { app/window_layouter }
+
 append boot_modules [qt5_boot_modules]
+lappend boot_modules window_layouter
 
 build_boot_image $boot_modules
 
