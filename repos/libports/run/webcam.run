@@ -16,6 +16,9 @@ proc libuvc_product_id {} { return "0xb564" }
 #proc libuvc_vendor_id {}  { return "0x0bda" }
 #proc libuvc_product_id {} { return "0x58db" }
 
+# x250
+proc libuvc_vendor_id {}  { return "0x04ca" }
+proc libuvc_product_id {} { return "0x703c" }
 
 
 create_boot_directory
