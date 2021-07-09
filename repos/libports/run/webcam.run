@@ -1,12 +1,4 @@
-set build_components {
-	app/rom_reporter
-	drivers/framebuffer
-	drivers/usb_host
-
-	server/dynamic_rom
-	server/gui_fb
-	server/nitpicker
-}
+set build_components { }
 
 # fuji4
 proc libuvc_vendor_id {}  { return "0x04f2" }
@@ -30,6 +22,12 @@ create_boot_directory
 
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/init \
+                  [depot_user]/src/nitpicker \
+                  [depot_user]/src/dynamic_rom \
+                  [depot_user]/src/rom_reporter \
+                  [depot_user]/src/usb_host_drv \
+                  [depot_user]/src/vesa_drv \
+                  [depot_user]/src/test-capture \
                   [depot_user]/pkg/usb_webcam
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
@@ -87,7 +85,8 @@ append config {
 		<resource name="RAM" quantum="20M"/>
 		<config/>
 		<route>
-			<any-service> <parent /> <any-child /> </any-service>
+			<service name="Capture"> <child name="nitpicker"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
 		</route>
 	</start>
 
@@ -108,13 +107,15 @@ append config {
 		</route>
 	</start>
 
-	<start name="gui_fb" priority="-1">
+	<start name="test-capture" priority="-1">
 		<resource name="RAM" quantum="8M"/>
-		<provides> <service name="Framebuffer"/> <service name="Input"/></provides>
-		<config width="1280" height="720"/>
+		<config period_ms="20" width="640" height="480">
+			<view xpos="100" ypos="100"/> <!--view xpos="800" ypos="600"/-->
+		</config>
 		<route>
 			<service name="Gui"> <child name="nitpicker"/> </service>
-			<any-service> <parent/> </any-service>
+			<service name="Capture"> <child name="webcam"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>
 
@@ -159,26 +160,18 @@ append config {
 		<route>
 			<service name="ROM" label="config"> <parent label="usb_webcam.config"/> </service>
 			<service name="Timer"> <child name="timer"/> </service>
-			<service name="Framebuffer"> <child  name="gui_fb"/> </service>
 			<service name="Usb"> <child name="usb_drv"/> </service>
 			<any-service> <parent /> </any-service>
 		</route>
-		<provides> <service name="Report"/> </provides>
+		<provides> <service name="Capture"/> <service name="Report"/> </provides>
 	</start>
 </config>}
 
 install_config $config
 
-append boot_modules {
-	dynamic_rom
-	gui_fb
-	nitpicker
-	rom_reporter
-	vesa_fb_drv
-	x86_pc_usb_host_drv
-}
-
 append_platform_drv_boot_modules
+
+append boot_modules { }
 
 build_boot_image $boot_modules
 
