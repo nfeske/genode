@@ -14,13 +14,16 @@
 #include <base/mutex.h>
 #include <base/log.h>
 #include <base/thread.h>
+#include <os/backtrace.h>
 
 void Genode::Mutex::acquire()
 {
 	Lock::Applicant myself(Thread::myself());
-	if (_lock.lock_owner(myself))
+	if (_lock.lock_owner(myself)) {
 		Genode::error("deadlock ahead, mutex=", this, ", return ip=",
 		              __builtin_return_address(0));
+		backtrace();
+	}
 
 	_lock.lock(myself);
 }

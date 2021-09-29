@@ -6,6 +6,8 @@ ARCHS := riscv arm_v6 arm_v7 arm_64 x86_32 x86_64
 include:
 	mkdir -p include
 	cp -r $(REP_DIR)/include/* $@/
+	mkdir -p $@/spec/arm_64/os
+	cp $(GENODE_DIR)/repos/os/include/spec/arm_64/os/backtrace.h $@/spec/arm_64/os/
 
 LIB_MK_FILES := base.mk ld.mk ldso_so_support.mk
 
