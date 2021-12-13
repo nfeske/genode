@@ -93,6 +93,11 @@ class Genode::Affinity
 					return Affinity::Space(node.attribute_value("width",  0U),
 					                       node.attribute_value("height", 0U));
 				}
+
+				void print(Output &out) const
+				{
+					Genode::print(out, _width, "x", _height);
+				}
 		};
 
 
@@ -166,6 +171,10 @@ class Genode::Affinity
 					                node.attribute_value("height", default_height));
 				}
 
+				void print(Output &out) const
+				{
+					Genode::print(out, _xpos, "+", _ypos, "+", _width, "x", _height);
+				}
 		};
 
 	private:
