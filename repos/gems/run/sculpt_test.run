@@ -6,6 +6,8 @@ source ${genode_dir}/repos/gems/run/sculpt.run
 append_qemu_nic_args
 append qemu_args " -m 1024 "
 
+append qemu_args " -smp cpus=4 "
+
 # attach small SATA disk to Qemu to experiment with file-system access
 set disk_image "bin/sculpt-ahci.raw"
 if {![file exists bin/sculpt-ahci.raw]} {
