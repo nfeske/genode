@@ -1101,6 +1101,14 @@ struct Sculpt::Main : Input_event_handler,
 	                             "runtime_dialog", "runtime_view_hover" };
 	Main(Env &env) : _env(env)
 	{
+		/*
+		 * Read static platform information
+		 */
+		_platform.xml().with_sub_node("affinity-space", [&] (Xml_node const &node) {
+			_affinity_space = Affinity::Space(node.attribute_value("width",  1U),
+			                                  node.attribute_value("height", 1U));
+		});
+
 		_manual_deploy_rom.sigh(_manual_deploy_handler);
 		_runtime_state_rom.sigh(_runtime_state_handler);
 		_runtime_config_rom.sigh(_runtime_config_handler);
@@ -1132,14 +1140,6 @@ struct Sculpt::Main : Input_event_handler,
 		_deploy.handle_deploy();
 		_handle_pci_devices();
 		_handle_runtime_config();
-
-		/*
-		 * Read static platform information
-		 */
-		_platform.xml().with_sub_node("affinity-space", [&] (Xml_node const &node) {
-			_affinity_space = Affinity::Space(node.attribute_value("width",  1U),
-			                                  node.attribute_value("height", 1U));
-		});
 
 		/*
 		 * Generate initial config/managed/deploy configuration
