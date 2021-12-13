@@ -695,6 +695,8 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 # Create boot image
 #
 
-append boot_modules { }
+build { core lib/ld init }
+
+append boot_modules { core-hw-pc.a ld.lib.so init }
 
 build_boot_image $boot_modules
