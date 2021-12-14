@@ -41,7 +41,7 @@ if {[expr ![have_include "power_on/qemu"] && !$use_vfs_block]} {
 # Build
 #
 
-set build_components { test/libc_vfs }
+set build_components { test/libc_vfs drivers/platform/spec/x86 }
 
 lappend build_components {*}$test_build_components
 
@@ -199,7 +199,7 @@ catch { exec sh -c $cmd }
 
 # generic modules
 append boot_modules {
-	libc.lib.so vfs.lib.so test-libc_vfs
+	libc.lib.so vfs.lib.so test-libc_vfs platform_drv
 }
 
 lappend boot_modules {*}$test_boot_modules
