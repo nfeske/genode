@@ -72,11 +72,13 @@ struct Sculpt::Main : Input_event_handler,
 
 	Registry<Child_state> _child_states { };
 
+	Input::Seq_number _global_input_seq_number { };
+
 	Gui::Connection _gui { _env, "input" };
 
 	bool _gui_mode_ready = false;  /* becomes true once the graphics driver is up */
 
-	Gui::Root _gui_root { _env, _heap, *this };
+	Gui::Root _gui_root { _env, _heap, *this, _global_input_seq_number };
 
 	Signal_handler<Main> _input_handler {
 		_env.ep(), *this, &Main::_handle_input };
