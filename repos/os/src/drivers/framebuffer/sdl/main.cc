@@ -101,6 +101,8 @@ struct Fb_sdl::Main
 				error("SDL_SetVideoMode failed (", Genode::Cstring(SDL_GetError()), ")");
 				throw Sdl_setvideomode_failed();
 			}
+
+			SDL_ShowCursor(1);
 			return *surface_ptr;
 		}
 
@@ -129,6 +131,8 @@ struct Fb_sdl::Main
 		_env.ep(), *this, &Main::_handle_timer };
 
 	int _mx = 0, _my = 0;
+
+	unsigned _key_cnt = 0;
 
 	void _handle_sdl_event(Event_batch &, SDL_Event const &);
 	void _handle_sdl_events();
@@ -205,7 +209,8 @@ void Fb_sdl::Main::_handle_sdl_event(Event_batch &batch, SDL_Event const &event)
 		if (ox == _mx && oy == _my)
 			return;
 
-		batch.submit(Absolute_motion{_mx, _my});
+		if (_key_cnt != 0)
+			batch.submit(Touch{ Touch_id { 0 }, (float)_mx, (float)_my});
 		return;
 	}
 
@@ -239,7 +244,8 @@ void Fb_sdl::Main::_handle_sdl_event(Event_batch &batch, SDL_Event const &event)
 			/* ignore */
 			return;
 
-		batch.submit(Release{keycode});
+		batch.submit(Touch_release{ Touch_id { 0 }});
+		_key_cnt--;
 		return;
 
 	case SDL_KEYDOWN:
@@ -249,8 +255,14 @@ void Fb_sdl::Main::_handle_sdl_event(Event_batch &batch, SDL_Event const &event)
 			batch.submit(Wheel{0, 1});
 		else if (event.button.button == SDL_BUTTON_WHEELDOWN)
 			batch.submit(Wheel{0, -1});
-		else
-			batch.submit(Press{keycode});
+		else {
+
+			if (_key_cnt == 0)
+				batch.submit(Touch{ Touch_id { 0 }, (float)_mx, (float)_my});
+
+			(void)keycode;
+			_key_cnt++;
+		}
 		return;
 
 	default:
