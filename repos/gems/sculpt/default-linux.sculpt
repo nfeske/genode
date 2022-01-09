@@ -9,4 +9,4 @@ launcher: sticks_blue_backdrop nano3d system_shell
 # supplemental depot content added to the system image
 import: pkg/drivers_interactive-linux
 
-build: drivers/framebuffer/sdl
+build: lib/ld core drivers/framebuffer/sdl app/sculpt_manager app/menu_view
