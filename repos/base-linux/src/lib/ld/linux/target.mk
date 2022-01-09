@@ -1,2 +1,2 @@
-TARGET = ld-linux
+TARGET = ld-linux.lib.so
 LIBS = ld-linux
