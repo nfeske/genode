@@ -41,6 +41,11 @@ include $(foreach LIB,$(LIBS),$(call select_from_repositories,lib/import/import-
 include $(SPEC_FILES)
 
 #
+# Names of build artifacts to appear in the 'progress.log'
+#
+BUILD_ARTIFACTS ?= $(TARGET)
+
+#
 # Determine location of $(TARGET_MK) within 'src/', remove trailing slash
 #
 PRG_REL_DIR := $(subst $(REP_DIR)/src/,,$(PRG_DIR))
@@ -113,4 +118,6 @@ ifeq ($(FORCE_BUILD_LIBS),yes)
 endif
 
 append_artifact_to_progress_log:
-	@echo -e "\n# Build artifact $(TARGET)\n" >> $(LIB_PROGRESS_LOG)
+	@( $(foreach A,$(BUILD_ARTIFACTS),\
+	      echo -e "\n# Build artifact $A\n";) true \
+	) >> $(LIB_PROGRESS_LOG)
