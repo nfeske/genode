@@ -1900,8 +1900,10 @@ void Sculpt::Main::_generate_event_filter_config(Xml_generator &xml)
 						});
 					});
 
+					xml.node("touch-click", [&] () {
+						gen_input("touch"); });
+
 					gen_input("usb");
-					gen_input("touch");
 					gen_input("sdl");
 				});
 			});
