@@ -1,0 +1,23 @@
+<runtime ram="20M" caps="250" binary="touch_keyboard" config="touch_keyboard.config">
+
+	<requires>
+		<gui/>
+		<timer/>
+		<file_system label="fonts" writeable="no"/>
+	</requires>
+
+	<content>
+		<rom label="touch_keyboard"/>
+		<rom label="touch_keyboard.config"/>
+		<rom label="ld.lib.so"/>
+		<rom label="libc.lib.so"/>
+		<rom label="libm.lib.so"/>
+		<rom label="vfs.lib.so"/>
+		<rom label="sandbox.lib.so"/>
+		<rom label="menu_view"/>
+		<rom label="menu_view_styles.tar"/>
+		<rom label="libpng.lib.so"/>
+		<rom label="zlib.lib.so"/>
+	</content>
+
+</runtime>

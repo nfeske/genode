@@ -68,9 +68,11 @@ install_config {
 			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
 			<domain name="default" layer="3" content="client" label="no" hover="always" />
 			<domain name="second" layer="2" xpos="200" ypos="300" content="client" label="no" hover="always" />
+			<domain name="touch_keyboard" layer="0" xpos="10" ypos="400" content="client" label="no" focus="transient" hover="always" />
 
 			<policy label_prefix="pointer" domain="pointer"/>
 			<policy label_prefix="text_area.2" domain="second"/>
+			<policy label_prefix="touch_keyboard" domain="touch_keyboard"/>
 			<default-policy domain="default"/>
 		</config>
 	</start>
@@ -141,14 +143,28 @@ install_config {
 		</route>
 	</start>
 
+	<start name="touch_keyboard" caps="250">
+		<binary name="touch_keyboard"/>
+		<resource name="RAM" quantum="8M"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="touch_keyboard.config"/> </service>
+			<service name="File_system" label="fonts"> <child name="fonts_fs"/> </service>
+			<service name="File_system" label="data">  <child name="data_fs"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
 </config>}
 
 set fd [open [run_dir]/genode/focus w]
 puts $fd "<focus label=\"text_area.2 -> \"/>"
 close $fd
 
-build { app/text_area app/menu_view }
+copy_file [genode_dir]/repos/gems/recipes/raw/touch_keyboard/touch_keyboard.config \
+          [run_dir]/genode/touch_keyboard.config
 
-build_boot_image { text_area sandbox.lib.so vfs.lib.so menu_view menu_view_styles.tar }
+build { app/text_area app/menu_view app/touch_keyboard }
+
+build_boot_image { text_area touch_keyboard sandbox.lib.so vfs.lib.so menu_view menu_view_styles.tar }
 
 run_genode_until forever
