@@ -38,6 +38,8 @@ class Event_filter::Touch_click_source : public Source, Source::Filter
 
 		bool _pressed = false;
 
+		Input::Keycode _last_keycode { };
+
 		/**
 		 * Filter interface
 		 */
@@ -58,7 +60,18 @@ class Event_filter::Touch_click_source : public Source, Source::Filter
 				destination.submit(Input::Absolute_motion{ int(x), int(y) });
 
 				if (!_pressed) {
-					destination.submit(Input::Press { Input::BTN_LEFT });
+
+					auto fake_f12_pressed = [&] () {
+						if (y < 520) return false;
+						if (y > 920) return false;
+						if (x > 100) return false;
+						return true;
+					};
+
+					_last_keycode = fake_f12_pressed() ? Input::KEY_F12 : Input::BTN_LEFT;
+
+					destination.submit(Input::Press { _last_keycode });
+
 					_pressed = true;
 				}
 			});
@@ -70,7 +83,7 @@ class Event_filter::Touch_click_source : public Source, Source::Filter
 					return;
 
 				if (_pressed) {
-					destination.submit(Input::Release { Input::BTN_LEFT });
+					destination.submit(Input::Release { _last_keycode });
 					_pressed = false;
 				}
 			});
