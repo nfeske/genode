@@ -24,10 +24,6 @@
 		<rom label="cached_fs_rom"/>
 		<rom label="terminal"/>
 		<rom label="posix.lib.so"/>
-		<rom label="ncurses.lib.so"/>
-		<rom label="bash-minimal.tar"/>
-		<rom label="coreutils-minimal.tar"/>
-		<rom label="vim-minimal.tar"/>
 		<rom label="vfs.lib.so"/>
 	</content>
 
