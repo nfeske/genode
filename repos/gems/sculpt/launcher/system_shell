@@ -14,6 +14,7 @@
 		<service name="ROM" label_last="bash-minimal.tar">      <parent/> </service>
 		<service name="ROM" label_last="coreutils-minimal.tar"> <parent/> </service>
 		<service name="ROM" label_last="vim-minimal.tar">       <parent/> </service>
+		<service name="RM">                                     <parent/> </service>
 
 	</route>
 </launcher>
