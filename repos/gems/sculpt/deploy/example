@@ -56,7 +56,7 @@
 	</start>
 
 	<start name="sticks_blue_backdrop"/>
-	<start name="nano3d"/>
 	<start name="system_shell"/>
+	<start name="touch_keyboard"/>
 
 </config>

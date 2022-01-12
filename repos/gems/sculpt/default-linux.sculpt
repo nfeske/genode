@@ -4,7 +4,7 @@ deploy:  example
 ram_fs:  depot
 
 # selection of launcher-menu entries
-launcher: sticks_blue_backdrop nano3d system_shell
+launcher: sticks_blue_backdrop nano3d system_shell touch_keyboard
 
 # supplemental depot content added to the system image
 import: pkg/drivers_interactive-linux
