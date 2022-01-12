@@ -1444,7 +1444,7 @@ void Sculpt::Main::_handle_gui_mode()
 
 	if (!_settings.manual_fonts_config) {
 
-		_font_size_px = (double)mode.area.h() / 60.0;
+		_font_size_px = (double)mode.area.h() / 50.0;
 
 		/*
 		 * Limit lower bound of font size. Otherwise, the glyph rendering
@@ -1453,7 +1453,7 @@ void Sculpt::Main::_handle_gui_mode()
 		_font_size_px = max(_font_size_px, 2.0);
 
 		if (_settings.font_size == Settings::Font_size::SMALL) _font_size_px *= 0.85;
-		if (_settings.font_size == Settings::Font_size::LARGE) _font_size_px *= 1.35;
+		if (_settings.font_size == Settings::Font_size::LARGE) _font_size_px *= 1.15;
 
 		_fonts_config.generate([&] (Xml_generator &xml) {
 			xml.attribute("copy",  true);
