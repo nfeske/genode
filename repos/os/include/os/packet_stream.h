@@ -321,8 +321,13 @@ class Genode::Packet_descriptor_transmitter
 
 			_tx_queue->add(packet);
 
-			if (_tx_queue->single_element())
+			if (_tx_queue->single_element()) {
+
+				if (!_rx_ready.context().valid())
+					warning("Packet_descriptor_transmitter: missing signal handler for rx ready");
+
 				_rx_ready.submit();
+			}
 		}
 
 		bool try_tx(typename TX_QUEUE::Packet_descriptor packet)
@@ -347,6 +352,10 @@ class Genode::Packet_descriptor_transmitter
 			bool signal_submitted = false;
 
 			if (_tx_wakeup_needed) {
+
+				if (!_rx_ready.context().valid())
+					warning("Packet_descriptor_transmitter: tx_wakeup: missing signal handler for rx ready");
+
 				_rx_ready.submit();
 				signal_submitted = true;
 			}
@@ -425,8 +434,13 @@ class Genode::Packet_descriptor_receiver
 
 			*out_packet = _rx_queue->get();
 
-			if (_rx_queue->single_slot_free())
+			if (_rx_queue->single_slot_free()) {
+
+				if (!_tx_ready.context().valid())
+					warning("Packet_descriptor_receiver: missing signal handler for tx ready");
+
 				_tx_ready.submit();
+			}
 		}
 
 		typename RX_QUEUE::Packet_descriptor try_rx()
@@ -451,6 +465,10 @@ class Genode::Packet_descriptor_receiver
 			bool signal_submitted = false;
 
 			if (_rx_wakeup_needed) {
+
+				if (!_tx_ready.context().valid())
+					warning("Packet_descriptor_receiver: rx_wakeup: missing signal handler for tx ready");
+
 				_tx_ready.submit();
 				signal_submitted = true;
 			}
