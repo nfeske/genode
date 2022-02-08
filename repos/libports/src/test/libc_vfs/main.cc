@@ -302,6 +302,16 @@ static void test(Genode::Xml_node node)
 				printf("file content is correct\n");
 			}
 
+			/* test readlink result (https://github.com/genodelabs/genode/issues/4395) */
+			{
+				char const *symlink_to_slash = "c/symlink_to_slash";
+				CALL_AND_CHECK(ret, symlink("/", symlink_to_slash),
+				               (ret == 0), "symlink name=%s", symlink_to_slash);
+				char buf[64] { };
+				CALL_AND_CHECK(ret, readlink(symlink_to_slash, buf, sizeof(buf)),
+				                    ret == strlen("/"), "");
+			}
+
 			/* test unlink for symbolic links */
 			CALL_AND_CHECK(ret, unlink("c/d"), (ret == 0), "symlink=%s", "c/d");
 			CALL_AND_CHECK(ret, stat("c/d", &stat_buf), (ret == -1), "symlink=%s", "c/d");
