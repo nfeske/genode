@@ -229,6 +229,16 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
+<!--
+	<start name="top" caps="200">
+		<resource name="RAM" quantum="3M"/>
+		<config period_ms="5000"/>
+		<route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+	-->
+
 	<start name="report_rom" priority="0">
 		<binary name="report_rom"/>
 		<resource name="RAM" quantum="2M"/>

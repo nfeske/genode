@@ -6,6 +6,8 @@ gpu_drv: intel
 # supplemental depot content added to the system image
 import: pkg/drivers_managed-pc pkg/wifi src/ipxe_nic_drv
 
+build: virtualbox6 app/top
+
 # selection of launcher-menu entries
 launcher: vm_fs shared_fs usb_devices_rom
 
