@@ -66,7 +66,7 @@ unsigned Sup::Vmx::ctrl_primary()
 	       | VMX_PROC_CTLS_UNCOND_IO_EXIT
 	       | VMX_PROC_CTLS_USE_TPR_SHADOW
 	       | VMX_PROC_CTLS_RDPMC_EXIT
-//	       | VMX_PROC_CTLS_RDTSC_EXIT
+	       | VMX_PROC_CTLS_RDTSC_EXIT
 	       ;
 }
 
@@ -206,49 +206,49 @@ Sup::Handle_exit_result Sup::Vmx::handle_exit(Vcpu_state &state)
 	case VMX_EXIT_MOV_CRX:
 	case VMX_EXIT_HLT:
 		_handle_default(state);
-		return { Exit_state::DEFAULT, VINF_EM_RAW_EMULATE_INSTR, exit };
+		return { Exit_state::DEFAULT, VINF_EM_RAW_EMULATE_INSTR };
 
 	case VMX_EXIT_INT_WINDOW:
-		return { Exit_state::IRQ_WINDOW, VINF_SUCCESS, exit };
+		return { Exit_state::IRQ_WINDOW, VINF_SUCCESS };
 
 	case VMX_EXIT_EPT_VIOLATION:
-		return { Exit_state::NPT_EPT, VINF_EM_RAW_EMULATE_INSTR, exit };
+		return { Exit_state::NPT_EPT, VINF_EM_RAW_EMULATE_INSTR };
 
 	case VMX_EXIT_IO_INSTR:
 		_handle_default(state);
 		/* EMHandleRCTmpl.h does not distinguish READ/WRITE rc */
-		return { Exit_state::DEFAULT, VINF_IOM_R3_IOPORT_WRITE, exit };
+		return { Exit_state::DEFAULT, VINF_IOM_R3_IOPORT_WRITE };
 
 	case VMX_EXIT_TPR_BELOW_THRESHOLD:
 		_handle_default(state);
 		/* the instruction causing the exit has already been executed */
-		return { Exit_state::DEFAULT, VINF_SUCCESS, exit };
+		return { Exit_state::DEFAULT, VINF_SUCCESS };
 
 	case VMX_EXIT_RDMSR:
 		_handle_default(state);
-		return { Exit_state::DEFAULT, VINF_CPUM_R3_MSR_READ, exit };
+		return { Exit_state::DEFAULT, VINF_CPUM_R3_MSR_READ };
 
 	case VMX_EXIT_WRMSR:
 		_handle_default(state);
-		return { Exit_state::DEFAULT, VINF_CPUM_R3_MSR_WRITE, exit };
+		return { Exit_state::DEFAULT, VINF_CPUM_R3_MSR_WRITE };
 
 	case VCPU_PAUSED:
-		return { Exit_state::PAUSED, VINF_SUCCESS, exit };
+		return { Exit_state::PAUSED, VINF_SUCCESS };
 
 	case VCPU_STARTUP:
-		return { Exit_state::STARTUP, VINF_SUCCESS, exit };
+		return { Exit_state::STARTUP, VINF_SUCCESS };
 
 	/* error conditions */
 
 	case VMX_EXIT_ERR_INVALID_GUEST_STATE:
 		_handle_invalid(state);
-		return { Exit_state::ERROR, VERR_EM_GUEST_CPU_HANG, exit };
+		return { Exit_state::ERROR, VERR_EM_GUEST_CPU_HANG };
 
 	case VMX_EXIT_TRIPLE_FAULT:
-		return { Exit_state::ERROR, VINF_EM_TRIPLE_FAULT, exit };
+		return { Exit_state::ERROR, VINF_EM_TRIPLE_FAULT };
 
 	default:
-		return { Exit_state::ERROR, VERR_EM_GUEST_CPU_HANG, exit };
+		return { Exit_state::ERROR, VERR_EM_GUEST_CPU_HANG };
 	}
 }
 

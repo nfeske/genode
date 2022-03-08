@@ -31,8 +31,6 @@
 #include <util/string.h>
 #include <util/reconstructible.h>
 
-#include <os/backtrace.h>
-
 /* local includes */
 #include <init.h>
 #include <pthread_emt.h>
@@ -49,10 +47,8 @@ extern "C" int sched_yield()
 {
 	static unsigned long counter = 0;
 
-	if (++counter % 100'000 == 0) {
-		warning(__func__, " called ", counter, " times by ", Thread::myself()->name());
-		Genode::backtrace();
-	}
+	if (++counter % 100'000 == 0)
+		warning(__func__, " called ", counter, " times");
 
 	return 0;
 }
