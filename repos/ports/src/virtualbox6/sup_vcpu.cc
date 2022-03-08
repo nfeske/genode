@@ -78,6 +78,7 @@ namespace Sup {
 	{
 		Exit_state   state;
 		VBOXSTRICTRC rc;
+		unsigned long reason;
 	};
 
 	template <typename> struct Vcpu_impl;
@@ -97,6 +98,9 @@ class Sup::Vcpu_impl : public Sup::Vcpu, Genode::Noncopyable
 		VM              &_vm;
 		VMCPU           &_vmcpu;
 		Libc::Allocator  _alloc;
+		unsigned long    _exit_count = 0;
+		unsigned long    _last_exit = 0;
+		unsigned long    _total_exit_count = 0;
 
 		/* exit handler run in vCPU mode - switches to EMT */
 		void _handle_exit();
@@ -160,6 +164,11 @@ class Sup::Vcpu_impl : public Sup::Vcpu, Genode::Noncopyable
 
 template <typename T> void Sup::Vcpu_impl<T>::_handle_exit()
 {
+	_exit_count++;
+
+//	if ((_exit_count % 5000) == 0) {
+//		log("Vcpu(",this,") exit count: ", _exit_count, " last exit: ", _last_exit);
+//	}
 	_emt.switch_to_emt();
 
 	_vcpu.run();
@@ -631,6 +640,29 @@ template <typename VIRT> VBOXSTRICTRC Sup::Vcpu_impl<VIRT>::_switch_to_hw()
 		_emt.switch_to_vcpu();
 
 		result = VIRT::handle_exit(_vcpu.state());
+
+		{
+			_total_exit_count++;
+
+	 		if ((_total_exit_count % 10000) == 0) {
+				log("Vcpu(",this,") total exit count: ", _exit_count);
+			}
+		}
+
+//		if (_total_exit_count > 1000*1000) {
+//			if (_last_exit == result.reason) {
+//				_exit_count++;
+//
+//	 			if ((_exit_count % 5000) == 0) {
+//					log("Vcpu(",this,") exit count: ", _exit_count, " last exit: ", _last_exit);
+//				}
+//
+//			} else {
+//				log("Vcpu(",this,") ", _exit_count, " exits of type ", _last_exit);
+//				_last_exit = result.reason;
+//				_exit_count = 0;
+//			}
+//		}
 
 		/* discharge by default */
 		_vcpu.state().discharge();
