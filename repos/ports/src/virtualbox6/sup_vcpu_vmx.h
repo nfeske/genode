@@ -193,6 +193,10 @@ Sup::Handle_exit_result Sup::Vmx::handle_exit(Vcpu_state &state)
 	/* table 24-14. Format of Exit Reason - 15:0 Basic exit reason */
 	unsigned short const exit = state.exit_reason & 0xffff;
 
+	Genode::trace("exit ", exit);
+
+	GENODE_TRACE_TSC(0);
+
 	switch (exit) {
 	case VMX_EXIT_INIT_SIGNAL:
 	case VMX_EXIT_TASK_SWITCH:
