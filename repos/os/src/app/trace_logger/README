@@ -58,7 +58,7 @@ This is a short description of the tags and attributes:
 :config.default_policy:
   Optional. Name of tracing policy for subjects without individual config.
 
-:config.default_policy:
+:config.default_buffer:
   Optional. Size of tracing buffer for subjects without individual config.
 
 :config.policy:
