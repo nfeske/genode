@@ -305,6 +305,7 @@ class Vfs_server::Session_component : private Session_resources,
 		 */
 		Process_packets_result process_packets()
 		{
+			GENODE_TRACE_TSC(0);
 			bool overall_progress = false;
 
 			/*
