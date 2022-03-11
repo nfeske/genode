@@ -8,7 +8,7 @@ import: pkg/drivers_managed-pc pkg/wifi src/ipxe_nic_drv
 import: pkg/trace_logger
 
 build: virtualbox6 app/top drivers/usb_host/pc app/sculpt_manager init
-build: app/trace_logger core
+build: app/trace_logger core server/vfs
 
 # selection of launcher-menu entries
 launcher: vm_fs shared_fs usb_devices_rom
