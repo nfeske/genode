@@ -568,6 +568,23 @@ install_config {
 		</route>
 	</start>
 
+	<start name="trace_logger" caps="1000">
+		<resource name="RAM" quantum="100M"/>
+		<config verbose="no"
+				session_ram="90M"
+				session_arg_buffer="1M"
+				session_parent_levels="1"
+				period_sec="10"
+				default_policy="null"
+				default_buffer="8K">
+			<policy label_prefix="init -> runtime -> "/>
+		</config>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
 	<start name="runtime" caps="50000" priority="-1">
 		<binary name="init"/>
 		<resource name="RAM" quantum="32G"/>
