@@ -103,15 +103,23 @@ static Str create_device_node(Xml_generator &xml,
 
 			bool const memory = r.type() == R::MEMORY;
 
-			xml.node(memory ? "io_mem" : "io_port", [&] () {
-				xml.attribute("phys_addr",
-				              to_string(Hex(memory ? mmio_phys_addr : r.bar())));
-				xml.attribute("size",      to_string(Hex(r.size())));
-				xml.attribute("bar",       id);
-			});
+			if (memory) {
+				xml.node("io_mem",  [&] () {
+					addr_t const phys_addr = mmio_phys_addr + (r.base() & 0xfffu);
+					xml.attribute("phys_addr", to_string(Hex(phys_addr)));
+					xml.attribute("size",      to_string(Hex(r.size())));
+					xml.attribute("bar",       id);
+				});
 
-			if (memory)
 				mmio_phys_addr += align_addr(r.size(), 12);
+			} else {
+
+				xml.node("io_port", [&] () {
+					xml.attribute("phys_addr", to_string(Hex(r.bar())));
+					xml.attribute("size",      to_string(Hex(r.size())));
+					xml.attribute("bar",       id);
+				});
+			}
 		});
 	});
 
