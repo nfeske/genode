@@ -48,7 +48,7 @@ class Lx_kit::Device : List<Device>::Element
 			using Index = Platform::Device::Mmio::Index;
 
 			Index  idx;
-			addr_t addr; /* may have sub-page offset */
+			addr_t addr;
 			size_t size;
 
 			Constructible<Platform::Device::Mmio> io_mem {};

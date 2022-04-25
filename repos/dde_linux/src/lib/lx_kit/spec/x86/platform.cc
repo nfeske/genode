@@ -105,8 +105,7 @@ static Str create_device_node(Xml_generator &xml,
 
 			if (memory) {
 				xml.node("io_mem",  [&] () {
-					addr_t const phys_addr = mmio_phys_addr + (r.base() & 0xfffu);
-					xml.attribute("phys_addr", to_string(Hex(phys_addr)));
+					xml.attribute("phys_addr", to_string(Hex(mmio_phys_addr)));
 					xml.attribute("size",      to_string(Hex(r.size())));
 					xml.attribute("bar",       id);
 				});
@@ -447,6 +446,9 @@ void *Platform::Device::Mmio::_local_addr()
 
 			if (device.resource(phys_bar_id).prefetchable())
 				cache = Cache::WRITE_COMBINED;
+
+			auto const r = device.resource(phys_bar_id);
+			Range::start = (r.base() & 0xfffu);
 		}
 
 		Io_mem_session_capability io_mem_cap =
@@ -458,7 +460,7 @@ void *Platform::Device::Mmio::_local_addr()
 		                       io_mem_client.dataspace());
 	}
 
-	return _attached_ds->local_addr<void*>();
+	return (void*)(_attached_ds->local_addr<char>() + Range::start);
 }
 
 
