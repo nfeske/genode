@@ -123,7 +123,8 @@ void * Device::io_mem_local_addr(addr_t phys_addr, size_t size)
 			io.io_mem.construct(*_pdev, io.idx);
 
 		ret = (void*)((addr_t)io.io_mem->local_addr<void>()
-		              + (phys_addr - io.addr) + (phys_addr & 0xffful));
+		              + (phys_addr - io.addr)   /* page offset */
+		              + (phys_addr & 0xffful)); /* sub-page offset */
 	});
 	return ret;
 }
