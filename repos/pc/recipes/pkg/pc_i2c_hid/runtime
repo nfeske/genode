@@ -1,0 +1,17 @@
+<runtime ram="8M" caps="120" binary="pc_i2c_hid">
+
+	<requires>
+		<event/>
+		<platform/>
+		<rm/>
+		<timer/>
+	</requires>
+
+	<config/>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="pc_i2c_hid"/>
+	</content>
+
+</runtime>
