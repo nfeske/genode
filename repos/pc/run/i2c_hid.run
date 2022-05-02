@@ -1,0 +1,138 @@
+assert_spec x86_64
+
+set build_components {
+	core init timer
+	app/pci_decode
+	drivers/acpi
+	drivers/platform
+	server/report_rom
+	server/rom_filter
+	drivers/i2c_hid/pc
+	server/event_dump
+}
+
+build $build_components
+
+create_boot_directory
+
+append config {
+<config prio_levels="2">
+	<parent-provides>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="CPU"/>
+		<service name="ROM"/>
+		<service name="IO_MEM"/>
+		<service name="IRQ"/>
+		<service name="RM"/>
+	</parent-provides>
+
+	<default caps="100"/>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="timer" priority="0">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+
+	<start name="drivers_reports" caps="100">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides>
+			<service name="Report"/>
+			<service name="ROM"/>
+		</provides>
+		<config verbose="no">
+			<policy label="pci_decode -> system" report="acpi_drv -> acpi"/>
+			<policy label="rom_filter -> pci_devices" report="pci_decode -> devices"/>
+		</config>
+	</start>
+
+	<start name="acpi_drv" caps="350">
+		<resource name="RAM" quantum="4M"/>
+		<route>
+			<service name="Report"> <child name="drivers_reports"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="pci_decode" caps="350">
+		<resource name="RAM" quantum="1M"/>
+		<route>
+			<service name="ROM" label="system"> <child name="drivers_reports"/> </service>
+			<service name="Report"> <child name="drivers_reports"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="rom_filter" caps="70">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="ROM"/> </provides>
+		<config buffer="32K">
+			<input name="devices"/>
+			<input name="pci_devices"/>
+			<output node="devices">
+				<input name="devices"     skip_toplevel="yes"/>
+				<input name="pci_devices" skip_toplevel="yes"/>
+			</output>
+		</config>
+		<route>
+			<service name="ROM" label="pci_devices"> <child name="drivers_reports"/> </service>
+			<service name="LOG"> <parent/> </service>
+			<service name="PD">  <parent/> </service>
+			<service name="CPU"> <parent/> </service>
+			<service name="ROM"> <parent/> </service>
+		</route>
+	</start>
+
+	<start name="platform_drv" caps="400" managing_system="yes">
+		<resource name="RAM" quantum="4M"/>
+		<provides>
+			<service name="Platform"/>
+		</provides>
+		<config>
+			<report devices="yes"/>
+			<policy label_prefix="pc_i2c_hid_drv" info="yes">
+				<device name="00:15.3" type="pci"/>
+				<device name="INT34C5" type="acpi"/>
+			</policy>
+		</config>
+		<route>
+			<service name="ROM" label="devices"> <child name="rom_filter"/> </service>
+			<service name="Report"> <child name="drivers_reports"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="pc_i2c_hid_drv" priority="-1" caps="120">
+		<resource name="RAM" quantum="8M"/>
+		<config ld_verbose="yes"/>
+	</start>
+
+	<start name="event_dump">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Event"/> </provides>
+	</start>
+</config>
+}
+
+install_config $config
+
+# non PCI devices for platform_drv: ps2/pit and ACPI HID
+file copy [select_from_repositories board/[board]/devices] [run_dir]/genode/devices
+
+set boot_modules {
+	core ld.lib.so init timer report_rom rom_filter
+	platform_drv pci_decode acpi_drv
+	pc_i2c_hid_drv
+	event_dump
+}
+
+build_boot_image $boot_modules
+
+run_genode_until forever
+
+# vi: set ft=tcl :
