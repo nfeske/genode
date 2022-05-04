@@ -1,0 +1,187 @@
+The 'pc_audio' is a port of the Linux audio driver (6.6.35) for Tigerlake
+platforms only (Fuji U7x).
+
+Summary:
+
+* Genode's Audio out sessions for playback
+* Genode's Audio in session for capture
+* Genode's Record/Play session support
+* Mixer control support for all channels and devices
+* Uses Sound Open Firmware (https://thesofproject.github.io)
+* ACPI's NHLT table is required
+* Known issues
+
+
+Test driving the driver
+=======================
+
+Run script
+~~~~~~~~~~
+
+The simplest way to test the driver is the 'fuji-u7x_audio.run' found under
+'repos/pc/run':
+
+! make KERNEL=nova BOARD=pc run/fuji-u7x_audio
+
+The script simply routes the microphone input to the Audio_out session, so you
+here what you say.
+
+In order to test Genode's Record/Play session support set
+
+! proc use_record_play_sessions { } { return 1 }
+
+in the run script
+
+
+VirtualBox6
+~~~~~~~~~~~
+
+In order to route the Audio driver to VirtualBox's HDA model the following steps
+are necessary:
+
+* Enable the device model in your 'machine.vbox6' file:
+
+! <AudioAdapter controller="HDA" driver="OSS" enabled="true" enabledIn="true" enabledOut="true"/>
+
+* Route the Audio sessions to VirtualBox within the '<route>'-XML node
+
+! <service name="Audio_out"> <child name="pc_audio"/> </service>
+! <service name="Audio_in">  <child name="pc_audio"/> </service>
+
+(Alternatively you can route the Audio_out to Genode's mixer and from the mixer to
+the driver).
+
+In the VirtualBox Linux guest make sure master volume and playback volume are
+set for playback and *both* capture channels are unmuted and set for recording.
+
+
+Mixer controls
+~~~~~~~~~~~~~~
+
+The config node of the driver takes '<control>' nodes as configuration inputs
+which can be configured at runtime. There are three types of controls: Integer,
+Boolean, and enumerations:
+
+* Example for Integer:
+
+! <control type="int" id="0" channel="0" name="Headphone Playback Volume" value="87" min="0" max="87"/>
+! <control type="int" id="0" channel="1" name="Headphone Playback Volume" value="87" min="0" max="87"/>
+
+This lets you configure the volume of the headphone playback for the left (0)
+and right (1) channel. "min" and "max" indicate the supported range of the
+"value" argument.
+
+* Example for Boolean:
+
+! <control type="bool" id="1" channel="0" name="Headphone Playback Switch" value="true"/>
+! <control type="bool" id="1" channel="1" name="Headphone Playback Switch" value="true"/>
+
+Boolean values are usually switches to turn on/off playback or recording. In
+this example both playback channels of the headphone are enabled.
+
+* Example for Enumeration:
+
+! <control type="enum" id="10" name="Input Source" selected="0">
+!   <value id="0" name="Headset Mic"/>
+!   <value id="1" name="Headphone Mic"/>
+! </control>
+
+Enumeration controls let's you select from 2 or more values (<value>-nodes).
+Here the headset microphone is selected by the "selected" attribute.
+
+The most common mixer controls for Tigerlake can be found in the
+'fuji-u7x_audio.run' script. In order to obtain a complete list of all controls
+enable:
+
+! <config report_mixer="true">
+
+in the configuration node of the audio driver.
+
+
+Jack handling
+~~~~~~~~~~~~~
+
+When plugging, for example, a headset into the audio jack the driver will
+automatically mute the speaker and the internal microphone (DMIC0) and unmute
+the headphones and the headset microphone. Therefore, please do not configure
+the playback and captures switches of the headphones, headsets, and speakers
+because this will interfere with the driver.
+
+For the microphone jack state changes additionally require that PCM devices
+have to be switched because the headset microphone and the internal microphone
+are two different PCM devices (pcmC0D0c, pcmC0D6c) - while the headphone and the
+internal speaker share the same device (pcmC0D0p).
+
+
+Sound open firmware (SOF)
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The driver requires SOF to be loaded onto the HDA card during initialization.
+Therefore, we provide a sof port.
+
+! ./tool/port/prepare sof
+
+will download the firmware. While the downloaded archive contains firmware for
+all HDA devices, we only extract Tigerlake files here.
+
+The files required for Tigerlake are:
+
+! contrib/sof-<hash>/firmware/sof-tplg-v2.2.4/sof-hda-generic-2ch.tplg
+! contrib/sof-<hash>/firmware/sof-v2.2.4/intel-signed/sof-tgl.ri
+
+When using a run script you can either copy the files to '<build-dir>/bin' and
+adjust the 'boot_modules' accordingly or import a depot package.
+
+! import_from_depot [depot_user]/raw/sof_firmware
+
+
+ACPI
+~~~~
+
+The drivers requires the NHLT (Non HDAudio Link) table in order to find the
+internal microphone (DMIC). Currently we created a binary dump of this table
+from a test notebook and placed it into
+'repos/pc/src/drivers/audio/pc/acpi/nhlt-fuji5c.dat'. In case some devices are
+not found by the driver you can try create a dump for your platform and replace
+the 'nhlt-fuji5c.dat' file. For a list of all devices found by the driver you
+can add the 'report_devices="true"' attribute to the '<config>' node.
+
+
+Record/Play-session support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to use Genode's Record/Play session instead of the Audio in/out add
+'record_play="true"' as XML attribute to the '<config>' node.
+
+
+Known issues
+~~~~~~~~~~~~
+
+* When inserting the headset too slowly the microphone will generate noise
+  instead of recording proper audio. This issue is not related to the driver but
+  seems to be caused either by SOF or the hardware, since we experience the same
+  behavior on Ubuntu 22.04.
+
+* SOF supports 48KHz as sample rate only. Therefore, we had to change the sample
+  rate of Genode's Audio out/in sessions to 48KHz from 44.1KHz because otherwise
+  resampling would have been required which is currently unsolved on Genode.
+  This implies that a Genode audio packet now contains ~10.6ms instead of
+  ~11.6ms of audio data. We have tested this change also with the old BSD based
+  driver and it seems to work so far.
+
+* Because of the 48KHz issue we had to change VirtualBox6's HDA device model to
+  only advertise 48KHz and not 44.1KHz and let the guest handle possible
+  resampling from 44.1 to 48KHz. We tested this with Ubuntu 21.10 and 22.04. If
+  a guest refuses 48KHz and still tries to configure 44.1 an assertion in
+  VirtualBox will be raised. Windows has not been tested.
+
+* No VirtualBox5 support
+
+* In the current state this driver is not ready for Genode upstream. For
+  upstream we need to have access to the ACPI NHLT table of the machine in order
+  to support other Tigerlake platforms. Also other hardware than Tigerlake's HDA
+  is not supported at the moment and would have to be enabled separately.
+  Additionally, the 48KHz sampling rate limitation of SOF has to be addressed by
+  our audio session with the addition of possible resampling support. This is
+  unsolved in Genode at the moment.
+

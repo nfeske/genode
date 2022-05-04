@@ -17,7 +17,11 @@ CC_DEF += -DARCH_DMA_MINALIGN=16 -DARCH_SLAB_MINALIGN=16
 INC_DIR += $(REP_DIR)/src/include
 
 # Handle specific source requirements
-CC_OPT_drivers/usb/host/xhci-trace += -I$(LX_SRC_DIR)/drivers/usb/host
+CC_OPT_drivers/usb/host/xhci-trace  += -I$(LX_SRC_DIR)/drivers/usb/host
+CC_OPT_sound/hda/trace              += -I$(LX_SRC_DIR)/sound/hda
+CC_OPT_sound/pci/hda/hda_controller += -I$(LX_SRC_DIR)/sound/pci/hda
+CC_OPT_sound/pci/hda/hda_intel      += -I$(LX_SRC_DIR)/sound/pci/hda
+CC_OPT_drivers/base/regmap/regmap   += -I$(LX_SRC_DIR)/drivers/base/regmap
 
 SRC_CC  += lx_emul/acpi.cc
 SRC_CC  += lx_emul/clock.cc

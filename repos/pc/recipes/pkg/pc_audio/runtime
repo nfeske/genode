@@ -1,0 +1,25 @@
+<runtime ram="8M" caps="200" binary="pc_audio">
+
+	<requires>
+		<platform/>
+		<report/>
+		<timer/>
+		<rm/>
+	</requires>
+
+	<provides>
+		<audio_in/>
+		<audio_out/>
+	</provides>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="pc_audio"/>
+		<rom label="sof-hda-generic-2ch.tplg"/>
+		<rom label="sof-tgl.ri"/>
+	</content>
+
+	<config>
+	</config>
+
+</runtime>

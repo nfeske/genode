@@ -1,0 +1,9 @@
+LICENSE   := mixed
+VERSION   := 2.2.4
+DOWNLOADS := sof-bin.archive
+
+URL(sof-bin)     := https://github.com/thesofproject/sof-bin/releases/download/v$(VERSION)/sof-bin-v$(VERSION).tar.gz
+SHA(sof-bin)     := ce8aaeba103aa56a82662552b0f33f33a859aa1008d8bfbc2c22f0ccfc8c6b3a
+TAR_OPT(sof-bin) := --strip-components=1 --files-from=$(REP_DIR)/src/drivers/audio/pc/sof.list
+DIR(sof-bin)     := firmware
+HASH_INPUT += $(REP_DIR)/src/drivers/audio/pc/sof.list
