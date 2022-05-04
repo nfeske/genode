@@ -785,3 +785,11 @@ int software_node_notify(struct device * dev,unsigned long action)
 	lx_emul_trace(__func__);
 	return 0;
 }
+
+
+#include <linux/kernel.h>
+
+int get_option(char ** str,int * pint)
+{
+	lx_emul_trace_and_stop(__func__);
+}

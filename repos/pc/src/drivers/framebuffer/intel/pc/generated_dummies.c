@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-03-22
+ * \date   2023-10-27
  */
 
 #include <lx_emul.h>
@@ -151,6 +151,14 @@ int acpi_dev_get_resources(struct acpi_device * adev,struct list_head * list,int
 }
 
 
+#include <linux/acpi.h>
+
+int acpi_dev_gpio_irq_wake_get_by(struct acpi_device * adev,const char * name,int index,bool * wake_capable)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <acpi/acpi_bus.h>
 
 bool acpi_dev_present(const char * hid,const char * uid,s64 hrv)
@@ -244,30 +252,6 @@ void bust_spinlocks(int yes)
 }
 
 
-#include <linux/fb.h>
-
-void cfb_copyarea(struct fb_info * p,const struct fb_copyarea * area)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fb.h>
-
-void cfb_fillrect(struct fb_info * p,const struct fb_fillrect * rect)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fb.h>
-
-void cfb_imageblit(struct fb_info * p,const struct fb_image * image)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/swap.h>
 
 void check_move_unevictable_pages(struct pagevec * pvec)
@@ -294,31 +278,7 @@ void console_flush_on_panic(enum con_flush_mode mode)
 
 #include <linux/console.h>
 
-void console_lock(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/console.h>
-
-int console_trylock(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/console.h>
-
 void console_unblank(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/console.h>
-
-void console_unlock(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -359,6 +319,22 @@ int device_create_managed_software_node(struct device * dev,const struct propert
 #include <linux/property.h>
 
 void device_remove_software_node(struct device * dev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check devm_gpiod_get(struct device * dev,const char * con_id,enum gpiod_flags flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check devm_gpiod_get_index(struct device * dev,const char * con_id,unsigned int idx,enum gpiod_flags flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -513,14 +489,6 @@ void emergency_restart(void)
 }
 
 
-#include <linux/fb.h>
-
-void fb_set_suspend(struct fb_info * info,int state)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/capability.h>
 
 bool file_ns_capable(const struct file * file,struct user_namespace * ns,int cap)
@@ -532,14 +500,6 @@ bool file_ns_capable(const struct file * file,struct user_namespace * ns,int cap
 #include <linux/rcuwait.h>
 
 void finish_rcuwait(struct rcuwait * w)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fb.h>
-
-void framebuffer_release(struct fb_info * info)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -580,9 +540,73 @@ void gen6_rps_irq_handler(struct intel_rps * rps,u32 pm_iir)
 }
 
 
-#include <linux/kernel.h>
+#include <linux/gpio/machine.h>
 
-int get_option(char ** str,int * pint)
+void gpiod_add_lookup_table(struct gpiod_lookup_table * table)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+int gpiod_direction_output(struct gpio_desc * desc,int value)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check gpiod_get(struct device * dev,const char * con_id,enum gpiod_flags flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+int gpiod_get_direction(struct gpio_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+int gpiod_get_value_cansleep(const struct gpio_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_put(struct gpio_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/machine.h>
+
+void gpiod_remove_lookup_table(struct gpiod_lookup_table * table)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_set_value(struct gpio_desc * desc,int value)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_set_value_cansleep(struct gpio_desc * desc,int value)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -2029,14 +2053,6 @@ void unmap_mapping_range(struct address_space * mapping,loff_t const holebegin,l
 #include <acpi/acpi_bus.h>
 
 int unregister_acpi_bus_type(struct acpi_bus_type * type)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fb.h>
-
-void unregister_framebuffer(struct fb_info * fb_info)
 {
 	lx_emul_trace_and_stop(__func__);
 }

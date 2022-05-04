@@ -381,3 +381,12 @@ DEFINE_PER_CPU(bool, hardirq_stack_inuse);
 
 DEFINE_PER_CPU_READ_MOSTLY(struct cpuinfo_x86, cpu_info);
 EXPORT_PER_CPU_SYMBOL(cpu_info);
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * devm_gpiod_get_optional(struct device * dev, const char * con_id, enum gpiod_flags flags)
+{
+	lx_emul_trace(__func__);
+	return NULL;
+}
