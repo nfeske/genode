@@ -28,6 +28,11 @@ SRC_CC += semaphore.cc rwlock.cc \
           pthread.cc pthread_create.cc
 
 #
+# Malloc implementation
+#
+LIBS  += jemalloc
+
+#
 # FreeBSD headers use the C99 restrict keyword
 #
 CXX_DEF += -Drestrict=__restrict

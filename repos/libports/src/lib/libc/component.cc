@@ -25,6 +25,21 @@
 #include <internal/kernel.h>
 
 
+/*
+ * XXX test for jemalloc reset mechanism
+ */
+extern "C" {
+	void call_a();
+	void show_a();
+	void call_b();
+	void show_b();
+
+	extern long _jemalloc_start;
+	extern long _jemalloc_end;
+}
+
+
+
 extern char **environ;
 
 
@@ -69,6 +84,39 @@ void Component::construct(Genode::Env &env)
 		plugin.init(env);
 	};
 	Libc::plugin_registry()->for_each_plugin(init_plugin);
+
+	/*
+	 * XXX test for retting jemalloc
+	 */
+	{
+		using namespace Genode;
+
+		log("initial state of jemalloc library:");
+		Libc::with_libc([&] () {
+			show_a();
+			show_b();
+			log("call jemalloc library, changing state");
+			call_a();
+			call_b();
+			log("modified state of jemalloc library:");
+			show_a();
+			show_b();
+		});
+
+		addr_t const start = (addr_t)&_jemalloc_start,
+		             end   = (addr_t)&_jemalloc_end;
+		size_t const bytes = end - start;
+
+		log("reset jemalloc library, variables "
+		    "from ", Hex(start), " to ", Hex(end), " (", bytes, " bytes)");
+		memset((void *)start, 0, bytes);
+
+		Libc::with_libc([&] () {
+			log("state after resetting jemalloc library:");
+			show_a();
+			show_b();
+		});
+	}
 
 	/* construct libc component on kernel stack */
 	Libc::Component::construct(kernel.libc_env());
