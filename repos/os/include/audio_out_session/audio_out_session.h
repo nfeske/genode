@@ -50,7 +50,7 @@ namespace Audio_out {
 
 	enum {
 		QUEUE_SIZE  = 256,           /* buffer queue size */
-		SAMPLE_RATE = 44100,
+		SAMPLE_RATE = 48000,
 		SAMPLE_SIZE = sizeof(float),
 	};
 

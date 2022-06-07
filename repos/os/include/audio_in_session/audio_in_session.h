@@ -36,7 +36,7 @@ namespace Audio_in {
 
 	enum {
 		QUEUE_SIZE  = 431,            /* buffer queue size (~5s) */
-		SAMPLE_RATE = 44100,
+		SAMPLE_RATE = 48000,
 		SAMPLE_SIZE = sizeof(float),
 	};
 
