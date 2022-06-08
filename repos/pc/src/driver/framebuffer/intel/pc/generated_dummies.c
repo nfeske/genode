@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-08-20
+ * \date   2024-08-27
  */
 
 #include <lx_emul.h>
@@ -169,22 +169,6 @@ struct acpi_device * acpi_find_child_device(struct acpi_device * parent,u64 addr
 
 extern acpi_status acpi_get_handle(acpi_handle parent,const char * pathname,acpi_handle * ret_handle);
 acpi_status acpi_get_handle(acpi_handle parent,const char * pathname,acpi_handle * ret_handle)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_match_device_ids(struct acpi_device * device,const struct acpi_device_id * ids)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-void acpi_set_modalias(struct acpi_device * adev,const char * default_id,char * modalias,size_t len)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -2079,3 +2063,4 @@ void vunmap(const void * addr)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+

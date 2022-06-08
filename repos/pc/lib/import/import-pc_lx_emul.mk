@@ -19,6 +19,7 @@ INC_DIR += $(REP_DIR)/src/include
 # Handle specific source requirements
 CC_OPT_drivers/usb/host/xhci-trace += -I$(LX_SRC_DIR)/drivers/usb/host
 
+SRC_CC  += lx_emul/acpi.cc
 SRC_CC  += lx_emul/clock.cc
 SRC_CC  += lx_emul/io_mem.cc
 SRC_CC  += lx_emul/io_port.cc

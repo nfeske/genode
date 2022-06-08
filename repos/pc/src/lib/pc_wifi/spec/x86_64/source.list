@@ -35,6 +35,7 @@ drivers/base/core.c
 drivers/base/dd.c
 drivers/base/devres.c
 drivers/base/driver.c
+drivers/base/firmware.c
 drivers/base/platform.c
 drivers/base/property.c
 drivers/net/loopback.c

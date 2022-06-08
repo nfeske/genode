@@ -18,6 +18,6 @@
 
 int acpi_platform_notify(struct device *dev, enum kobject_action action)
 {
-    lx_emul_trace(__func__);
-    return 0;
+	lx_emul_trace(__func__);
+	return 0;
 }

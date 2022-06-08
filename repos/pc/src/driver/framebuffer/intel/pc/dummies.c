@@ -155,6 +155,15 @@ acpi_status acpi_get_name(acpi_handle object, u32 name_type,
 }
 
 
+acpi_status acpi_evaluate_object(acpi_handle handle, acpi_string pathname,
+                                 struct acpi_object_list *external_params,
+                                 struct acpi_buffer *return_buffer)
+{
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
+}
+
+
 void cpu_latency_qos_add_request(struct pm_qos_request *req, s32 value)
 {
 	lx_emul_trace(__func__);
@@ -207,13 +216,6 @@ int register_acpi_notifier(struct notifier_block * nb)
 
 
 int unregister_acpi_notifier(struct notifier_block * nb)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int acpi_reconfig_notifier_register(struct notifier_block * nb)
 {
 	lx_emul_trace(__func__);
 	return 0;
@@ -445,12 +447,6 @@ void pci_disable_msi(struct pci_dev *dev)
 }
 
 
-int acpi_bus_get_status(struct acpi_device * device)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 void acpi_device_notify(struct device * dev)
 {
 	lx_emul_trace(__func__);
@@ -494,12 +490,6 @@ int sysfs_add_file_to_group(      struct kobject   * kobj,
 
 
 u16 get_random_u16(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-void acpi_dev_clear_dependencies(struct acpi_device * supplier)
 {
 	lx_emul_trace_and_stop(__func__);
 }
