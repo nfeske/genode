@@ -6,6 +6,7 @@ drivers/base/core.c
 drivers/base/dd.c
 drivers/base/devres.c
 drivers/base/driver.c
+drivers/base/firmware.c
 drivers/base/platform.c
 drivers/base/property.c
 drivers/pci/pci-driver.c
@@ -98,6 +99,7 @@ lib/scatterlist.c
 lib/siphash.c
 lib/sort.c
 lib/string.c
+lib/string_helpers.c
 lib/timerqueue.c
 lib/vsprintf.c
 lib/xarray.c

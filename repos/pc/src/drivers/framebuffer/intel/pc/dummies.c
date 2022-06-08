@@ -154,6 +154,22 @@ acpi_status acpi_get_name(acpi_handle object, u32 name_type,
 }
 
 
+acpi_status acpi_evaluate_object(acpi_handle handle, acpi_string pathname,
+                                 struct acpi_object_list *external_params,
+                                 struct acpi_buffer *return_buffer)
+{
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
+}
+
+
+acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle)
+{
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
+}
+
+
 void cpu_latency_qos_add_request(struct pm_qos_request *req, s32 value)
 {
 	lx_emul_trace(__func__);
@@ -212,13 +228,6 @@ int register_acpi_notifier(struct notifier_block * nb)
 
 
 int unregister_acpi_notifier(struct notifier_block * nb)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int acpi_reconfig_notifier_register(struct notifier_block * nb)
 {
 	lx_emul_trace(__func__);
 	return 0;
@@ -448,15 +457,6 @@ acpi_status acpi_buffer_to_resource(u8 * aml_buffer,u16 aml_buffer_length,struct
 }
 
 
-struct acpi_device;
-
-extern int acpi_bus_get_status(struct acpi_device * device);
-int acpi_bus_get_status(struct acpi_device * device)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 void acpi_device_notify(struct device * dev)
 {
 	lx_emul_trace(__func__);
@@ -504,6 +504,14 @@ void __init __register_sysctl_init(const char * path,struct ctl_table * table,co
 	lx_emul_trace(__func__);
 }
 
+#include <linux/fs.h>
+
+int __register_chrdev(unsigned int major,unsigned int baseminor,unsigned int count,const char * name,const struct file_operations * fops)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
 
 #include <linux/sysfs.h>
 
@@ -517,38 +525,6 @@ int sysfs_add_file_to_group(struct kobject * kobj,const struct attribute * attr,
 #include <linux/random.h>
 
 u16 get_random_u16(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_bus_attach_private_data(acpi_handle handle,void * data)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-void acpi_bus_detach_private_data(acpi_handle handle)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_bus_get_private_data(acpi_handle handle,void ** data)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-void acpi_dev_clear_dependencies(struct acpi_device * supplier)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -758,3 +734,12 @@ void software_node_notify_remove(struct device * dev)
 {
 	lx_emul_trace(__func__);
 }
+
+
+#include <linux/kernel.h>
+
+int get_option(char ** str,int * pint)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+

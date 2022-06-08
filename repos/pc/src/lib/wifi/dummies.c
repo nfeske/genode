@@ -215,18 +215,19 @@ int verify_pkcs7_signature(const void *data, size_t len,
 #include <acpi/acpixf.h>
 
 
-acpi_status acpi_evaluate_object(acpi_handle handle,
-             acpi_string pathname,
-             struct acpi_object_list *external_params,
-             struct acpi_buffer *return_buffer)
+acpi_status acpi_evaluate_object(acpi_handle handle, acpi_string pathname,
+                                 struct acpi_object_list *external_params,
+                                 struct acpi_buffer *return_buffer)
 {
-	lx_emul_trace_and_stop(__func__);
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
 }
 
 
 acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle)
 {
-	lx_emul_trace_and_stop(__func__);
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
 }
 
 

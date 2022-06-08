@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-03-22
+ * \date   2023-09-07
  */
 
 #include <lx_emul.h>
@@ -202,29 +202,6 @@ struct acpi_device * acpi_fetch_acpi_dev(acpi_handle handle)
 #include <acpi/acpi_bus.h>
 
 struct acpi_device * acpi_find_child_device(struct acpi_device * parent,u64 address,bool check_children)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle);
-acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_match_device_ids(struct acpi_device * device,const struct acpi_device_id * ids)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-void acpi_set_modalias(struct acpi_device * adev,const char * default_id,char * modalias,size_t len)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -615,14 +592,6 @@ void gen6_gt_irq_handler(struct intel_gt * gt,u32 gt_iir)
 
 extern void gen6_rps_irq_handler(struct intel_rps * rps,u32 pm_iir);
 void gen6_rps_irq_handler(struct intel_rps * rps,u32 pm_iir)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kernel.h>
-
-int get_option(char ** str,int * pint)
 {
 	lx_emul_trace_and_stop(__func__);
 }

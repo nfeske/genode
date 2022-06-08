@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-03-17
+ * \date   2023-09-07
  */
 
 #include <lx_emul.h>
@@ -31,14 +31,6 @@ void __printk_safe_enter(void)
 #include <linux/printk.h>
 
 void __printk_safe_exit(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/cred.h>
-
-void __put_cred(struct cred * cred)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -131,14 +123,6 @@ const struct cpumask * cpu_clustergroup_mask(int cpu)
 }
 
 
-#include <linux/fs.h>
-
-struct timespec64 current_time(struct inode * inode)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/property.h>
 
 int device_create_managed_software_node(struct device * dev,const struct property_entry * properties,const struct software_node * parent)
@@ -206,14 +190,6 @@ void * gen_pool_dma_zalloc_align(struct gen_pool * pool,size_t size,dma_addr_t *
 #include <linux/genalloc.h>
 
 void gen_pool_free_owner(struct gen_pool * pool,unsigned long addr,size_t size,void ** owner)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kernel.h>
-
-int get_option(char ** str,int * pint)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -428,14 +404,6 @@ int proc_douintvec(struct ctl_table * table,int write,void * buffer,size_t * len
 }
 
 
-#include <linux/pid.h>
-
-void put_pid(struct pid * pid)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/refcount.h>
 
 void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
@@ -455,14 +423,6 @@ int remap_pfn_range(struct vm_area_struct * vma,unsigned long addr,unsigned long
 #include <linux/seq_file.h>
 
 void seq_printf(struct seq_file * m,const char * f,...)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/string.h>
-
-char * skip_spaces(const char * str)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -489,33 +449,9 @@ int smp_call_function_single(int cpu,smp_call_func_t func,void * info,int wait)
 bool static_key_initialized;
 
 
-#include <linux/string_helpers.h>
-
-int string_escape_mem(const char * src,size_t isz,char * dst,size_t osz,unsigned int flags,const char * only)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/string.h>
-
-char * strreplace(char * s,char old,char new)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/sysctl.h>
 
 const int sysctl_vals[] = {};
-
-
-#include <linux/string.h>
-
-bool sysfs_streq(const char * s1,const char * s2)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/task_work.h>

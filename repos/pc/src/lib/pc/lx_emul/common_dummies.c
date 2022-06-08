@@ -166,13 +166,6 @@ bool irq_wait_for_poll(struct irq_desc * desc)
 
 #include <linux/fs.h>
 
-int __register_chrdev(unsigned int major,unsigned int baseminor,unsigned int count,const char * name,const struct file_operations * fops)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
 int register_chrdev_region(dev_t from,unsigned count,const char * name)
 {
 	lx_emul_trace(__func__);
@@ -297,12 +290,6 @@ bool parse_option_str(const char * str,const char * option)
 
 
 #include <linux/pci.h>
-
-void pci_fixup_device(enum pci_fixup_pass pass,struct pci_dev * dev)
-{
-	lx_emul_trace(__func__);
-}
-
 
 int pci_disable_link_state(struct pci_dev * pdev,int state)
 {
