@@ -1,7 +1,7 @@
 /*
  * \brief  Array defining order of Linux Kernel initcalls
  * \author Automatically generated file - do no edit
- * \date   2023-03-17
+ * \date   2023-06-12
  */
 
 #pragma once
@@ -35,6 +35,8 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_init_jiffies_clocksource1",
 	"__initcall_init_script_binfmt1",
 	"__initcall_init_elf_binfmt1",
+	"__initcall_pinctrl_init1",
+	"__initcall_gpiolib_dev_init1",
 	"__initcall_iommu_init1",
 	"__initcall_cpufreq_core_init1",
 	"__initcall_cpufreq_gov_performance_init1",
@@ -50,6 +52,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_mm_sysfs_init2",
 	"__initcall_init_per_zone_wmark_min2",
 	"__initcall_mpi_init2",
+	"__initcall_acpi_gpio_setup_params2",
 	"__initcall_pcibus_class_init2",
 	"__initcall_pci_driver_init2",
 	"__initcall_backlight_class_init2",
@@ -59,6 +62,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_mipi_dsi_bus_init2",
 	"__initcall_devlink_class_init2",
 	"__initcall_software_node_init2",
+	"__initcall_regmap_initcall2",
 	"__initcall_i2c_init2",
 	"__initcall_thermal_init2",
 	"__initcall_init_menu2",
@@ -199,6 +203,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_x509_key_init6",
 	"__initcall_blake2s_mod_init6",
 	"__initcall_percpu_counter_startup6",
+	"__initcall_tgl_pinctrl_driver_init6",
 	"__initcall_pci_proc_init6",
 	"__initcall_ged_driver_init6",
 	"__initcall_acpi_ac_init6",
@@ -208,6 +213,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_acpi_processor_driver_init6",
 	"__initcall_acpi_thermal_init6",
 	"__initcall_acpi_battery_init6",
+	"__initcall_gpio_clk_driver_init6",
 	"__initcall_n_null_init6",
 	"__initcall_pty_init6",
 	"__initcall_serial8250_init6",
@@ -223,6 +229,8 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_i915_init6",
 	"__initcall_topology_sysfs_init6",
 	"__initcall_cacheinfo_sysfs_init6",
+	"__initcall_intel_lpss_init6",
+	"__initcall_intel_lpss_pci_driver_init6",
 	"__initcall_blackhole_netdev_init6",
 	"__initcall_phylink_init6",
 	"__initcall_phy_module_init6",
@@ -252,10 +260,16 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_xhci_pci_init6",
 	"__initcall_i8042_init6",
 	"__initcall_serport_init6",
+	"__initcall_input_leds_init6",
+	"__initcall_evdev_init6",
+	"__initcall_evbug_init6",
 	"__initcall_atkbd_init6",
 	"__initcall_psmouse_init6",
 	"__initcall_pkg_temp_thermal_init6",
 	"__initcall_thermal_throttle_init_device6",
+	"__initcall_hid_init6",
+	"__initcall_hid_generic_init6",
+	"__initcall_i2c_hid_acpi_driver_init6",
 	"__initcall_intel_pstate_init6",
 	"__initcall_wmi_bmof_driver_init6",
 	"__initcall_sock_diag_init6",
@@ -293,6 +307,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_deferred_probe_initcall7",
 	"__initcall_regulatory_init_db7",
 	"__initcall_pci_mmcfg_late_insert_resources7",
+	"__initcall_clk_disable_unused7s",
 	"__initcall_con_initcon",
 	"__initcall_end",
 	"__initcall_univ8250_console_initcon",
