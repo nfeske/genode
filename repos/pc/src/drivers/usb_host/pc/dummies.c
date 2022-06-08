@@ -243,6 +243,35 @@ int __register_chrdev(unsigned int major,unsigned int baseminor,unsigned int cou
 }
 
 
+#include <linux/acpi.h>
+#include <acpi/acpixf.h>
+
+acpi_status acpi_evaluate_object(acpi_handle handle, acpi_string pathname,
+                                 struct acpi_object_list *external_params,
+                                 struct acpi_buffer *return_buffer)
+{
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
+}
+
+
+#include <linux/kernel.h>
+
+int get_option(char ** str,int * pint)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+
+#include <linux/kernel.h>
+
+char * strreplace(char * s,char old,char new)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/property.h>
 
 int software_node_notify(struct device * dev,unsigned long action)
@@ -250,3 +279,22 @@ int software_node_notify(struct device * dev,unsigned long action)
 	lx_emul_trace(__func__);
 	return 0;
 }
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_bind_pins(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_init_done(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
