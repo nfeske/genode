@@ -10,6 +10,7 @@ shaderlib.patch
 svga.patch
 audio.patch
 gcc-12.patch
+audio_48khz.patch
 pgmphys.patch
 sup_ioctl_query_func_size.patch
 disk_geometry.patch
