@@ -55,6 +55,14 @@
 		</route>
 	</start>
 
+	<start name="touch_keyboard" pkg="touch_keyboard">
+		<route>
+			<service name="Gui">   <parent/> </service>
+			<service name="Event"> <parent label="global"/> </service>
+			<service name="File_system" label="fonts">  <child name="fonts_fs"/> </service>
+		</route>
+	</start>
+
 	<start name="sticks_blue_backdrop"/>
 	<start name="nano3d"/>
 	<start name="system_shell"/>
