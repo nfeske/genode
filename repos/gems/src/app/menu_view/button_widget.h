@@ -160,19 +160,34 @@ struct Menu_view::Button_widget : Widget, Animator::Item
 			}
 		});
 
+		Area const area = _animated_geometry.area();
+
 		/*
 		 * Apply blended texture to target surface
 		 */
-		Icon_painter::paint(pixel_surface, Rect(at, _animated_geometry.area()),
-		                    scratch.texture(), 255);
-
-		Icon_painter::paint(alpha_surface, Rect(at, _animated_geometry.area()),
-		                    scratch.texture(), 255);
+		Icon_painter::paint(pixel_surface, Rect(at, area), scratch.texture(), 255);
+		Icon_painter::paint(alpha_surface, Rect(at, area), scratch.texture(), 255);
 
 		if (_selected)
 			at = at + Point(0, 1);
 
-		_draw_children(pixel_surface, alpha_surface, at);
+		Rect const content_rect { at + Point(margin.left, margin.top),
+		                          Area(area.w() - margin.horizontal(),
+		                               area.h() - margin.vertical()) };
+
+		Rect const orig_clip = pixel_surface.clip();
+
+		pixel_surface.clip(content_rect);
+		alpha_surface.clip(content_rect);
+
+		/* center content during animation that changes the button size */
+		Point const animation_shift { ((int)area.w() - (int)geometry().w()) / 2,
+		                              ((int)area.h() - (int)geometry().h()) / 2 };
+
+		_draw_children(pixel_surface, alpha_surface, at + animation_shift);
+
+		pixel_surface.clip(orig_clip);
+		alpha_surface.clip(orig_clip);
 	}
 
 	void _layout() override
