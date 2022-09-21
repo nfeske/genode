@@ -188,7 +188,13 @@ void Graph::generate(Xml_generator &xml) const
 		_runtime_config.for_each_component([&] (Component const &component) {
 
 			Start_name const name = component.name;
-			Start_name const pretty_name { Pretty(name) };
+			Start_name pretty_name { Pretty(name) };
+
+			if (pretty_name == "mmcblk0.part_block")
+				pretty_name = "mmcblk0";
+
+			if (pretty_name == "mmcblk0.1.fs")
+				pretty_name = "1.fs";
 
 			/* omit sculpt's helpers from the graph */
 			bool const blacklisted = (name == "runtime_view"
