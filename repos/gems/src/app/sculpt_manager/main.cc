@@ -1212,7 +1212,9 @@ struct Sculpt::Main : Input_event_handler,
 
 	Graph _graph { _runtime_state, _cached_runtime_config, _storage._storage_devices,
 	               _storage._sculpt_partition, _storage._ram_fs_state,
-	               _popup.state, _deploy._children };
+	               _popup.state, _deploy._children,
+	               Graph::Attr { .plus_menu      = true,
+	                             .storage_dialog = true } };
 
 	Menu_view _graph_menu_view { _env, _child_states, _graph, "runtime_view",
 	                             Ram_quota{8*1024*1024}, Cap_quota{200},

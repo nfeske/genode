@@ -87,18 +87,28 @@ struct Sculpt::Graph : Dialog
 			_storage_dialog->reset_operation();
 	}
 
+	struct Attr
+	{
+		bool plus_menu;      /* show '+' menu button as top-level graph node */
+		bool storage_dialog; /* present storage dialog in the 'storage' node */
+	};
+
+	Attr const _attr;
+
 	Graph(Runtime_state                &runtime_state,
 	      Runtime_config         const &runtime_config,
 	      Storage_devices        const &storage_devices,
 	      Storage_target         const &sculpt_partition,
 	      Ram_fs_state           const &ram_fs_state,
 	      Popup::State           const &popup_state,
-	      Depot_deploy::Children const &deploy_children)
+	      Depot_deploy::Children const &deploy_children,
+	      Attr                          attr)
 	:
 		_runtime_state(runtime_state), _runtime_config(runtime_config),
 		_storage_devices(storage_devices), _sculpt_partition(sculpt_partition),
 		_ram_fs_state(ram_fs_state), _popup_state(popup_state),
-		_deploy_children(deploy_children), _ram_fs_dialog(sculpt_partition)
+		_deploy_children(deploy_children), _ram_fs_dialog(sculpt_partition),
+		_attr(attr)
 	{ }
 
 	bool add_button_hovered() const { return _add_button_item._hovered.valid(); }

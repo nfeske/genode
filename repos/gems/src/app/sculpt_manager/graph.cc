@@ -157,7 +157,7 @@ void Graph::generate(Xml_generator &xml) const
 {
 	xml.node("depgraph", [&] () {
 
-		if (_sculpt_partition.valid()) {
+		if (_attr.plus_menu && _sculpt_partition.valid()) {
 			gen_named_node(xml, "button", "global+", [&] () {
 				_add_button_item.gen_button_attr(xml, "global+");
 
@@ -168,7 +168,10 @@ void Graph::generate(Xml_generator &xml) const
 					xml.attribute("text", "+"); }); });
 		}
 
-		_gen_storage_node(xml);
+		if (_attr.storage_dialog)
+			_gen_storage_node(xml);
+		else
+			_gen_parent_node(xml, "storage", "Storage");
 
 		if (_storage_devices.usb_present)
 			_gen_usb_node(xml);
