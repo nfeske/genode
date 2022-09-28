@@ -291,8 +291,6 @@ Platform::Platform()
 			Idle_thread_trace_source(
 				Trace::sources(), Affinity::Location(cpu_idx, 0));
 	}
-
-	log(_rom_fs);
 }
 
 
