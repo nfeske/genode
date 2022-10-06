@@ -1,0 +1,93 @@
+build "core init timer app/msr server/report_rom server/dynamic_rom"
+
+create_boot_directory
+
+install_config {
+	<config prio_levels="2">
+		<parent-provides>
+			<service name="LOG"/>
+			<service name="CPU"/>
+			<service name="ROM"/>
+			<service name="PD"/>
+		</parent-provides>
+
+		<start name="timer" caps="100">
+			<resource name="RAM" quantum="1M"/>
+			<provides><service name="Timer"/></provides>
+			<route> <any-service> <parent/> </any-service> </route>
+		</start>
+
+		<start name="report_rom" caps="100" priority="-1">
+			<resource name="RAM" quantum="1M"/>
+			<provides>
+				<service name="Report"/>
+				<service name="ROM"/>
+			</provides>
+			<config verbose="yes"/>
+			<route> <any-service> <parent/> </any-service> </route>
+		</start>
+
+		<start name="msr" caps="100" ld="yes" priority="-1" managing_system="yes">
+			<resource name="RAM" quantum="2M"/>
+			<route>
+				<service name="ROM" label="config"> <child name="dynamic_rom"/> </service>
+				<any-service> <parent/> <any-child/> </any-service>
+			</route>
+		</start>
+
+		<start name="dynamic_rom" caps="100">
+			<resource name="RAM" quantum="4M"/>
+			<provides><service name="ROM"/></provides>
+			<config verbose="yes">
+				<rom name="config">
+					<inline description="empty msr config">
+						<config/>
+					</inline>
+					<sleep milliseconds="10000" />
+					<inline description="set pstate AMD - middle performance">
+						<config>
+							<cpu x="0" y="0" verbose="yes"> <pstate rw_command="1"/> </cpu>
+							<cpu x="0" y="1"> <pstate rw_command="1"/> </cpu>
+							<cpu x="1" y="0"> <pstate rw_command="1"/> </cpu>
+							<cpu x="1" y="1"> <pstate rw_command="1"/> </cpu>
+						</config>
+					</inline>
+					<sleep milliseconds="10000" />
+					<inline description="set pstate AMD - low performance">
+						<config verbose="yes">
+							<cpu x="0" y="0"> <pstate rw_command="2"/> </cpu>
+							<cpu x="0" y="1"> <pstate rw_command="2"/> </cpu>
+							<cpu x="1" y="0"> <pstate rw_command="2"/> </cpu>
+							<cpu x="1" y="1"> <pstate rw_command="2"/> </cpu>
+						</config>
+					</inline>
+					<sleep milliseconds="10000" />
+					<inline description="set pstate AMD - high performance">
+						<config verbose="yes">
+							<cpu x="0" y="0"> <pstate rw_command="0"/> </cpu>
+							<cpu x="0" y="1"> <pstate rw_command="0"/> </cpu>
+							<cpu x="1" y="0"> <pstate rw_command="0"/> </cpu>
+							<cpu x="1" y="1"> <pstate rw_command="0"/> </cpu>
+						</config>
+					</inline>
+					<sleep milliseconds="10000" />
+				</rom>
+			</config>
+			<route> <any-service> <parent/> <any-child/> </any-service> </route>
+		</start>
+	</config>
+}
+
+build_boot_image "core ld.lib.so init timer msr report_rom dynamic_rom"
+
+if {[have_include "power_on/qemu"]} {
+	# in general we want to have at least 2 CPUs
+	set want_cpus 4
+	set want_threads 2
+
+	append qemu_args " -nographic  -smp [expr $want_cpus*$want_threads],"
+	append qemu_args "cores=$want_cpus,threads=$want_threads "
+}
+
+# run the test
+run_genode_until forever

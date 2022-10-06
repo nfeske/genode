@@ -1,0 +1,62 @@
+<runtime ram="2M" caps="100" binary="msr">
+
+	<requires>
+		<rom label="platform_info"/>
+		<report/>
+		<timer/>
+	</requires>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="msr"/>
+	</content>
+
+	<config>
+	<!--
+		<cpu x="0" y="0" verbose="false">
+			<hwp_cap high="36" guar="27" effi="9" low="1"/>
+			<hwp_request min="1" max="255" desired="0" epp="128"/>
+			<intel_speed_step epb="0"/>
+			<hwp_coord_feed_cap/>
+		</cpu>
+	-->
+		<!-- AMD pstate p0...px - high to low performance -->
+		<!--
+			<cpu x="0" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="0" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="1" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="1" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="2" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="2" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="3" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="3" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="4" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="4" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="5" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="5" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="6" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="6" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="7" y="0" verbose="no"> <pstate rw_command="0"/> </cpu>
+			<cpu x="7" y="1" verbose="no"> <pstate rw_command="0"/> </cpu>
+		-->
+		<!--
+			<cpu x="0" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="0" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="1" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="1" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="2" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="2" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="3" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="3" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="4" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="4" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="5" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="5" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="6" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="6" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="7" y="0" verbose="no"> <pstate rw_command="2"/> </cpu>
+			<cpu x="7" y="1" verbose="no"> <pstate rw_command="2"/> </cpu>
+		-->
+	</config>
+
+</runtime>
