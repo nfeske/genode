@@ -64,6 +64,31 @@ struct Main
 };
 
 
+/*
+ * If PCI devices happen to miss complete configuration after boot, i.e., have
+ * a zero base address, we report a fixed address for known devices.
+ * platform_drv in turn, will setup the address from the report when enabling
+ * the device.
+ *
+ * The issue was discovered with Intel LPSS devices in Fujitsu notebooks.
+ *
+ * XXX static fixup list should be replaced by dynamic mapping of BAR
+ */
+static uint64_t fixup_bar_base_address(Bdf bdf, unsigned bar, uint64_t addr, size_t size)
+{
+	auto base_address = addr;
+
+	/* Fujitsu U7411 LPSS (values after linux boot) */
+	if (bdf == Bdf { 0, 0x15, 0 } && bar == 0) base_address = 0x4017000000;
+	if (bdf == Bdf { 0, 0x15, 2 } && bar == 0) base_address = 0x4017001000;
+	if (bdf == Bdf { 0, 0x15, 3 } && bar == 0) base_address = 0x4017002000;
+
+	if (addr != base_address)
+		log(bdf, " remap MEM BAR", bar, " ", Hex_range(addr, size), " to ", Hex(base_address));
+
+	return base_address;
+}
+
 void Main::parse_pci_function(Bdf             bdf,
                               Config        & cfg,
                               addr_t          cfg_phys_base,
@@ -132,6 +157,10 @@ void Main::parse_pci_function(Bdf             bdf,
 		cfg.for_each_bar([&] (uint64_t addr, size_t size,
 		                      unsigned bar, bool pf)
 		{
+			addr = fixup_bar_base_address(bdf, bar, addr, size);
+			if (!addr)
+				warning(bdf, " MEM BAR", bar, " ", Hex_range(addr, size),
+				        " has invalid base address - consider pci-fixup in parse_pci_function()");
 			gen.node("io_mem", [&]
 			{
 				gen.attribute("pci_bar", bar);
