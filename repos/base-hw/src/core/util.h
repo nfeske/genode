@@ -33,16 +33,8 @@ namespace Genode {
 
 	/**
 	 * Return highest supported flexpage size for the given mapping size
-	 *
-	 * This function is called by the page-fault handler to determine the
-	 * mapping granularity to be used for a page-fault answer. If a kernel
-	 * supports flexible page sizes, this function can just return the
-	 * argument. If a kernel only supports a certain set of map sizes such
-	 * as 4K and 4M, this function should select one of those smaller or
-	 * equal to the argument.
 	 */
-	constexpr size_t constrain_map_size_log2(size_t size_log2) {
-		return (size_log2 < 20) ? 12 : 20; }
+	constexpr size_t constrain_map_size_log2(size_t size_log2) { return size_log2; }
 }
 
 #endif /* _CORE__UTIL_H_ */

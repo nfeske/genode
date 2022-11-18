@@ -23,6 +23,7 @@
 #include <cpu_session_component.h>
 #include <region_map_component.h>
 #include <dataspace_component.h>
+#include <address_space.h>
 
 static const bool verbose_page_faults = false;
 
@@ -452,6 +453,31 @@ Region_map_component::_attach(Dataspace_capability ds_cap, Attach_attr const att
 			.off   = attr.offset,
 			.dma   = attr.dma,
 		};
+
+		/* install eager mapping to reduce the number of page-fault IPCs */
+		if (_address_space && !dsc->managed()) {
+
+			Weak_ptr<Address_space> weak_ptr(_address_space->weak_ptr());
+			Locked_ptr<Address_space> locked_ptr(weak_ptr);
+
+			if (locked_ptr.valid()) {
+
+				Hw::Address_space &as = *static_cast<Hw::Address_space*>(&*locked_ptr);
+
+				Hw::Page_flags const flags {
+					.writeable  = attr.writeable  ? Hw::RW   : Hw::RO,
+					.executable = attr.executable ? Hw::EXEC : Hw::NO_EXEC,
+					.privileged = Hw::USER,
+					.global     = Hw::NO_GLOBAL,
+					.type       = dsc->io_mem() ? Hw::DEVICE : Hw::RAM,
+					.cacheable  = dsc->cacheability()
+				};
+
+				as.insert_translation((addr_t)attach_at,
+				                      dsc->phys_addr() + attr.offset,
+				                      size, flags);
+			}
+		}
 
 		/* store attachment info in meta data */
 		try {

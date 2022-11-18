@@ -35,45 +35,49 @@ void Pager_entrypoint::entry()
 		/* receive fault */
 		if (Kernel::await_signal(Capability_space::capid(_kobj.cap()))) continue;
 
-		Pager_object *po = *(Pager_object**)Thread::myself()->utcb()->data();
-		cap = po->cap();
-
-		if (!po) continue;
-
-		/* fetch fault data */
-		Platform_thread * const pt = (Platform_thread *)po->badge();
-		if (!pt) {
-			Genode::warning("failed to get platform thread of faulter");
-			continue;
-		}
-
-		_fault = pt->fault_info();
-
-		/* try to resolve fault directly via local region managers */
-		if (po->pager(*this)) continue;
-
-		/* apply mapping that was determined by the local region managers */
 		{
-			Locked_ptr<Address_space> locked_ptr(pt->address_space());
-			if (!locked_ptr.valid()) continue;
+			GENODE_LOG_TSC_NAMED(1000, "page fault");
 
-			Hw::Address_space * as = static_cast<Hw::Address_space*>(&*locked_ptr);
+			Pager_object *po = *(Pager_object**)Thread::myself()->utcb()->data();
+			cap = po->cap();
 
-			Hw::Page_flags const flags {
-				.writeable  = _mapping.writeable  ? Hw::RW   : Hw::RO,
-				.executable = _mapping.executable ? Hw::EXEC : Hw::NO_EXEC,
-				.privileged = Hw::USER,
-				.global     = Hw::NO_GLOBAL,
-				.type       = _mapping.io_mem ? Hw::DEVICE : Hw::RAM,
-				.cacheable  = _mapping.cached ? Genode::CACHED : Genode::UNCACHED
-			};
+			if (!po) continue;
 
-			as->insert_translation(_mapping.dst_addr, _mapping.src_addr,
-			                       1UL << _mapping.size_log2, flags);
+			/* fetch fault data */
+			Platform_thread * const pt = (Platform_thread *)po->badge();
+			if (!pt) {
+				Genode::warning("failed to get platform thread of faulter");
+				continue;
+			}
+
+			_fault = pt->fault_info();
+
+			/* try to resolve fault directly via local region managers */
+			if (po->pager(*this)) continue;
+
+			/* apply mapping that was determined by the local region managers */
+			{
+				Locked_ptr<Address_space> locked_ptr(pt->address_space());
+				if (!locked_ptr.valid()) continue;
+
+				Hw::Address_space * as = static_cast<Hw::Address_space*>(&*locked_ptr);
+
+				Hw::Page_flags const flags {
+					.writeable  = _mapping.writeable  ? Hw::RW   : Hw::RO,
+					.executable = _mapping.executable ? Hw::EXEC : Hw::NO_EXEC,
+					.privileged = Hw::USER,
+					.global     = Hw::NO_GLOBAL,
+					.type       = _mapping.io_mem ? Hw::DEVICE : Hw::RAM,
+					.cacheable  = _mapping.cached ? Genode::CACHED : Genode::UNCACHED
+				};
+
+				as->insert_translation(_mapping.dst_addr, _mapping.src_addr,
+				                       1UL << _mapping.size_log2, flags);
+			}
+
+			/* let pager object go back to no-fault state */
+			po->wake_up();
 		}
-
-		/* let pager object go back to no-fault state */
-		po->wake_up();
 	}
 }
 
