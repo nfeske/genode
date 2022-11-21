@@ -116,6 +116,7 @@ class Hw::Page_table_allocator<TABLE_SIZE>::Array<COUNT>::Allocator
 			try {
 				return (unsigned)_free_tables.alloc();
 			} catch (typename Bit_allocator::Out_of_indices&) {}
+			Genode::raw("Out_of_tables");
 			throw Out_of_tables();
 		}
 
