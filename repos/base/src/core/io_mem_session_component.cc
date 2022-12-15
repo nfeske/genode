@@ -48,8 +48,25 @@ Io_mem_session_component::_prepare_io_mem(const char      *args,
 		return Dataspace_attr();
 	}
 
+	/**
+	 * _Unfortunate_ workaround for U7411.
+	 *
+	 * The ported i2c_hid driver needs & contains the driver code for the
+	 * "Intel Tiger Lake PCH pinctrl/GPIO" device. Unfortunately, the ported
+	 * acpica driver also access on Lid open/close via the ACPI AML code
+	 * of the DSDT table the device to read out the state of a pin reflecting
+	 * the Lid state, which fails since on Genode the I/O memory should/can
+	 * only be used by one driver a time. This hack ignores the region check
+	 * for the specified GPIO regions to make both driver working at the same
+	 * time. A general solution is required, where the GPIO part is separated
+	 * in a separated/standalone driver and makes i2c-hid and acpica clients
+	 * of it.
+	 */
+	bool skip_iomem_check = (req_base == 0xfd6d0000ull && req_size == 4096) ||
+	                        (req_base == 0xfd6e0000ull && req_size == 4096);
+
 	/* allocate region */
-	if (_io_mem_alloc.alloc_addr(req_size, req_base).failed()) {
+	if (!skip_iomem_check && _io_mem_alloc.alloc_addr(req_size, req_base).failed()) {
 		error("I/O memory ", Hex_range<addr_t>(req_base, req_size), " not available");
 		return Dataspace_attr();
 	}
