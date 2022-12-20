@@ -58,6 +58,8 @@ class Vfs::Terminal_file_system::Data_file_system : public Single_file_system
 
 		Genode::Entrypoint &_ep;
 
+		Vfs::Env::User &_vfs_user;
+
 		Terminal::Connection &_terminal;
 
 		Interrupt_handler &_interrupt_handler;
@@ -116,7 +118,6 @@ class Vfs::Terminal_file_system::Data_file_system : public Single_file_system
 			bool const _raw;
 
 			bool notifying = false;
-			bool blocked   = false;
 
 			Terminal_vfs_handle(Terminal::Connection &terminal,
 			                    Read_buffer          &read_buffer,
@@ -152,10 +153,8 @@ class Vfs::Terminal_file_system::Data_file_system : public Single_file_system
 					_fetch_data_from_terminal(_terminal, _read_buffer,
 					                          _interrupt_handler, _raw);
 
-				if (_read_buffer.empty()) {
-					blocked = true;
+				if (_read_buffer.empty())
 					return READ_QUEUED;
-				}
 
 				unsigned consumed = 0;
 				for (; consumed < count && !_read_buffer.empty(); consumed++)
@@ -201,21 +200,19 @@ class Vfs::Terminal_file_system::Data_file_system : public Single_file_system
 			                          _raw);
 
 			_handle_registry.for_each([] (Registered_handle &handle) {
-				if (handle.blocked) {
-					handle.blocked = false;
-					handle.io_progress_response();
-				}
-
 				if (handle.notifying) {
 					handle.notifying = false;
 					handle.read_ready_response();
 				}
 			});
+
+			_vfs_user.wakeup_vfs_user();
 		}
 
 	public:
 
 		Data_file_system(Genode::Entrypoint   &ep,
+		                 Vfs::Env::User       &vfs_user,
 		                 Terminal::Connection &terminal,
 		                 Name           const &name,
 		                 Interrupt_handler    &interrupt_handler,
@@ -223,7 +220,7 @@ class Vfs::Terminal_file_system::Data_file_system : public Single_file_system
 		:
 			Single_file_system(Node_type::TRANSACTIONAL_FILE, name.string(),
 			                   Node_rwx::rw(), Genode::Xml_node("<data/>")),
-			_name(name), _ep(ep), _terminal(terminal),
+			_name(name), _ep(ep), _vfs_user(vfs_user), _terminal(terminal),
 			_interrupt_handler(interrupt_handler),
 			_raw(raw)
 		{
@@ -274,11 +271,13 @@ struct Vfs::Terminal_file_system::Local_factory : File_system_factory,
 
 	Genode::Env &_env;
 
+	Vfs::Env::User &_vfs_user;
+
 	Terminal::Connection _terminal { _env, _label.string() };
 
 	bool const _raw;
 
-	Data_file_system _data_fs { _env.ep(), _terminal, _name, *this, _raw };
+	Data_file_system _data_fs { _env.ep(), _vfs_user, _terminal, _name, *this, _raw };
 
 	struct Info
 	{
@@ -336,6 +335,7 @@ struct Vfs::Terminal_file_system::Local_factory : File_system_factory,
 		_label(config.attribute_value("label", Label(""))),
 		_name(name(config)),
 		_env(env.env()),
+		_vfs_user(env.user()),
 		_raw(config.attribute_value("raw", false))
 	{
 		_terminal.size_changed_sigh(_size_changed_handler);

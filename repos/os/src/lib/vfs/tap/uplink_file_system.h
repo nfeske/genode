@@ -49,6 +49,8 @@ class Vfs::Uplink_file_system::Uplink_vfs_handle : public Single_vfs_handle,
 		using Read_result  = File_io_service::Read_result;
 		using Write_result = File_io_service::Write_result;
 
+		Vfs::Env::User &_vfs_user;
+
 		bool _notifying = false;
 		bool _blocked   = false;
 
@@ -59,7 +61,7 @@ class Vfs::Uplink_file_system::Uplink_vfs_handle : public Single_vfs_handle,
 
 			if (_blocked) {
 				_blocked = false;
-				io_progress_response();
+				_vfs_user.wakeup_vfs_user();
 			}
 
 			if (_notifying) {
@@ -87,15 +89,20 @@ class Vfs::Uplink_file_system::Uplink_vfs_handle : public Single_vfs_handle,
 	public:
 
 		Uplink_vfs_handle(Genode::Env            &env,
+		                  Vfs::Env::User         &vfs_user,
 		                  Allocator              &alloc,
 		                  Label            const &label,
 		                  Net::Mac_address const &mac,
 		                  Directory_service      &ds,
 		                  File_io_service        &fs,
 		                  int                     flags)
-		: Single_vfs_handle  { ds, fs, alloc, flags },
-		  Uplink_client_base { env, alloc, mac, label }
-		{ _drv_handle_link_state(true); }
+		:
+			Single_vfs_handle  { ds, fs, alloc, flags },
+			Uplink_client_base { env, alloc, mac, label },
+			_vfs_user(vfs_user)
+		{
+			_drv_handle_link_state(true);
+		}
 
 		bool notify_read_ready() override
 		{

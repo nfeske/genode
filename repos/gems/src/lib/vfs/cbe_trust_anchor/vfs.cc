@@ -495,7 +495,7 @@ class Trust_anchor
 			return progress;
 		}
 
-		bool _execute()
+		bool _execute_one_step()
 		{
 			switch (_job) {
 			case Job::DECRYPT:     return _execute_decrypt();
@@ -512,35 +512,6 @@ class Trust_anchor
 			/* never reached */
 			return false;
 		}
-
-		friend struct Io_response_handler;
-
-		struct Io_response_handler : Vfs::Io_response_handler
-		{
-			Genode::Signal_context_capability _io_sigh;
-
-			Io_response_handler(Genode::Signal_context_capability io_sigh)
-			: _io_sigh(io_sigh) { }
-
-			void read_ready_response() override { }
-
-			void io_progress_response() override
-			{
-				if (_io_sigh.valid()) {
-					Genode::Signal_transmitter(_io_sigh).submit();
-				}
-			}
-		};
-
-		void _handle_io()
-		{
-			(void)_execute();
-		}
-
-		Genode::Io_signal_handler<Trust_anchor> _io_handler {
-			_vfs_env.env().ep(), *this, &Trust_anchor::_handle_io };
-
-		Io_response_handler _io_response_handler { _io_handler };
 
 		void _close_handle(Vfs::Vfs_handle **handle)
 		{
@@ -647,7 +618,6 @@ class Trust_anchor
 				return false;
 			}
 
-			_private_key_handle->handler(&_io_response_handler);
 			_private_key_io_job.construct(*_private_key_handle, Util::Io_job::Operation::READ,
 			                      _private_key_io_job_buffer, 0,
 			                      Util::Io_job::Partial_result::ALLOW);
@@ -676,7 +646,6 @@ class Trust_anchor
 				return false;
 			}
 
-			_jitterentropy_handle->handler(&_io_response_handler);
 			_jitterentropy_io_job.construct(*_jitterentropy_handle, Util::Io_job::Operation::READ,
 			                      _jitterentropy_io_job_buffer, 0,
 			                      Util::Io_job::Partial_result::ALLOW);
@@ -707,7 +676,6 @@ class Trust_anchor
 				return false;
 			}
 
-			_key_handle->handler(&_io_response_handler);
 			_key_io_job.construct(*_key_handle, Util::Io_job::Operation::READ,
 			                      _key_io_job_buffer, 0,
 			                      Util::Io_job::Partial_result::ALLOW);
@@ -795,7 +763,6 @@ class Trust_anchor
 				return false;
 			}
 
-			_key_handle->handler(&_io_response_handler);
 			_key_io_job.construct(*_key_handle, Util::Io_job::Operation::WRITE,
 			                      _key_io_job_buffer, 0);
 			if (_key_io_job->execute() && _key_io_job->completed()) {
@@ -840,7 +807,6 @@ class Trust_anchor
 				return false;
 			}
 
-			_hash_handle->handler(&_io_response_handler);
 			_hash_io_job.construct(*_hash_handle, Util::Io_job::Operation::READ,
 			                       _hash_io_job_buffer, 0,
 			                       Util::Io_job::Partial_result::ALLOW);
@@ -907,7 +873,6 @@ class Trust_anchor
 				return false;
 			}
 
-			_hash_handle->handler(&_io_response_handler);
 			_hash_io_job.construct(*_hash_handle, Util::Io_job::Operation::WRITE,
 			                      _hash_io_job_buffer, 0);
 
@@ -1004,7 +969,12 @@ class Trust_anchor
 
 		bool execute()
 		{
-			return _execute();
+			bool result = false;
+
+			while (_execute_one_step() == true)
+				result = true;
+
+			return result;
 		}
 
 		bool queue_initialize(char const *src, size_t len)
