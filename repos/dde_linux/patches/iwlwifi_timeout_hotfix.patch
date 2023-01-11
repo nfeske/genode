@@ -1,0 +1,17 @@
+--- src/linux/drivers/net/wireless/intel/iwlwifi/queue/tx.c	2023-01-11 16:32:56.001532688 +0100
++++ src/linux/drivers/net/wireless/intel/iwlwifi/queue/tx.c	2023-01-11 16:34:59.273138390 +0100
+@@ -1736,4 +1736,14 @@ static int iwl_trans_txq_send_hcmd_sync(
+ 					   &trans->status),
+ 				 HOST_COMPLETE_TIMEOUT);
++
++	if (!ret)
++	{
++		ret = wait_event_timeout(trans->wait_command_queue,
++				 	 !test_bit(STATUS_SYNC_HCMD_ACTIVE,
++					   	   &trans->status),
++				 	 HOST_COMPLETE_TIMEOUT);
++		IWL_INFO(trans, "Hotfix: retry sending %s\n", cmd_str);
++	}
++
+ 	if (!ret) {
+ 		IWL_ERR(trans, "Error sending %s: time out after %dms.\n",
