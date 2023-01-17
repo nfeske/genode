@@ -139,7 +139,7 @@ May - Release 23.05
 * Base-hw kernel support for the tracing of scheduling events
 * Updated DDE-Linux based driver for USB HID and USB network
 * Replacing iPXE network driver by DDE-Linux-based driver
-* Revision of the CBE block encryptor + usability improvements
+* Revision of the consistent block encrypter (CBE) + usability improvements
 * Goa support for building simple Rust programs for Genode
 
 
