@@ -34,7 +34,7 @@ specifically for Genode, most prominently our custom Intel GPU multiplexer
 that covers recent hardware generations like Intel Alderlake and Tigerlake.
 
 Our intense engagement with the PinePhone was driven by the vision of a
-Genode-based smartphone. It entailed the enabling of device hardware ranging
+Genode-based smartphone. It entailed the enablement of device hardware ranging
 from touch screen, over power management, audio, storage, telephony, camera,
 GPU, to mobile-data connectivity. The challenge of getting the hardware to
 cooperate was met by the challenge of enabling meaningful application
@@ -49,7 +49,7 @@ Besides these two main lines of development, 2022 was packed with further
 intriguing topics as well. To name a few, we combined Genode with FPGAs for
 new hardware-software co-design opportunities, enabled the use of
 WireGuard-based virtual private networks, experimented with hardware security
-modules, and explored suspend/resume on PC hardware.
+modules, and explored suspend/resume functionality on PC hardware.
 The [https://genode.org/documentation/release-notes/index - documentation] of
 the four releases of 2022 presents the whole picture.
 
@@ -70,12 +70,12 @@ scaling up (towards edge-computing platforms).
 In 2023, we are going to move from making things work to making things rock!
 
 Specifically, to rock the PinePhone, we will invite the community to
-participate in multiple rounds on field tests, allowing us to enable and
+participate in multiple rounds of field tests, allowing us to enable and
 refine advanced features, like prolonged standby, in an iterative way.
 
 Regarding the PC, we aim at leveraging the different power characteristics
 of CPU cores found in modern Intel platforms, step up our game regarding GPU
-support (peeking a Vulkan), and making suspend/resume a regular feature that
+support (peeking at Vulkan), and making suspend/resume a regular feature that
 just works.
 
 These efforts will be flanked by continuous architectural work that will make
@@ -90,7 +90,7 @@ topics stood out during our yearly brainstorming session on the mailing list.
 First, several developers expressed their curiosity in working on AMD graphics
 (display and GPU) as a side activity. A second recurring topic was the
 usability of Genode as desktop OS, easing the work with files on Sculpt,
-supporting drag'n'drop, tightening the work-flow integration of app-VMs
+supporting Drag'n'Drop, tightening the work-flow integration of app-VMs
 using the light-weight Seoul VMM, or the use of Qemu on top of Genode for
 cross development.
 Even though those topics are absent from the timeline below, we can expect
