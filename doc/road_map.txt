@@ -41,7 +41,7 @@ cooperate was met by the challenge of enabling meaningful application
 workloads. The ability to run the Chromium-based morph browser directly on
 Genode on the PinePhone is certainly the most prolific result. Moreover, we
 haven't merely managed to get it to work, but we gained detailed guidance
-material [https://genode.org/documentation/genode-platforms-22-05.pdf - (PDF)]
+material ([https://genode.org/documentation/genode-platforms-22-05.pdf - PDF])
 along the way, lowering the barrier of entry for others who wish to port
 Genode to further mobile platforms in the future.
 
