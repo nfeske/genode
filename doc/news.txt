@@ -8,7 +8,7 @@ Road Map for 2023 | 2023-01-17
 ##############################
 
 | In 2022, we will make the mobile version of Sculpt OS fit for end users,
-| unlock advanced hardware features of Intel platforms,
+| unleash advanced hardware features of Intel platforms,
 | switch to C++20 by default, and run the feature-complete PC version
 | of Sculpt OS on Genode's custom-tailored microkernel.
 
