@@ -106,15 +106,15 @@ append config {
 	</start>
 
 	<start name="vfs">
-		<resource name="RAM" quantum="20M"/>
+		<resource name="RAM" quantum="100M"/>
 		<provides> <service name="File_system"/> </provides>
 		<config>
 			<vfs>
 				<dir name="depot">
-					<dir name="genodelabs">
+					<dir name="nfeske_test">
 						<ram/>
-						<inline name="download">} [depot_user_download genodelabs] {</inline>
-						<inline name="pubkey">}   [depot_user_pubkey   genodelabs] {</inline>
+						<inline name="download">} [depot_user_download nfeske_test] {</inline>
+						<inline name="pubkey">}   [depot_user_pubkey   nfeske_test] {</inline>
 					</dir>
 				</dir>
 				<dir name="public"> <ram/> </dir>
@@ -150,9 +150,8 @@ append config {
 set fd [open [run_dir]/genode/installation w]
 puts $fd {
 <installation arch="x86_64">
-	<archive path="genodelabs/pkg/wm/2019-03-17"/>
-	<index   path="genodelabs/index/19.02"/>
-	<index   path="genodelabs/index/19.03"/>
+	<image_index path="nfeske_test/image/index"/>
+	<image path="nfeske_test/image/sculpt-pinephone-2023-01-19"/>
 </installation>}
 close $fd
 
