@@ -199,13 +199,11 @@ void Cpu_scheduler::update(time_t time)
 		_consumed(duration);
 	}
 
-	if (_claim_for_head())
-		return;
+	/* check whether a claim is ready, otherwise a fill */
+	bool ready = _claim_for_head() || _fill_for_head();
 
-	if (_fill_for_head())
-		return;
-
-	_set_head(_idle, _fill, 0);
+	/* if no one is ready, set idle for head */
+	if (!ready || !_head) _set_head(_idle, _fill, 0);
 }
 
 
