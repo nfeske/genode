@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2017 Genode Labs GmbH
+ * Copyright (C) 2017-2023 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -29,12 +29,19 @@ struct Fault_info
 		ERR_P = 1 << 0,
 	};
 
-	Fault_info(seL4_MessageInfo_t)
+	Fault_info(seL4_MessageInfo_t info)
 	:
 		ip(seL4_GetMR(0)),
 		pf(seL4_GetMR(1)),
 		write(seL4_GetMR(3) & ERR_W)
-	{ }
+	{
+		auto const fault_type = seL4_MessageInfo_get_label(info);
+		if (fault_type == seL4_Fault_UserException) {
+			auto const fault = seL4_getFault(info);
+			ip = seL4_Fault_UserException_get_FaultIP(fault);
+			pf = seL4_Fault_UserException_get_Number(fault);
+		}
+	}
 
 	bool exec_fault() const { return false; }
 	bool align_fault() const { return false; }
