@@ -15,10 +15,10 @@
 
 PHDRS
 {
-  ro         PT_LOAD;
-  rw         PT_LOAD;
-  dynamic    PT_DYNAMIC;
-  eh_frame   PT_GNU_EH_FRAME;
+  ro       PT_LOAD;
+  rw       PT_LOAD;
+  dynamic  PT_DYNAMIC;
+  eh_frame PT_GNU_EH_FRAME;
 }
 
 SECTIONS
@@ -97,7 +97,7 @@ SECTIONS
   {
     /*
      * Leave space for parent capability parameters at start of data
-     * section. The protection domain creator is reponsible for storing
+     * section. The protection-domain creator is reponsible for storing
      * sane values here.
      */
      _parent_cap = .;
@@ -130,6 +130,7 @@ SECTIONS
   .ARM.extab : {
     *(.ARM.extab*)
   }
+
   __exidx_start = .;
   .ARM.exidx : {
     *(.ARM.exidx* .gnu.linkonce.armexidx.*)
@@ -199,7 +200,7 @@ SECTIONS
     LONG(0)
   }
 
-  .dynamic : { *(.dynamic) } :rw : dynamic
+  .dynamic : { *(.dynamic) } : rw : dynamic
 
   _edata = .; PROVIDE (edata = .);
   __bss_start = .;

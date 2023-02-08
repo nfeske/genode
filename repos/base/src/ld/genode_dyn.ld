@@ -243,8 +243,9 @@ SECTIONS
 
     /*
      * Make sure to have a least one entry within the dynamic section, so the
-     * dynamic sgement point to something valid in case there are no dynamic
-     * symbols
+     * dynamic segment points to something valid in case there are no dynamic
+     * symbols in a binary. These semi-static binaries are not supported by
+     * our dynamic linker that depends on the .dynamic section.
      */
     LONG(0x0);
    } : rw : dynamic
