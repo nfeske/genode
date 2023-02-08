@@ -143,7 +143,7 @@ void Partition_dialog::gen_operations(Xml_generator        &xml,
 	}
 
 	if (partition.format_in_progress)
-		xml.node("label", [&] () { xml.attribute("text", "Formating in progress..."); });
+		xml.node("label", [&] () { xml.attribute("text", "Formatting in progress..."); });
 
 	if (partition.gpt_expand_in_progress)
 		xml.node("label", [&] () { xml.attribute("text", "Expanding partition..."); });
