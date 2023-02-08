@@ -13,8 +13,8 @@
 
 struct Fault_info
 {
-	Genode::addr_t ip;
-	Genode::addr_t pf;
+	Genode::addr_t const ip;
+	Genode::addr_t const pf;
 	bool           data_abort;
 	bool const     write;
 	bool const     align;
@@ -26,10 +26,29 @@ struct Fault_info
 		DFSR_WRITE_FAULT = 1UL << 11
 	};
 
+	Genode::addr_t _ip_from_message(seL4_MessageInfo_t &info) const
+	{
+		auto const fault_type = seL4_MessageInfo_get_label(info);
+
+		if (fault_type == seL4_Fault_UserException)
+			return seL4_Fault_UserException_get_FaultIP(seL4_getFault(info));
+		else
+			return seL4_GetMR(0);
+	}
+
+	Genode::addr_t _pf_from_message(seL4_MessageInfo_t &info) const
+	{
+		auto const fault_type = seL4_MessageInfo_get_label(info);
+		if (fault_type == seL4_Fault_UserException)
+			return seL4_Fault_UserException_get_Number(seL4_getFault(info));
+		else
+			return seL4_GetMR(1);
+	}
+
 	Fault_info(seL4_MessageInfo_t info)
 	:
-		ip(seL4_GetMR(0)),
-		pf(seL4_GetMR(1)),
+		ip(_ip_from_message(info)),
+		pf(_pf_from_message(info)),
 		data_abort(seL4_GetMR(2) != IFSR_FAULT),
 		/* Instruction Fault Status Register (IFSR) resp. Data FSR (DFSR) */
 		write(data_abort && (seL4_GetMR(3) & DFSR_WRITE_FAULT)),
@@ -37,13 +56,6 @@ struct Fault_info
 	{
 		if (!data_abort && seL4_GetMR(3) != IFSR_FAULT_PERMISSION)
 			data_abort = true;
-
-		auto const fault_type = seL4_MessageInfo_get_label(info);
-		if (fault_type == seL4_Fault_UserException) {
-			auto const fault = seL4_getFault(info);
-			ip = seL4_Fault_UserException_get_FaultIP(fault);
-			pf = seL4_Fault_UserException_get_Number(fault);
-		}
 	}
 
 	bool exec_fault() const { return !data_abort; }
