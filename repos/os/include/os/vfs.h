@@ -492,7 +492,7 @@ class Genode::Readonly_file : public File
 				if (read_bytes == 0)
 					break;
 
-				total += read_bytes;
+				total += size_t(read_bytes);
 			}
 
 			return total;
