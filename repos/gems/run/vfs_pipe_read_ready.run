@@ -1,0 +1,68 @@
+build {
+	core init timer server/vfs app/stdin2out app/count_seconds lib/vfs_pipe
+}
+
+create_boot_directory
+
+install_config {
+	<config>
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+		</parent-provides>
+
+		<default-route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</default-route>
+
+		<default caps="100"/>
+
+		<start name="timer">
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="Timer"/> </provides>
+		</start>
+
+		<start name="vfs">
+			<resource name="RAM" quantum="12M"/>
+			<provides> <service name="File_system"/> </provides>
+			<config>
+				<vfs> <pipe> <fifo name="fifo"/> </pipe> </vfs>
+				<default-policy root="/" writeable="yes"/>
+			</config>
+		</start>
+
+		<start name="stdin2out">
+			<resource name="RAM" quantum="3M"/>
+			<config>
+				<vfs>
+					<dir name="dev"> <log/> </dir>
+					<dir name="rw"> <fs/> </dir>
+				</vfs>
+				<libc stdin="/rw/fifo" stdout="/dev/log" stderr="/dev/log"/>
+			</config>
+		</start>
+
+		<start name="count_seconds">
+			<resource name="RAM" quantum="3M"/>
+			<config>
+				<vfs>
+					<dir name="dev"> <null/> <fs/> <log/> </dir>
+					<dir name="rw"> <fs/> </dir>
+				</vfs>
+				<libc stdin="/dev/null" stdout="/rw/fifo" stderr="/dev/log"/>
+			</config>
+		</start>
+
+	</config>
+}
+
+build_boot_image [build_artifacts]
+
+append qemu_args "-nographic "
+
+run_genode_until {.*\[init -> stdin2out\] 3.*\n} 30
+
+# vi: set ft=tcl :
