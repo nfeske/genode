@@ -9,7 +9,8 @@ DIR(linux) := src/linux
 #
 # Patches
 #
-PATCH_FILES := i2c_hid_settings.patch \
+PATCH_FILES := audio_jack.patch \
+               i2c_hid_settings.patch \
                i915_ggtt.patch \
                i915_irq.patch \
                iwlwifi_break_busy_loop.patch \
