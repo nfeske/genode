@@ -118,8 +118,9 @@ void dma_unmap_sg_attrs(struct device         * dev,
 		if (!sg->dma_address)
 			continue;
 
-		virt_addr = lx_emul_mem_virt_addr(sg->dma_address - sg->offset);
-		lx_emul_mem_cache_invalidate(virt_addr + sg->offset,
+		virt_addr =
+			lx_emul_mem_virt_addr((void*)(sg->dma_address - sg->offset));
+		lx_emul_mem_cache_invalidate((void*)(virt_addr + sg->offset),
 		                             sg->length);
 		sg->dma_address = 0;
 	}
