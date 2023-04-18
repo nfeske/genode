@@ -165,17 +165,19 @@ static int __init pci_subsys_init(void)
 		return -ENOMEM;
 
 #ifdef CONFIG_X86
-	struct pci_sysdata *sd;
-	sd = kzalloc(sizeof (struct pci_sysdata), GFP_KERNEL);
-	if (!sd) {
-		kfree(b);
-		return -ENOMEM;
+	{
+		struct pci_sysdata *sd;
+		sd = kzalloc(sizeof (struct pci_sysdata), GFP_KERNEL);
+		if (!sd) {
+			kfree(b);
+			return -ENOMEM;
+		}
+
+		/* needed by intel_fb */
+		sd->domain = 0;
+
+		b->sysdata = sd;
 	}
-
-	/* needed by intel_fb */
-	sd->domain = 0;
-
-	b->sysdata = sd;
 #endif /* CONFIG_X86 */
 
 	INIT_LIST_HEAD(&b->node);
