@@ -92,49 +92,67 @@ void Sculpt::Deploy::handle_deploy()
 	if ((managed_deploy.type() != "empty") && !_arch.valid())
 		warning("managed deploy config lacks 'arch' attribute");
 
-	try { _children.apply_config(managed_deploy); }
-	catch (...) {
-		error("spurious exception during deploy update (apply_config)"); }
+	auto apply_config = [&]
+	{
+		try { return _children.apply_config(managed_deploy); }
+		catch (...) {
+			error("spurious exception during deploy update (apply_config)"); }
+		return false;
+	};
 
-	/*
-	 * Apply launchers
-	 */
-	Xml_node const launcher_listing = _launcher_listing_rom.xml();
-	launcher_listing.for_each_sub_node("dir", [&] (Xml_node dir) {
+	bool const config_affected_child = apply_config();
 
-		typedef String<20> Path;
-		Path const path = dir.attribute_value("path", Path());
+	auto apply_launchers = [&]
+	{
+		bool any_child_affected = false;
 
-		if (path != "/launcher")
-			return;
+		Xml_node const launcher_listing = _launcher_listing_rom.xml();
+		launcher_listing.for_each_sub_node("dir", [&] (Xml_node dir) {
 
-		dir.for_each_sub_node("file", [&] (Xml_node file) {
+			typedef String<20> Path;
+			Path const path = dir.attribute_value("path", Path());
 
-			if (file.attribute_value("xml", false) == false)
+			if (path != "/launcher")
 				return;
 
-			typedef Depot_deploy::Child::Launcher_name Name;
-			Name const name = file.attribute_value("name", Name());
+			dir.for_each_sub_node("file", [&] (Xml_node file) {
 
-			file.for_each_sub_node("launcher", [&] (Xml_node launcher) {
-				_children.apply_launcher(name, launcher); });
+				if (file.attribute_value("xml", false) == false)
+					return;
+
+				typedef Depot_deploy::Child::Launcher_name Name;
+				Name const name = file.attribute_value("name", Name());
+
+				file.for_each_sub_node("launcher", [&] (Xml_node launcher) {
+					if (_children.apply_launcher(name, launcher))
+						any_child_affected = true; });
+			});
 		});
-	});
+		return any_child_affected;
+	};
 
-	try {
-		Xml_node const blueprint = _blueprint_rom.xml();
+	bool const launcher_affected_child = apply_launchers();
 
-		/* apply blueprint, except when stale */
-		typedef String<32> Version;
-		Version const version = blueprint.attribute_value("version", Version());
-		if (version == Version(_depot_query.depot_query_version().value))
-			_children.apply_blueprint(_blueprint_rom.xml());
-	}
-	catch (...) {
-		error("spurious exception during deploy update (apply_blueprint)"); }
+	auto apply_blueprint = [&]
+	{
+		try {
+			Xml_node const blueprint = _blueprint_rom.xml();
+
+			/* apply blueprint, except when stale */
+			typedef String<32> Version;
+			Version const version = blueprint.attribute_value("version", Version());
+			if (version == Version(_depot_query.depot_query_version().value))
+				return _children.apply_blueprint(_blueprint_rom.xml());
+		}
+		catch (...) {
+			error("spurious exception during deploy update (apply_blueprint)"); }
+		return false;
+	};
+
+	bool const blueprint_affected_child = apply_blueprint();
 
 	/* update query for blueprints of all unconfigured start nodes */
-	if (_children.any_blueprint_needed() && !_download_queue.any_active_download())
+	if (config_affected_child || launcher_affected_child || blueprint_affected_child)
 		_depot_query.trigger_depot_query();
 
 	/* feed missing packages to installation queue */

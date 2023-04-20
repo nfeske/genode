@@ -159,10 +159,13 @@ class Depot_deploy::Child : public List_model<Child>::Element
 
 		Name name() const { return _name; }
 
-		void apply_config(Xml_node start_node)
+		/*
+		 * \return true if config had an effect on the child's state
+		 */
+		bool apply_config(Xml_node start_node)
 		{
 			if (!start_node.differs_from(_start_xml->xml()))
-				return;
+				return false;
 
 			Archive::Path const old_pkg_path = _config_pkg_path();
 
@@ -179,12 +182,16 @@ class Depot_deploy::Child : public List_model<Child>::Element
 				/* reset error state, attempt to obtain the blueprint again */
 				_pkg_incomplete = false;
 			}
+			return true;
 		}
 
-		void apply_blueprint(Xml_node pkg)
+		/*
+		 * \return true if bluerprint had an effect on the child
+		 */
+		bool apply_blueprint(Xml_node pkg)
 		{
 			if (pkg.attribute_value("path", Archive::Path()) != _blueprint_pkg_path)
-				return;
+				return false;
 
 			/* check for the completeness of all ROM ingredients */
 			bool any_rom_missing = false;
@@ -200,8 +207,9 @@ class Depot_deploy::Child : public List_model<Child>::Element
 			});
 
 			if (any_rom_missing) {
+				bool const orig_pkg_incomplete = _pkg_incomplete;
 				_pkg_incomplete = true;
-				return;
+				return (orig_pkg_incomplete != _pkg_incomplete);
 			}
 
 			/* package was missing but is installed now */
@@ -218,22 +226,26 @@ class Depot_deploy::Child : public List_model<Child>::Element
 
 			/* keep copy of the blueprint info */
 			_pkg_xml.construct(_alloc, pkg);
+
+			return true;
 		}
 
-		void apply_launcher(Launcher_name const &name, Xml_node launcher)
+		bool apply_launcher(Launcher_name const &name, Xml_node launcher)
 		{
 			if (!_defined_by_launcher())
-				return;
+				return false;
 
 			if (_launcher_name() != name)
-				return;
+				return false;
 
 			if (_launcher_xml.constructed() && !launcher.differs_from(_launcher_xml->xml()))
-				return;
+				return false;
 
 			_launcher_xml.construct(_alloc, launcher);
 
 			_blueprint_pkg_path = _config_pkg_path();
+
+			return true;
 		}
 
 		/*
@@ -266,19 +278,25 @@ class Depot_deploy::Child : public List_model<Child>::Element
 				fn(_start_xml->xml(), launcher_xml, _name);
 		}
 
-		void mark_as_incomplete(Xml_node missing)
+		/*
+		 * \return true if the call had an effect on the child
+		 */
+		bool mark_as_incomplete(Xml_node missing)
 		{
 			/* print error message only once */
 			if(_pkg_incomplete)
-				return;
+				return false;
 
 			Archive::Path const path = missing.attribute_value("path", Archive::Path());
 			if (path != _blueprint_pkg_path)
-				return;
+				return false;
 
 			log(path, " incomplete or missing");
 
+			bool const orig_pkg_incomplete = _pkg_incomplete;
 			_pkg_incomplete = true;
+
+			return (orig_pkg_incomplete != _pkg_incomplete);
 		}
 
 		/**
