@@ -115,7 +115,9 @@ class Depot_deploy::Child : public List_model<Child>::Element
 		/*
 		 * Set if the depot query for the child's blueprint failed.
 		 */
-		bool _pkg_incomplete = false;
+		enum class State { UNKNOWN, PKG_INCOMPLETE, PKG_COMPLETE };
+
+		State _state = State::UNKNOWN;
 
 		bool _configured() const
 		{
@@ -180,7 +182,7 @@ class Depot_deploy::Child : public List_model<Child>::Element
 				_pkg_xml.destruct();
 
 				/* reset error state, attempt to obtain the blueprint again */
-				_pkg_incomplete = false;
+				_state = State::UNKNOWN;
 			}
 			return true;
 		}
@@ -190,6 +192,9 @@ class Depot_deploy::Child : public List_model<Child>::Element
 		 */
 		bool apply_blueprint(Xml_node pkg)
 		{
+			if (_state == State::PKG_COMPLETE)
+				return false;
+
 			if (pkg.attribute_value("path", Archive::Path()) != _blueprint_pkg_path)
 				return false;
 
@@ -207,13 +212,13 @@ class Depot_deploy::Child : public List_model<Child>::Element
 			});
 
 			if (any_rom_missing) {
-				bool const orig_pkg_incomplete = _pkg_incomplete;
-				_pkg_incomplete = true;
-				return (orig_pkg_incomplete != _pkg_incomplete);
+				State const orig_state = _state;
+				_state = State::PKG_INCOMPLETE;
+				return (orig_state != _state);
 			}
 
 			/* package was missing but is installed now */
-			_pkg_incomplete = false;
+			_state = State::PKG_COMPLETE;
 
 			Xml_node const runtime = pkg.sub_node("runtime");
 
@@ -284,7 +289,7 @@ class Depot_deploy::Child : public List_model<Child>::Element
 		bool mark_as_incomplete(Xml_node missing)
 		{
 			/* print error message only once */
-			if(_pkg_incomplete)
+			if(_state == State::PKG_INCOMPLETE)
 				return false;
 
 			Archive::Path const path = missing.attribute_value("path", Archive::Path());
@@ -293,10 +298,10 @@ class Depot_deploy::Child : public List_model<Child>::Element
 
 			log(path, " incomplete or missing");
 
-			bool const orig_pkg_incomplete = _pkg_incomplete;
-			_pkg_incomplete = true;
+			State const orig_state = _state;
+			_state = State::PKG_INCOMPLETE;
 
-			return (orig_pkg_incomplete != _pkg_incomplete);
+			return (orig_state != _state);
 		}
 
 		/**
@@ -304,8 +309,8 @@ class Depot_deploy::Child : public List_model<Child>::Element
 		 */
 		void reset_incomplete()
 		{
-			if (_pkg_incomplete) {
-				_pkg_incomplete = false;
+			if (_state == State::PKG_INCOMPLETE) {
+				_state = State::UNKNOWN;
 				_pkg_xml.destruct();
 			}
 		}
@@ -351,7 +356,7 @@ class Depot_deploy::Child : public List_model<Child>::Element
 		template <typename FN>
 		void with_missing_pkg_path(FN const &fn) const
 		{
-			if (_pkg_incomplete)
+			if (_state == State::PKG_INCOMPLETE)
 				fn(_config_pkg_path());
 		}
 
@@ -366,7 +371,7 @@ class Depot_deploy::Child : public List_model<Child>::Element
 					xml.attribute("source", "no"); }); });
 		}
 
-		bool incomplete() const { return _pkg_incomplete; }
+		bool incomplete() const { return _state == State::PKG_INCOMPLETE; }
 };
 
 

@@ -88,9 +88,12 @@ void Sculpt::Deploy::handle_deploy()
 	Xml_node const managed_deploy = _managed_deploy_rom.xml();
 
 	/* determine CPU architecture of deployment */
+	Arch const orig_arch = _arch;
 	_arch = managed_deploy.attribute_value("arch", Arch());
 	if ((managed_deploy.type() != "empty") && !_arch.valid())
 		warning("managed deploy config lacks 'arch' attribute");
+
+	bool const arch_changed = (orig_arch != _arch);
 
 	auto apply_config = [&]
 	{
@@ -151,18 +154,25 @@ void Sculpt::Deploy::handle_deploy()
 
 	bool const blueprint_affected_child = apply_blueprint();
 
-	/* update query for blueprints of all unconfigured start nodes */
-	if (config_affected_child || launcher_affected_child || blueprint_affected_child)
-		_depot_query.trigger_depot_query();
+	bool const progress = arch_changed
+	                   || config_affected_child
+	                   || launcher_affected_child
+	                   || blueprint_affected_child;
+	if (progress) {
 
-	/* feed missing packages to installation queue */
-	update_installation();
+		/* update query for blueprints of all unconfigured start nodes */
+		if (!_download_queue.any_active_download())
+			_depot_query.trigger_depot_query();
 
-	/* apply runtime condition checks */
-	update_child_conditions();
+		/* feed missing packages to installation queue */
+		update_installation();
 
-	_dialog_generator.generate_dialog();
-	_runtime_config_generator.generate_runtime_config();
+		/* apply runtime condition checks */
+		update_child_conditions();
+
+		_dialog_generator.generate_dialog();
+		_runtime_config_generator.generate_runtime_config();
+	}
 }
 
 
