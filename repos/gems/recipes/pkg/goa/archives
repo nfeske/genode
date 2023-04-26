@@ -1,7 +1,5 @@
-_/pkg/drivers_interactive-linux
 _/pkg/terminal
 _/raw/ttf-bitstream-vera-minimal
-_/src/base-linux
 _/src/bash
 _/src/coreutils
 _/src/event_filter
@@ -11,9 +9,6 @@ _/src/gui_fb
 _/src/init
 _/src/libc
 _/src/libssh
-_/src/linux_nic_drv
-_/src/linux_rtc_drv
-_/src/lx_fs
 _/src/ncurses
 _/src/nic_router
 _/src/nitpicker
