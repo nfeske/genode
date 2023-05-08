@@ -7,7 +7,7 @@ gpu_drv: intel
 import: pkg/drivers_managed-pc pkg/wifi src/ipxe_nic_drv
 
 # selection of launcher-menu entries
-launcher: vm_fs shared_fs usb_devices_rom
+launcher: vm_fs shared_fs usb_devices_rom frequency
 
 # selection of accepted depot-package providers
 depot: genodelabs cnuke alex-ab mstein nfeske cproc chelmuth jschlatow

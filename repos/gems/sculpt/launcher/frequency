@@ -1,0 +1,16 @@
+<launcher managing_system="yes" pkg="alex-ab/pkg/msr_gui/2023-05-29" priority="-2">
+	<route>
+		<service name="Gui">
+			<child name="wm"/>
+		</service>
+		<service name="File_system" label="fonts">
+			<child name="fonts_fs"/>
+		</service>
+		<service name="ROM" label="platform_info">
+			<parent label="platform_info"/>
+		</service>
+		<service name="Report">
+			<parent/>
+		</service>
+	</route>
+</launcher>
