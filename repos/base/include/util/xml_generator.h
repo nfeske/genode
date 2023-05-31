@@ -259,6 +259,11 @@ class Genode::Xml_generator
 				void append(char const *src, size_t src_len)
 				{
 					Out_buffer content_buffer = _content_buffer(false);
+
+					/* indent end tag after appending a trailing newline */
+					if (src_len > 0 && src[src_len - 1] == '\n')
+						_is_indented = true;
+
 					content_buffer.append(src, src_len);
 					_commit_content(content_buffer);
 				}
