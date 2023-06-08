@@ -441,7 +441,7 @@ struct m : Command_without_separator
 					state.read_memory(Memory_accessor::Virt_addr { addr + pos },
 					                  Byte_range_ptr(chunk, num_bytes));
 
-				for(unsigned i = 0; i < read_len; i++)
+				for (unsigned i = 0; i < read_len; i++)
 					print(out, Gdb_hex(chunk[i]));
 
 				pos += read_len;
