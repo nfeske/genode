@@ -1,3 +1,15 @@
+proc platform_supported { } {
+	if {[have_spec x86_64] && [have_board pc]} {
+		if {![have_spec linux] && ![have_spec foc] && ![have_spec sel4]} {
+			return 1 } }
+	return 0
+}
+
+if {![platform_supported]} {
+	puts "Run script is not supported on this platform"
+	exit 0
+}
+
 build { core lib/ld init timer monitor drivers/uart test/log }
 
 create_boot_directory
