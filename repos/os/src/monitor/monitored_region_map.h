@@ -108,8 +108,7 @@ struct Monitor::Monitored_region_map : Monitored_rpc_object<Region_map>
 	                  bool executable = false,
 	                  bool writeable = true) override
 	{
-
-		if (executable && _writeable_text_segments.constructed()) {
+		if (executable && !writeable && _writeable_text_segments.constructed()) {
 			ds = _writeable_text_segments->create_writable_copy(ds, offset, size);
 			offset = 0;
 			writeable = true;
