@@ -13,6 +13,7 @@
 
 #include <lx_emul.h>
 
+
 #include <asm-generic/sections.h>
 
 char __start_rodata[] = {};
@@ -249,15 +250,6 @@ void seq_vprintf(struct seq_file * m,const char * f,va_list args)
 }
 
 
-#include <linux/property.h>
-
-int software_node_notify(struct device * dev,unsigned long action)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
 extern void pci_allocate_vc_save_buffers(struct pci_dev * dev);
 void pci_allocate_vc_save_buffers(struct pci_dev * dev)
 {
@@ -387,5 +379,3 @@ DEFINE_PER_CPU(bool, hardirq_stack_inuse);
 
 DEFINE_PER_CPU_READ_MOSTLY(struct cpuinfo_x86, cpu_info);
 EXPORT_PER_CPU_SYMBOL(cpu_info);
-
-

@@ -167,6 +167,14 @@ int acpi_dev_get_resources(struct acpi_device * adev,struct list_head * list,int
 }
 
 
+#include <linux/acpi.h>
+
+int acpi_dev_gpio_irq_wake_get_by(struct acpi_device * adev,const char * name,int index,bool * wake_capable)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <acpi/acpi_bus.h>
 
 bool acpi_dev_present(const char * hid,const char * uid,s64 hrv)
@@ -352,6 +360,22 @@ int device_create_managed_software_node(struct device * dev,const struct propert
 #include <linux/property.h>
 
 void device_remove_software_node(struct device * dev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check devm_gpiod_get(struct device * dev,const char * con_id,enum gpiod_flags flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check devm_gpiod_get_index(struct device * dev,const char * con_id,unsigned int idx,enum gpiod_flags flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -597,65 +621,73 @@ void gen6_rps_irq_handler(struct intel_rps * rps,u32 pm_iir)
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/machine.h>
 
-s32 i2c_smbus_read_block_data(const struct i2c_client * client,u8 command,u8 * values)
+void gpiod_add_lookup_table(struct gpiod_lookup_table * table)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/consumer.h>
 
-s32 i2c_smbus_read_byte(const struct i2c_client * client)
+int gpiod_direction_output(struct gpio_desc * desc,int value)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/consumer.h>
 
-s32 i2c_smbus_read_byte_data(const struct i2c_client * client,u8 command)
+struct gpio_desc * __must_check gpiod_get(struct device * dev,const char * con_id,enum gpiod_flags flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/consumer.h>
 
-s32 i2c_smbus_read_word_data(const struct i2c_client * client,u8 command)
+int gpiod_get_direction(struct gpio_desc * desc)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/consumer.h>
 
-s32 i2c_smbus_write_block_data(const struct i2c_client * client,u8 command,u8 length,const u8 * values)
+int gpiod_get_value_cansleep(const struct gpio_desc * desc)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/consumer.h>
 
-s32 i2c_smbus_write_byte(const struct i2c_client * client,u8 value)
+void gpiod_put(struct gpio_desc * desc)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/machine.h>
 
-s32 i2c_smbus_write_byte_data(const struct i2c_client * client,u8 command,u8 value)
+void gpiod_remove_lookup_table(struct gpiod_lookup_table * table)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/i2c.h>
+#include <linux/gpio/consumer.h>
 
-s32 i2c_smbus_write_word_data(const struct i2c_client * client,u8 command,u16 value)
+void gpiod_set_value(struct gpio_desc * desc,int value)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_set_value_cansleep(struct gpio_desc * desc,int value)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1850,6 +1882,38 @@ void pci_unmap_rom(struct pci_dev * pdev,void __iomem * rom)
 #include <linux/pci.h>
 
 int pci_write_config_byte(const struct pci_dev * dev,int where,u8 val)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pinctrl/consumer.h>
+
+struct pinctrl_state * pinctrl_lookup_state(struct pinctrl * p,const char * name)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pinctrl/machine.h>
+
+int pinctrl_register_mappings(const struct pinctrl_map * maps,unsigned num_maps)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pinctrl/consumer.h>
+
+int pinctrl_select_state(struct pinctrl * p,struct pinctrl_state * state)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pinctrl/machine.h>
+
+void pinctrl_unregister_mappings(const struct pinctrl_map * map)
 {
 	lx_emul_trace_and_stop(__func__);
 }
