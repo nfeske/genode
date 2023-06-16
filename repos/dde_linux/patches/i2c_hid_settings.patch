@@ -1,0 +1,41 @@
+This patch enforces correct settings in Tigerlake Designware I2C controller for
+touchpad. Settings currently get lost in the rudimentary clk infrastructure.
+
+--- src/linux/drivers/i2c/busses/i2c-designware-common.c
++++ src/linux/drivers/i2c/busses/i2c-designware-common.c
+@@ -422,6 +422,9 @@
+ 		if (!(dev->sda_hold_time & DW_IC_SDA_HOLD_RX_MASK))
+ 			dev->sda_hold_time |= 1 << DW_IC_SDA_HOLD_RX_SHIFT;
+ 
++		/* XXX force correct value for i2c_hid */
++		dev->sda_hold_time = 1 << DW_IC_SDA_HOLD_RX_SHIFT | 80; /* 0x10050 */
++
+ 		dev_dbg(dev->dev, "SDA Hold Time TX:RX = %d:%d\n",
+ 			dev->sda_hold_time & ~(u32)DW_IC_SDA_HOLD_RX_MASK,
+ 			dev->sda_hold_time >> DW_IC_SDA_HOLD_RX_SHIFT);
+--- src/linux/drivers/i2c/busses/i2c-designware-master.c
++++ src/linux/drivers/i2c/busses/i2c-designware-master.c
+@@ -74,6 +74,11 @@
+ 					scl_falling_time,
+ 					0);	/* No offset */
+ 	}
++
++	/* XXX force correct value for i2c_hid */
++	dev->ss_hcnt = 500; /* 0x1f4 */
++	dev->ss_lcnt = 588; /* 0x24c */
++
+ 	dev_dbg(dev->dev, "Standard Mode HCNT:LCNT = %d:%d\n",
+ 		dev->ss_hcnt, dev->ss_lcnt);
+ 
+@@ -124,6 +129,11 @@
+ 					scl_falling_time,
+ 					0);	/* No offset */
+ 	}
++
++	/* XXX force correct value for i2c_hid */
++	dev->fs_hcnt = 193; /* 0xc1 */
++	dev->fs_lcnt = 313; /* 0x139 */
++
+ 	dev_dbg(dev->dev, "Fast Mode%s HCNT:LCNT = %d:%d\n",
+ 		fp_str, dev->fs_hcnt, dev->fs_lcnt);
+ 
