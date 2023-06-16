@@ -13,7 +13,8 @@ PATCH_FILES := i915_irq.patch i915_fb_resize.patch \
                iwlwifi_enable_irq_before_pnvm.patch \
                iwlwifi_limit_rx_bufs.patch \
                usb_message.patch \
-               workqueue_deadlock.patch
+               workqueue_deadlock.patch \
+               i2c_hid_settings.patch
 PATCHES += $(addprefix patches/,$(PATCH_FILES))
 
 PATCH_OPT(patches/i915_irq.patch)           := -p1 -d${DIR(linux)}
