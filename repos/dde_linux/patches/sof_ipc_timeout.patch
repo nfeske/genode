@@ -1,0 +1,13 @@
+diff --git a/sound/soc/sof/core.c b/sound/soc/sof/core.c
+index 625977a..990ec09 100644
+--- src/linux/sound/soc/sof/core.c
++++ src/linux/sound/soc/sof/core.c
+@@ -24,7 +24,7 @@ module_param_named(sof_debug, sof_core_debug, int, 0444);
+ MODULE_PARM_DESC(sof_debug, "SOF core debug options (0x0 all off)");
+ 
+ /* SOF defaults if not provided by the platform in ms */
+-#define TIMEOUT_DEFAULT_IPC_MS  500
++#define TIMEOUT_DEFAULT_IPC_MS  2000
+ #define TIMEOUT_DEFAULT_BOOT_MS 2000
+ 
+ /**
