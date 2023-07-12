@@ -232,6 +232,11 @@ proc check_depot_state { context } {
 	return 0
 }
 
+# print all directories within the depot starting with "20" (version)
+proc show_depot_content { } {
+	puts "current depot content:\n[exec find [run_dir]/genode/depot -type d -name "20*"]"
+}
+
 puts "\n--------------- TEST 1 --- Delete nano3d"
 
 set context [mark_pkg_for_deletion [build_depot_context] "nano3d"]
@@ -242,6 +247,7 @@ install_test_config {
 	<vfs> <dir name="depot"> <fs/> </dir> </vfs>
 </config>}
 
+show_depot_content
 run_genode_until ".*</removed_archives>" 10
 
 if { [check_depot_state $context] } {
@@ -260,6 +266,7 @@ install_test_config {
 	<vfs> <dir name="depot"> <fs/> </dir> </vfs>
 </config>}
 
+show_depot_content
 run_genode_until ".*<removed_archives/>" 10
 
 if { [check_depot_state $context] } {
@@ -279,10 +286,12 @@ install_test_config {
 	<vfs> <dir name="depot"> <fs/> </dir> </vfs>
 </config>}
 
+show_depot_content
 run_genode_until ".*</removed_archives>" 10
 
 if { [check_depot_state $context] } {
 	puts " TEST 3 --- Delete a PKG archive with deps to keep --- ERROR"
+	show_depot_content
 	exit 1
 }
 
@@ -303,6 +312,7 @@ install_test_config {
 	<vfs> <dir name="depot"> <fs/> </dir> </vfs>
 </config>}
 
+show_depot_content
 run_genode_until ".*</removed_archives>" 10
 
 if { [check_depot_state $context] } {
@@ -322,6 +332,7 @@ install_test_config {
 	<vfs> <dir name="depot"> <fs/> </dir> </vfs>
 </config>}
 
+show_depot_content
 run_genode_until ".*</removed_archives>" 10
 
 if { [check_depot_state $context] } {
@@ -330,3 +341,5 @@ if { [check_depot_state $context] } {
 }
 
 puts " TEST 5 --- Remove all --- SUCCESS"
+
+show_depot_content
