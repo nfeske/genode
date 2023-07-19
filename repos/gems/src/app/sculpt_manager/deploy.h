@@ -248,7 +248,7 @@ struct Sculpt::Deploy
 		return !all_satisfied;
 	}
 
-	void gen_child_diagnostics(Xml_generator &xml) const;
+	void view_diag(Scope<> &) const;
 
 	void gen_runtime_start_nodes(Xml_generator &, Prio_levels, Affinity::Space) const;
 
