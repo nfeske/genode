@@ -161,7 +161,7 @@ void Sculpt::Deploy::handle_deploy()
 		/* apply runtime condition checks */
 		update_child_conditions();
 
-		_dialog_generator.generate_dialog();
+		_action.refresh_deploy_dialog();
 		_runtime_config_generator.generate_runtime_config();
 	}
 }

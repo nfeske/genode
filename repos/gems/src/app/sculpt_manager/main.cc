@@ -56,9 +56,9 @@ namespace Sculpt { struct Main; }
 
 
 struct Sculpt::Main : Input_event_handler,
-                      Deprecated_dialog::Generator,
                       Runtime_config_generator,
-                      Storage::Target_user,
+                      Deploy::Action,
+                      Storage::Action,
                       Network::Action,
                       Graph::Action,
                       Panel_dialog::Action,
@@ -229,10 +229,10 @@ struct Sculpt::Main : Input_event_handler,
 		return _prepare_version.value != _prepare_completed.value;
 	}
 
-	Storage _storage { _env, _heap, _child_states, *this, *this, *this };
+	Storage _storage { _env, _heap, _child_states, *this, *this };
 
 	/**
-	 * Storage::Target_user interface
+	 * Storage::Action interface
 	 */
 	void use_storage_target(Storage_target const &target) override
 	{
@@ -245,8 +245,13 @@ struct Sculpt::Main : Input_event_handler,
 		_deploy.restart();
 
 		generate_runtime_config();
-		generate_dialog();
+		_generate_dialog();
 	}
+
+	/**
+	 * Storage::Action interface
+	 */
+	void refresh_storage_dialog() override { _generate_dialog(); }
 
 	Network _network { _env, _heap, *this, _child_states, *this, _runtime_state, _pci_info };
 
@@ -464,6 +469,11 @@ struct Sculpt::Main : Input_event_handler,
 	Deploy _deploy { _env, _heap, _child_states, _runtime_state, *this, *this, *this,
 	                 _launcher_listing_rom, _blueprint_rom, _download_queue };
 
+	/**
+	 * Deploy::Action interface
+	 */
+	void refresh_deploy_dialog() override { _generate_dialog(); }
+
 	Attached_rom_dataspace _manual_deploy_rom { _env, "config -> deploy" };
 
 	void _handle_manual_deploy()
@@ -573,10 +583,7 @@ struct Sculpt::Main : Input_event_handler,
 		}
 	};
 
-	/**
-	 * Deprecated_dialog::Generator interface
-	 */
-	void generate_dialog() override
+	void _generate_dialog()
 	{
 		_diag_dialog.refresh();
 		_graph_menu_view.generate();
@@ -598,7 +605,7 @@ struct Sculpt::Main : Input_event_handler,
 	{
 		_manually_managed_runtime = !config.has_type("empty");
 		generate_runtime_config();
-		generate_dialog();
+		_generate_dialog();
 	}
 
 	void _generate_runtime_config(Xml_generator &) const;
@@ -826,7 +833,7 @@ struct Sculpt::Main : Input_event_handler,
 		});
 
 		if (need_generate_dialog)
-			generate_dialog();
+			_generate_dialog();
 	}
 
 	/*
@@ -1313,7 +1320,7 @@ struct Sculpt::Main : Input_event_handler,
 		_deploy.update_installation();
 
 		generate_runtime_config();
-		generate_dialog();
+		_generate_dialog();
 	}
 
 	void remove_index(Depot::Archive::User const &user) override
@@ -1486,7 +1493,7 @@ struct Sculpt::Main : Input_event_handler,
 		_handle_manual_deploy();
 
 		generate_runtime_config();
-		generate_dialog();
+		_generate_dialog();
 	}
 };
 
@@ -1815,7 +1822,7 @@ void Sculpt::Main::_handle_gui_mode()
 void Sculpt::Main::_handle_update_state()
 {
 	_update_state_rom.update();
-	generate_dialog();
+	_generate_dialog();
 
 	Xml_node const update_state = _update_state_rom.xml();
 
@@ -1840,7 +1847,7 @@ void Sculpt::Main::_handle_update_state()
 		_deploy.reattempt_after_installation();
 	}
 
-	generate_dialog();
+	_generate_dialog();
 }
 
 
@@ -2036,7 +2043,7 @@ void Sculpt::Main::_handle_runtime_state()
 		_storage.handle_storage_devices_update();
 
 	if (regenerate_dialog) {
-		generate_dialog();
+		_generate_dialog();
 		_graph_menu_view.generate();
 	}
 
