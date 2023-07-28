@@ -34,7 +34,7 @@ class Sculpt::Screensaver : Noncopyable
 		Action &_action;
 
 		/* config from outside */
-		unsigned _max_seconds_of_inactivity = 13;
+		unsigned _max_seconds_of_inactivity = 60;
 		bool     _blank_after_some_time     = true;
 		bool     _display_driver_ready      = false;
 
