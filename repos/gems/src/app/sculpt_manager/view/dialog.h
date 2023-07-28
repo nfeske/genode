@@ -257,18 +257,28 @@ struct Dialog::Radio_select_button : Widget<Left_floating_hbox>
 
 struct Dialog::Pin_button : Action_button
 {
-	void view(Scope<Button> &s) const
-	{
-		auto const &text = s.id.value;
+	struct Attr { bool visible; };
 
-		Action_button::view(s, [&] (Scope<Button> &s) {
-			s.sub_scope<Vbox>([&] (Scope<Button, Vbox> &s) {
-				s.sub_scope<Min_ex>(10);
-				s.sub_scope<Vgap>();
-				s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
-					s.attribute("font", "title/regular"); });
-				s.sub_scope<Vgap>();
-			});
+	void view(Scope<Button> &s, Attr attr = { .visible = true }) const
+	{
+		if (attr.visible) {
+			bool const selected = _seq_number == s.hover.seq_number,
+			           hovered  = (s.hovered() && (!s.dragged() || selected));
+
+			if (selected) s.attribute("selected", "yes");
+			if (hovered)  s.attribute("hovered",  "yes");
+		} else {
+			s.attribute("style", "invisible");
+		}
+		auto const &text = s.id.value;
+		s.sub_scope<Vbox>([&] (Scope<Button, Vbox> &s) {
+			s.sub_scope<Min_ex>(10);
+			s.sub_scope<Vgap>();
+			s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
+				if (!attr.visible)
+					s.attribute("style", "invisible");
+				s.attribute("font", "title/regular"); });
+			s.sub_scope<Vgap>();
 		});
 	}
 };
@@ -284,10 +294,13 @@ struct Dialog::Pin_row : Widget<Hbox>
 		_buttons { Id { left }, Id { middle }, Id { right } }
 	{ }
 
-	void view(Scope<Hbox> &s) const
+	struct Visible { bool left, middle, right; };
+
+	void view(Scope<Hbox> &s, Visible visible = { true, true, true }) const
 	{
-		for (auto const &button : _buttons)
-			s.widget(button);
+		s.widget(_buttons[0], Pin_button::Attr { visible.left   });
+		s.widget(_buttons[1], Pin_button::Attr { visible.middle });
+		s.widget(_buttons[2], Pin_button::Attr { visible.right  });
 	}
 
 	template <typename FN>
