@@ -397,6 +397,8 @@ void lx_user_init(void)
 
 static int genode_fb_client_hotplug(struct drm_client_dev *client)
 {
+	int ret = -EINVAL;
+
 	/*
 	 * Set deferred_setup to execute codepath of drm_fb_helper_hotplug_event()
 	 * on next connector state change that does not drop modes, which are
@@ -406,6 +408,10 @@ static int genode_fb_client_hotplug(struct drm_client_dev *client)
 	 * connected after boot.
 	 */
 	i915_fb()->deferred_setup = true;
+
+	ret = drm_client_modeset_commit(client);
+	if (!ret)
+		printk("%s: drm_client_modeset_commit failed with %d\n", __func__, ret);
 
 	lx_emul_i915_hotplug_connector(client);
 	return 0;
