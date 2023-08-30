@@ -1,0 +1,11 @@
+<launcher name="pc_wifi" pkg="pc_wifi_uplink">
+	<route>
+		<service name="Timer"> <parent/> </service>
+		<service name="RM"> <parent/> </service>
+		<service name="Platform"> <parent label="wifi"/> </service>
+		<service name="Report" label="pc_wifi_drv -> accesspoints"> <parent label="wifi_drv -> accesspoints"/> </service>
+		<service name="Report" label="pc_wifi_drv -> state"> <parent label="wifi_drv -> state"/> </service>
+		<service name="Report" label="pc_wifi_drv -> devices"> <parent label="wifi_drv -> devices"/> </service>
+		<service name="ROM" label="pc_wifi_drv -> wifi_config"> <parent label="config -> managed/wifi"/> </service>
+	</route>
+</launcher>

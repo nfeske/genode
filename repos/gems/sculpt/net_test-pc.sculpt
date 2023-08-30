@@ -3,7 +3,7 @@ drivers: pc
 ram_fs: depot
 
 # selection of launcher-menu entries
-launcher: ping pc_nic
+launcher: pc_nic ping_nic pc_wifi ping_wifi
 
 # supplemental depot content added to the system image
-import: pkg/drivers_managed-pc src/pc_nic_drv pkg/pc_nic pkg/ping
+import: pkg/drivers_managed-pc pkg/pc_nic pkg/pc_wifi_uplink pkg/ping

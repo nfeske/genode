@@ -1,0 +1,109 @@
+<runtime ram="40M" caps="600" binary="init">
+
+	<requires> <platform/> <report/> <timer/> </requires>
+
+	<provides> <nic/> </provides>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="nic_uplink"/>
+		<rom label="init"/>
+		<rom label="pc_wifi_drv"/>
+		<rom label="libcrypto.lib.so"/>
+		<rom label="vfs.lib.so"/>
+		<rom label="libc.lib.so"/>
+		<rom label="libm.lib.so"/>
+		<rom label="vfs_jitterentropy.lib.so"/>
+		<rom label="vfs_wifi.lib.so"/>
+		<rom label="libssl.lib.so"/>
+		<rom label="wifi.lib.so"/>
+		<rom label="wpa_driver_nl80211.lib.so"/>
+		<rom label="wpa_supplicant.lib.so"/>
+		<rom label="iwlwifi-1000-5.ucode"/>
+		<rom label="iwlwifi-3160-17.ucode"/>
+		<rom label="iwlwifi-5000-5.ucode"/>
+		<rom label="iwlwifi-6000-4.ucode"/>
+		<rom label="iwlwifi-6000g2a-6.ucode"/>
+		<rom label="iwlwifi-6000g2b-6.ucode"/>
+		<rom label="iwlwifi-7260-17.ucode"/>
+		<rom label="iwlwifi-7265-17.ucode"/>
+		<rom label="iwlwifi-7265D-29.ucode"/>
+		<rom label="iwlwifi-8000C-36.ucode"/>
+		<rom label="iwlwifi-8265-36.ucode"/>
+		<rom label="iwlwifi-9000-pu-b0-jf-b0-46.ucode"/>
+		<rom label="iwlwifi-9260-th-b0-jf-b0-46.ucode"/>
+		<rom label="iwlwifi-QuZ-a0-hr-b0-68.ucode"/>
+		<rom label="iwlwifi-so-a0-hr-b0-68.ucode"/>
+		<rom label="iwlwifi-so-a0-gf-a0-68.ucode"/>
+		<rom label="iwlwifi-so-a0-gf-a0.pnvm"/>
+		<rom label="iwlwifi-ty-a0-gf-a0-68.ucode"/>
+		<rom label="iwlwifi-ty-a0-gf-a0.pnvm"/>
+		<rom label="regulatory.db"/>
+		<rom label="regulatory.db.p7s"/>
+	</content>
+
+	<config>
+
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+			<service name="Timer"/>
+			<service name="Report"/>
+			<service name="Platform"/>
+		</parent-provides>
+
+		<service name="Nic">
+			<default-policy> <child name="nic_uplink"/> </default-policy>
+		</service>
+
+		<start name="nic_uplink" caps="100">
+			<resource name="RAM" quantum="1M"/>
+			<provides>
+				<service name="Uplink"/>
+				<service name="Nic"/>
+			</provides>
+			<config/>
+			<route>
+				<service name="Timer"> <parent/> </service>
+				<service name="PD"> <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+				<service name="LOG"> <parent/> </service>
+				<service name="CPU"> <parent/> </service>
+			</route>
+		</start>
+
+		<start name="pc_wifi_drv" caps="300">
+			<resource name="RAM" quantum="32M"/>
+			<config ld_verbose="yes">
+				<report mac_address="true"/>
+				<vfs>
+					<dir name="dev">
+						<zero/> <null/> <log/> <wifi/>
+						<jitterentropy name="random"/>
+						<jitterentropy name="urandom"/>
+						<inline name="rtc">2018-01-01 00:01</inline>
+					</dir>
+				</vfs>
+				<libc stdout="/dev/null" stderr="/dev/null" rtc="/dev/rtc"/>
+			</config>
+			<route>
+				<service name="Uplink"> <child name="nic_uplink"/> </service>
+				<service name="Platform"> <parent label="wifi"/> </service>
+				<service name="ROM" label="wifi_config"> <parent/> </service>
+				<service name="Report"> <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+				<service name="Timer"> <parent/> </service>
+				<service name="Rtc"> <parent/> </service>
+				<service name="PD"> <parent/> </service>
+				<service name="RM"> <parent/> </service>
+				<service name="LOG"> <parent/> </service>
+				<service name="CPU"> <parent/> </service>
+			</route>
+		</start>
+
+	</config>
+
+</runtime>
