@@ -1,0 +1,107 @@
+create_boot_directory
+
+build {
+	core init timer lib/ld server/vfs lib/vfs_pipe test/vfs_pipe_close
+	server/dynamic_rom
+}
+
+install_config {
+<config verbose="no">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+
+	<start name="vfs">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<vfs>
+				<pipe> <fifo name="named"/> </pipe>
+			</vfs>
+			<default-policy root="/" writeable="yes"/>
+		</config>
+	</start>
+
+	<start name="writer">
+		<resource name="RAM" quantum="1M"/>
+		<binary name="test-vfs_pipe_close_writer"/>
+		<config> <vfs> <fs/> </vfs> </config>
+	</start>
+
+	<start name="dynamic_rom">
+		<resource name="RAM" quantum="2M"/>
+		<provides><service name="ROM"/></provides>
+		<config verbose="yes">
+			<rom name="config">
+				<inline description="idle">
+					<config>
+						<parent-provides>
+							<service name="ROM"/> <service name="PD"/>
+							<service name="RM"/>  <service name="CPU"/>
+							<service name="LOG"/> <service name="Timer"/>
+							<service name="File_system"/>
+						</parent-provides>
+						<default-route> <any-service> <parent/> </any-service> </default-route>
+						<default caps="100"/>
+					</config>
+				</inline>
+				<sleep milliseconds="1000" />
+				<inline description="reader alive">
+					<config>
+						<parent-provides>
+							<service name="ROM"/> <service name="PD"/>
+							<service name="RM"/>  <service name="CPU"/>
+							<service name="LOG"/> <service name="Timer"/>
+							<service name="File_system"/>
+						</parent-provides>
+						<default-route> <any-service> <parent/> </any-service> </default-route>
+						<default caps="100"/>
+						<start name="reader">
+							<resource name="RAM" quantum="2M"/>
+							<binary name="test-vfs_pipe_close_reader"/>
+							<config>
+								<libc stdout="/dev/log" />
+								<vfs>
+									<dir name="dev"> <log/> </dir>
+									<fs/>
+								</vfs>
+							</config>
+						</start>
+					</config>
+				</inline>
+				<sleep milliseconds="1000" />
+			</rom>
+		</config>
+	</start>
+
+	<start name="dynamic" caps="200">
+		<resource name="RAM" quantum="10M"/>
+		<binary name="init"/>
+		<route>
+			<service name="ROM" label="config"> <child name="dynamic_rom"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+</config>}
+
+build_boot_image [build_artifacts]
+
+run_genode_until forever

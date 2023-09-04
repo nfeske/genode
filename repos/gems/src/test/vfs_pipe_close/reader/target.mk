@@ -1,0 +1,5 @@
+TARGET := test-vfs_pipe_close_reader
+SRC_CC := main.cc
+LIBS   := base libc
+
+CC_CXX_WARN_STRICT :=
