@@ -1,6 +1,5 @@
 _/pkg/sculpt
 _/pkg/drivers_managed-pc
-_/pkg/wifi
 _/pkg/ipxe_nic_drv
 _/pkg/vbox6
 _/pkg/acpica
@@ -8,3 +7,4 @@ _/pkg/system_clock-pc
 _/pkg/mesa_gpu-intel
 _/pkg/file_vault
 _/pkg/bsd_audio_drv
+_/pkg/pc_wifi_uplink
