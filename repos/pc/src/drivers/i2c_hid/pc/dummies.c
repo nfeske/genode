@@ -136,20 +136,6 @@ int input_ff_event(struct input_dev * dev,unsigned int type,unsigned int code,in
 	return 0;
 }
 
-#include <linux/input/mt.h>
-
-void input_mt_destroy_slots(struct input_dev * dev)
-{
-	lx_emul_trace(__func__);
-}
-
-#include <linux/input/mt.h>
-
-void input_mt_release_slots(struct input_dev * dev)
-{
-	lx_emul_trace(__func__);
-}
-
 #include <linux/sysfs.h>
 
 const struct attribute_group dev_attr_physical_location_group = {};

@@ -269,6 +269,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_thermal_throttle_init_device6",
 	"__initcall_hid_init6",
 	"__initcall_hid_generic_init6",
+	"__initcall_mt_driver_init6",
 	"__initcall_i2c_hid_acpi_driver_init6",
 	"__initcall_intel_pstate_init6",
 	"__initcall_wmi_bmof_driver_init6",
