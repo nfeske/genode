@@ -625,6 +625,12 @@ Platform::Platform()
 		}
 	}
 
+	addr_t tmp_range = 0x10bf00000;
+	addr_t tmp_size  = 0x1000;
+
+	_io_mem_alloc.add_range(tmp_range, tmp_size);
+	ram_alloc().remove_range(tmp_range, tmp_size);
+
 	/*
 	 * From now on, it is save to use the core allocators...
 	 */
