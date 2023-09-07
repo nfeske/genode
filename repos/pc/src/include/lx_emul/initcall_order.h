@@ -1,7 +1,7 @@
 /*
  * \brief  Array defining order of Linux Kernel initcalls
  * \author Automatically generated file - do no edit
- * \date   2023-06-12
+ * \date   2023-09-07
  */
 
 #pragma once
@@ -26,11 +26,9 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_init_mmap_min_addr0",
 	"__initcall_pci_realloc_setup_params0",
 	"__initcall_e820__register_nvs_regions1",
-	"__initcall_cpufreq_register_tsc_scaling1",
 	"__initcall_reboot_init1",
 	"__initcall_wq_sysfs_init1",
 	"__initcall_ksysfs_init1",
-	"__initcall_schedutil_gov_init1",
 	"__initcall_rcu_set_runtime_mode1",
 	"__initcall_init_jiffies_clocksource1",
 	"__initcall_init_script_binfmt1",
@@ -38,8 +36,6 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_pinctrl_init1",
 	"__initcall_gpiolib_dev_init1",
 	"__initcall_iommu_init1",
-	"__initcall_cpufreq_core_init1",
-	"__initcall_cpufreq_gov_performance_init1",
 	"__initcall_cpuidle_init1",
 	"__initcall_sock_init1",
 	"__initcall_net_inuse_init1",
@@ -66,7 +62,6 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_i2c_init2",
 	"__initcall_thermal_init2",
 	"__initcall_init_menu2",
-	"__initcall_pcc_init2",
 	"__initcall_amd_postcore_init2",
 	"__initcall_kobject_uevent_init2",
 	"__initcall_bts_init3",
@@ -115,6 +110,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_usb_init4",
 	"__initcall_serio_init4",
 	"__initcall_input_init4",
+	"__initcall_dw_i2c_init_driver4",
 	"__initcall_power_supply_class_init4",
 	"__initcall_proto_init4",
 	"__initcall_net_dev_init4",
@@ -260,9 +256,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_xhci_pci_init6",
 	"__initcall_i8042_init6",
 	"__initcall_serport_init6",
-	"__initcall_input_leds_init6",
 	"__initcall_evdev_init6",
-	"__initcall_evbug_init6",
 	"__initcall_atkbd_init6",
 	"__initcall_psmouse_init6",
 	"__initcall_pkg_temp_thermal_init6",
@@ -271,7 +265,6 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_hid_generic_init6",
 	"__initcall_mt_driver_init6",
 	"__initcall_i2c_hid_acpi_driver_init6",
-	"__initcall_intel_pstate_init6",
 	"__initcall_wmi_bmof_driver_init6",
 	"__initcall_sock_diag_init6",
 	"__initcall_packet_init6",
@@ -308,6 +301,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_deferred_probe_initcall7",
 	"__initcall_regulatory_init_db7",
 	"__initcall_pci_mmcfg_late_insert_resources7",
+	"__initcall_acpi_gpio_handle_deferred_request_irqs7s",
 	"__initcall_clk_disable_unused7s",
 	"__initcall_con_initcon",
 	"__initcall_end",
