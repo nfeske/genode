@@ -84,8 +84,8 @@ int acpi_dev_gpio_irq_wake_get_by(struct acpi_device *adev, const char *name, in
 
 	/* most interesting part happens in gpiod_to_irq(desc) */
 	chip = gpiochip_find("INT34C5:00", find_match_name);
-	desc = gpiochip_get_desc(chip , 266); /* Fujitsu U7411 */
-//	desc = gpiochip_get_desc(chip ,   3); /* Framework */
+//	desc = gpiochip_get_desc(chip , 266); /* Fujitsu U7411 */
+	desc = gpiochip_get_desc(chip ,   3); /* Framework */
 	irq  = gpiod_to_irq(desc);
 
 	snprintf(label, sizeof(label), "GpioInt() %d", index);
