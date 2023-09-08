@@ -2194,6 +2194,7 @@ void Sculpt::Main::_generate_event_filter_config(Xml_generator &xml)
 
 						xml.node("button-scroll", [&] () {
 							gen_input("ps2");
+							gen_input("touchpad");
 
 							xml.node("vertical", [&] () {
 								xml.attribute("button", "BTN_MIDDLE");
@@ -2253,6 +2254,7 @@ void Sculpt::Main::_generate_event_filter_config(Xml_generator &xml)
 	gen_policy("ps2");
 	gen_policy("usb");
 	gen_policy("touch");
+	gen_policy("touchpad");
 	gen_policy("sdl");
 }
 

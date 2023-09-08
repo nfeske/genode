@@ -11,6 +11,7 @@
 					<accelerate max="50" sensitivity_percent="1000" curve="127">
 						<button-scroll>
 							<input name="ps2"/>
+							<input name="touchpad"/>
 							<vertical   button="BTN_MIDDLE" speed_percent="-10"/>
 							<horizontal button="BTN_MIDDLE" speed_percent="-10"/>
 						</button-scroll>
@@ -37,4 +38,5 @@
 	</output>
 	<policy label="ps2" input="ps2"/>
 	<policy label="usb" input="usb"/>
+	<policy label="touchpad" input="touchpad"/>
 </config>
