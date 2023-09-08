@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-03-23
+ * \date   2023-09-08
  */
 
 #include <lx_emul.h>
@@ -463,14 +463,6 @@ int get_option(char ** str,int * pint)
 }
 
 
-#include <linux/kernel.h>
-
-char * get_options(const char * str,int nints,int * ints)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/file.h>
 
 int get_unused_fd_flags(unsigned flags)
@@ -514,6 +506,46 @@ int gnet_stats_copy_basic(struct gnet_dump * d,struct gnet_stats_basic_sync __pe
 #include <net/gen_stats.h>
 
 int gnet_stats_copy_queue(struct gnet_dump * d,struct gnet_stats_queue __percpu * cpu_q,struct gnet_stats_queue * q,__u32 qlen)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <asm-generic/gpio.h>
+
+void gpio_free(unsigned gpio)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <asm-generic/gpio.h>
+
+int gpio_request_one(unsigned gpio,unsigned long flags,const char * label)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * gpio_to_desc(unsigned gpio)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+int gpiod_get_raw_value(const struct gpio_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_set_raw_value(struct gpio_desc * desc,int value)
 {
 	lx_emul_trace_and_stop(__func__);
 }

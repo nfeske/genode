@@ -531,3 +531,91 @@ int pcie_capability_clear_and_set_word(struct pci_dev *dev, int pos,
 	lx_emul_trace_and_stop(__func__);
 	return 0;
 }
+
+
+#include <linux/leds.h>
+
+int led_trigger_register(struct led_trigger * trig)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern void ieee80211_alloc_led_names(struct ieee80211_local * local);
+void ieee80211_alloc_led_names(struct ieee80211_local * local)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void ieee80211_led_assoc(struct ieee80211_local * local,bool associated);
+void ieee80211_led_assoc(struct ieee80211_local * local,bool associated)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void ieee80211_led_init(struct ieee80211_local * local);
+void ieee80211_led_init(struct ieee80211_local * local)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void ieee80211_led_radio(struct ieee80211_local * local,bool enabled);
+void ieee80211_led_radio(struct ieee80211_local * local,bool enabled)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void ieee80211_mod_tpt_led_trig(struct ieee80211_local * local,unsigned int types_on,unsigned int types_off);
+void ieee80211_mod_tpt_led_trig(struct ieee80211_local * local,unsigned int types_on,unsigned int types_off)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <../drivers/net/wireless/intel/iwlwifi/mvm/mvm.h>
+
+//extern int iwl_mvm_leds_init(struct iwl_mvm * mvm);
+//int iwl_mvm_leds_init(struct iwl_mvm * mvm)
+//{
+//	lx_emul_trace(__func__);
+//	return 0;
+//}
+
+
+//extern void iwl_mvm_leds_sync(struct iwl_mvm * mvm);
+//void iwl_mvm_leds_sync(struct iwl_mvm * mvm)
+//{
+//	lx_emul_trace(__func__);
+//}
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_bind_pins(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_init_done(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/property.h>
+
+int software_node_notify(struct device * dev,unsigned long action)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
