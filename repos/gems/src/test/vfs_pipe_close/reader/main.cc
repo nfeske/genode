@@ -44,12 +44,6 @@ struct Reader::Main
 		FD_SET(fd, &read_fds);
 
 		while (1) {
-			log("calling select");
-
-			int const select_res = select(fd + 1, &read_fds, NULL, NULL, NULL);
-
-			log("select returned ", select_res);
-
 			char read_buf[1024] { };
 
 			log("read from fd ", fd);
