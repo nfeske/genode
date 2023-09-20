@@ -27,14 +27,21 @@ namespace Dialog {
 
 struct Dialog::Toggle_button : Widget<Button>
 {
-	void view(Scope<Button> &s, bool selected) const
+	template <typename FN>
+	void view(Scope<Button> &s, bool selected, FN const &fn) const
 	{
 		bool const hovered = (s.hovered() && (!s.dragged() || selected));
 
 		if (selected) s.attribute("selected", "yes");
 		if (hovered)  s.attribute("hovered",  "yes");
 
-		s.sub_scope<Dialog::Label>(s.id.value);
+		fn(s);
+	}
+
+	void view(Scope<Button> &s, bool selected) const
+	{
+		view(s, selected, [&] (Scope<Button> &s) {
+			s.sub_scope<Dialog::Label>(s.id.value); });
 	}
 
 	template <typename FN>
