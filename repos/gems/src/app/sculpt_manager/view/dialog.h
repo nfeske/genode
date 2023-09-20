@@ -33,6 +33,7 @@ namespace Dialog {
 	struct Titled_frame;
 	struct Pin_button;
 	struct Pin_row;
+	struct Doublechecked_action_button;
 	template <typename> struct Radio_select_button;
 }
 
@@ -308,6 +309,51 @@ struct Dialog::Pin_row : Widget<Hbox>
 	{
 		for (auto &button : _buttons)
 			button.propagate(at, [&] { fn(button.id.value); });
+	}
+};
+
+
+struct Dialog::Doublechecked_action_button
+{
+	bool selected  = false;
+	bool confirmed = false;
+
+	Hosted<Vbox, Toggle_button>          _operation;
+	Hosted<Vbox, Deferred_action_button> _confirm_or_cancel;
+
+	Doublechecked_action_button(Id::Value const &id_prefix)
+	:
+		_operation        (Id { Id::Value { id_prefix, " op" } }),
+		_confirm_or_cancel(Id { Id::Value { id_prefix, " confirm" } })
+	{ }
+
+	void reset() { selected = false, confirmed = false; }
+
+	template <typename TEXT>
+	void view(Scope<Vbox> &s, TEXT const &text) const
+	{
+		s.widget(_operation, selected, [&] (Scope<Button> &s) {
+			s.sub_scope<Dialog::Label>(text); });
+
+		if (selected)
+			s.widget(_confirm_or_cancel, [&] (auto &s) {
+				s.template sub_scope<Dialog::Label>(confirmed ? " Cancel "
+				                                              : " Confirm "); });
+	}
+
+	void click(Clicked_at const &at)
+	{
+		_operation.propagate(at, [&] {
+			if (!confirmed)
+				selected = !selected; });
+
+		_confirm_or_cancel.propagate(at);
+	}
+
+	template <typename FN>
+	void clack(Clacked_at const &at, FN const &activate_fn)
+	{
+		_confirm_or_cancel.propagate(at, activate_fn);
 	}
 };
 

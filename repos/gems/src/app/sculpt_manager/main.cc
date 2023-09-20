@@ -586,7 +586,7 @@ struct Sculpt::Main : Input_event_handler,
 	void _generate_dialog()
 	{
 		_diag_dialog.refresh();
-		_graph_menu_view.generate();
+		_graph_view.refresh();
 
 		if (_system_visible)
 			_system_menu_view.generate();
@@ -648,7 +648,7 @@ struct Sculpt::Main : Input_event_handler,
 	{
 		_runtime_config_rom.update();
 		_cached_runtime_config.update_from_xml(_runtime_config_rom.xml());
-		_graph_menu_view.generate();
+		_graph_view.refresh();
 
 		if (_selected_tab == Panel_dialog::Tab::FILES)
 			_file_browser_menu_view.generate();
@@ -709,24 +709,17 @@ struct Sculpt::Main : Input_event_handler,
 		};
 
 		/* remove popup dialog when clicking somewhere outside */
-		if (click_outside_popup() && _popup.state == Popup::VISIBLE
-		 && !_graph.add_button_hovered()) {
+		if (click_outside_popup() && _popup.state == Popup::VISIBLE) {
 
 			_popup.state = Popup::OFF;
 			_popup_dialog.reset();
 			discard_construction();
 
 			/* de-select '+' button */
-			_graph_menu_view.generate();
+			_graph_view.refresh();
 
 			/* remove popup window from window layout */
 			_handle_window_layout();
-		}
-
-		else if (_graph_menu_view.hovered(seq)) {
-			_graph.click(*this);
-			_graph_menu_view.generate();
-			_clicked_seq_number.destruct();
 		}
 		else if (_popup_menu_view.hovered(seq)) {
 			_popup_dialog.click(*this);
@@ -762,12 +755,7 @@ struct Sculpt::Main : Input_event_handler,
 
 		Input::Seq_number const seq = *_clacked_seq_number;
 
-		if (_graph_menu_view.hovered(seq)) {
-			_graph.clack(*this, _storage);
-			_graph_menu_view.generate();
-			_clacked_seq_number.destruct();
-		}
-		else if (_system_menu_view.hovered(seq)) {
+		if (_system_menu_view.hovered(seq)) {
 			_system_dialog.clack();
 			_system_menu_view.generate();
 			_clacked_seq_number.destruct();
@@ -947,7 +935,7 @@ struct Sculpt::Main : Input_event_handler,
 		_popup_menu_view.generate();
 		_popup.anchor = anchor;
 		_popup.toggle();
-		_graph_menu_view.generate();
+		_graph_view.refresh();
 		_handle_window_layout();
 	}
 
@@ -1271,7 +1259,7 @@ struct Sculpt::Main : Input_event_handler,
 		_handle_window_layout();
 
 		/* reset state of the '+' button */
-		_graph_menu_view.generate();
+		_graph_view.refresh();
 	}
 
 	/*
@@ -1439,9 +1427,40 @@ struct Sculpt::Main : Input_event_handler,
 	               _storage._sculpt_partition, _storage._ram_fs_state,
 	               _popup.state, _deploy._children };
 
-	Menu_view _graph_menu_view { _env, _child_states, _graph, "runtime_view",
-	                             Ram_quota{8*1024*1024}, Cap_quota{200},
-	                             "runtime_dialog", "runtime_view_hover", *this };
+	struct Graph_dialog : Dialog::Top_level_dialog
+	{
+		Graph                 &_graph;
+		Graph::Action         &_action;
+		Ram_fs_dialog::Action &_ram_fs_action;
+
+		Graph_dialog(Graph &graph, Graph::Action &action, Ram_fs_dialog::Action &ram_fs_action)
+		:
+			Top_level_dialog("runtime"),
+			_graph(graph), _action(action), _ram_fs_action(ram_fs_action)
+		{ }
+
+		void view(Scope<> &s) const override
+		{
+//			// deprecated, apply hover state, remove after transition
+//			Graph_dialog &non_const = *const_cast<Graph_dialog *>(this);
+//			non_const._graph.hover(s.hover._location);
+
+			s.sub_scope<Depgraph>([&] (Scope<Depgraph> &s) {
+				_graph.view(s); });
+		}
+
+		void click(Clicked_at const &at) override { _graph.click(at, _action); }
+		void clack(Clacked_at const &at) override { _graph.clack(at, _action, _ram_fs_action); }
+		void drag (Dragged_at const &)   override { }
+
+	} _graph_dialog { _graph, *this, _storage };
+
+	Dialog::Distant_runtime::View
+		_graph_view { _dialog_runtime, _graph_dialog,
+		            { .opaque      = false,
+		              .background  = { },
+		              .initial_ram = { 8*1024*1024 } } };
+
 	Main(Env &env) : _env(env)
 	{
 		_manual_deploy_rom.sigh(_manual_deploy_handler);
@@ -2044,7 +2063,7 @@ void Sculpt::Main::_handle_runtime_state()
 
 	if (regenerate_dialog) {
 		_generate_dialog();
-		_graph_menu_view.generate();
+		_graph_view.refresh();
 	}
 
 	if (reconfigure_runtime)
@@ -2099,9 +2118,6 @@ void Sculpt::Main::_generate_runtime_config(Xml_generator &xml) const
 		xml.attribute("width",  _affinity_space.width());
 		xml.attribute("height", _affinity_space.height());
 	});
-
-	xml.node("start", [&] () {
-		gen_runtime_view_start_content(xml, _graph_menu_view._child_state, _font_size_px); });
 
 	_dialog_runtime.gen_start_nodes(xml);
 	_settings_menu_view.gen_start_node(xml);

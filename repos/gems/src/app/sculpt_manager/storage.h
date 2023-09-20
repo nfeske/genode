@@ -27,7 +27,7 @@
 namespace Sculpt { struct Storage; }
 
 
-struct Sculpt::Storage : Storage_dialog::Action, Ram_fs_dialog::Action
+struct Sculpt::Storage : Storage_device_dialog::Action, Ram_fs_dialog::Action
 {
 	Env &_env;
 
