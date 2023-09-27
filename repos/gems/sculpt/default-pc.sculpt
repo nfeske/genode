@@ -17,4 +17,4 @@ depot: ssumpf skalk nfeske_test
 presets: empty nano3d window_manager falkon_web_browser
 
 build: app/sculpt_manager server/nitpicker
-build: core lib/ld
+build: core lib/ld app/menu_view
