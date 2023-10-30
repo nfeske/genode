@@ -462,7 +462,7 @@ struct Sculpt::Main : Input_event_handler,
 				_presets.update_from_xml(dir);   /* iterate over <file> nodes */
 		});
 
-		_popup_menu_view.generate();
+		_popup_dialog.refresh();
 		_deploy._handle_managed_deploy();
 	}
 
@@ -675,17 +675,10 @@ struct Sculpt::Main : Input_event_handler,
 		Input::Seq_number const seq = *_clicked_seq_number;
 
 		/* used to detect clicks outside the popup dialog (for closing it) */
-		bool       popup_dialog_clicked = false;
 		bool const popup_opened = (_popup_opened_seq_number.value == seq.value);
 		bool       click_consumed = false;
 
-		if (_popup_menu_view.hovered(seq)) {
-			_popup_dialog.click(*this);
-			click_consumed = true;
-			_popup_menu_view.generate();
-			popup_dialog_clicked = true;
-		}
-		else if (_settings_menu_view.hovered(seq)) {
+		if (_settings_menu_view.hovered(seq)) {
 			_settings_dialog.click(*this);
 			click_consumed = true;
 			_settings_menu_view.generate();
@@ -707,7 +700,7 @@ struct Sculpt::Main : Input_event_handler,
 		}
 
 		/* remove popup dialog when clicking somewhere outside */
-		if (!popup_dialog_clicked && !_popup_menu_view._hovered && !popup_opened) {
+		if (!_popup_dialog.hovered() && !popup_opened) {
 			if (_popup.state == Popup::VISIBLE) {
 				_close_popup_dialog();
 				discard_construction();
@@ -728,10 +721,6 @@ struct Sculpt::Main : Input_event_handler,
 		if (_system_menu_view.hovered(seq)) {
 			_system_dialog.clack();
 			_system_menu_view.generate();
-			_clacked_seq_number.destruct();
-		}
-		else if (_popup_menu_view.hovered(seq)) {
-			_popup_dialog.clack(*this);
 			_clacked_seq_number.destruct();
 		}
 	}
@@ -912,7 +901,7 @@ struct Sculpt::Main : Input_event_handler,
 		if (_clicked_seq_number.constructed())
 			_popup_opened_seq_number = *_clicked_seq_number;
 
-		_popup_menu_view.generate();
+		_popup_dialog.refresh();
 		_popup.anchor = anchor;
 		_popup.state = Popup::VISIBLE;
 		_graph_view.refresh();
@@ -1236,7 +1225,7 @@ struct Sculpt::Main : Input_event_handler,
 		/* close popup menu */
 		_popup.state = Popup::OFF;
 		_popup_dialog.reset();
-		_popup_menu_view.generate();
+		_popup_dialog.refresh();
 
 		/* remove popup window from window layout */
 		_handle_window_layout();
@@ -1326,6 +1315,7 @@ struct Sculpt::Main : Input_event_handler,
 
 		using Distant_runtime::View::refresh;
 		using Distant_runtime::View::min_width;
+		using Distant_runtime::View::hovered;
 	};
 
 	Dialog_view<Panel_dialog> _panel_dialog { _dialog_runtime, *this, *this };
@@ -1347,14 +1337,11 @@ struct Sculpt::Main : Input_event_handler,
 
 	Dialog_view<Diag_dialog> _diag_dialog { _dialog_runtime, *this, _heap };
 
-	Popup_dialog _popup_dialog { _env, *this, _launchers,
-	                             _network._nic_state, _network._nic_target,
-	                             _runtime_state, _cached_runtime_config,
-	                             _download_queue, _scan_rom, *this, *this };
-
-	Menu_view _popup_menu_view { _env, _child_states, _popup_dialog, "popup_view",
-	                             Ram_quota{4*1024*1024}, Cap_quota{150},
-	                             "popup_dialog", "popup_view_hover", *this };
+	Dialog_view<Popup_dialog> _popup_dialog { _dialog_runtime, _env, *this, *this,
+	                                          _launchers, _network._nic_state,
+	                                          _network._nic_target, _runtime_state,
+	                                          _cached_runtime_config, _download_queue,
+	                                          _scan_rom, *this, *this };
 
 	File_browser_dialog _file_browser_dialog { _cached_runtime_config, _file_browser_state };
 
@@ -1365,7 +1352,7 @@ struct Sculpt::Main : Input_event_handler,
 	/**
 	 * Popup_dialog::Refresh interface
 	 */
-	void refresh_popup_dialog() override { _popup_menu_view.generate(); }
+	void refresh_popup_dialog() override { _popup_dialog.refresh(); }
 
 	Managed_config<Main> _fb_drv_config {
 		_env, "config", "fb_drv", *this, &Main::_handle_fb_drv_config };
@@ -1412,27 +1399,21 @@ struct Sculpt::Main : Input_event_handler,
 
 	struct Graph_dialog : Dialog::Top_level_dialog
 	{
-		Graph                 &_graph;
-		Graph::Action         &_action;
-		Ram_fs_dialog::Action &_ram_fs_action;
+		Main &_main;
 
-		Graph_dialog(Graph &graph, Graph::Action &action, Ram_fs_dialog::Action &ram_fs_action)
-		:
-			Top_level_dialog("runtime"),
-			_graph(graph), _action(action), _ram_fs_action(ram_fs_action)
-		{ }
+		Graph_dialog(Main &main) : Top_level_dialog("runtime"), _main(main) { }
 
 		void view(Scope<> &s) const override
 		{
 			s.sub_scope<Depgraph>([&] (Scope<Depgraph> &s) {
-				_graph.view(s); });
+				_main._graph.view(s); });
 		}
 
-		void click(Clicked_at const &at) override { _graph.click(at, _action); }
-		void clack(Clacked_at const &at) override { _graph.clack(at, _action, _ram_fs_action); }
+		void click(Clicked_at const &at) override { _main._graph.click(at, _main); }
+		void clack(Clacked_at const &at) override { _main._graph.clack(at, _main, _main._storage); }
 		void drag (Dragged_at const &)   override { }
 
-	} _graph_dialog { _graph, *this, _storage };
+	} _graph_dialog { *this };
 
 	Dialog::Distant_runtime::View
 		_graph_view { _dialog_runtime, _graph_dialog,
@@ -2101,7 +2082,6 @@ void Sculpt::Main::_generate_runtime_config(Xml_generator &xml) const
 	_settings_menu_view.gen_start_node(xml);
 	_system_menu_view.gen_start_node(xml);
 	_network_menu_view.gen_start_node(xml);
-	_popup_menu_view.gen_start_node(xml);
 	_file_browser_menu_view.gen_start_node(xml);
 
 	_storage.gen_runtime_start_nodes(xml);

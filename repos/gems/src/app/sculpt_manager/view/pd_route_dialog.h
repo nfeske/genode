@@ -1,11 +1,11 @@
 /*
  * \brief  PD/CPU route assignment dialog
- * \author Alexander Boettcher
- * \date   2021-02-26
+ * \author Norman Feske
+ * \date   2023-10-30
  */
 
 /*
- * Copyright (C) 2021 Genode Labs GmbH
+ * Copyright (C) 2023 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -14,12 +14,7 @@
 #ifndef _VIEW__PD_ROUTE_DIALOG_H_
 #define _VIEW__PD_ROUTE_DIALOG_H_
 
-/* Genode includes */
-#include <os/reporter.h>
-#include <depot/archive.h>
-
 /* local includes */
-#include <xml.h>
 #include <model/component.h>
 #include <model/runtime_config.h>
 #include <view/dialog.h>
@@ -27,12 +22,8 @@
 namespace Sculpt { struct Pd_route_dialog; }
 
 
-struct Sculpt::Pd_route_dialog : Noncopyable, Deprecated_dialog
+struct Sculpt::Pd_route_dialog : Widget<Vbox>
 {
-	Route          _route         { "<pd/>" };
-	Hoverable_item _route_item    { };
-	bool           _menu_selected { false };
-
 	Runtime_config const &_runtime_config;
 
 	Pd_route_dialog(Runtime_config const &runtime_config)
@@ -40,66 +31,67 @@ struct Sculpt::Pd_route_dialog : Noncopyable, Deprecated_dialog
 		_runtime_config(runtime_config)
 	{ }
 
-	Hover_result hover(Xml_node hover_node) override
+	void view(Scope<Vbox> &s, Id const &selected_route, Component const &component) const
 	{
-		Deprecated_dialog::Hover_result const hover_result = hover(hover_node);
-		return hover_result;
+		using Route_entry   = Hosted<Vbox, Menu_entry>;
+		using Service_entry = Hosted<Vbox, Menu_entry>;
+		using Info          = Component::Info;
+
+		Id const pd_route_id = s.id;
+
+		bool const selected = (selected_route == pd_route_id);
+
+		if (!selected) {
+			bool const defined = component.pd_route.selected_service.constructed();
+
+			Route_entry entry { pd_route_id };
+			s.widget(entry, defined,
+			         defined ? Info(component.pd_route.selected_service->info)
+			                 : Info("PD"));
+			return;
+		}
+
+		/*
+		 * List of routing options
+		 */
+		Route_entry back { Id { "back" } };
+		s.widget(back, true, "PD", "back");
+
+		unsigned count = 0;
+		_runtime_config.for_each_service([&] (Service const &service) {
+
+			Id const service_id { Id::Value("service.", count++) };
+
+			bool const service_selected =
+				component.pd_route.selected_service.constructed() &&
+				service_id.value == component.pd_route.selected_service_id;
+
+			if (service.type == Service::Type::PD) {
+				Service_entry entry { service_id };
+				s.widget(entry, service_selected, service.info);
+			}
+		});
 	}
 
-	template <typename... ARGS>
-	Hover_result hover(Xml_node hover, ARGS &&... args)
+	void click(Clicked_at const &at, Component &component)
 	{
-		Deprecated_dialog::Hover_result const hover_result = Deprecated_dialog::any_hover_changed(
-			_route_item.match(hover, args...));
+		Id const id = at.matching_id<Vbox, Menu_entry>();
 
-		return hover_result;
-	}
+		unsigned count = 0;
+		_runtime_config.for_each_service([&] (Service const &service) {
 
-	void click(Component &);
+			Id const service_id { Id::Value("service.", count++) };
 
-	void generate(Xml_generator &xml) const override;
-
-	void reset() override
-	{
-		if (_route.selected_service.constructed())
-			_route.selected_service.destruct();
-		_route_item._hovered = Hoverable_item::Id();
-		_menu_selected = false;
-	}
-
-	void click()
-	{
-		if (_route_item.hovered("pd_route"))
-			_menu_selected = true;
-	}
-
-	void _gen_route_entry(Xml_generator &xml,
-	                      Start_name const &name,
-	                      Start_name const &text,
-	                      bool selected, char const *style = "radio") const
-	{
-		gen_named_node(xml, "hbox", name, [&] () {
-
-			gen_named_node(xml, "float", "left", [&] () {
-				xml.attribute("west", "yes");
-
-				xml.node("hbox", [&] () {
-					gen_named_node(xml, "button", "button", [&] () {
-
-						if (selected)
-							xml.attribute("selected", "yes");
-
-						xml.attribute("style", style);
-						_route_item.gen_hovered_attr(xml, name);
-
-						xml.node("hbox", [&] () { });
-					});
-					gen_named_node(xml, "label", "name", [&] () {
-						xml.attribute("text", Path(" ", text)); });
-				});
-			});
-
-			gen_named_node(xml, "hbox", "right", [&] () { });
+			if (id == service_id) {
+				Route &route = component.pd_route;
+				if (route.selected_service_id == service_id.value) {
+					route.selected_service.destruct();
+					route.selected_service_id = { };
+				} else {
+					route.selected_service.construct(service);
+					route.selected_service_id = service_id.value;
+				}
+			}
 		});
 	}
 };

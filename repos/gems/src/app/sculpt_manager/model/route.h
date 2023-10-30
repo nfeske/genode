@@ -14,6 +14,7 @@
 #ifndef _MODEL__ROUTE_H_
 #define _MODEL__ROUTE_H_
 
+#include <xml.h>
 #include <types.h>
 #include <model/service.h>
 

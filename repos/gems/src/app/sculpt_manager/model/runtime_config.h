@@ -428,6 +428,15 @@ class Sculpt::Runtime_config
 			_components.for_each([&] (Component const &component) {
 				component.for_each_service(fn); });
 		}
+
+		unsigned num_service_options(Service::Type const type) const
+		{
+			unsigned count = 0;
+			for_each_service([&] (Service const &service) {
+				if (service.type == type)
+					count++; });
+			return count;
+		}
 };
 
 #endif /* _MODEL__RUNTIME_CONFIG_H_ */

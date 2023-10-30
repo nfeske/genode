@@ -17,50 +17,38 @@
 using namespace Sculpt;
 
 
-void Resource_dialog::_gen_affinity_section(Xml_generator &xml) const
+void Resource_dialog::Affinity_selector::view(Scope<Vbox> &s,
+                                              Affinity::Space    const &space,
+                                              Affinity::Location const &location) const
 {
-	unsigned const CELL_WIDTH_EX = 4;
+	auto view_hyperthread_index = [] (auto &s, unsigned index) {
+		s.template sub_scope<Dialog::Label>(String<8>(index), [&] (auto &s) {
+			s.attribute("font", "annotation/regular");
+			s.attribute("min_ex", 2); }); };
 
-	using Id = Hoverable_item::Id;
+	auto view_cell_hspacer = [] (auto &s) {
+		s.template sub_scope<Min_ex>(5); };
 
-	auto gen_small_label = [] (Xml_generator &xml, auto id, auto fn) {
-		gen_named_node(xml, "label", id, [&] () {
-			xml.attribute("font", "annotation/regular");
-			fn(); }); };
+	auto view_cell_cpu = [&] (auto &s, Id const &id, bool selected) {
+		s.template sub_scope<Vbox>(id, [&] (auto &s) {
+			view_cell_hspacer(s);
+			s.template sub_scope<Float>(id, [&] (auto &s) {
+				s.template sub_scope<Button>([&] (auto &s) {
+					s.attribute("style", "checkbox");
+					s.attribute("selected", selected);
+					s.template sub_scope<Hbox>(); }); }); }); };
 
-	auto gen_cell_hspacer = [&] (Xml_generator &xml, auto id) {
-		gen_small_label(xml, id, [&] () {
-			xml.attribute("min_ex", CELL_WIDTH_EX); }); };
+	auto view_cpu_index = [&] (auto &s, unsigned index) {
+		s.template sub_scope<Vbox>([&] (auto &s) {
+			s.template sub_scope<Annotation>(String<8>(index));
+			view_cell_hspacer(s); }); };
 
-	auto gen_cell_cpu = [&] (Xml_generator &xml, auto name, bool selected)
-	{
-		gen_named_node(xml, "vbox",  name, [&] () {
+	auto view_leftaligned = [] (auto &s, auto text) {
+		s.template sub_scope<Float>([&] (auto &s) {
+			s.attribute("west", "yes");
+			s.template sub_scope<Annotation>(text); }); };
 
-			gen_named_node(xml, "button", name, [&] () {
-				xml.attribute("style", "checkbox");
-				_space_item.gen_hovered_attr(xml, name);
-
-				if (selected)
-					xml.attribute("selected", "yes");
-
-				xml.node("hbox", [&] () { });
-			});
-			gen_cell_hspacer(xml, "below");
-		});
-	};
-
-	auto gen_cell_number = [&] (Xml_generator &xml, Id n)
-	{
-		gen_named_node(xml, "vbox", n, [&] () {
-			gen_cell_hspacer(xml, "above");
-			gen_named_node(xml, "float", "number", [&] () {
-				gen_small_label(xml, "number", [&] () {
-					xml.attribute("text", n); }); });
-			gen_cell_hspacer(xml, "below");
-		});
-	};
-
-	auto cpu_selected = [] (Affinity::Location location, unsigned x, unsigned y)
+	auto selected = [] (Affinity::Location location, unsigned x, unsigned y)
 	{
 		return (unsigned(location.xpos()) <= x)
 		    && (x < location.xpos() + location.width())
@@ -68,223 +56,118 @@ void Resource_dialog::_gen_affinity_section(Xml_generator &xml) const
 		    && (y < location.ypos() + location.height());
 	};
 
-	_gen_dialog_section(xml, "affinity", "Affinity", [&] () {
+	bool const have_hyperthreads = (space.height() > 1);
 
-		gen_named_node(xml, "vbox", "selection", [&] () {
+	s.sub_scope<Hbox>([&] (Scope<Vbox, Hbox> &s) {
+		s.sub_scope<Vbox>([&] (Scope<Vbox, Hbox, Vbox> &s) {
 
-			bool const have_hyperthreads = (_space.height() > 1);
+			for (unsigned y = 0; y < space.height(); y++) {
+				s.sub_scope<Hbox>(Id { { y } }, [&] (Scope<Vbox, Hbox, Vbox, Hbox> &s) {
+					for (unsigned x = 0; x < space.width(); x++)
+						view_cell_cpu(s, Id { Id::Value(x) }, selected(location, x, y));
 
-			gen_named_node(xml, "hbox", "labeledcores", [&] () {
-				gen_named_node(xml, "vbox", "cores", [&] () {
-
-					for (unsigned y = 0; y < _space.height(); y++) {
-
-						gen_named_node(xml, "hbox", Id("row", y), [&] () {
-
-							for (unsigned x = 0; x < _space.width(); x++)
-								gen_cell_cpu(xml, _cpu_id(x, y),
-								             cpu_selected(_location, x, y));
-
-							if (have_hyperthreads)
-								gen_named_node(xml, "float", "number", [&] () {
-									gen_small_label(xml, "number", [&] () {
-										xml.attribute("min_ex", 2);
-										xml.attribute("text", y); }); });
-						});
-					}
+					if (have_hyperthreads)
+						s.sub_scope<Float>([&] (Scope<Vbox, Hbox, Vbox, Hbox, Float> &s) {
+							view_hyperthread_index(s, y ); });
 				});
-				if (have_hyperthreads) {
-					gen_named_node(xml, "float", "hyperthreadslabel", [&] () {
-						xml.node("vbox", [&] () {
+			}
+		});
 
-							unsigned line = 0;
+		if (have_hyperthreads)
+			s.sub_scope<Float>([&] (Scope<Vbox, Hbox, Float> &s) {
+				s.sub_scope<Vbox>([&] (Scope<Vbox, Hbox, Float, Vbox> &s) {
+					view_leftaligned(s, "Hyper");
+					view_leftaligned(s, "threads"); }); });
+	});
 
-							auto gen_leftaligned = [&] (auto text) {
-								gen_named_node(xml, "float", Id(line++), [&] () {
-									xml.attribute("west", "yes");
-									gen_small_label(xml, "label", [&] () {
-										xml.attribute("text", text); }); }); };
-
-							gen_leftaligned("Hyper");
-							gen_leftaligned("threads");
-						});
-					});
-				}
+	s.sub_scope<Float>([&] (Scope<Vbox, Float> &s) {
+		s.attribute("west", "yes");
+		s.sub_scope<Vbox>([&] (Scope<Vbox, Float, Vbox> &s) {
+			s.sub_scope<Hbox>([&] (Scope<Vbox, Float, Vbox, Hbox> &s) {
+				for (unsigned x = 0; x < space.width(); x++)
+					view_cpu_index(s, x);
 			});
-
-			gen_named_node(xml, "float", "corelabels", [&] () {
-				xml.attribute("west", "yes");
-				xml.node("vbox", [&] () {
-
-					xml.node("hbox", [&] () {
-						for (unsigned x = 0; x < _space.width(); x++)
-							gen_cell_number(xml, x); });
-
-					gen_small_label(xml, "cores", [&] () {
-						xml.attribute("text", "Cores"); });
-				});
-			});
+			s.sub_scope<Annotation>("Cores");
 		});
 	});
 }
 
 
-void Resource_dialog::_gen_priority_section(Xml_generator &xml) const
+void Resource_dialog::Affinity_selector::click(Clicked_at      const &at,
+                                               Affinity::Space const &space,
+                                               Affinity::Location    &location)
 {
-	_gen_dialog_section(xml, "priority", "Priority", [&] () {
+	Id const x_id = at.matching_id<Vbox, Hbox, Vbox, Hbox, Vbox>(),
+	         y_id = at.matching_id<Vbox, Hbox, Vbox, Hbox>();
 
-		gen_named_node(xml, "vbox", "selection", [&] () {
+	unsigned x = ~0, y = ~0;
 
-			auto gen_radiobutton = [&] (auto id, auto text)
-			{
-				gen_named_node(xml, "hbox", id, [&] () {
+	ascii_to(x_id.value.string(), x);
+	ascii_to(y_id.value.string(), y);
 
-					gen_named_node(xml, "float", "left", [&] () {
-						xml.attribute("west", "yes");
-
-						gen_named_node(xml, "hbox", id, [&] () {
-							gen_named_node(xml, "button", "button", [&] () {
-
-								xml.attribute("style", "radio");
-								_priority_item.gen_button_attr(xml, id);
-								xml.node("hbox", [&] () { });
-							});
-							gen_named_node(xml, "label", "name", [&] () {
-								xml.attribute("text", text);
-								xml.attribute("min_ex", 13);
-							});
-						});
-					});
-
-					gen_named_node(xml, "hbox", "right", [&] () { });
-				});
-			};
-
-			gen_radiobutton("driver",     "Driver");
-			gen_radiobutton("multimedia", "Multimedia");
-			gen_radiobutton("default",    "Default");
-			gen_radiobutton("background", "Background");
-		});
-
-		gen_named_node(xml, "hbox", "right", [&] () { });
-	});
-}
-
-
-void Resource_dialog::click(Component &component)
-{
-	if (component.affinity_space.total() > 1) {
-		Hoverable_item::Id const clicked_space = _space_item._hovered;
-		if (clicked_space.valid()) {
-			_click_space(component, clicked_space);
-			return;
-		}
-	}
-
-	Hoverable_item::Id const clicked_priority = _priority_item._hovered;
-	if (clicked_priority.valid()) {
-		_click_priority(component, clicked_priority);
+	if (x >= space.width() || y >= space.height())
 		return;
+
+	unsigned loc_x = location.xpos();
+	unsigned loc_y = location.ypos();
+	unsigned loc_w = location.width();
+	unsigned loc_h = location.height();
+
+	bool handled_x = false;
+	bool handled_y = false;
+
+	if (x < loc_x) {
+		loc_w += loc_x - x;
+		loc_x = x;
+		handled_x = true;
+	} else if (x >= loc_x + loc_w) {
+		loc_w = x - loc_x + 1;
+		handled_x = true;
 	}
 
-	if (_option_item.hovered("system_control")) {
-		_system_control = !_system_control;
-		component.system_control = _system_control;
+	if (y < loc_y) {
+		loc_h += loc_y - y;
+		loc_y = y;
+		handled_y = true;
+	} else if (y >= loc_y + loc_h) {
+		loc_h = y - loc_y + 1;
+		handled_y = true;
 	}
-}
 
+	if (handled_x && !handled_y) {
+		handled_y = true;
+	} else
+	if (handled_y && !handled_x) {
+		handled_x = true;
+	}
 
-void Resource_dialog::_click_space(Component &component, Hoverable_item::Id clicked_space)
-{
-	for (unsigned y = 0; y < _space.height(); y++) {
-		for (unsigned x = 0; x < _space.width(); x++) {
-			if (_cpu_id(x, y) != clicked_space)
-				continue;
-
-			unsigned loc_x = _location.xpos();
-			unsigned loc_y = _location.ypos();
-			unsigned loc_w = _location.width();
-			unsigned loc_h = _location.height();
-
-			bool handled_x = false;
-			bool handled_y = false;
-
-			if (x < loc_x) {
-				loc_w += loc_x - x;
+	if (!handled_x) {
+		if ((x - loc_x) < (loc_x + loc_w - x)) {
+			if (x - loc_x + 1 < loc_w) {
+				loc_w -= x - loc_x + 1;
+				loc_x = x + 1;
+			} else {
+				loc_w = loc_x + loc_w - x;
 				loc_x = x;
-				handled_x = true;
-			} else if (x >= loc_x + loc_w) {
-				loc_w = x - loc_x + 1;
-				handled_x = true;
 			}
-
-			if (y < loc_y) {
-				loc_h += loc_y - y;
-				loc_y = y;
-				handled_y = true;
-			} else if (y >= loc_y + loc_h) {
-				loc_h = y - loc_y + 1;
-				handled_y = true;
-			}
-
-			if (handled_x && !handled_y) {
-				handled_y = true;
-			} else
-			if (handled_y && !handled_x) {
-				handled_x = true;
-			}
-
-			if (!handled_x) {
-				if ((x - loc_x) < (loc_x + loc_w - x)) {
-					if (x - loc_x + 1 < loc_w) {
-						loc_w -= x - loc_x + 1;
-						loc_x = x + 1;
-					} else {
-						loc_w = loc_x + loc_w - x;
-						loc_x = x;
-					}
-				} else {
-					loc_w = x - loc_x;
-				}
-			}
-
-			if (!handled_y) {
-				if ((y - loc_y) < (loc_y + loc_h - y)) {
-					if (y - loc_y + 1 < loc_h) {
-						loc_h -= y - loc_y + 1;
-						loc_y = y + 1;
-					} else {
-						loc_h = loc_y + loc_h - y;
-						loc_y = y;
-					}
-				} else {
-					loc_h = y - loc_y;
-				}
-			}
-
-			_location = Affinity::Location(loc_x, loc_y,
-			                               loc_w, loc_h);
-
-			component.affinity_location = _location;
+		} else {
+			loc_w = x - loc_x;
 		}
 	}
-}
 
+	if (!handled_y) {
+		if ((y - loc_y) < (loc_y + loc_h - y)) {
+			if (y - loc_y + 1 < loc_h) {
+				loc_h -= y - loc_y + 1;
+				loc_y = y + 1;
+			} else {
+				loc_h = loc_y + loc_h - y;
+				loc_y = y;
+			}
+		} else {
+			loc_h = y - loc_y;
+		}
+	}
 
-void Resource_dialog::_click_priority(Component &component, Hoverable_item::Id priority)
-{
-	_priority_item.select(priority);
-
-	/* propagate priority change to component */
-	auto priority_value = [] (Hoverable_item::Id string)
-	{
-		if (string == "background") return Priority::BACKGROUND;
-		if (string == "default")    return Priority::DEFAULT;
-		if (string == "multimedia") return Priority::MULTIMEDIA;
-		if (string == "driver")     return Priority::DRIVER;
-
-		return Priority::BACKGROUND;
-	};
-
-	component.priority = priority_value(priority);
+	location = Affinity::Location(loc_x, loc_y, loc_w, loc_h);
 }

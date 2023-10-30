@@ -1,12 +1,11 @@
 /*
  * \brief  Resource assignment dialog
- * \author Alexander Boettcher
  * \author Norman Feske
- * \date   2020-07-22
+ * \date   2023-11-01
  */
 
 /*
- * Copyright (C) 2020-2021 Genode Labs GmbH
+ * Copyright (C) 2023 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -15,175 +14,109 @@
 #ifndef _VIEW__RESOURCE_DIALOG_H_
 #define _VIEW__RESOURCE_DIALOG_H_
 
-/* Genode includes */
-#include <os/reporter.h>
-#include <depot/archive.h>
-
 /* local includes */
-#include <xml.h>
 #include <model/component.h>
 #include <view/dialog.h>
-#include <view/selectable_item.h>
 
 namespace Sculpt { struct Resource_dialog; }
 
 
-struct Sculpt::Resource_dialog : Noncopyable, Deprecated_dialog
+struct Sculpt::Resource_dialog : Widget<Vbox>
 {
-	Affinity::Space const _space;
-	Affinity::Location    _location;
-	Hoverable_item        _space_item { };
-	Selectable_item       _priority_item { };
-	Hoverable_item        _option_item { };
-
-	bool _system_control = false;
-
-	static char const *_priority_id(Priority priority)
+	template <typename WIDGET>
+	struct Titled_widget : Widget<Left_floating_hbox>
 	{
-		switch (priority) {
-		case Priority::DRIVER:     return "driver";
-		case Priority::MULTIMEDIA: return "multimedia";
-		case Priority::BACKGROUND: return "background";
-		default:                   break;
-		};
-		return "default";
-	}
+		Hosted<Left_floating_hbox, Vbox, WIDGET> _hosted;
 
-	static Hoverable_item::Id _cpu_id(unsigned x, unsigned y)
-	{
-		return Hoverable_item::Id("cpu", x, "x", y);
-	}
+		Titled_widget(auto &&... args) : _hosted(Id { "hosted" }, args...) { }
 
-	Resource_dialog(Affinity::Space space, Affinity::Location location,
-	                Priority priority)
-	:
-		_space(space), _location(location)
-	{
-		_priority_item.select(_priority_id(priority));
-	}
+		void view(Scope<Left_floating_hbox> &s, auto const &text, auto &&... args) const
+		{
+			/* title */
+			s.sub_scope<Vbox>([&] (Scope<Left_floating_hbox, Vbox> &s) {
+				s.sub_scope<Top_left_floating_hbox>([&] (auto &s) {
 
-	void _gen_affinity_section(Xml_generator &) const;
-	void _gen_priority_section(Xml_generator &) const;
+					/*
+					 * The button is used to vertically align the "Priority"
+					 * label with the text of the first radio button.
+					 * The leading space is used to horizontally align
+					 * the label with the "Resource assignment ..." dialog
+					 * title.
+					 */
+					s.template sub_scope<Button>([&] (auto &s) {
+						s.attribute("style", "invisible");
+						s.sub_node("hbox", [&] () { }); });
 
-	Hover_result hover(Xml_node hover) override
-	{
-		return Deprecated_dialog::any_hover_changed(
-			_space_item.match(hover,
-			                  "vbox", "float", "hbox",        /* _gen_dialog_section */
-			                  "vbox", "hbox", "vbox", "hbox", /* _gen_affinity_section */
-			                  "vbox", "button", "name"        /* gen_cell_cpu */
-			),
-			_priority_item.match(hover,
-			                     "vbox", "float", "hbox",     /* _gen_dialog_section */
-			                     "vbox", "hbox", "float", "hbox", "name"),
-			_option_item.match(hover, "vbox", "hbox", "name")
-		);
-	}
-
-	void click(Component &);
-
-	void _click_space   (Component &, Hoverable_item::Id);
-	void _click_priority(Component &, Hoverable_item::Id);
-
-	template <typename FN>
-	void _gen_dialog_section(Xml_generator &xml, Hoverable_item::Id id,
-	                         char const *text, FN const &gen_content_fn) const
-	{
-		gen_named_node(xml, "float", id, [&] () {
-			xml.attribute("west", "yes");
-
-			xml.node("hbox", [&] () {
-
-				gen_named_node(xml, "vbox", "title", [&] () {
-					xml.node("float", [&] () {
-
-						xml.attribute("north", "yes");
-						xml.attribute("west",  "yes");
-
-						xml.node("hbox", [&] () {
-
-							/*
-							 * The button is used to vertically align the "Priority"
-							 * label with the text of the first radio button.
-							 * The leading space is used to horizontally align
-							 * the label with the "Resource assignment ..." dialog
-							 * title.
-							 */
-							gen_named_node(xml, "button", "spacer", [&] () {
-								xml.attribute("style", "invisible");
-								xml.node("hbox", [&] () { }); });
-
-							gen_named_node(xml, "label", "label", [&] () {
-								xml.attribute("text", String<32>(" ", text)); });
-						});
-					});
-
-					gen_named_node(xml, "label", "spacer", [&] () {
-						xml.attribute("min_ex", 11); });
+					s.template sub_scope<Dialog::Label>(String<32>(" ", text));
 				});
-
-				gen_content_fn();
-			});
-		});
-	}
-
-	void _gen_option(Xml_generator &xml, auto const &name, auto const &text, bool selected) const
-	{
-		gen_named_node(xml, "hbox", name, [&] () {
-
-			gen_named_node(xml, "float", "left", [&] () {
-				xml.attribute("west", "yes");
-
-				xml.node("hbox", [&] () {
-
-					/* align with the "Resource assignment ..." dialog */
-					gen_named_node(xml, "button", "left", [&] () {
-						xml.attribute("style", "invisible");
-						xml.node("hbox", [&] () { }); });
-
-					gen_named_node(xml, "button", "button", [&] () {
-
-						if (selected)
-							xml.attribute("selected", "yes");
-
-						xml.attribute("style", "checkbox");
-						_option_item.gen_hovered_attr(xml, name);
-						xml.node("hbox", [&] () { });
-					});
-					gen_named_node(xml, "label", "name", [&] () {
-						xml.attribute("text", Path(" ", text)); });
-				});
+				s.sub_scope<Min_ex>(11);
 			});
 
-			gen_named_node(xml, "hbox", "right", [&] () { });
-		});
+			s.sub_scope<Vbox>([&] (Scope<Left_floating_hbox, Vbox> &s) {
+				s.widget(_hosted, args...); });
+
+			s.sub_scope<Hbox>();
+		}
+
+		void click(auto &&... args) { _hosted.propagate(args...); }
+	};
+
+	struct Priority_selector : Widget<Vbox>
+	{
+		Hosted<Vbox, Radio_select_button<Priority>>
+			_buttons[4] { { Id { "Driver"     }, Priority::DRIVER     },
+			              { Id { "Multimedia" }, Priority::MULTIMEDIA },
+			              { Id { "Default"    }, Priority::DEFAULT    },
+			              { Id { "Background" }, Priority::BACKGROUND } };
+
+		void view(Scope<Vbox> &s, Priority const &priority) const
+		{
+			for (auto const &button : _buttons)
+				s.widget(button, priority);
+		}
+
+		void click(Clicked_at const &at, Priority &priority)
+		{
+			for (auto &button : _buttons)
+				button.propagate(at, [&] (Priority value) { priority = value; });
+		}
+	};
+
+	struct Affinity_selector : Widget<Vbox>
+	{
+		void view(Scope<Vbox> &, Affinity::Space const &, Affinity::Location const &) const;
+
+		void click(Clicked_at const &, Affinity::Space const &, Affinity::Location &);
+	};
+
+	Hosted<Vbox, Titled_widget<Affinity_selector>> _affinity { Id { "affinity" } };
+	Hosted<Vbox, Titled_widget<Priority_selector>> _priority { Id { "priority" } };
+	Hosted<Vbox, Menu_entry>                       _system   { Id { "system control" } };
+
+	void view(Scope<Vbox> &s, Component const &component) const
+	{
+		s.sub_scope<Small_vgap>();
+
+		if (component.affinity_space.total() > 1) {
+			s.widget(_affinity, "Affinity", component.affinity_space, component.affinity_location);
+			s.sub_scope<Small_vgap>();
+		}
+
+		s.widget(_priority, "Priority", component.priority);
+		s.sub_scope<Small_vgap>();
+
+		s.widget(_system, component.system_control, "System control", "checkbox");
 	}
 
-	void generate(Xml_generator &xml) const override
+	void click(Clicked_at const &at, Component &component)
 	{
-		auto gen_vspacer = [&] (auto id) {
-			gen_named_node(xml, "label", id, [&] () {
-				xml.attribute("text", "");
-				xml.attribute("font", "annotation/regular"); }); };
+		if (component.affinity_space.total() > 1)
+			_affinity.propagate(at, component.affinity_space, component.affinity_location);
 
-		xml.node("vbox", [&] () {
-			gen_vspacer("spacer1");
-			_gen_affinity_section(xml);
-			gen_vspacer("spacer2");
-			_gen_priority_section(xml);
-			gen_vspacer("spacer3");
-			_gen_option(xml, "system_control", "System control", _system_control);
-			gen_vspacer("spacer4");
-		});
-	}
+		_priority.propagate(at, component.priority),
 
-	void reset() override
-	{
-		_space_item._hovered = Hoverable_item::Id();
-		_priority_item.reset();
-		_location = Affinity::Location();
-		_system_control = false;
-		_option_item._hovered = Hoverable_item::Id();
+		_system.propagate(at, [&] {
+			component.system_control = !component.system_control; });
 	}
 };
 

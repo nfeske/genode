@@ -1,7 +1,7 @@
 /*
  * \brief  Debug options dialog
- * \author Christian Prochaska
- * \date   2022-09-06
+ * \author Norman Feske
+ * \date   2023-10-30
  */
 
 /*
@@ -15,92 +15,38 @@
 #define _VIEW__DEBUG_DIALOG_H_
 
 /* local includes */
-#include <xml.h>
 #include <model/component.h>
 #include <view/dialog.h>
 
 namespace Sculpt { struct Debug_dialog; }
 
 
-struct Sculpt::Debug_dialog : Noncopyable, Deprecated_dialog
+struct Sculpt::Debug_dialog : Widget<Vbox>
 {
-	bool _monitor = false;
-	bool _wait    = false;
-	bool _wx      = false;
+	Hosted<Vbox, Menu_entry> _monitor { Id { "monitor" } },
+	                         _wx      { Id { "wx"      } },
+	                         _wait    { Id { "wait"    } };
 
-	Hoverable_item _item { };
-
-	Hover_result hover(Xml_node hover) override
+	void click(Clicked_at const &at, Component &component)
 	{
-		return Deprecated_dialog::any_hover_changed(
-			_item.match(hover, "vbox", "hbox", "name"));
-	}
-
-	void click(Component &component)
-	{
-		Hoverable_item::Id const clicked = _item._hovered;
-
-		if (!clicked.valid())
-			return;
-
-		if (clicked == "monitor") _monitor = !_monitor;
-		if (clicked == "wx")      _wx      = !_wx;
-		if (clicked == "wait")    _wait    = !_wait;
+		_monitor.propagate(at, [&] { component.monitor = !component.monitor; });
+		_wx     .propagate(at, [&] { component.wx      = !component.wx;      });
+		_wait   .propagate(at, [&] { component.wait    = !component.wait;    });
 
 		/* "wx" depends on "monitor", "wait" depends on "wx" */
-		_wx   &= _monitor;
-		_wait &= _wx;
-
-		component.wx      = _wx;
-		component.monitor = _monitor;
-		component.wait    = _wait;
+		component.wx   &= component.monitor;
+		component.wait &= component.wx;
 	}
 
-	void _gen_checkbox(Xml_generator &xml, Start_name const &name,
-	                   Component::Info const &text, bool selected) const
+	void view(Scope<Vbox> &s, Component const &component) const
 	{
-		gen_named_node(xml, "hbox", name, [&] {
+		s.widget(_monitor, component.monitor, "Debug", "checkbox");
 
-			gen_named_node(xml, "float", "left", [&] {
-				xml.attribute("west", "yes");
+		if (component.monitor)
+			s.widget(_wx, component.wx, "Allow code patching", "checkbox");
 
-				xml.node("hbox", [&] {
-
-					gen_named_node(xml, "button", "button", [&] {
-
-						if (selected)
-							xml.attribute("selected", "yes");
-
-						xml.attribute("style", "checkbox");
-						_item.gen_hovered_attr(xml, name);
-						xml.node("hbox", [&] { });
-					});
-					gen_named_node(xml, "label", "name", [&] {
-						xml.attribute("text", Path(" ", text)); });
-				});
-			});
-
-			gen_named_node(xml, "hbox", "right", [&] { });
-		});
-	}
-
-	void generate(Xml_generator &xml) const override
-	{
-		xml.node("vbox", [&] {
-			_gen_checkbox(xml, "monitor", "Debug", _monitor);
-
-			if (_monitor)
-				_gen_checkbox(xml, "wx", "Allow code patching", _wx);
-
-			if (_wx)
-				_gen_checkbox(xml, "wait", "Wait for GDB", _wait);
-		});
-	}
-
-	void reset() override
-	{
-		_item._hovered = Hoverable_item::Id();
-		_monitor = _wait = _wx = false;
+		if (component.wx)
+			s.widget(_wait, component.wait, "Wait for GDB", "checkbox");
 	}
 };
 

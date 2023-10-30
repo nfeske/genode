@@ -254,6 +254,8 @@ class Dialog::Distant_runtime::View : private Views::Element
 		{ }
 
 		void refresh() { _refresh_handler.local_submit(); }
+
+		bool hovered() const { return _dialog_hovered; }
 };
 
 #endif /* _DIALOG__DISTANT_RUNTIME_H_ */
