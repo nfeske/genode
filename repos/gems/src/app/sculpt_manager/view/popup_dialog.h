@@ -122,17 +122,8 @@ struct Sculpt::Popup_dialog : Dialog::Top_level_dialog
 		{
 			bool const hovered = (s.hovered() && !s.dragged());
 
-			s.sub_scope<Float>([&] (Scope<Left_floating_hbox, Float> &s) {
-				s.sub_scope<Button>([&] (Scope<Left_floating_hbox, Float, Button> &s) {
-					s.attribute("style",    "back");
-					s.attribute("selected", "yes");
-					if (hovered)
-						s.attribute("hovered", "yes");
-
-					s.sub_scope<Hbox>();
-				});
-			});
-
+			s.sub_scope<Icon>("back", Icon::Attr { .hovered  = hovered,
+			                                       .selected = true });
 			s.sub_scope<Dialog::Label>(" ");
 			s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
 				s.attribute("font", "title/regular"); });

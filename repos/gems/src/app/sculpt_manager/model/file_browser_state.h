@@ -61,16 +61,14 @@ struct Sculpt::File_browser_state : Noncopyable
 			fn(query_result->xml());
 	}
 
-	using Index = Label;
-
 	template <typename FN>
-	void with_entry_at_index(Index index, FN const &fn) const
+	void with_entry_at_index(unsigned const index, FN const &fn) const
 	{
-		unsigned cnt = 0;
+		unsigned count = 0;
 		with_query_result([&] (Xml_node node) {
 			node.with_optional_sub_node("dir", [&] (Xml_node listing) {
 				listing.for_each_sub_node([&] (Xml_node entry) {
-					if (Index(cnt++) == index)
+					if (count++ == index)
 						fn(entry); }); }); });
 	}
 

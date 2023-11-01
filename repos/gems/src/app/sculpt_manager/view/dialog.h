@@ -33,6 +33,7 @@ namespace Dialog {
 	struct Button_vgap;
 	struct Centered_info_vbox;
 	struct Centered_dialog_vbox;
+	struct Icon;
 	struct Titled_frame;
 	struct Pin_button;
 	struct Pin_row;
@@ -236,6 +237,36 @@ struct Dialog::Centered_dialog_vbox : Sub_scope
 };
 
 
+struct Dialog::Icon : Sub_scope
+{
+	struct Attr { bool hovered, selected; };
+
+	/* used whenever the icon's hover sensitivity is larger than the icon */
+	static void view_sub_scope(auto &s, auto const &style, Attr attr)
+	{
+		s.node("float", [&] {
+			s.sub_node("button", [&] {
+				s.attribute("style", style);
+				if (attr.selected) s.attribute("selected", "yes");
+				if (attr.hovered)  s.attribute("hovered",  "yes");
+				s.sub_node("hbox", [&] { }); }); });
+	}
+
+	/* used when hovering responds only to the icon's boundaries */
+	static void view_sub_scope(auto &s, auto const &style, bool selected)
+	{
+		view_sub_scope(s, style, Attr { .hovered  = s.hovered(),
+		                                .selected = selected });
+	}
+
+	static void with_narrowed_at(auto const &at, auto const &fn)
+	{
+		with_narrowed_xml(at, "float", [&] (auto const &at) {
+			with_narrowed_xml(at, "button", fn); });
+	}
+};
+
+
 struct Dialog::Titled_frame : Widget<Frame>
 {
 	struct Attr { unsigned min_ex; };
@@ -271,16 +302,8 @@ struct Dialog::Radio_select_button : Widget<Left_floating_hbox>
 		bool const selected = (selected_value == value),
 		           hovered  = (s.hovered() && !s.dragged() && !selected);
 
-		s.sub_scope<Float>([&] (Scope<Left_floating_hbox, Float> &s) {
-			s.sub_scope<Button>([&] (Scope<Left_floating_hbox, Float, Button> &s) {
-				s.attribute("style", "radio");
-
-				if (selected) s.attribute("selected", "yes");
-				if (hovered)  s.attribute("hovered",  "yes");
-
-				s.sub_scope<Hbox>();
-			});
-		});
+		s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
+		                                        .selected = selected });
 		s.sub_scope<Dialog::Label>(String<100>(" ", text));
 		s.sub_scope<Button_vgap>();
 	}
@@ -356,17 +379,19 @@ struct Dialog::Menu_entry : Widget<Left_floating_hbox>
 	{
 		bool const hovered = (s.hovered() && !s.dragged());
 
-		s.sub_scope<Float>([&] (Scope<Left_floating_hbox, Float> &s) {
-			s.sub_scope<Button>([&] (Scope<Left_floating_hbox, Float, Button> &s) {
-				s.attribute("style", style);
+//		s.sub_scope<Float>([&] (Scope<Left_floating_hbox, Float> &s) {
+//			s.sub_scope<Button>([&] (Scope<Left_floating_hbox, Float, Button> &s) {
+//				s.attribute("style", style);
+//
+//				if (selected) s.attribute("selected", "yes");
+//				if (hovered)  s.attribute("hovered",  "yes");
+//
+//				s.sub_scope<Hbox>();
+//			});
+//		});
 
-				if (selected) s.attribute("selected", "yes");
-				if (hovered)  s.attribute("hovered",  "yes");
-
-				s.sub_scope<Hbox>();
-			});
-		});
-
+		s.sub_scope<Icon>(style, Icon::Attr { .hovered  = hovered,
+		                                      .selected = selected });
 		s.sub_scope<Dialog::Label>(String<100>(" ", text));
 		s.sub_scope<Button_vgap>();
 	}

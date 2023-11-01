@@ -651,7 +651,7 @@ struct Sculpt::Main : Input_event_handler,
 		_graph_view.refresh();
 
 		if (_selected_tab == Panel_dialog::Tab::FILES)
-			_file_browser_menu_view.generate();
+			_file_browser_dialog.refresh();
 	}
 
 
@@ -692,11 +692,6 @@ struct Sculpt::Main : Input_event_handler,
 			_network.dialog.click(_network);
 			click_consumed = true;
 			_network_menu_view.generate();
-		}
-		else if (_file_browser_menu_view.hovered(seq)) {
-			_file_browser_dialog.click(*this);
-			click_consumed = true;
-			_file_browser_menu_view.generate();
 		}
 
 		/* remove popup dialog when clicking somewhere outside */
@@ -982,7 +977,7 @@ struct Sculpt::Main : Input_event_handler,
 		_selected_tab = tab;
 
 		if (_selected_tab == Panel_dialog::Tab::FILES)
-			_file_browser_menu_view.generate();
+			_file_browser_dialog.refresh();
 
 		_refresh_panel_and_window_layout();
 	}
@@ -1078,7 +1073,7 @@ struct Sculpt::Main : Input_event_handler,
 	void _handle_fs_query_result()
 	{
 		_file_browser_state.update_query_results();
-		_file_browser_menu_view.generate();
+		_file_browser_dialog.refresh();
 	}
 
 	Signal_handler<Main> _editor_saved_handler {
@@ -1096,7 +1091,7 @@ struct Sculpt::Main : Input_event_handler,
 		_file_browser_state.last_saved_version = saved.attribute_value("version", 0U);
 
 		if (orig_modified != _file_browser_state.modified)
-			_file_browser_menu_view.generate();
+			_file_browser_dialog.refresh();
 	}
 
 	void _close_edited_file()
@@ -1137,7 +1132,7 @@ struct Sculpt::Main : Input_event_handler,
 
 		generate_runtime_config();
 
-		_file_browser_menu_view.generate();
+		_file_browser_dialog.refresh();
 	}
 
 	void browse_sub_directory(File_browser_state::Sub_dir const &sub_dir) override
@@ -1343,11 +1338,9 @@ struct Sculpt::Main : Input_event_handler,
 	                                          _cached_runtime_config, _download_queue,
 	                                          _scan_rom, *this, *this };
 
-	File_browser_dialog _file_browser_dialog { _cached_runtime_config, _file_browser_state };
-
-	Menu_view _file_browser_menu_view { _env, _child_states, _file_browser_dialog, "file_browser_view",
-	                                    Ram_quota{8*1024*1024}, Cap_quota{150},
-	                                    "file_browser_dialog", "file_browser_view_hover", *this };
+	Dialog_view<File_browser_dialog> _file_browser_dialog { _dialog_runtime,
+	                                                        _cached_runtime_config,
+	                                                        _file_browser_state, *this };
 
 	/**
 	 * Popup_dialog::Refresh interface
@@ -2082,7 +2075,7 @@ void Sculpt::Main::_generate_runtime_config(Xml_generator &xml) const
 	_settings_menu_view.gen_start_node(xml);
 	_system_menu_view.gen_start_node(xml);
 	_network_menu_view.gen_start_node(xml);
-	_file_browser_menu_view.gen_start_node(xml);
+//	_file_browser_menu_view.gen_start_node(xml);
 
 	_storage.gen_runtime_start_nodes(xml);
 	_file_browser_state.gen_start_nodes(xml);
