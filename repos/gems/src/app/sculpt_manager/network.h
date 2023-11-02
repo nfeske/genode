@@ -50,8 +50,13 @@ struct Sculpt::Network : Network_dialog::Action
 	Runtime_info const &_runtime_info;
 	Pci_info     const &_pci_info;
 
+	using Wlan_config_policy = Network_dialog::Wlan_config_policy;
+
 	Nic_target _nic_target { };
 	Nic_state  _nic_state  { };
+
+	Ap_selector::List_hovered _ap_list_hovered { };
+	Access_point::Bssid _selected_ap { };
 
 	Wpa_passphrase wpa_passphrase { };
 
@@ -100,8 +105,7 @@ struct Sculpt::Network : Network_dialog::Action
 	Signal_handler<Network> _nic_router_state_handler {
 		_env.ep(), *this, &Network::_handle_nic_router_state };
 
-	Network_dialog::Wlan_config_policy _wlan_config_policy =
-		Network_dialog::WLAN_CONFIG_MANAGED;
+	Wlan_config_policy _wlan_config_policy = Wlan_config_policy::MANAGED;
 
 	Network_dialog dialog {
 		_nic_target, _access_points,
@@ -114,12 +118,12 @@ struct Sculpt::Network : Network_dialog::Action
 	void _handle_wlan_config(Xml_node)
 	{
 		if (_wlan_config.try_generate_manually_managed()) {
-			_wlan_config_policy = Network_dialog::WLAN_CONFIG_MANUAL;
+			_wlan_config_policy = Wlan_config_policy::MANUAL;
 			_action.update_network_dialog();
 			return;
 		}
 
-		_wlan_config_policy = Network_dialog::WLAN_CONFIG_MANAGED;;
+		_wlan_config_policy = Wlan_config_policy::MANAGED;;
 
 		if (_wifi_connection.connected())
 			wifi_connect(_wifi_connection.bssid);

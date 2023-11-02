@@ -186,6 +186,20 @@ struct Sculpt::Main : Input_event_handler,
 		}
 	}
 
+	Dialog::Distant_runtime _dialog_runtime { _env };
+
+	template <typename TOP_LEVEL_DIALOG>
+	struct Dialog_view : TOP_LEVEL_DIALOG, private Distant_runtime::View
+	{
+		template <typename... ARGS>
+		Dialog_view(Distant_runtime &runtime, ARGS &&... args)
+		: TOP_LEVEL_DIALOG(args...), Distant_runtime::View(runtime, *this) { }
+
+		using Distant_runtime::View::refresh;
+		using Distant_runtime::View::min_width;
+		using Distant_runtime::View::hovered;
+	};
+
 
 	/**********************
 	 ** Device discovery **
@@ -229,6 +243,11 @@ struct Sculpt::Main : Input_event_handler,
 		return _prepare_version.value != _prepare_completed.value;
 	}
 
+
+	/*************
+	 ** Storage **
+	 *************/
+
 	Storage _storage { _env, _heap, _child_states, *this, *this };
 
 	/**
@@ -253,19 +272,43 @@ struct Sculpt::Main : Input_event_handler,
 	 */
 	void refresh_storage_dialog() override { _generate_dialog(); }
 
+
+	/*************
+	 ** Network **
+	 *************/
+
 	Network _network { _env, _heap, *this, _child_states, *this, _runtime_state, _pci_info };
 
-	Menu_view _network_menu_view { _env, _child_states, _network.dialog, "network_view",
-	                               Ram_quota{4*1024*1024}, Cap_quota{150},
-	                               "network_dialog", "network_view_hover",
-	                               *this };
+	struct Network_top_level_dialog : Top_level_dialog
+	{
+		Main &_main;
+
+		Network_top_level_dialog(Main &main)
+		: Top_level_dialog("network"), _main(main) { }
+
+		void view(Scope<> &s) const override
+		{
+			s.sub_scope<Frame>([&] (Scope<Frame> &s) {
+				_main._network.dialog.view(s, _main._network._ap_list_hovered); });
+		}
+
+		void click(Clicked_at const &at) override
+		{
+			_main._network.dialog.click(at, _main._network);
+		}
+
+		void clack(Clacked_at const &) override { }
+		void drag (Dragged_at const &) override { }
+	};
+
+	Dialog_view<Network_top_level_dialog> _network_dialog { _dialog_runtime, *this };
 
 	/**
 	 * Network::Action interface
 	 */
 	void update_network_dialog() override
 	{
-		_network_menu_view.generate();
+		_network_dialog.refresh();
 		_system_menu_view.generate();
 	}
 
@@ -659,8 +702,6 @@ struct Sculpt::Main : Input_event_handler,
 	 ** Interactive operations **
 	 ****************************/
 
-	Dialog::Distant_runtime _dialog_runtime { _env };
-
 	Keyboard_focus _keyboard_focus { _env, _network.dialog, _network.wpa_passphrase,
 	                                 *this, _system_dialog, _system_visible };
 
@@ -687,11 +728,6 @@ struct Sculpt::Main : Input_event_handler,
 			_system_dialog.click();
 			click_consumed = true;
 			_system_menu_view.generate();
-		}
-		else if (_network_menu_view.hovered(seq)) {
-			_network.dialog.click(_network);
-			click_consumed = true;
-			_network_menu_view.generate();
 		}
 
 		/* remove popup dialog when clicking somewhere outside */
@@ -1301,18 +1337,6 @@ struct Sculpt::Main : Input_event_handler,
 		_runtime_state.with_construction([&] (Component const &c) { fn.with(c); });
 	}
 
-	template <typename TOP_LEVEL_DIALOG>
-	struct Dialog_view : TOP_LEVEL_DIALOG, private Distant_runtime::View
-	{
-		template <typename... ARGS>
-		Dialog_view(Distant_runtime &runtime, ARGS &&... args)
-		: TOP_LEVEL_DIALOG(args...), Distant_runtime::View(runtime, *this) { }
-
-		using Distant_runtime::View::refresh;
-		using Distant_runtime::View::min_width;
-		using Distant_runtime::View::hovered;
-	};
-
 	Dialog_view<Panel_dialog> _panel_dialog { _dialog_runtime, *this, *this };
 
 	Settings_dialog _settings_dialog { _settings };
@@ -1782,7 +1806,7 @@ void Sculpt::Main::_handle_gui_mode()
 	_panel_dialog.min_width = _screen_size.w();
 	unsigned const menu_width = max((unsigned)(_font_size_px*21.0), 320u);
 	_diag_dialog.min_width = menu_width;
-	_network_menu_view.min_width = menu_width;
+	_network_dialog.min_width = menu_width;
 
 	/* font size may has changed, propagate fonts config of runtime view */
 	generate_runtime_config();
@@ -2074,8 +2098,6 @@ void Sculpt::Main::_generate_runtime_config(Xml_generator &xml) const
 	_dialog_runtime.gen_start_nodes(xml);
 	_settings_menu_view.gen_start_node(xml);
 	_system_menu_view.gen_start_node(xml);
-	_network_menu_view.gen_start_node(xml);
-//	_file_browser_menu_view.gen_start_node(xml);
 
 	_storage.gen_runtime_start_nodes(xml);
 	_file_browser_state.gen_start_nodes(xml);
