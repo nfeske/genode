@@ -38,7 +38,7 @@ struct Sculpt::System_dialog : Top_level_dialog
 	enum Tab { PRESET, UPDATE } _selected_tab = Tab::PRESET;
 
 	Hosted<Frame, Vbox, Software_presets_dialog> _presets_dialog { Id { "presets" } };
-	Software_update_dialog  _update_dialog;
+	Hosted<Frame, Vbox, Software_update_dialog>  _update_dialog;
 	Hosted<Frame, Vbox, Software_version_dialog> _version_dialog { Id { "version" } };
 
 	void _hover(Xml_node hover)
@@ -77,7 +77,7 @@ struct Sculpt::System_dialog : Top_level_dialog
 					s.widget(_presets_dialog, _presets);
 					break;
 				case Tab::UPDATE:
-					_update_dialog .generate(s.xml);
+					s.widget(_update_dialog);
 					s.widget(_version_dialog, _build_info);
 					break;
 				};
@@ -94,16 +94,12 @@ struct Sculpt::System_dialog : Top_level_dialog
 
 		_hover(at._location);
 		if (_selected_tab == Tab::UPDATE)
-			_update_dialog.click();
+			_update_dialog.propagate(at);
 	}
 
 	void clack(Clacked_at const &at) override
 	{
 		_presets_dialog.propagate(at, _presets, _presets_action);
-
-		_hover(at._location);
-		if (_selected_tab == Tab::UPDATE)
-			_update_dialog.clack();
 	}
 
 	void drag(Dragged_at const &) override { }
@@ -123,7 +119,8 @@ struct Sculpt::System_dialog : Top_level_dialog
 		Top_level_dialog("system"),
 		_presets(presets), _presets_action(presets_action),
 		_build_info(build_info),
-		_update_dialog(build_info, nic_state, download_queue,
+		_update_dialog(Id { "update" },
+		               build_info, nic_state, download_queue,
 		               index_update_queue, file_operation_queue, depot_users,
 		               image_index, depot_users_action, update_action)
 	{ }

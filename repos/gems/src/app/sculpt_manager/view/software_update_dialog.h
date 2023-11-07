@@ -79,7 +79,6 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 		return _file_operation_queue.copying_to_path("/rw/boot");
 	};
 
-	Hoverable_item _check     { };
 	Hoverable_item _version   { };
 	Hoverable_item _operation { };
 
@@ -211,107 +210,103 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 		});
 	}
 
-	void _gen_image_info(Xml_generator &xml, Xml_node const &image) const
+	struct Image_info : Widget<Float>
 	{
-		gen_named_node(xml, "vbox", "main", [&] {
-
+		void view(Scope<Float> &s, Xml_node const &image) const
+		{
 			unsigned line = 0;
+			s.sub_scope<Vbox>([&] (Scope<Float, Vbox> &s) {
+				s.sub_scope<Vgap>();
 
-			image.for_each_sub_node("info", [&] (Xml_node const &info) {
+				image.for_each_sub_node("info", [&] (Xml_node const &info) {
 
-				/* limit changelog to a sensible maximum of lines  */
-				if (++line > 8)
-					return;
+					/* limit changelog to a sensible maximum of lines  */
+					if (++line > 8)
+						return;
 
-				using Text = String<80>;
-				Text const text = info.attribute_value("text", Text());
+					using Text = String<80>;
+					Text const text = info.attribute_value("text", Text());
 
-				gen_named_node(xml, "float", String<16>(line), [&] {
-					xml.attribute("west", "yes");
-					xml.node("label", [&] {
-						xml.attribute("text", text);
-						xml.attribute("font", "annotation/regular");
+					s.sub_scope<Float>([&] (Scope<Float, Vbox, Float> &s) {
+						s.attribute("west", "yes");
+						s.sub_scope<Annotation>(text);
 					});
 				});
-			});
-		});
-	}
 
-	void _gen_image_entry(Xml_generator &xml, Xml_node const &image) const
+				s.sub_scope<Vgap>();
+			});
+		}
+	};
+
+	void _view_image_entry(Scope<Vbox> &s, Xml_node const &image) const
 	{
 		Version const version = image.attribute_value("version", Version());
 		Path    const path    = _image_path(version);
 
-		gen_named_node(xml, "frame", version, [&] {
-			xml.attribute("style", "important");
+		s.sub_scope<Frame>([&] (Scope<Vbox, Frame> &s) {
+			s.attribute("style", "important");
 
-			xml.node("vbox", [&] {
+			s.sub_scope<Vbox>([&] (Scope<Vbox, Frame, Vbox> &s) {
 
-				gen_named_node(xml, "float", "main", [&] {
-					xml.attribute("east", "yes");
-					xml.attribute("west", "yes");
-					_gen_image_main(xml, image);
+				s.sub_scope<Float>([&] (Scope<Vbox, Frame, Vbox, Float> &s) {
+					s.attribute("east", "yes");
+					s.attribute("west", "yes");
+					_gen_image_main(s.xml, image);
 				});
 
 				if (path == _last_selected && image.has_sub_node("info")) {
-					_gen_vspacer(xml, "above");
-					gen_named_node(xml, "float", "info", [&] {
-						_gen_image_info(xml, image); });
-					_gen_vspacer(xml, "below");
+					Hosted<Vbox, Frame, Vbox, Image_info> hosted { Id { "info" } };
+					s.widget(hosted, image);
 				}
 			});
 		});
 	}
 
-	void _gen_image_list(Xml_generator &xml) const
+	void _view_image_list(Scope<Vbox> &s) const
 	{
 		Xml_node const index = _image_index.xml();
 
 		index.for_each_sub_node("user", [&] (Xml_node const &user) {
 			if (user.attribute_value("name", User()) == _users.selected())
 				user.for_each_sub_node("image", [&] (Xml_node const &image) {
-					_gen_image_entry(xml, image); }); });
+					_view_image_entry(s, image); }); });
 	}
 
-	void _gen_update_dialog(Xml_generator &xml) const
+	Hosted<Vbox, Frame, Vbox, Float, Action_button> _check { Id { "check" } };
+
+	void view(Scope<Vbox> &s) const
 	{
-		gen_named_node(xml, "frame", "update_dialog", [&] {
-			xml.node("vbox", [&] {
-				_users.generate(xml);
+		s.sub_scope<Frame>([&] (Scope<Vbox, Frame> &s) {
+			s.sub_scope<Vbox>([&] (Scope<Vbox, Frame, Vbox> &s) {
+
+				_users.generate(s.xml);
 
 				User_properties const properties = _users.selected_user_properties();
 
 				bool const offer_index_update = _users.one_selected()
 				                             && _nic_state.ready()
 				                             && properties.download_url;
-				if (offer_index_update) {
-					_gen_vspacer(xml, "above check");
-					gen_named_node(xml, "float", "check", [&] {
-						gen_named_node(xml, "button", "check", [&] {
-							_check.gen_hovered_attr(xml, "check");
-							if (_index_update_in_progress()) {
-								xml.attribute("selected", "yes");
-								xml.attribute("style", "unimportant");
-							}
-							xml.node("label", [&] {
-								auto const text = properties.public_key
-								                ? "  Check for Updates  "
-								                : "  Check for unverified Updates  ";
-								xml.attribute("text", text); });
-						});
+				if (!offer_index_update)
+					return;
+
+				s.sub_scope<Vgap>();
+				s.sub_scope<Float>([&] (Scope<Vbox, Frame, Vbox, Float> &s) {
+					s.widget(_check, [&] (Scope<Button> &s) {
+						if (_index_update_in_progress()) {
+							s.attribute("selected", "yes");
+							s.attribute("style", "unimportant");
+						}
+						auto const text = properties.public_key
+						                ? "  Check for Updates  "
+						                : "  Check for unverified Updates  ";
+						s.sub_scope<Dialog::Label>(text);
 					});
-					_gen_vspacer(xml, "below check");
-				}
+				});
+				s.sub_scope<Vgap>();
 			});
 		});
 
-		_gen_image_list(xml);
-	}
-
-	void generate(Xml_generator &xml) const
-	{
-		gen_named_node(xml, "vbox", "update", [&] {
-			_gen_update_dialog(xml); });
+		_view_image_list(s);
 	}
 
 	Hover_result hover(Xml_node const &hover)
@@ -320,7 +315,6 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 
 		return Deprecated_dialog::any_hover_changed(
 			match_sub_dialog(hover, _users, "vbox", "frame", "vbox"),
-			_check    .match(hover, "vbox", "frame", "vbox", "float", "button", "name"),
 			_version  .match(hover, "vbox", "frame", "name"),
 			_operation.match(hover, "vbox", "frame", "vbox", "float", "float", "hbox", "button", "name")
 		);
@@ -328,7 +322,7 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 
 	bool hovered() const { return _users.hovered();  }
 
-	void click()
+	void click(Clicked_at const &at)
 	{
 		Verify const verify { _users.selected_user_properties().public_key };
 
@@ -336,8 +330,9 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 			_users.click([&] (User const &selected_user) {
 				_action.query_image_index(selected_user); });
 
-		if (_check.hovered("check") && !_index_update_in_progress())
-			_action.update_image_index(_users.selected(), verify);
+		if (!_index_update_in_progress())
+			_check.propagate(at, [&] {
+				_action.update_image_index(_users.selected(), verify); });
 
 		if (_operation.hovered("download"))
 			_action.trigger_image_download(_image_path(_version._hovered), verify);
@@ -350,8 +345,6 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 			_action.install_boot_image(_last_installed);
 		}
 	}
-
-	void clack() { }
 
 	bool keyboard_needed() const { return _users.keyboard_needed(); }
 
