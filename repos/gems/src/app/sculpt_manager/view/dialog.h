@@ -38,6 +38,7 @@ namespace Dialog {
 	struct Pin_button;
 	struct Pin_row;
 	struct Menu_entry;
+	struct Operation_button;
 	struct Doublechecked_action_button;
 	template <typename> struct Radio_select_button;
 	template <typename> struct Choice;
@@ -387,6 +388,31 @@ struct Dialog::Menu_entry : Widget<Left_floating_hbox>
 	}
 
 	void click(Clicked_at const &, auto const &fn) const { fn(); }
+};
+
+
+struct Dialog::Operation_button : Widget<Button>
+{
+	void view(Scope<Button> &s, bool selected, auto const &text) const
+	{
+		if (selected) {
+			s.attribute("selected", "yes");
+			s.attribute("style", "unimportant");
+		}
+
+		if (s.hovered() && !s.dragged() && !selected)
+			s.attribute("hovered",  "yes");
+
+		s.sub_scope<Dialog::Label>(String<50>("  ", text, "  "));
+	}
+
+	void view(Scope<Button> &s, bool selected) const
+	{
+		view(s, selected, s.id.value);
+	}
+
+	template <typename FN>
+	void click(Clicked_at const &, FN const &fn) const { fn(); }
 };
 
 

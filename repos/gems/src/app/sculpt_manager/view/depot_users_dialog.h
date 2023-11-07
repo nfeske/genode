@@ -21,7 +21,7 @@
 namespace Sculpt { struct Depot_users_dialog; }
 
 
-struct Sculpt::Depot_users_dialog
+struct Sculpt::Depot_users_dialog : Widget<Vbox>
 {
 	public:
 
@@ -43,20 +43,11 @@ struct Sculpt::Depot_users_dialog
 
 		Depot_users const &_depot_users;
 
-		Action &_action;
-
-		User _selected;
+		User _selected { _default_user };
 
 		bool _unfolded = false;
 
 		bool _selected_user_exists = false;
-
-		Hoverable_item _user   { };
-		Hoverable_item _button { };
-
-		Url const _orig_edit_url { "https://" };
-
-		Url_edit_field _url_edit_field { _orig_edit_url };
 
 		Url _url(Xml_node const &user) const
 		{
@@ -78,163 +69,146 @@ struct Sculpt::Depot_users_dialog
 			return Url(url, "/", name);
 		}
 
-		static void _gen_vspacer(Xml_generator &xml, char const *name)
-		{
-			gen_named_node(xml, "label", name, [&] () {
-				xml.attribute("text", " ");
-				xml.attribute("font", "annotation/regular");
-			});
-		}
-
 		static inline char const *_add_id() { return "/add"; }
 
-		template <typename GEN_LABEL_FN, typename RIGHT_FN>
-		void _gen_item(Xml_generator &xml, User const &name,
-		               GEN_LABEL_FN const &gen_label_fn,
-		               RIGHT_FN     const &right_fn) const
+		struct Conditional_button : Widget<Button>
 		{
-			bool const selected = (name == _selected);
+			Dialog::Event::Seq_number _seq_number { };
 
-			gen_named_node(xml, "hbox", name, [&] () {
-				gen_named_node(xml, "float", "left", [&] () {
-					xml.attribute("west", "yes");
-					xml.node("hbox", [&] () {
-						gen_named_node(xml, "float", "button", [&] () {
-							gen_named_node(xml, "button", "button", [&] () {
+			void view(Scope<Button> &s, bool ready, auto const &text) const
+			{
+				bool const selected = _seq_number == s.hover.seq_number;
 
-								_user.gen_hovered_attr(xml, name);
+				if (!ready)
+					s.attribute("style", "unimportant");
 
-								if (selected)
-									xml.attribute("selected", "yes");
+				if (selected)
+					s.attribute("selected", "yes");
 
-								xml.attribute("style", "radio");
-								xml.node("hbox", [&] () { });
-							});
-						});
-						gen_named_node(xml, "label", "name", [&] () {
-							gen_label_fn(); });
-					});
-				});
-				gen_named_node(xml, "hbox", "right", [&] () {
-					right_fn(); });
-			});
-		}
+				if (s.hovered() && !s.dragged() && !selected && ready)
+					s.attribute("hovered",  "yes");
 
-		void _gen_entry(Xml_generator &xml, Xml_node const user, bool /* last */) const
+				s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
+					if (!ready)
+						s.attribute("style", "unimportant"); });
+			}
+
+			void view(Scope<Button> &s, bool ready) const
+			{
+				view(s, ready, s.id.value);
+			}
+
+			void click(Clicked_at const &at, auto const &fn)
+			{
+				_seq_number = at.seq_number;
+				fn();
+			}
+		};
+
+		struct Item : Widget<Hbox>
 		{
-			User const name     = user.attribute_value("name", User());
-			bool const selected = (name == _selected);
-			Url  const url      = _url(user);
-			Url  const label    = Depot_url::from_string(url).valid() ? url : Url(name);
-			bool const show_all = _unfolded || !_selected_user_exists;
+			void view(Scope<Hbox> &s, bool selected, auto const &text) const
+			{
+				bool const hovered = s.hovered();
 
-			if (!selected && !show_all)
-				return;
-
-			_gen_item(xml, name,
-				[&] /* label */ { xml.attribute("text", Path(" ", label)); },
-				[&] /* right */ { }
-			);
-		}
-
-		Depot_url _depot_url(Xml_node const &depot_users) const
-		{
-			Depot_url const result =
-				Depot_url::from_string(Depot_url::Url { _url_edit_field });
-
-			/* check for duplicated user name */
-			bool unique = true;
-			depot_users.for_each_sub_node("user", [&] (Xml_node user) {
-				User const name = user.attribute_value("name", User());
-				if (name == result.user)
-					unique = false;
-			});
-
-			return unique ? result : Depot_url { };
-		}
-
-		void _gen_add_entry(Xml_generator &xml, Xml_node const &depot_users) const
-		{
-			_gen_item(xml, _add_id(),
-
-				[&] /* label */ {
-					xml.attribute("text", Depot_url::Url(" ", _url_edit_field));
-					xml.attribute("min_ex", 30);
-					xml.node("cursor", [&] () {
-						xml.attribute("at", _url_edit_field.cursor_pos + 1); });
-				},
-
-				[&] /* right */ {
-					gen_named_node(xml, "float", "actions", [&] {
-						xml.attribute("east", "yes");
-						bool const editing = (_selected == _add_id());
-						if (editing) {
-							bool const url_valid = _depot_url(depot_users).valid();
-							gen_named_node(xml, "button", "add", [&] {
-								if (!url_valid)
-									xml.attribute("style", "unimportant");
-								else
-									_button.gen_hovered_attr(xml, "add");
-
-								xml.node("label", [&] {
-									if (!url_valid)
-										xml.attribute("style", "unimportant");
-									xml.attribute("text", "Add"); });
-							});
-						} else {
-							gen_named_node(xml, "button", "edit", [&] {
-								_button.gen_hovered_attr(xml, "edit");
-								xml.node("label", [&] {
-									xml.attribute("text", "Edit"); }); });
-						}
-					});
-				}
-			);
-		}
-
-		void _gen_selection(Xml_generator &xml) const
-		{
-			Xml_node const depot_users = _depot_users.xml();
-
-			size_t remain_count = depot_users.num_sub_nodes();
-
-			remain_count++; /* account for '_gen_add_entry' */
-
-			bool known_pubkey = false;
-
-			gen_named_node(xml, "frame", "user_selection", [&] () {
-				xml.node("vbox", [&] () {
-					depot_users.for_each_sub_node("user", [&] (Xml_node user) {
-
-						if (_selected == user.attribute_value("name", User()))
-							known_pubkey = user.attribute_value("known_pubkey", false);
-
-						bool const last = (--remain_count == 0);
-						_gen_entry(xml, user, last); });
-
-					if (_unfolded || !_selected_user_exists)
-						_gen_add_entry(xml, depot_users);
-				});
-			});
-
-			if (!_unfolded && !known_pubkey && _selected_user_exists) {
-				gen_named_node(xml, "button", "pubkey warning", [&] {
-					xml.attribute("style", "invisible");
-					xml.node("label", [&] {
-						xml.attribute("font", "annotation/regular");
-						xml.attribute("text", "missing public key for verification"); });
+				s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
+					s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
+					                                        .selected = selected });
+					s.sub_scope<Dialog::Label>(text);
 				});
 			}
-		}
+		};
+
+		struct Edit_item : Widget<Hbox>
+		{
+			Url const _orig_edit_url { "https://" };
+
+			Url_edit_field _url_edit_field { _orig_edit_url };
+
+			Depot_url depot_url(Xml_node const &depot_users) const
+			{
+				Depot_url const result =
+					Depot_url::from_string(Depot_url::Url { _url_edit_field });
+
+				/* check for duplicated user name */
+				bool unique = true;
+				depot_users.for_each_sub_node("user", [&] (Xml_node user) {
+					User const name = user.attribute_value("name", User());
+					if (name == result.user)
+						unique = false; });
+
+				return unique ? result : Depot_url { };
+			}
+
+			Hosted<Hbox, Hbox, Float, Conditional_button> _add  { Id { "Add" } };
+			Hosted<Hbox, Hbox, Float, Action_button>      _edit { Id { "Edit" } };
+
+			bool _ready_to_add(Xml_node const &depot_users) const
+			{
+				return depot_url(depot_users).valid();
+			}
+
+			void view(Scope<Hbox> &s, bool selected, Xml_node const &depot_users) const
+			{
+				bool const hovered = s.hovered() && !s.dragged() && !selected;
+
+				s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
+
+					s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
+					                                        .selected = selected });
+
+					auto const text = Depot_url::Url(" ", _url_edit_field);
+					s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
+						s.attribute("min_ex", 30);
+						s.template sub_node("cursor", [&] {
+							s.attribute("at", _url_edit_field.cursor_pos + 1); });
+					});
+				});
+
+				s.sub_scope<Hbox>([&] (Scope<Hbox, Hbox> &s) {
+					s.sub_scope<Float>([&] (Scope<Hbox, Hbox, Float> &s) {
+						s.attribute("east", "yes");
+						if (selected)
+							s.widget(_add, _ready_to_add(depot_users));
+						else
+							s.widget(_edit);
+					});
+				});
+			}
+
+			void reset()
+			{
+				_url_edit_field = _orig_edit_url;
+			}
+
+			void handle_key(Codepoint c, auto const &enter_fn)
+			{
+				/* prevent input of printable yet risky characters as URL */
+				if (c.value == ' ' || c.value == '"')
+					return;
+
+				/* respond to enter key */
+				if (c.value == 10)
+					enter_fn();
+
+				_url_edit_field.apply(c);
+			}
+
+			void click(Clicked_at const &, Xml_node const &depot_users, auto const add_fn)
+			{
+				if (_ready_to_add(depot_users))
+					add_fn();
+			}
+		};
+
+		Hosted<Vbox, Frame, Vbox, Edit_item> _edit_item { Id { _add_id() } };
 
 	public:
 
 		Depot_users_dialog(Depot_users const &depot_users,
-		                   User        const &default_user,
-		                   Action            &action)
+		                   User        const &default_user)
 		:
-			_default_user(default_user), _depot_users(depot_users),
-			_action(action), _selected(default_user)
+			_default_user(default_user), _depot_users(depot_users)
 		{ }
 
 		User selected() const
@@ -242,7 +216,45 @@ struct Sculpt::Depot_users_dialog
 			return (_selected == _add_id()) ? User() : _selected;
 		}
 
-		void generate(Xml_generator &xml) const { _gen_selection(xml); }
+		void view(Scope<Vbox> &s) const
+		{
+			Xml_node const depot_users = _depot_users.xml();
+
+			bool known_pubkey = false;
+
+			s.sub_scope<Frame>([&] (Scope<Vbox, Frame> &s) {
+				s.sub_scope<Vbox>([&] (Scope<Vbox, Frame, Vbox> &s) {
+					depot_users.for_each_sub_node("user", [&] (Xml_node const &user) {
+
+						if (_selected == user.attribute_value("name", User()))
+							known_pubkey = user.attribute_value("known_pubkey", false);
+
+						User const name     = user.attribute_value("name", User());
+						bool const selected = (name == _selected);
+						Url  const url      = _url(user);
+						Url  const label    = Depot_url::from_string(url).valid() ? url : Url(name);
+						bool const show_all = _unfolded || !_selected_user_exists;
+
+						if (!selected && !show_all)
+							return;
+
+						Hosted<Vbox, Frame, Vbox, Item> item { Id { name } };
+
+						s.widget(item, selected, Path(" ", label));
+					});
+
+					if (_unfolded || !_selected_user_exists)
+						s.widget(_edit_item, (_selected == _add_id()), depot_users);
+				});
+			});
+
+			if (!_unfolded && !known_pubkey && _selected_user_exists) {
+				s.sub_scope<Button>([&] (Scope<Vbox, Button> &s) {
+					s.attribute("style", "invisible");
+					s.sub_scope<Annotation>("missing public key for verification");
+				});
+			}
+		}
 
 		bool unfolded() const { return _unfolded || !_selected_user_exists; }
 
@@ -268,8 +280,24 @@ struct Sculpt::Depot_users_dialog
 			return result;
 		}
 
-		template <typename SELECT_FN>
-		void click(SELECT_FN const &select_fn)
+		void _select_depot_user(User const &user)
+		{
+			_selected = user;
+			_unfolded = false;
+			_selected_user_exists = true;
+			_edit_item.reset();
+		}
+
+		void _add_and_select_new_depot_user(Action &action)
+		{
+			Depot_url const depot_url = _edit_item.depot_url(_depot_users.xml());
+			if (depot_url.valid()) {
+				action.add_depot_url(depot_url);
+				_select_depot_user(depot_url.user);
+			}
+		}
+
+		void click(Clicked_at const &at, Action &action, auto const &select_fn)
 		{
 			/* unfold depot users */
 			if (!_unfolded) {
@@ -277,72 +305,27 @@ struct Sculpt::Depot_users_dialog
 				return;
 			}
 
-			/* handle click on unfolded depot-user selection */
-
-			auto select_depot_user = [&] (User const &user)
-			{
-				_selected = user;
-				select_fn(user);
-				_unfolded = false;
-				_selected_user_exists = true;
-				_url_edit_field = _orig_edit_url;
-			};
-
-			if (_user._hovered.length() <= 1)
-				return;
-
-			if (_user.hovered(_add_id())) {
-				if (_button.hovered("add")) {
-					Depot_url const depot_url = _depot_url(_depot_users.xml());
-					if (depot_url.valid()) {
-						_action.add_depot_url(depot_url);
-						select_depot_user(depot_url.user);
-					}
+			Id const item = at.matching_id<Vbox, Frame, Vbox, Item>();
+			if (item.valid()) {
+				if (item.value == _add_id()) {
+					_selected = item.value;
 				} else {
-					_selected = _add_id();
+					_select_depot_user(item.value);
+					select_fn(item.value);
 				}
-			} else {
-				select_depot_user(_user._hovered);
 			}
+
+			_edit_item.propagate(at, _depot_users.xml(), [&] {
+				_add_and_select_new_depot_user(action); });
 		}
-
-		Hover_result hover(Xml_node const &hover)
-		{
-			return Deprecated_dialog::any_hover_changed(
-				_user  .match(hover, "frame", "vbox", "hbox", "name"),
-				_button.match(hover, "frame", "vbox", "hbox", "hbox", "float", "button", "name")
-			);
-		}
-
-		void reset_hover() { _user._hovered = { }; }
-
-		bool hovered() const { return _user._hovered.valid();  }
 
 		bool keyboard_needed() const { return _selected == _add_id(); }
 
-		void handle_key(Codepoint c)
+		void handle_key(Codepoint c, Action &action)
 		{
-			if (_selected != _add_id())
-				return;
-
-			/* prevent input of printable yet risky characters as URL */
-			if (c.value == ' ' || c.value == '"')
-				return;
-
-			/* respond to enter key */
-			if (c.value == 10) {
-				Depot_url const depot_url = _depot_url(_depot_users.xml());
-				if (depot_url.valid()) {
-					_action.add_depot_url(depot_url);
-					_selected = depot_url.user;
-					_selected_user_exists = true;
-					_unfolded = false;
-					_url_edit_field = _orig_edit_url;
-				}
-				return;
-			}
-
-			_url_edit_field.apply(c);
+			if (_selected == _add_id())
+				_edit_item.handle_key(c, [&] {
+					_add_and_select_new_depot_user(action); });
 		}
 
 		bool one_selected() const { return !_unfolded && _selected.length() > 1; }

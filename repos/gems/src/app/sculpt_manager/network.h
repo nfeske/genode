@@ -22,7 +22,6 @@
 #include <model/child_exit_state.h>
 #include <model/pci_info.h>
 #include <view/network_dialog.h>
-#include <menu_view.h>
 #include <runtime.h>
 #include <keyboard_focus.h>
 #include <managed_config.h>

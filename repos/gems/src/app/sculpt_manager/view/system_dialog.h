@@ -29,29 +29,18 @@ struct Sculpt::System_dialog : Top_level_dialog
 	using Depot_users = Depot_users_dialog::Depot_users;
 	using Image_index = Attached_rom_dataspace;
 
-	Presets const &_presets;
+	Presets     const &_presets;
+	Image_index const &_image_index;
+	Build_info  const &_build_info;
 
 	Software_presets_dialog::Action &_presets_action;
-
-	Build_info const &_build_info;
+	Software_update_dialog::Action  &_update_action;
 
 	enum Tab { PRESET, UPDATE } _selected_tab = Tab::PRESET;
 
 	Hosted<Frame, Vbox, Software_presets_dialog> _presets_dialog { Id { "presets" } };
 	Hosted<Frame, Vbox, Software_update_dialog>  _update_dialog;
 	Hosted<Frame, Vbox, Software_version_dialog> _version_dialog { Id { "version" } };
-
-	void _hover(Xml_node hover)
-	{
-		hover.with_optional_sub_node("frame", [&] (Xml_node const &frame) {
-			frame.with_optional_sub_node("vbox", [&] (Xml_node const &vbox) {
-				switch (_selected_tab) {
-				case Tab::PRESET: break;
-				case Tab::UPDATE: _update_dialog.hover(vbox);  break;
-				}
-			});
-		});
-	}
 
 	Hosted<Frame, Vbox, Hbox, Select_button<Tab>>
 		_preset_tab { Id { " Presets " }, Tab::PRESET },
@@ -77,7 +66,7 @@ struct Sculpt::System_dialog : Top_level_dialog
 					s.widget(_presets_dialog, _presets);
 					break;
 				case Tab::UPDATE:
-					s.widget(_update_dialog);
+					s.widget(_update_dialog, _image_index.xml());
 					s.widget(_version_dialog, _build_info);
 					break;
 				};
@@ -92,9 +81,8 @@ struct Sculpt::System_dialog : Top_level_dialog
 
 		_presets_dialog.propagate(at, _presets);
 
-		_hover(at._location);
 		if (_selected_tab == Tab::UPDATE)
-			_update_dialog.propagate(at);
+			_update_dialog.propagate(at, _update_action);
 	}
 
 	void clack(Clacked_at const &at) override
@@ -113,23 +101,25 @@ struct Sculpt::System_dialog : Top_level_dialog
 	              Depot_users               const &depot_users,
 	              Image_index               const &image_index,
 	              Software_presets_dialog::Action &presets_action,
-	              Depot_users_dialog::Action      &depot_users_action,
 	              Software_update_dialog::Action  &update_action)
 	:
 		Top_level_dialog("system"),
-		_presets(presets), _presets_action(presets_action),
-		_build_info(build_info),
+		_presets(presets), _image_index(image_index), _build_info(build_info),
+		_presets_action(presets_action), _update_action(update_action),
 		_update_dialog(Id { "update" },
 		               build_info, nic_state, download_queue,
 		               index_update_queue, file_operation_queue, depot_users,
-		               image_index, depot_users_action, update_action)
+		               image_index)
 	{ }
 
 	bool update_tab_selected() const { return _selected_tab == Tab::UPDATE; }
 
 	bool keyboard_needed() const { return _update_dialog.keyboard_needed(); }
 
-	void handle_key(Codepoint c) { _update_dialog.handle_key(c); }
+	void handle_key(Codepoint c, Software_update_dialog::Action &action)
+	{
+		_update_dialog.handle_key(c, action);
+	}
 
 	void sanitize_user_selection() { _update_dialog.sanitize_user_selection(); }
 

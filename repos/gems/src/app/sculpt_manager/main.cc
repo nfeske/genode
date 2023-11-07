@@ -44,7 +44,6 @@
 #include <view/settings_dialog.h>
 #include <view/system_dialog.h>
 #include <view/file_browser_dialog.h>
-#include <menu_view.h>
 #include <gui.h>
 #include <keyboard_focus.h>
 #include <network.h>
@@ -65,14 +64,12 @@ struct Sculpt::Main : Input_event_handler,
                       Popup_dialog::Action,
                       Settings_dialog::Action,
                       Software_presets_dialog::Action,
-                      Depot_users_dialog::Action,
                       Software_update_dialog::Action,
                       File_browser_dialog::Action,
                       Popup_dialog::Construction_info,
                       Depot_query,
                       Panel_dialog::State,
                       Popup_dialog::Refresh,
-                      Menu_view::Hover_update_handler,
                       Screensaver::Action
 {
 	Env &_env;
@@ -716,7 +713,6 @@ struct Sculpt::Main : Input_event_handler,
 
 		/* used to detect clicks outside the popup dialog (for closing it) */
 		bool const popup_opened = (_popup_opened_seq_number.value == seq.value);
-		bool       click_consumed = false;
 
 		/* remove popup dialog when clicking somewhere outside */
 		if (!_popup_dialog.hovered() && !popup_opened) {
@@ -725,9 +721,6 @@ struct Sculpt::Main : Input_event_handler,
 				discard_construction();
 			}
 		}
-
-		if (click_consumed)
-			_clicked_seq_number.destruct();
 	}
 
 	struct Keyboard_focus_guard
@@ -738,17 +731,6 @@ struct Sculpt::Main : Input_event_handler,
 
 		~Keyboard_focus_guard() { _main._keyboard_focus.update(); }
 	};
-
-	/**
-	 * Menu_view::Hover_update_handler interface
-	 */
-	void menu_view_hover_updated() override
-	{
-		Keyboard_focus_guard focus_guard { *this };
-
-		if (_clicked_seq_number.constructed())
-			_try_handle_click();
-	}
 
 	/**
 	 * Input_event_handler interface
@@ -772,7 +754,7 @@ struct Sculpt::Main : Input_event_handler,
 			if (_keyboard_focus.target == Keyboard_focus::WPA_PASSPHRASE)
 				_network.handle_key_press(code);
 			else if (_system_visible && _system_dialog.keyboard_needed())
-				_system_dialog.handle_key(code);
+				_system_dialog.handle_key(code, *this);
 
 			need_generate_dialog = true;
 		});
@@ -1330,7 +1312,7 @@ struct Sculpt::Main : Input_event_handler,
 	                                            _presets, _build_info, _network._nic_state,
 	                                            _download_queue, _index_update_queue,
 	                                            _file_operation_queue, _scan_rom,
-	                                            _image_index_rom, *this, *this, *this };
+	                                            _image_index_rom, *this, *this };
 
 	Dialog_view<Diag_dialog> _diag_dialog { _dialog_runtime, *this, _heap };
 
