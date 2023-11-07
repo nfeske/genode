@@ -150,7 +150,7 @@ struct Sculpt::Main : Input_event_handler,
 		_handle_gui_mode();
 
 		/* visibility of fonts section of settings dialog may have changed */
-		_settings_menu_view.generate();
+		_settings_dialog.refresh();
 
 		/* visibility of settings button may have changed */
 		_refresh_panel_and_window_layout();
@@ -177,7 +177,7 @@ struct Sculpt::Main : Input_event_handler,
 			_event_filter_config.generate([&] (Xml_generator &xml) {
 				_generate_event_filter_config(xml); });
 
-		_settings_menu_view.generate();
+		_settings_dialog.refresh();
 
 		/* visibility of the settings dialog may have changed */
 		if (orig_settings_available != _settings.interactive_settings_available()) {
@@ -719,12 +719,7 @@ struct Sculpt::Main : Input_event_handler,
 		bool const popup_opened = (_popup_opened_seq_number.value == seq.value);
 		bool       click_consumed = false;
 
-		if (_settings_menu_view.hovered(seq)) {
-			_settings_dialog.click(*this);
-			click_consumed = true;
-			_settings_menu_view.generate();
-		}
-		else if (_system_menu_view.hovered(seq)) {
+		if (_system_menu_view.hovered(seq)) {
 			_system_dialog.click();
 			click_consumed = true;
 			_system_menu_view.generate();
@@ -1078,6 +1073,27 @@ struct Sculpt::Main : Input_event_handler,
 		});
 	}
 
+	struct Settings_top_level_dialog : Top_level_dialog
+	{
+		Main &_main;
+
+		Hosted<Frame, Settings_dialog> _hosted { Id { "hosted" }, _main._settings };
+
+		Settings_top_level_dialog(Main &main)
+		: Top_level_dialog("settings"), _main(main) { }
+
+		void view(Scope<> &s) const override
+		{
+			s.sub_scope<Frame>([&] (Scope<Frame> &s) { s.widget(_hosted); });
+		}
+
+		void click(Clicked_at const &at) override { _hosted.propagate(at, _main); }
+		void clack(Clacked_at const &)   override { }
+		void drag (Dragged_at const &)   override { }
+	};
+
+	Dialog_view<Settings_top_level_dialog> _settings_dialog { _dialog_runtime, *this };
+
 	/*
 	 * Settings_dialog::Action interface
 	 */
@@ -1338,12 +1354,6 @@ struct Sculpt::Main : Input_event_handler,
 	}
 
 	Dialog_view<Panel_dialog> _panel_dialog { _dialog_runtime, *this, *this };
-
-	Settings_dialog _settings_dialog { _settings };
-
-	Menu_view _settings_menu_view { _env, _child_states, _settings_dialog, "settings_view",
-	                                Ram_quota{4*1024*1024}, Cap_quota{150},
-	                                "settings_dialog", "settings_view_hover", *this };
 
 	System_dialog _system_dialog { _presets, _build_info, _network._nic_state,
 	                               _download_queue, _index_update_queue,
@@ -2096,7 +2106,6 @@ void Sculpt::Main::_generate_runtime_config(Xml_generator &xml) const
 	});
 
 	_dialog_runtime.gen_start_nodes(xml);
-	_settings_menu_view.gen_start_node(xml);
 	_system_menu_view.gen_start_node(xml);
 
 	_storage.gen_runtime_start_nodes(xml);

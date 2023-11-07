@@ -40,6 +40,7 @@ namespace Dialog {
 	struct Menu_entry;
 	struct Doublechecked_action_button;
 	template <typename> struct Radio_select_button;
+	template <typename> struct Choice;
 }
 
 
@@ -313,7 +314,7 @@ struct Dialog::Radio_select_button : Widget<Left_floating_hbox>
 		view(s, selected_value, s.id.value);
 	}
 
-	void click(Clicked_at const &, auto const &fn) { fn(value); }
+	void click(Clicked_at const &, auto const &fn) const { fn(value); }
 };
 
 
@@ -364,7 +365,7 @@ struct Dialog::Pin_row : Widget<Hbox>
 		s.widget(_buttons[2], Pin_button::Attr { visible.right  });
 	}
 
-	void click(Clicked_at const &at, auto const &fn)
+	void click(Clicked_at const &at, auto const &fn) const
 	{
 		for (auto &button : _buttons)
 			button.propagate(at, [&] { fn(button.id.value); });
@@ -385,7 +386,7 @@ struct Dialog::Menu_entry : Widget<Left_floating_hbox>
 		s.sub_scope<Button_vgap>();
 	}
 
-	void click(Clicked_at const &, auto const &fn) { fn(); }
+	void click(Clicked_at const &, auto const &fn) const { fn(); }
 };
 
 
@@ -428,6 +429,80 @@ struct Dialog::Doublechecked_action_button
 	void clack(Clacked_at const &at, auto const &activate_fn)
 	{
 		_confirm_or_cancel.propagate(at, activate_fn);
+	}
+};
+
+
+template <typename ENUM>
+struct Dialog::Choice : Widget<Hbox>
+{
+	ENUM const _unfold_value;
+
+	Choice(ENUM const unfold_value) : _unfold_value(unfold_value) { }
+
+	struct Attr
+	{
+		unsigned left_ex, right_ex;
+		ENUM     unfolded;
+		Id       selected_item;
+	};
+
+	struct Sub_scope
+	{
+		Scope<> &_scope;
+
+		bool const _unfolded;
+		Id   const _selected_item;
+
+		template <typename HOSTED, typename... ARGS>
+		void widget(HOSTED const &hosted, ARGS &&... args)
+		{
+			if (_unfolded || (hosted.id == _selected_item))
+				hosted._view_hosted(_scope, args...);
+		}
+	};
+
+	void view(Scope<Hbox> &s, Attr attr, auto const &fn) const
+	{
+		Id::Value const text     = s.id.value;
+		bool      const unfolded = (attr.unfolded == _unfold_value);
+
+		s.sub_scope<Vbox>([&] (Scope<Hbox, Vbox> &s) {
+			s.sub_scope<Min_ex>(attr.left_ex);
+			s.sub_scope<Float>([&] (Scope<Hbox, Vbox, Float> &s) {
+				s.attribute("north", true);
+				s.attribute("west",  true);
+				s.sub_scope<Frame>([&] (Scope<Hbox, Vbox, Float, Frame> &s) {
+					s.attribute("style", "invisible");
+					s.sub_scope<Hbox>([&] (Scope<Hbox, Vbox, Float, Frame, Hbox> &s) {
+						s.sub_scope<Dialog::Label>(text);
+						s.sub_scope<Button_vgap>(); }); }); }); });
+
+		s.sub_scope<Frame>([&] (Scope<Hbox, Frame> &s) {
+			s.sub_scope<Vbox>([&] (Scope<Hbox, Frame, Vbox> &s) {
+				s.sub_scope<Min_ex>(attr.right_ex);
+				s.as_new_scope([&] (Scope<> &s) {
+					Sub_scope sub_scope { s, unfolded, attr.selected_item };
+					fn(sub_scope); }); }); });
+	}
+
+	void click(Clicked_at const &at, ENUM &unfolded,
+	           auto const &fold_all_fn, auto const &item_fn) const
+	{
+		if (unfolded != _unfold_value) {
+			unfolded = _unfold_value;
+			return;
+		}
+
+		bool clicked_at_item = false;
+		Hbox::with_narrowed_at(at, [&] (Clicked_at const &at) {
+			Frame::with_narrowed_at(at, [&] (Clicked_at const &at) {
+				Vbox::with_narrowed_at(at, [&] (Clicked_at const &at) {
+					clicked_at_item = true;
+					item_fn(at); }); }); });
+
+		if (!clicked_at_item)
+			fold_all_fn();
 	}
 };
 
