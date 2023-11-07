@@ -23,139 +23,93 @@ namespace Sculpt { struct Software_presets_dialog; }
 
 struct Sculpt::Software_presets_dialog : Widget<Float>
 {
-	Presets const &_presets;
+	using Name = Presets::Info::Name;
+
+	Name _selected { };
+
+	struct Preset : Widget<Vbox>
+	{
+		using Radio = Hosted<Vbox, Radio_select_button<Name>>;
+		using Load  = Hosted<Vbox, Float, Deferred_action_button>;
+
+		void view(Scope<Vbox> &s, Presets::Info const &preset, Load const &load,
+		          Name const &selected) const
+		{
+			s.widget(Radio { Id { preset.name }, preset.name },
+			         selected, Name { " ", Pretty(preset.name) });
+
+			if (selected != preset.name)
+				return;
+
+			s.sub_scope<Vgap>();
+
+			s.sub_scope<Float>([&] (Scope<Vbox, Float> &s) {
+				s.sub_scope<Dialog::Label>(preset.text); });
+
+			s.sub_scope<Vgap>();
+
+			s.sub_scope<Float>([&] (Scope<Vbox, Float> &s) {
+				s.widget(load); });
+
+			s.sub_scope<Vgap>();
+		}
+
+		void click(Clicked_at const &at, Load &load) { load.propagate(at); }
+
+		void clack(Clacked_at const &at, Load &load, auto const &fn)
+		{
+			load.propagate(at, fn);
+		}
+	};
+
+	/* use one button to preserve 'Deferred_action_button' state across presets */
+	Preset::Load _load { Id { " Load " } };
+
+	using Hosted_preset = Hosted<Float, Frame, Vbox, Preset>;
+
+	void view(Scope<Float> &s, Presets const &presets) const
+	{
+		s.sub_scope<Frame>([&] (Scope<Float, Frame> &s) {
+			s.sub_scope<Vbox>([&] (Scope<Float, Frame, Vbox> &s) {
+				s.sub_scope<Min_ex>(35);
+				presets.for_each([&] (Presets::Info const &info) {
+					Hosted_preset const hosted { Id { info.name } };
+					s.widget(hosted, info, _load, _selected); }); }); });
+	}
+
+	void _with_selected_preset(Presets const &presets, auto const &fn)
+	{
+		presets.for_each([&] (Presets::Info const &info) {
+			if (info.name == _selected)
+				fn(info); });
+	}
+
+	void click(Clicked_at const &at, Presets const &presets)
+	{
+		/* unfold preset info */
+		Id const id = at.matching_id<Float, Frame, Vbox, Vbox>();
+		if (id.valid())
+			_selected = id.value;
+
+		_with_selected_preset(presets, [&] (Presets::Info const &info) {
+			Hosted_preset hosted { Id { info.name } };
+			hosted.propagate(at, _load); });
+	}
 
 	struct Action : Interface
 	{
 		virtual void load_deploy_preset(Presets::Info::Name const &) = 0;
 	};
 
-	Action &_action;
-
-	using Hover_result = Hoverable_item::Hover_result;
-
-	Presets::Info::Name _selected { };
-
-	Hoverable_item   _item      { };
-	Activatable_item _operation { };
-
-	Software_presets_dialog(Presets const &presets, Action &action)
-	:
-		_presets(presets), _action(action)
-	{ }
-
-	using Name = Presets::Info::Name;
-
-	void _gen_horizontal_spacer(Xml_generator &xml) const
+	void clack(Clacked_at const &at, Presets const &presets, Action &action)
 	{
-		gen_named_node(xml, "label", "spacer", [&] {
-			xml.attribute("min_ex", 35); });
-	}
-
-	void _gen_preset(Xml_generator &xml, Presets::Info const &preset) const
-	{
-		gen_named_node(xml, "vbox", preset.name, [&] () {
-
-			gen_named_node(xml, "hbox", preset.name, [&] () {
-
-				gen_named_node(xml, "float", "left", [&] () {
-					xml.attribute("west", "yes");
-
-					xml.node("hbox", [&] () {
-						gen_named_node(xml, "float", "radio", [&] () {
-							gen_named_node(xml, "button", "button", [&] () {
-
-								_item.gen_hovered_attr(xml, preset.name);
-
-								if (_selected == preset.name)
-									xml.attribute("selected", "yes");
-
-								xml.attribute("style", "radio");
-
-								xml.node("hbox", [&] () { });
-							});
-						});
-
-						gen_named_node(xml, "label", "name", [&] () {
-							xml.attribute("text", Name(" ", Pretty(preset.name))); });
-
-						gen_item_vspace(xml, "vspace");
-					});
-				});
+		_with_selected_preset(presets, [&] (Presets::Info const &info) {
+			Hosted_preset hosted { Id { info.name } };
+			hosted.propagate(at, _load, [&] {
+				action.load_deploy_preset(_selected);
+				_selected = { };
 			});
-
-			if (_selected != preset.name)
-				return;
-
-			auto vspacer = [&] (auto name)
-			{
-				gen_named_node(xml, "label", name, [&] () {
-					xml.attribute("text", " "); });
-			};
-
-			vspacer("spacer1");
-
-			gen_named_node(xml, "float", "info", [&] () {
-				gen_named_node(xml, "label", "text", [&] () {
-					xml.attribute("text", preset.text); }); });
-
-			vspacer("spacer2");
-
-			gen_named_node(xml, "float", "operations", [&] () {
-				gen_named_node(xml, "button", "load", [&] () {
-					_operation.gen_button_attr(xml, "load");
-					gen_named_node(xml, "label", "text", [&] () {
-						xml.attribute("text", " Load "); });
-				});
-			});
-
-			vspacer("spacer3");
 		});
-	}
-
-	void generate(Xml_generator &xml) const
-	{
-		if (_presets.available())
-			gen_named_node(xml, "float", "presets", [&] {
-				xml.node("frame", [&] {
-					xml.node("vbox", [&] {
-						_gen_horizontal_spacer(xml);
-						_presets.for_each([&] (Presets::Info const &info) {
-							_gen_preset(xml, info); }); }); }); });
-	}
-
-	Hover_result hover(Xml_node hover)
-	{
-		return Deprecated_dialog::any_hover_changed(
-			_item.match     (hover, "float", "frame", "vbox", "vbox", "hbox", "name"),
-			_operation.match(hover, "float", "frame", "vbox", "vbox", "float", "button", "name")
-		);
-	}
-
-	bool hovered() const { return _item._hovered.valid(); }
-
-	void click()
-	{
-		if (_item._hovered.length() > 1)
-			_selected = _item._hovered;
-
-		if (_operation.hovered("load"))
-			_operation.propose_activation_on_click();
-	}
-
-	void clack()
-	{
-		if (_selected.length() <= 1)
-			return;
-
-		_operation.confirm_activation_on_clack();
-
-		if (_operation.activated("load")) {
-			_action.load_deploy_preset(_selected);
-			_selected = { };
-		}
-
-		_operation.reset();
 	}
 };
 

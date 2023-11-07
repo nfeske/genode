@@ -309,7 +309,7 @@ struct Sculpt::Main : Input_event_handler,
 	void update_network_dialog() override
 	{
 		_network_dialog.refresh();
-		_system_menu_view.generate();
+		_system_dialog.refresh();
 	}
 
 
@@ -477,7 +477,7 @@ struct Sculpt::Main : Input_event_handler,
 	void _handle_image_index()
 	{
 		_image_index_rom.update();
-		_system_menu_view.generate();
+		_system_dialog.refresh();
 	}
 
 	Attached_rom_dataspace _launcher_listing_rom {
@@ -632,7 +632,7 @@ struct Sculpt::Main : Input_event_handler,
 		_graph_view.refresh();
 
 		if (_system_visible)
-			_system_menu_view.generate();
+			_system_dialog.refresh();
 	}
 
 	Attached_rom_dataspace _runtime_state_rom { _env, "report -> runtime/state" };
@@ -706,7 +706,6 @@ struct Sculpt::Main : Input_event_handler,
 	                                 *this, _system_dialog, _system_visible };
 
 	Constructible<Input::Seq_number> _clicked_seq_number { };
-	Constructible<Input::Seq_number> _clacked_seq_number { };
 
 	void _try_handle_click()
 	{
@@ -719,12 +718,6 @@ struct Sculpt::Main : Input_event_handler,
 		bool const popup_opened = (_popup_opened_seq_number.value == seq.value);
 		bool       click_consumed = false;
 
-		if (_system_menu_view.hovered(seq)) {
-			_system_dialog.click();
-			click_consumed = true;
-			_system_menu_view.generate();
-		}
-
 		/* remove popup dialog when clicking somewhere outside */
 		if (!_popup_dialog.hovered() && !popup_opened) {
 			if (_popup.state == Popup::VISIBLE) {
@@ -735,20 +728,6 @@ struct Sculpt::Main : Input_event_handler,
 
 		if (click_consumed)
 			_clicked_seq_number.destruct();
-	}
-
-	void _try_handle_clack()
-	{
-		if (!_clacked_seq_number.constructed())
-			return;
-
-		Input::Seq_number const seq = *_clacked_seq_number;
-
-		if (_system_menu_view.hovered(seq)) {
-			_system_dialog.clack();
-			_system_menu_view.generate();
-			_clacked_seq_number.destruct();
-		}
 	}
 
 	struct Keyboard_focus_guard
@@ -769,9 +748,6 @@ struct Sculpt::Main : Input_event_handler,
 
 		if (_clicked_seq_number.constructed())
 			_try_handle_click();
-
-		if (_clacked_seq_number.constructed())
-			_try_handle_clack();
 	}
 
 	/**
@@ -788,11 +764,6 @@ struct Sculpt::Main : Input_event_handler,
 		if (ev.key_press(Input::BTN_LEFT) || ev.touch()) {
 			_clicked_seq_number.construct(_global_input_seq_number);
 			_try_handle_click();
-		}
-
-		if (ev.key_release(Input::BTN_LEFT)) {
-			_clacked_seq_number.construct(_global_input_seq_number);
-			_try_handle_clack();
 		}
 
 		bool need_generate_dialog = false;
@@ -829,7 +800,7 @@ struct Sculpt::Main : Input_event_handler,
 
 		/* hide system panel button and system dialog when "un-using" */
 		_panel_dialog.refresh();
-		_system_menu_view.generate();
+		_system_dialog.refresh();
 		_handle_window_layout();
 	}
 
@@ -1355,14 +1326,11 @@ struct Sculpt::Main : Input_event_handler,
 
 	Dialog_view<Panel_dialog> _panel_dialog { _dialog_runtime, *this, *this };
 
-	System_dialog _system_dialog { _presets, _build_info, _network._nic_state,
-	                               _download_queue, _index_update_queue,
-	                               _file_operation_queue, _scan_rom,
-	                               _image_index_rom, *this, *this, *this };
-
-	Menu_view _system_menu_view { _env, _child_states, _system_dialog, "system_view",
-	                              Ram_quota{4*1024*1024}, Cap_quota{150},
-	                              "system_dialog", "system_view_hover", *this };
+	Dialog_view<System_dialog> _system_dialog { _dialog_runtime,
+	                                            _presets, _build_info, _network._nic_state,
+	                                            _download_queue, _index_update_queue,
+	                                            _file_operation_queue, _scan_rom,
+	                                            _image_index_rom, *this, *this, *this };
 
 	Dialog_view<Diag_dialog> _diag_dialog { _dialog_runtime, *this, _heap };
 
@@ -2106,7 +2074,6 @@ void Sculpt::Main::_generate_runtime_config(Xml_generator &xml) const
 	});
 
 	_dialog_runtime.gen_start_nodes(xml);
-	_system_menu_view.gen_start_node(xml);
 
 	_storage.gen_runtime_start_nodes(xml);
 	_file_browser_state.gen_start_nodes(xml);

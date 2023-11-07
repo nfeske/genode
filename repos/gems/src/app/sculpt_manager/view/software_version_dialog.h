@@ -22,24 +22,15 @@ namespace Sculpt { struct Software_version_dialog; }
 
 struct Sculpt::Software_version_dialog : Widget<Frame>
 {
-	Build_info const _build_info;
-
-	Software_version_dialog(Build_info  const &info) : _build_info(info) { }
-
-	void generate(Xml_generator &xml) const
+	void view(Scope<Frame> &s, Build_info const &info) const
 	{
 		using Version = Build_info::Version;
+
 		auto padded = [] (Version const &v) { return Version("  ", v, "  "); };
 
-		gen_named_node(xml, "frame", "version", [&] {
-			xml.node("vbox", [&] {
-				gen_named_node(xml, "label", "image", [&] {
-					xml.attribute("text", padded(_build_info.image_version())); });
-				gen_named_node(xml, "label", "genode", [&] {
-					xml.attribute("text", padded(_build_info.genode_version()));
-					xml.attribute("font", "annotation/regular");
-				});
-			});
+		s.sub_scope<Vbox>([&] (Scope<Frame, Vbox> &s) {
+			s.sub_scope<Dialog::Label>(padded(info.image_version()));
+			s.sub_scope<Annotation>   (padded(info.genode_version()));
 		});
 	}
 };
