@@ -1,5 +1,5 @@
 /*
- * \brief  PD/CPU route assignment dialog
+ * \brief  PD/CPU route assignment widget
  * \author Norman Feske
  * \date   2023-10-30
  */
@@ -11,22 +11,22 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__PD_ROUTE_DIALOG_H_
-#define _VIEW__PD_ROUTE_DIALOG_H_
+#ifndef _VIEW__PD_ROUTE_WIDGET_H_
+#define _VIEW__PD_ROUTE_WIDGET_H_
 
 /* local includes */
 #include <model/component.h>
 #include <model/runtime_config.h>
 #include <view/dialog.h>
 
-namespace Sculpt { struct Pd_route_dialog; }
+namespace Sculpt { struct Pd_route_widget; }
 
 
-struct Sculpt::Pd_route_dialog : Widget<Vbox>
+struct Sculpt::Pd_route_widget : Widget<Vbox>
 {
 	Runtime_config const &_runtime_config;
 
-	Pd_route_dialog(Runtime_config const &runtime_config)
+	Pd_route_widget(Runtime_config const &runtime_config)
 	:
 		_runtime_config(runtime_config)
 	{ }
@@ -96,4 +96,4 @@ struct Sculpt::Pd_route_dialog : Widget<Vbox>
 	}
 };
 
-#endif /* _VIEW__PD_ROUTE_DIALOG_H_ */
+#endif /* _VIEW__PD_ROUTE_WIDGET_H_ */

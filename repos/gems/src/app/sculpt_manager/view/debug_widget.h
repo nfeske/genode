@@ -1,5 +1,5 @@
 /*
- * \brief  Debug options dialog
+ * \brief  Debug-options widget
  * \author Norman Feske
  * \date   2023-10-30
  */
@@ -11,17 +11,17 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__DEBUG_DIALOG_H_
-#define _VIEW__DEBUG_DIALOG_H_
+#ifndef _VIEW__DEBUG_WIDGET_H_
+#define _VIEW__DEBUG_WIDGET_H_
 
 /* local includes */
 #include <model/component.h>
 #include <view/dialog.h>
 
-namespace Sculpt { struct Debug_dialog; }
+namespace Sculpt { struct Debug_widget; }
 
 
-struct Sculpt::Debug_dialog : Widget<Vbox>
+struct Sculpt::Debug_widget : Widget<Vbox>
 {
 	Hosted<Vbox, Menu_entry> _monitor { Id { "monitor" } },
 	                         _wx      { Id { "wx"      } },
@@ -50,4 +50,4 @@ struct Sculpt::Debug_dialog : Widget<Vbox>
 	}
 };
 
-#endif /* _VIEW__DEBUG_DIALOG_H_ */
+#endif /* _VIEW__DEBUG_WIDGET_H_ */

@@ -1,5 +1,5 @@
 /*
- * \brief  Dialog for the deploy presets
+ * \brief  Widget for the deploy presets
  * \author Norman Feske
  * \date   2023-01-11
  */
@@ -11,17 +11,17 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__SOFTWARE_PRESETS_DIALOG_H_
-#define _VIEW__SOFTWARE_PRESETS_DIALOG_H_
+#ifndef _VIEW__SOFTWARE_PRESETS_WIDGET_H_
+#define _VIEW__SOFTWARE_PRESETS_WIDGET_H_
 
 #include <model/presets.h>
 #include <view/dialog.h>
 #include <string.h>
 
-namespace Sculpt { struct Software_presets_dialog; }
+namespace Sculpt { struct Software_presets_widget; }
 
 
-struct Sculpt::Software_presets_dialog : Widget<Float>
+struct Sculpt::Software_presets_widget : Widget<Float>
 {
 	using Name = Presets::Info::Name;
 
@@ -113,4 +113,4 @@ struct Sculpt::Software_presets_dialog : Widget<Float>
 	}
 };
 
-#endif /* _VIEW__SOFTWARE_PRESETS_DIALOG_H_ */
+#endif /* _VIEW__SOFTWARE_PRESETS_WIDGET_H_ */

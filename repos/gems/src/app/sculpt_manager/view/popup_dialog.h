@@ -24,9 +24,9 @@
 #include <model/nic_state.h>
 #include <model/index_menu.h>
 #include <view/dialog.h>
-#include <view/pd_route_dialog.h>
-#include <view/resource_dialog.h>
-#include <view/debug_dialog.h>
+#include <view/pd_route_widget.h>
+#include <view/resource_widget.h>
+#include <view/debug_widget.h>
 #include <depot_query.h>
 
 namespace Sculpt { struct Popup_dialog; }
@@ -140,9 +140,9 @@ struct Sculpt::Popup_dialog : Dialog::Top_level_dialog
 	Hosted<Frame, Vbox, Sub_menu_title>               _back      { Id { "back" } };
 	Hosted<Frame, Vbox, Deferred_action_button>       _launch    { Id { "Add component" } };
 	Hosted<Frame, Vbox, Float, Vbox, Float, Deferred_action_button> _install { Id { "install" } };
-	Hosted<Frame, Vbox, Frame, Vbox, Resource_dialog> _resources { Id { "resources" } };
-	Hosted<Frame, Vbox, Frame, Pd_route_dialog>       _pd_route  { Id { "pd_route" }, _runtime_config };
-	Hosted<Frame, Vbox, Frame, Debug_dialog>          _debug     { Id { "debug" } };
+	Hosted<Frame, Vbox, Frame, Vbox, Resource_widget> _resources { Id { "resources" } };
+	Hosted<Frame, Vbox, Frame, Pd_route_widget>       _pd_route  { Id { "pd_route" }, _runtime_config };
+	Hosted<Frame, Vbox, Frame, Debug_widget>          _debug     { Id { "debug" } };
 
 	enum State { TOP_LEVEL, DEPOT_REQUESTED, DEPOT_SHOWN, DEPOT_SELECTION,
 	             INDEX_REQUESTED, INDEX_SHOWN,

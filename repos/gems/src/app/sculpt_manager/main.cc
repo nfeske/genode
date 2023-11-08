@@ -38,10 +38,10 @@
 #include <model/settings.h>
 #include <model/presets.h>
 #include <model/screensaver.h>
-#include <view/download_status_dialog.h>
+#include <view/download_status_widget.h>
 #include <view/popup_dialog.h>
 #include <view/panel_dialog.h>
-#include <view/settings_dialog.h>
+#include <view/settings_widget.h>
 #include <view/system_dialog.h>
 #include <view/file_browser_dialog.h>
 #include <gui.h>
@@ -62,9 +62,9 @@ struct Sculpt::Main : Input_event_handler,
                       Graph::Action,
                       Panel_dialog::Action,
                       Popup_dialog::Action,
-                      Settings_dialog::Action,
-                      Software_presets_dialog::Action,
-                      Software_update_dialog::Action,
+                      Settings_widget::Action,
+                      Software_presets_widget::Action,
+                      Software_update_widget::Action,
                       File_browser_dialog::Action,
                       Popup_dialog::Construction_info,
                       Depot_query,
@@ -615,7 +615,7 @@ struct Sculpt::Main : Input_event_handler,
 
 				if (download_in_progress || _main._download_queue.any_failed_download()) {
 
-					Hosted<Vbox, Download_status_dialog> download_status { Id { "Download" } };
+					Hosted<Vbox, Download_status_widget> download_status { Id { "Download" } };
 
 					s.widget(download_status, state, _main._download_queue);
 				}
@@ -776,7 +776,7 @@ struct Sculpt::Main : Input_event_handler,
 
 	void use(Storage_target const &target) override
 	{
-		_system_dialog.reset_update_dialog();
+		_system_dialog.reset_update_widget();
 		_download_queue.reset();
 		_storage.use(target);
 
@@ -792,7 +792,7 @@ struct Sculpt::Main : Input_event_handler,
 	}
 
 	/*
-	 * Storage_dialog::Action interface
+	 * Storage_widget::Action interface
 	 */
 	void format(Storage_target const &target) override
 	{
@@ -910,7 +910,7 @@ struct Sculpt::Main : Input_event_handler,
 	}
 
 	/**
-	 * Software_update_dialog::Action interface
+	 * Software_update_widget::Action interface
 	 */
 	void query_image_index(Depot::Archive::User const &user) override
 	{
@@ -919,7 +919,7 @@ struct Sculpt::Main : Input_event_handler,
 	}
 
 	/**
-	 * Software_update_dialog::Action interface
+	 * Software_update_widget::Action interface
 	 */
 	void trigger_image_download(Path const &path, Verify verify) override
 	{
@@ -930,7 +930,7 @@ struct Sculpt::Main : Input_event_handler,
 	}
 
 	/**
-	 * Software_update_dialog::Action interface
+	 * Software_update_widget::Action interface
 	 */
 	void update_image_index(Depot::Archive::User const &user, Verify verify) override
 	{
@@ -941,7 +941,7 @@ struct Sculpt::Main : Input_event_handler,
 	}
 
 	/**
-	 * Software_update_dialog::Action interface
+	 * Software_update_widget::Action interface
 	 */
 	void install_boot_image(Path const &path) override
 	{
@@ -1018,19 +1018,14 @@ struct Sculpt::Main : Input_event_handler,
 						file.with_optional_sub_node("config", [&] (Xml_node const &config) {
 							_runtime_state.reset_abandoned_and_launched_children();
 							_deploy.use_as_deploy_template(config);
-							_deploy.update_managed_deploy_config();
-						});
-					}
-				});
-			}
-		});
+							_deploy.update_managed_deploy_config(); }); } }); } });
 	}
 
 	struct Settings_top_level_dialog : Top_level_dialog
 	{
 		Main &_main;
 
-		Hosted<Frame, Settings_dialog> _hosted { Id { "hosted" }, _main._settings };
+		Hosted<Frame, Settings_widget> _hosted { Id { "hosted" }, _main._settings };
 
 		Settings_top_level_dialog(Main &main)
 		: Top_level_dialog("settings"), _main(main) { }

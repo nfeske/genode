@@ -1,5 +1,5 @@
 /*
- * \brief  Resource assignment dialog
+ * \brief  Resource assignment widget
  * \author Norman Feske
  * \date   2023-11-01
  */
@@ -11,17 +11,17 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__RESOURCE_DIALOG_H_
-#define _VIEW__RESOURCE_DIALOG_H_
+#ifndef _VIEW__RESOURCE_WIDGET_H_
+#define _VIEW__RESOURCE_WIDGET_H_
 
 /* local includes */
 #include <model/component.h>
 #include <view/dialog.h>
 
-namespace Sculpt { struct Resource_dialog; }
+namespace Sculpt { struct Resource_widget; }
 
 
-struct Sculpt::Resource_dialog : Widget<Vbox>
+struct Sculpt::Resource_widget : Widget<Vbox>
 {
 	template <typename WIDGET>
 	struct Titled_widget : Widget<Left_floating_hbox>
@@ -120,4 +120,4 @@ struct Sculpt::Resource_dialog : Widget<Vbox>
 	}
 };
 
-#endif /* _VIEW__RESOURCE_DIALOG_H_ */
+#endif /* _VIEW__RESOURCE_WIDGET_H_ */

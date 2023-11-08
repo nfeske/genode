@@ -1,5 +1,5 @@
 /*
- * \brief  Resource assignment dialog
+ * \brief  Resource-assignment widget
  * \author Alexander Boettcher
  * \author Norman Feske
  * \date   2020-07-22
@@ -12,12 +12,12 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#include <view/resource_dialog.h>
+#include <view/resource_widget.h>
 
 using namespace Sculpt;
 
 
-void Resource_dialog::Affinity_selector::view(Scope<Vbox> &s,
+void Resource_widget::Affinity_selector::view(Scope<Vbox> &s,
                                               Affinity::Space    const &space,
                                               Affinity::Location const &location) const
 {
@@ -93,7 +93,7 @@ void Resource_dialog::Affinity_selector::view(Scope<Vbox> &s,
 }
 
 
-void Resource_dialog::Affinity_selector::click(Clicked_at      const &at,
+void Resource_widget::Affinity_selector::click(Clicked_at      const &at,
                                                Affinity::Space const &space,
                                                Affinity::Location    &location)
 {

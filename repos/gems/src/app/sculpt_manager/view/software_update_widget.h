@@ -1,5 +1,5 @@
 /*
- * \brief  Dialog for software update
+ * \brief  Widget for software update
  * \author Norman Feske
  * \date   2023-01-23
  */
@@ -11,22 +11,22 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__SOFTWARE_UPDATE_DIALOG_H_
-#define _VIEW__SOFTWARE_UPDATE_DIALOG_H_
+#ifndef _VIEW__SOFTWARE_UPDATE_WIDGET_H_
+#define _VIEW__SOFTWARE_UPDATE_WIDGET_H_
 
 #include <model/nic_state.h>
 #include <model/build_info.h>
 #include <model/download_queue.h>
 #include <model/index_update_queue.h>
-#include <view/depot_users_dialog.h>
+#include <view/depot_users_widget.h>
 
-namespace Sculpt { struct Software_update_dialog; }
+namespace Sculpt { struct Software_update_widget; }
 
 
-struct Sculpt::Software_update_dialog : Widget<Vbox>
+struct Sculpt::Software_update_widget : Widget<Vbox>
 {
-	using Depot_users = Depot_users_dialog::Depot_users;
-	using User        = Depot_users_dialog::User;
+	using Depot_users = Depot_users_widget::Depot_users;
+	using User        = Depot_users_widget::User;
 	using Image_index = Attached_rom_dataspace;
 	using Version     = String<16>;
 
@@ -41,7 +41,7 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 	Path _last_installed { };
 	Path _last_selected  { };
 
-	Hosted<Vbox, Frame, Vbox, Depot_users_dialog> _users;
+	Hosted<Vbox, Frame, Vbox, Depot_users_widget> _users;
 
 	Path _index_path() const { return Path(_users.selected(), "/image/index"); }
 
@@ -204,7 +204,7 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 
 	Hosted<Vbox, Frame, Vbox, Float, Operation_button> _check { Id { "check" } };
 
-	Software_update_dialog(Build_info           const &build_info,
+	Software_update_widget(Build_info           const &build_info,
 	                       Nic_state            const &nic_state,
 	                       Download_queue       const &download_queue,
 	                       Index_update_queue   const &index_update_queue,
@@ -228,7 +228,7 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 
 				s.widget(_users);
 
-				Depot_users_dialog::User_properties const
+				Depot_users_widget::User_properties const
 					properties = _users.selected_user_properties();
 
 				bool const offer_index_update = _users.one_selected()
@@ -253,7 +253,7 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 					_view_image_entry(s, image); }); });
 	}
 
-	struct Action : Depot_users_dialog::Action
+	struct Action : Depot_users_widget::Action
 	{
 		virtual void query_image_index     (User const &) = 0;
 		virtual void trigger_image_download(Path const &, Verify) = 0;
@@ -304,4 +304,4 @@ struct Sculpt::Software_update_dialog : Widget<Vbox>
 	}
 };
 
-#endif /* _VIEW__SOFTWARE_UPDATE_DIALOG_H_ */
+#endif /* _VIEW__SOFTWARE_UPDATE_WIDGET_H_ */

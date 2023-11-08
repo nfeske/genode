@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__AP_SELECTOR_H_
-#define _VIEW__AP_SELECTOR_H_
+#ifndef _VIEW__AP_SELECTOR_WIDGET_H_
+#define _VIEW__AP_SELECTOR_WIDGET_H_
 
 /* local includes */
 #include <types.h>
@@ -20,10 +20,10 @@
 #include <model/wpa_passphrase.h>
 #include <view/dialog.h>
 
-namespace Sculpt { struct Ap_selector; }
+namespace Sculpt { struct Ap_selector_widget; }
 
 
-struct Sculpt::Ap_selector : Widget<Vbox>
+struct Sculpt::Ap_selector_widget : Widget<Vbox>
 {
 	enum class Wlan_config_policy { MANAGED, MANUAL };
 
@@ -106,10 +106,10 @@ struct Sculpt::Ap_selector : Widget<Vbox>
 			                  Access_point::UNKNOWN });
 	}
 
-	Ap_selector(Access_points        const &aps,
-	            Wifi_connection      const &wifi_connection,
-	            Wlan_config_policy   const &wlan_config_policy,
-	            Blind_wpa_passphrase const &wpa_passphrase)
+	Ap_selector_widget(Access_points        const &aps,
+	                   Wifi_connection      const &wifi_connection,
+	                   Wlan_config_policy   const &wlan_config_policy,
+	                   Blind_wpa_passphrase const &wpa_passphrase)
 	:
 		_access_points(aps), _wifi_connection(wifi_connection),
 		_wlan_config_policy(wlan_config_policy), _wpa_passphrase(wpa_passphrase)
@@ -230,4 +230,4 @@ struct Sculpt::Ap_selector : Widget<Vbox>
 	}
 };
 
-#endif /* _VIEW__AP_SELECTOR_H_ */
+#endif /* _VIEW__AP_SELECTOR_WIDGET_H_ */

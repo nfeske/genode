@@ -1,5 +1,5 @@
 /*
- * \brief  Network management dialog
+ * \brief  Network management widget
  * \author Norman Feske
  * \date   2018-05-07
  */
@@ -11,27 +11,27 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__NETWORK_DIALOG_H_
-#define _VIEW__NETWORK_DIALOG_H_
+#ifndef _VIEW__NETWORK_WIDGET_H_
+#define _VIEW__NETWORK_WIDGET_H_
 
 /* local includes */
 #include <model/nic_target.h>
 #include <model/nic_state.h>
 #include <model/pci_info.h>
-#include <view/ap_selector.h>
+#include <view/ap_selector_widget.h>
 
-namespace Sculpt { struct Network_dialog; }
+namespace Sculpt { struct Network_widget; }
 
 
-struct Sculpt::Network_dialog : Widget<Frame>
+struct Sculpt::Network_widget : Widget<Frame>
 {
-	using Wlan_config_policy = Ap_selector::Wlan_config_policy;
+	using Wlan_config_policy = Ap_selector_widget::Wlan_config_policy;
 
 	Nic_target const &_nic_target;
 	Nic_state  const &_nic_state;
 	Pci_info   const &_pci_info;
 
-	struct Action : Ap_selector::Action
+	struct Action : Ap_selector_widget::Action
 	{
 		virtual void nic_target(Nic_target::Type) = 0;
 	};
@@ -85,11 +85,11 @@ struct Sculpt::Network_dialog : Widget<Frame>
 
 	Hosted<Frame, Vbox, Target_selector> _target_selector { Id { "target" } };
 
-	Hosted<Frame, Vbox, Frame, Vbox, Ap_selector> _ap_selector;
+	Hosted<Frame, Vbox, Frame, Vbox, Ap_selector_widget> _ap_selector;
 
 	void _gen_connected_ap(Xml_generator &, bool) const;
 
-	Network_dialog(Nic_target           const &nic_target,
+	Network_widget(Nic_target           const &nic_target,
 	               Access_points        const &access_points,
 	               Wifi_connection      const &wifi_connection,
 	               Nic_state            const &nic_state,
@@ -103,7 +103,7 @@ struct Sculpt::Network_dialog : Widget<Frame>
 		             wlan_config_policy, wpa_passphrase)
 	{ }
 
-	void view(Scope<Frame> &s, Ap_selector::List_hovered &ap_list_hovered) const
+	void view(Scope<Frame> &s, Ap_selector_widget::List_hovered &ap_list_hovered) const
 	{
 		s.sub_scope<Vbox>([&] (Scope<Frame, Vbox> &s) {
 
@@ -138,4 +138,4 @@ struct Sculpt::Network_dialog : Widget<Frame>
 	}
 };
 
-#endif /* _VIEW__NETWORK_DIALOG_H_ */
+#endif /* _VIEW__NETWORK_WIDGET_H_ */

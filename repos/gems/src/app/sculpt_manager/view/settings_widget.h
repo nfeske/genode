@@ -1,5 +1,5 @@
 /*
- * \brief  Settings dialog
+ * \brief  Settings widget
  * \author Norman Feske
  * \date   2020-01-30
  */
@@ -11,16 +11,16 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__SETTINGS_DIALOG_H_
-#define _VIEW__SETTINGS_DIALOG_H_
+#ifndef _VIEW__SETTINGS_WIDGET_H_
+#define _VIEW__SETTINGS_WIDGET_H_
 
 #include <view/dialog.h>
 #include <model/settings.h>
 
-namespace Sculpt { struct Settings_dialog; }
+namespace Sculpt { struct Settings_widget; }
 
 
-struct Sculpt::Settings_dialog : Widget<Vbox>
+struct Sculpt::Settings_widget : Widget<Vbox>
 {
 	Settings const &_settings;
 
@@ -58,7 +58,7 @@ struct Sculpt::Settings_dialog : Widget<Vbox>
 		_font_size_choice       { Id { "Font size" }, Selected_section::FONT_SIZE },
 		_keyboard_layout_choice { Id { "Keyboard"  }, Selected_section::KEYBAORD  };
 
-	Settings_dialog(Settings const &settings) : _settings(settings) { }
+	Settings_widget(Settings const &settings) : _settings(settings) { }
 
 	void view(Scope<Vbox> &s) const
 	{
@@ -119,4 +119,4 @@ struct Sculpt::Settings_dialog : Widget<Vbox>
 	}
 };
 
-#endif /* _VIEW__SETTINGS_DIALOG_H_ */
+#endif /* _VIEW__SETTINGS_WIDGET_H_ */

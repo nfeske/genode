@@ -1,5 +1,5 @@
 /*
- * \brief  Dialog for showing the system version
+ * \brief  Widget for showing the system version
  * \author Norman Feske
  * \date   2023-01-23
  */
@@ -11,16 +11,16 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__SOFTWARE_VERSION_DIALOG_H_
-#define _VIEW__SOFTWARE_VERSION_DIALOG_H_
+#ifndef _VIEW__SOFTWARE_VERSION_WIDGET_H_
+#define _VIEW__SOFTWARE_VERSION_WIDGET_H_
 
 #include <model/build_info.h>
 #include <view/dialog.h>
 
-namespace Sculpt { struct Software_version_dialog; }
+namespace Sculpt { struct Software_version_widget; }
 
 
-struct Sculpt::Software_version_dialog : Widget<Frame>
+struct Sculpt::Software_version_widget : Widget<Frame>
 {
 	void view(Scope<Frame> &s, Build_info const &info) const
 	{
@@ -35,4 +35,4 @@ struct Sculpt::Software_version_dialog : Widget<Frame>
 	}
 };
 
-#endif /* _VIEW__SOFTWARE_VERSION_DIALOG_H_ */
+#endif /* _VIEW__SOFTWARE_VERSION_WIDGET_H_ */

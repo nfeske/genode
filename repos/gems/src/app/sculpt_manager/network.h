@@ -21,7 +21,7 @@
 /* local includes */
 #include <model/child_exit_state.h>
 #include <model/pci_info.h>
-#include <view/network_dialog.h>
+#include <view/network_widget.h>
 #include <runtime.h>
 #include <keyboard_focus.h>
 #include <managed_config.h>
@@ -29,7 +29,7 @@
 namespace Sculpt { struct Network; }
 
 
-struct Sculpt::Network : Network_dialog::Action
+struct Sculpt::Network : Network_widget::Action
 {
 	Env &_env;
 
@@ -49,12 +49,13 @@ struct Sculpt::Network : Network_dialog::Action
 	Runtime_info const &_runtime_info;
 	Pci_info     const &_pci_info;
 
-	using Wlan_config_policy = Network_dialog::Wlan_config_policy;
+	using Wlan_config_policy = Network_widget::Wlan_config_policy;
 
 	Nic_target _nic_target { };
 	Nic_state  _nic_state  { };
 
-	Ap_selector::List_hovered _ap_list_hovered { };
+	Ap_selector_widget::List_hovered _ap_list_hovered { };
+
 	Access_point::Bssid _selected_ap { };
 
 	Wpa_passphrase wpa_passphrase { };
@@ -106,7 +107,7 @@ struct Sculpt::Network : Network_dialog::Action
 
 	Wlan_config_policy _wlan_config_policy = Wlan_config_policy::MANAGED;
 
-	Network_dialog dialog {
+	Network_widget dialog {
 		_nic_target, _access_points,
 		_wifi_connection, _nic_state, wpa_passphrase, _wlan_config_policy,
 		_pci_info };
@@ -133,7 +134,7 @@ struct Sculpt::Network : Network_dialog::Action
 	void _update_nic_target_from_config(Xml_node const &);
 
 	/**
-	 * Network_dialog::Action interface
+	 * Network_widget::Action interface
 	 */
 	void nic_target(Nic_target::Type const type) override
 	{

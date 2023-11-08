@@ -16,9 +16,9 @@
 
 #include <view/layout_helper.h>
 #include <view/dialog.h>
-#include <view/software_presets_dialog.h>
-#include <view/software_update_dialog.h>
-#include <view/software_version_dialog.h>
+#include <view/software_presets_widget.h>
+#include <view/software_update_widget.h>
+#include <view/software_version_widget.h>
 #include <model/settings.h>
 
 namespace Sculpt { struct System_dialog; }
@@ -26,21 +26,21 @@ namespace Sculpt { struct System_dialog; }
 
 struct Sculpt::System_dialog : Top_level_dialog
 {
-	using Depot_users = Depot_users_dialog::Depot_users;
+	using Depot_users = Depot_users_widget::Depot_users;
 	using Image_index = Attached_rom_dataspace;
 
 	Presets     const &_presets;
 	Image_index const &_image_index;
 	Build_info  const &_build_info;
 
-	Software_presets_dialog::Action &_presets_action;
-	Software_update_dialog::Action  &_update_action;
+	Software_presets_widget::Action &_presets_action;
+	Software_update_widget::Action  &_update_action;
 
 	enum Tab { PRESET, UPDATE } _selected_tab = Tab::PRESET;
 
-	Hosted<Frame, Vbox, Software_presets_dialog> _presets_dialog { Id { "presets" } };
-	Hosted<Frame, Vbox, Software_update_dialog>  _update_dialog;
-	Hosted<Frame, Vbox, Software_version_dialog> _version_dialog { Id { "version" } };
+	Hosted<Frame, Vbox, Software_presets_widget> _presets_widget { Id { "presets" } };
+	Hosted<Frame, Vbox, Software_update_widget>  _update_widget;
+	Hosted<Frame, Vbox, Software_version_widget> _version_widget { Id { "version" } };
 
 	Hosted<Frame, Vbox, Hbox, Select_button<Tab>>
 		_preset_tab { Id { " Presets " }, Tab::PRESET },
@@ -63,11 +63,11 @@ struct Sculpt::System_dialog : Top_level_dialog
 
 				switch (_selected_tab) {
 				case Tab::PRESET:
-					s.widget(_presets_dialog, _presets);
+					s.widget(_presets_widget, _presets);
 					break;
 				case Tab::UPDATE:
-					s.widget(_update_dialog, _image_index.xml());
-					s.widget(_version_dialog, _build_info);
+					s.widget(_update_widget, _image_index.xml());
+					s.widget(_version_widget, _build_info);
 					break;
 				};
 			});
@@ -79,15 +79,15 @@ struct Sculpt::System_dialog : Top_level_dialog
 		_preset_tab.propagate(at, [&] (Tab t) { _selected_tab = t; });
 		_update_tab.propagate(at, [&] (Tab t) { _selected_tab = t; });
 
-		_presets_dialog.propagate(at, _presets);
+		_presets_widget.propagate(at, _presets);
 
 		if (_selected_tab == Tab::UPDATE)
-			_update_dialog.propagate(at, _update_action);
+			_update_widget.propagate(at, _update_action);
 	}
 
 	void clack(Clacked_at const &at) override
 	{
-		_presets_dialog.propagate(at, _presets, _presets_action);
+		_presets_widget.propagate(at, _presets, _presets_action);
 	}
 
 	void drag(Dragged_at const &) override { }
@@ -100,13 +100,13 @@ struct Sculpt::System_dialog : Top_level_dialog
 	              File_operation_queue      const &file_operation_queue,
 	              Depot_users               const &depot_users,
 	              Image_index               const &image_index,
-	              Software_presets_dialog::Action &presets_action,
-	              Software_update_dialog::Action  &update_action)
+	              Software_presets_widget::Action &presets_action,
+	              Software_update_widget::Action  &update_action)
 	:
 		Top_level_dialog("system"),
 		_presets(presets), _image_index(image_index), _build_info(build_info),
 		_presets_action(presets_action), _update_action(update_action),
-		_update_dialog(Id { "update" },
+		_update_widget(Id { "update" },
 		               build_info, nic_state, download_queue,
 		               index_update_queue, file_operation_queue, depot_users,
 		               image_index)
@@ -114,16 +114,16 @@ struct Sculpt::System_dialog : Top_level_dialog
 
 	bool update_tab_selected() const { return _selected_tab == Tab::UPDATE; }
 
-	bool keyboard_needed() const { return _update_dialog.keyboard_needed(); }
+	bool keyboard_needed() const { return _update_widget.keyboard_needed(); }
 
-	void handle_key(Codepoint c, Software_update_dialog::Action &action)
+	void handle_key(Codepoint c, Software_update_widget::Action &action)
 	{
-		_update_dialog.handle_key(c, action);
+		_update_widget.handle_key(c, action);
 	}
 
-	void sanitize_user_selection() { _update_dialog.sanitize_user_selection(); }
+	void sanitize_user_selection() { _update_widget.sanitize_user_selection(); }
 
-	void reset_update_dialog() { _update_dialog.reset(); }
+	void reset_update_widget() { _update_widget.reset(); }
 };
 
 #endif /* _VIEW__SYSTEM_DIALOG_H_ */

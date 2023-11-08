@@ -1,5 +1,5 @@
 /*
- * \brief  Dialog for selecting a depot user
+ * \brief  Widget for selecting a depot user
  * \author Norman Feske
  * \date   2023-03-17
  */
@@ -11,17 +11,17 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VIEW__DEPOT_USERS_DIALOG_H_
-#define _VIEW__DEPOT_USERS_DIALOG_H_
+#ifndef _VIEW__DEPOT_USERS_WIDGET_H_
+#define _VIEW__DEPOT_USERS_WIDGET_H_
 
 #include <view/dialog.h>
 #include <view/text_entry_field.h>
 #include <model/depot_url.h>
 
-namespace Sculpt { struct Depot_users_dialog; }
+namespace Sculpt { struct Depot_users_widget; }
 
 
-struct Sculpt::Depot_users_dialog : Widget<Vbox>
+struct Sculpt::Depot_users_widget : Widget<Vbox>
 {
 	public:
 
@@ -205,7 +205,7 @@ struct Sculpt::Depot_users_dialog : Widget<Vbox>
 
 	public:
 
-		Depot_users_dialog(Depot_users const &depot_users,
+		Depot_users_widget(Depot_users const &depot_users,
 		                   User        const &default_user)
 		:
 			_default_user(default_user), _depot_users(depot_users)
@@ -344,4 +344,4 @@ struct Sculpt::Depot_users_dialog : Widget<Vbox>
 		}
 };
 
-#endif /* _VIEW__DEPOT_USERS_DIALOG_H_ */
+#endif /* _VIEW__DEPOT_USERS_WIDGET_H_ */
