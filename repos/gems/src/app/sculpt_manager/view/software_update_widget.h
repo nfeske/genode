@@ -253,7 +253,7 @@ struct Sculpt::Software_update_widget : Widget<Vbox>
 					_view_image_entry(s, image); }); });
 	}
 
-	struct Action : Depot_users_widget::Action
+	struct Action : virtual Depot_users_widget::Action
 	{
 		virtual void query_image_index     (User const &) = 0;
 		virtual void trigger_image_download(Path const &, Verify) = 0;

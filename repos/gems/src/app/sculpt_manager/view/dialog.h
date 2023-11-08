@@ -39,6 +39,7 @@ namespace Dialog {
 	struct Pin_row;
 	struct Menu_entry;
 	struct Operation_button;
+	struct Right_floating_off_on;
 	struct Doublechecked_action_button;
 	template <typename> struct Radio_select_button;
 	template <typename> struct Choice;
@@ -366,7 +367,7 @@ struct Dialog::Pin_row : Widget<Hbox>
 		s.widget(_buttons[2], Pin_button::Attr { visible.right  });
 	}
 
-	void click(Clicked_at const &at, auto const &fn) const
+	void click(Clicked_at const &at, auto const &fn)
 	{
 		for (auto &button : _buttons)
 			button.propagate(at, [&] { fn(button.id.value); });
@@ -413,6 +414,36 @@ struct Dialog::Operation_button : Widget<Button>
 
 	template <typename FN>
 	void click(Clicked_at const &, FN const &fn) const { fn(); }
+};
+
+
+struct Dialog::Right_floating_off_on : Widget<Right_floating_hbox>
+{
+	struct Attr { bool on, transient; };
+
+	Hosted<Right_floating_hbox, Select_button<bool>> const
+		_off { Id { "  Off  " }, false },
+		_on  { Id { "  On  "  }, true  };
+
+	void view(Scope<Right_floating_hbox> &s, Attr attr) const
+	{
+		auto transient_attr_fn = [&] (Scope<Button> &s)
+		{
+			if (attr.transient)
+				s.attribute("style", "unimportant");
+
+			s.sub_scope<Dialog::Label>(s.id.value);
+		};
+
+		s.widget(_off, attr.on, transient_attr_fn);
+		s.widget(_on,  attr.on, transient_attr_fn);
+	}
+
+	void click(Clicked_at const &at, auto const &fn) const
+	{
+		_off.propagate(at, [&] (bool) { fn(false); });
+		_on .propagate(at, [&] (bool) { fn(true);  });
+	}
 };
 
 
