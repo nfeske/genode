@@ -532,19 +532,4 @@ struct Dialog::Choice : Widget<Hbox>
 	}
 };
 
-
-/* local includes */
-#include <view/deprecated_dialog.h>
-
-namespace Dialog {
-
-	static inline void with_dummy_scope(Xml_generator &xml, auto const &fn)
-	{
-		static Xml_node const hover("<hover/>");
-		At const no_hover(Dialog::Event::Seq_number { }, hover);
-		Scope<> scope(xml, no_hover, Dialog::Event::Dragged { }, Id { });
-		fn(scope);
-	}
-}
-
 #endif /* _VIEW__DIALOG_H_ */

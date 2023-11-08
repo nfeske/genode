@@ -23,6 +23,7 @@
 #include "types.h"
 #include <view/dialog.h>
 #include <model/child_state.h>
+#include <view/deprecated_dialog.h>
 
 namespace Sculpt { struct Menu_view; }
 
