@@ -439,6 +439,11 @@ struct Dialog::Right_floating_off_on : Widget<Right_floating_hbox>
 		s.widget(_on,  attr.on, transient_attr_fn);
 	}
 
+	void view(Scope<Right_floating_hbox> &s, bool on) const
+	{
+		view(s, Attr { .on = on, .transient = false });
+	}
+
 	void click(Clicked_at const &at, auto const &fn) const
 	{
 		_off.propagate(at, [&] (bool) { fn(false); });
