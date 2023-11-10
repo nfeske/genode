@@ -195,7 +195,6 @@ struct Sculpt::Main : Input_event_handler,
 
 		using Distant_runtime::View::refresh;
 		using Distant_runtime::View::min_width;
-		using Distant_runtime::View::hovered;
 		using Distant_runtime::View::if_hovered;
 	};
 
@@ -725,8 +724,11 @@ struct Sculpt::Main : Input_event_handler,
 		/* used to detect clicks outside the popup dialog (for closing it) */
 		bool const popup_opened = (_popup_opened_seq_number.value == seq.value);
 
+		bool const popup_hovered =
+			_popup_dialog.if_hovered([&] (Hovered_at const &) { return true; });
+
 		/* remove popup dialog when clicking somewhere outside */
-		if (!_popup_dialog.hovered() && !popup_opened) {
+		if (!popup_hovered && !popup_opened) {
 			if (_popup.state == Popup::VISIBLE) {
 				_close_popup_dialog();
 				discard_construction();

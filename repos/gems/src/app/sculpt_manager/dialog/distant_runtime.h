@@ -254,13 +254,12 @@ class Dialog::Distant_runtime::View : private Views::Element
 
 		void refresh() { _refresh_handler.local_submit(); }
 
-		bool hovered() const { return _dialog_hovered; }
-
 		bool if_hovered(auto const &fn) const
 		{
 			bool result = false;
-			_with_dialog_hover([&] (Xml_node const &location) {
-				result = fn(Hovered_at { Event::Seq_number { }, location }); });
+			if (_dialog_hovered)
+				_with_dialog_hover([&] (Xml_node const &location) {
+					result = fn(Hovered_at { Event::Seq_number { }, location }); });
 			return result;
 		}
 };
