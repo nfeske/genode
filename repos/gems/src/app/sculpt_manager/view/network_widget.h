@@ -139,7 +139,7 @@ struct Sculpt::Network_widget : Widget<Frame>
 
 	bool ap_list_hovered(Hovered_at const &at) const
 	{
-		return _ap_selector.if_hovered(at, [&] (Hovered_at const &at) {
+		return _ap_selector.if_hovered(at, [&] (Hovered_at const &) {
 			return _ap_selector.ap_list_shown(); });
 	}
 };
