@@ -59,6 +59,7 @@ struct Sculpt::Main : Input_event_handler,
                       Deploy::Action,
                       Storage::Action,
                       Network::Action,
+                      Network::Info,
                       Graph::Action,
                       Panel_dialog::Action,
                       Popup_dialog::Action,
@@ -195,6 +196,7 @@ struct Sculpt::Main : Input_event_handler,
 		using Distant_runtime::View::refresh;
 		using Distant_runtime::View::min_width;
 		using Distant_runtime::View::hovered;
+		using Distant_runtime::View::if_hovered;
 	};
 
 
@@ -274,7 +276,7 @@ struct Sculpt::Main : Input_event_handler,
 	 ** Network **
 	 *************/
 
-	Network _network { _env, _heap, *this, _child_states, *this, _runtime_state, _pci_info };
+	Network _network { _env, _heap, *this, *this, _child_states, *this, _runtime_state, _pci_info };
 
 	struct Network_top_level_dialog : Top_level_dialog
 	{
@@ -286,7 +288,7 @@ struct Sculpt::Main : Input_event_handler,
 		void view(Scope<> &s) const override
 		{
 			s.sub_scope<Frame>([&] (Scope<Frame> &s) {
-				_main._network.dialog.view(s, _main._network._ap_list_hovered); });
+				_main._network.dialog.view(s); });
 		}
 
 		void click(Clicked_at const &at) override
@@ -307,6 +309,15 @@ struct Sculpt::Main : Input_event_handler,
 	{
 		_network_dialog.refresh();
 		_system_dialog.refresh();
+	}
+
+	/**
+	 * Network::Info interface
+	 */
+	bool ap_list_hovered() const override
+	{
+		return _network_dialog.if_hovered([&] (Hovered_at const &at) {
+			return _network.dialog.ap_list_hovered(at); });
 	}
 
 

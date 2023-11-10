@@ -45,8 +45,6 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 
 	Hosted<Vbox, Action_button> _connect { Id { "Connect" } };
 
-	struct List_hovered { bool value; };
-
 	struct Item : Widget<Hbox>
 	{
 		struct Attr { bool selected; };
@@ -115,7 +113,7 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 		_wlan_config_policy(wlan_config_policy), _wpa_passphrase(wpa_passphrase)
 	{ }
 
-	void view(Scope<Vbox> &s, List_hovered &list_hovered) const
+	void view(Scope<Vbox> &s) const
 	{
 		if (_wlan_config_policy == Wlan_config_policy::MANUAL)
 			return;
@@ -131,8 +129,6 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 			                           ? "connecting" : "associated" );
 			return;
 		}
-
-		list_hovered.value = s.hovered();
 
 		bool const selected_ap_visible = _selected_ap_visible();
 
@@ -228,6 +224,8 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 
 		_connect.propagate(at, [&] { action.wifi_connect(_selected); });
 	}
+
+	bool ap_list_shown() const { return !_selected.valid(); }
 };
 
 #endif /* _VIEW__AP_SELECTOR_WIDGET_H_ */

@@ -40,7 +40,13 @@ struct Sculpt::Network : Network_widget::Action
 		virtual void update_network_dialog() = 0;
 	};
 
-	Action &_action;
+	struct Info : Interface
+	{
+		virtual bool ap_list_hovered() const = 0;
+	};
+
+	Action     &_action;
+	Info const &_info;
 
 	Registry<Child_state> &_child_states;
 
@@ -53,8 +59,6 @@ struct Sculpt::Network : Network_widget::Action
 
 	Nic_target _nic_target { };
 	Nic_state  _nic_state  { };
-
-	Ap_selector_widget::List_hovered _ap_list_hovered { };
 
 	Access_point::Bssid _selected_ap { };
 
@@ -211,12 +215,13 @@ struct Sculpt::Network : Network_widget::Action
 		_runtime_config_generator.generate_runtime_config();
 	}
 
-	Network(Env &env, Allocator &alloc, Action &action,
+	Network(Env &env, Allocator &alloc, Action &action, Info const &info,
 	        Registry<Child_state> &child_states,
 	        Runtime_config_generator &runtime_config_generator,
 	        Runtime_info const &runtime_info, Pci_info const &pci_info)
 	:
-		_env(env), _alloc(alloc), _action(action), _child_states(child_states),
+		_env(env), _alloc(alloc), _action(action), _info(info),
+		_child_states(child_states),
 		_runtime_config_generator(runtime_config_generator),
 		_runtime_info(runtime_info), _pci_info(pci_info)
 	{

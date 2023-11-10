@@ -103,7 +103,7 @@ struct Sculpt::Network_widget : Widget<Frame>
 		             wlan_config_policy, wpa_passphrase)
 	{ }
 
-	void view(Scope<Frame> &s, Ap_selector_widget::List_hovered &ap_list_hovered) const
+	void view(Scope<Frame> &s) const
 	{
 		s.sub_scope<Vbox>([&] (Scope<Frame, Vbox> &s) {
 
@@ -115,7 +115,7 @@ struct Sculpt::Network_widget : Widget<Frame>
 					s.sub_scope<Vbox>([&] (Scope<Frame, Vbox, Frame, Vbox> &s) {
 
 						if (_nic_target.wifi())
-							s.widget(_ap_selector, ap_list_hovered);
+							s.widget(_ap_selector);
 
 						if (_nic_state.ready())
 							s.sub_scope<Dialog::Label>(_nic_state.ipv4);
@@ -135,6 +135,12 @@ struct Sculpt::Network_widget : Widget<Frame>
 	{
 		return _nic_target.wifi()
 		    && _ap_selector.need_keyboard_focus_for_passphrase();
+	}
+
+	bool ap_list_hovered(Hovered_at const &at) const
+	{
+		return _ap_selector.if_hovered(at, [&] (Hovered_at const &at) {
+			return _ap_selector.ap_list_shown(); });
 	}
 };
 

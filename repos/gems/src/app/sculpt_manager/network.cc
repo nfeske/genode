@@ -124,7 +124,7 @@ void Sculpt::Network::_handle_wlan_accesspoints()
 	_wlan_accesspoints_rom.update();
 
 	/* suppress updating the list while the access-point list is hovered */
-	if (!initial_scan && _ap_list_hovered.value)
+	if (!initial_scan && _info.ap_list_hovered())
 		return;
 
 	_access_points.update_from_xml(_wlan_accesspoints_rom.xml(),
