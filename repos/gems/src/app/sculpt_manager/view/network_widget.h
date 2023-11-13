@@ -106,6 +106,7 @@ struct Sculpt::Network_widget : Widget<Frame>
 	void view(Scope<Frame> &s) const
 	{
 		s.sub_scope<Vbox>([&] (Scope<Frame, Vbox> &s) {
+			s.sub_scope<Min_ex>(35);
 
 			s.widget(_target_selector, _nic_target, _pci_info);
 
