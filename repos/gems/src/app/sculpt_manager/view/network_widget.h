@@ -41,11 +41,11 @@ struct Sculpt::Network_widget : Widget<Frame>
 		using Type = Nic_target::Type;
 
 		Hosted<Hbox, Select_button<Type>>
-			_off   { Id { "Off"   }, Type::OFF          },
-			_local { Id { "Local" }, Type::DISCONNECTED },
-			_wired { Id { "Wired" }, Type::WIRED        },
-			_wifi  { Id { "Wifi"  }, Type::WIFI         },
-			_modem { Id { "Modem" }, Type::MODEM        };
+			_off   { Id { "Off"          }, Type::OFF          },
+			_local { Id { "Disconnected" }, Type::DISCONNECTED },
+			_wired { Id { "Wired"        }, Type::WIRED        },
+			_wifi  { Id { "Wifi"         }, Type::WIFI         },
+			_modem { Id { "Mobile data"  }, Type::MODEM        };
 
 		void view(Scope<Hbox> &s, Nic_target const &target, Pci_info const &pci_info) const
 		{
