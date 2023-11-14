@@ -566,14 +566,10 @@ struct Sculpt::Main : Input_event_handler,
 	/**
 	 * Panel_dialog::State interface
 	 */
-	bool log_visible() const override { return _log_visible; }
-
-	bool network_visible() const override { return _network_visible; }
-
-	bool settings_visible() const override { return _settings_visible; }
-
-	bool system_visible() const override { return _system_visible; }
-
+	bool log_visible()         const override { return _log_visible; }
+	bool network_visible()     const override { return _network_visible; }
+	bool settings_visible()    const override { return _settings_visible; }
+	bool system_visible()      const override { return _system_visible; }
 	bool inspect_tab_visible() const override { return _storage.any_file_system_inspected(); }
 
 	Panel_dialog::Tab selected_tab() const override { return _selected_tab; }
@@ -712,30 +708,6 @@ struct Sculpt::Main : Input_event_handler,
 	Keyboard_focus _keyboard_focus { _env, _network.dialog, _network.wpa_passphrase,
 	                                 *this, _system_dialog, _system_visible };
 
-	Constructible<Input::Seq_number> _clicked_seq_number { };
-
-	void _try_handle_click()
-	{
-		if (!_clicked_seq_number.constructed())
-			return;
-
-		Input::Seq_number const seq = *_clicked_seq_number;
-
-		/* used to detect clicks outside the popup dialog (for closing it) */
-		bool const popup_opened = (_popup_opened_seq_number.value == seq.value);
-
-		bool const popup_hovered =
-			_popup_dialog.if_hovered([&] (Hovered_at const &) { return true; });
-
-		/* remove popup dialog when clicking somewhere outside */
-		if (!popup_hovered && !popup_opened) {
-			if (_popup.state == Popup::VISIBLE) {
-				_close_popup_dialog();
-				discard_construction();
-			}
-		}
-	}
-
 	struct Keyboard_focus_guard
 	{
 		Main &_main;
@@ -744,6 +716,10 @@ struct Sculpt::Main : Input_event_handler,
 
 		~Keyboard_focus_guard() { _main._keyboard_focus.update(); }
 	};
+
+	/* used to prevent closing the popup immediatedly after opened */
+	Input::Seq_number _popup_opened_seq_number { };
+	Input::Seq_number _clicked_seq_number      { };
 
 	/**
 	 * Input_event_handler interface
@@ -756,9 +732,25 @@ struct Sculpt::Main : Input_event_handler,
 
 		_dialog_runtime.route_input_event(seq_number, ev);
 
+		/*
+		 * Detect clicks outside the popup dialog (for closing it)
+		 */
 		if (ev.key_press(Input::BTN_LEFT) || ev.touch()) {
-			_clicked_seq_number.construct(_global_input_seq_number);
-			_try_handle_click();
+
+			_clicked_seq_number = _global_input_seq_number;
+
+			bool const popup_opened =
+				(_popup_opened_seq_number.value == _clicked_seq_number.value);
+
+			bool const popup_hovered =
+				_popup_dialog.if_hovered([&] (Hovered_at const &) { return true; });
+
+			if (!popup_hovered && !popup_opened) {
+				if (_popup.state == Popup::VISIBLE) {
+					_close_popup_dialog();
+					discard_construction();
+				}
+			}
 		}
 
 		bool need_generate_dialog = false;
@@ -879,9 +871,6 @@ struct Sculpt::Main : Input_event_handler,
 		}
 	}
 
-	/* used to prevent closing the popup immediatedly after opened */
-	Input::Seq_number _popup_opened_seq_number { };
-
 	/*
 	 * Graph::Action interface
 	 */
@@ -890,8 +879,7 @@ struct Sculpt::Main : Input_event_handler,
 		if (_popup.state == Popup::VISIBLE)
 			return;
 
-		if (_clicked_seq_number.constructed())
-			_popup_opened_seq_number = *_clicked_seq_number;
+		_popup_opened_seq_number = _clicked_seq_number;
 
 		_popup_dialog.refresh();
 		_popup.anchor = anchor;

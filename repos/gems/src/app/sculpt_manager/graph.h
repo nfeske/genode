@@ -23,8 +23,6 @@
 
 /* local includes */
 #include <types.h>
-#include <xml.h>
-#include <view/activatable_item.h>
 #include <view/storage_widget.h>
 #include <view/ram_fs_widget.h>
 #include <model/capacity.h>

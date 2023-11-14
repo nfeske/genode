@@ -14,7 +14,6 @@
 #ifndef _VIEW__SYSTEM_DIALOG_H_
 #define _VIEW__SYSTEM_DIALOG_H_
 
-#include <view/layout_helper.h>
 #include <view/dialog.h>
 #include <view/software_presets_widget.h>
 #include <view/software_update_widget.h>

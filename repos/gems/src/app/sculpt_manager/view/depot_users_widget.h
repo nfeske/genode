@@ -25,10 +25,9 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 {
 	public:
 
-		using Depot_users  = Attached_rom_dataspace;
-		using User         = Depot::Archive::User;
-		using Url          = Depot_url::Url;
-		using Hover_result = Hoverable_item::Hover_result;
+		using Depot_users = Attached_rom_dataspace;
+		using User        = Depot::Archive::User;
+		using Url         = Depot_url::Url;
 
 		struct Action : Interface
 		{
