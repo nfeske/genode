@@ -131,7 +131,7 @@ struct Sculpt::File_browser_dialog : Top_level_dialog
 					if (last)
 						s.attribute("style", "unimportant");
 
-					s.sub_scope<Dialog::Label>(elem);
+					s.sub_scope<Label>(elem);
 				});
 			});
 		}
@@ -163,7 +163,7 @@ struct Sculpt::File_browser_dialog : Top_level_dialog
 			if (!condition)
 				s.attribute("style", "invisible");
 
-			s.sub_scope<Dialog::Label>(s.id.value, [&] (auto &s) {
+			s.sub_scope<Label>(s.id.value, [&] (auto &s) {
 				if (!condition) s.attribute("style", "invisible"); });
 		}
 
@@ -211,7 +211,7 @@ struct Sculpt::File_browser_dialog : Top_level_dialog
 				s.sub_scope<Hbox>([&] (Scope<Hbox, Float, Hbox> &s) {
 					s.sub_scope<Icon>(style, Icon::Attr { .hovered  = hovered,
 					                                      .selected = selected });
-					s.sub_scope<Dialog::Label>(Path(" ", name)); }); });
+					s.sub_scope<Label>(Path(" ", name)); }); });
 
 			s.sub_scope<Float>([&] (Scope<Hbox, Float> &s) {
 				s.attribute("east", "yes");
@@ -288,7 +288,7 @@ struct Sculpt::File_browser_dialog : Top_level_dialog
 					if (selected)
 						s.attribute("selected", true);
 
-					s.sub_scope<Dialog::Label>(pretty_name, [&] (auto &s) {
+					s.sub_scope<Label>(pretty_name, [&] (auto &s) {
 						s.attribute("style", "title"); });
 				});
 

@@ -24,8 +24,6 @@ struct Dialog::Partition_button : Widget<Hbox>
 	void view(Scope<Hbox> &s, bool selected, Storage_target const &used_target,
 	          Storage_device const &device, Partition const &partition) const
 	{
-		using Label = Dialog::Label;
-
 		bool const hovered = s.hovered();
 
 		s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {

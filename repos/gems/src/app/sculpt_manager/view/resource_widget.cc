@@ -22,7 +22,7 @@ void Resource_widget::Affinity_selector::view(Scope<Vbox> &s,
                                               Affinity::Location const &location) const
 {
 	auto view_hyperthread_index = [] (auto &s, unsigned index) {
-		s.template sub_scope<Dialog::Label>(String<8>(index), [&] (auto &s) {
+		s.template sub_scope<Label>(String<8>(index), [&] (auto &s) {
 			s.attribute("font", "annotation/regular");
 			s.attribute("min_ex", 2); }); };
 

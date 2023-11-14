@@ -70,7 +70,7 @@ struct Dialog::Selectable_node
 					if (s.hovered())     s.attribute("hovered",  "yes");
 					if (attr.selected)   s.attribute("selected", "yes");
 
-					s.sub_scope<Dialog::Label>(attr.pretty_name);
+					s.sub_scope<Label>(attr.pretty_name);
 				});
 
 				if (attr.selected)
@@ -110,8 +110,8 @@ void Graph::_view_selected_node_content(Scope<Depgraph, Frame, Vbox> &s,
 		     info.assigned_caps, " caps");
 
 	s.sub_scope<Min_ex>(25);
-	s.sub_scope<Dialog::Label>(ram);
-	s.sub_scope<Dialog::Label>(caps);
+	s.sub_scope<Label>(ram);
+	s.sub_scope<Label>(caps);
 }
 
 

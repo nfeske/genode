@@ -44,7 +44,7 @@ struct Sculpt::Software_presets_widget : Widget<Float>
 			s.sub_scope<Vgap>();
 
 			s.sub_scope<Float>([&] (Scope<Vbox, Float> &s) {
-				s.sub_scope<Dialog::Label>(preset.text); });
+				s.sub_scope<Label>(preset.text); });
 
 			s.sub_scope<Vgap>();
 

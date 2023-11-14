@@ -47,7 +47,7 @@ struct Sculpt::Resource_widget : Widget<Vbox>
 						s.attribute("style", "invisible");
 						s.sub_node("hbox", [&] () { }); });
 
-					s.template sub_scope<Dialog::Label>(String<32>(" ", text));
+					s.template sub_scope<Label>(String<32>(" ", text));
 				});
 				s.sub_scope<Min_ex>(11);
 			});

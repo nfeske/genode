@@ -100,8 +100,6 @@ struct Sculpt::Block_device_button : Widget<Button>
 		if (s.hovered()) s.attribute("hovered",  "yes");
 		if (selected)    s.attribute("selected", "yes");
 
-		using Label = Dialog::Label;
-
 		s.sub_scope<Hbox>([&] (Scope<Button, Hbox> &s) {
 			s.sub_scope<Left_floating_hbox>(
 				[&] (Scope<Button, Hbox, Left_floating_hbox> &s) {
@@ -157,8 +155,6 @@ struct Sculpt::Usb_storage_device_button : Widget<Button>
 
 		if (s.hovered() && !discarded) s.attribute("hovered",  "yes");
 		if (selected)                  s.attribute("selected", "yes");
-
-		using Label = Dialog::Label;
 
 		s.sub_scope<Hbox>([&] (Scope<Button, Hbox> &s) {
 			s.sub_scope<Left_floating_hbox>(

@@ -261,13 +261,13 @@ void Popup_dialog::_view_menu_elements(Scope<Frame, Vbox> &s, Xml_node const &de
 									s.sub_scope<Vgap>();
 									s.sub_scope<Annotation>(component.path);
 									s.sub_scope<Vgap>();
-									s.sub_scope<Dialog::Label>("installed but incomplete");
+									s.sub_scope<Label>("installed but incomplete");
 
 									if (_nic_ready()) {
 										s.sub_scope<Vgap>();
 										s.sub_scope<Float>([&] (Scope<Frame, Vbox, Float, Vbox, Float> &s) {
-											s.widget(_install, [&] (auto &s) {
-												s.template sub_scope<Dialog::Label>("Reattempt Install"); }); });
+											s.widget(_install, [&] (Scope<Button> &s) {
+												s.sub_scope<Label>("Reattempt Install"); }); });
 									}
 									s.sub_scope<Vgap>();
 								}
@@ -281,8 +281,8 @@ void Popup_dialog::_view_menu_elements(Scope<Frame, Vbox> &s, Xml_node const &de
 
 									s.sub_scope<Vgap>();
 									s.sub_scope<Float>([&] (Scope<Frame, Vbox, Float, Vbox, Float> &s) {
-										s.widget(_install, [&] (auto &s) {
-											s.template sub_scope<Dialog::Label>("Install"); }); });
+										s.widget(_install, [&] (Scope<Button> &s) {
+											s.sub_scope<Label>("Install"); }); });
 									s.sub_scope<Vgap>();
 								}
 
@@ -294,7 +294,7 @@ void Popup_dialog::_view_menu_elements(Scope<Frame, Vbox> &s, Xml_node const &de
 									s.sub_scope<Vgap>();
 									s.sub_scope<Annotation>(component.path);
 									s.sub_scope<Vgap>();
-									s.sub_scope<Dialog::Label>("not installed");
+									s.sub_scope<Label>("not installed");
 									s.sub_scope<Vgap>();
 								}
 							});

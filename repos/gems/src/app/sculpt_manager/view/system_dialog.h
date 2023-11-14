@@ -55,7 +55,7 @@ struct Sculpt::System_dialog : Top_level_dialog
 					s.widget(_preset_tab, _selected_tab, [&] (auto &s) {
 						if (!_presets.available())
 							s.attribute("style", "unimportant");
-						s.template sub_scope<Dialog::Label>(_preset_tab.id.value);
+						s.template sub_scope<Label>(_preset_tab.id.value);
 					});
 					s.widget(_update_tab, _selected_tab);
 				});

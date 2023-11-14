@@ -307,7 +307,7 @@ struct Dialog::Radio_select_button : Widget<Left_floating_hbox>
 
 		s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
 		                                        .selected = selected });
-		s.sub_scope<Dialog::Label>(String<100>(" ", text));
+		s.sub_scope<Label>(String<100>(" ", text));
 		s.sub_scope<Button_vgap>();
 	}
 
@@ -339,7 +339,7 @@ struct Dialog::Pin_button : Action_button
 		s.sub_scope<Vbox>([&] (Scope<Button, Vbox> &s) {
 			s.sub_scope<Min_ex>(10);
 			s.sub_scope<Vgap>();
-			s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
+			s.sub_scope<Label>(text, [&] (auto &s) {
 				if (!attr.visible)
 					s.attribute("style", "invisible");
 				s.attribute("font", "title/regular"); });
@@ -384,7 +384,7 @@ struct Dialog::Menu_entry : Widget<Left_floating_hbox>
 
 		s.sub_scope<Icon>(style, Icon::Attr { .hovered  = hovered,
 		                                      .selected = selected });
-		s.sub_scope<Dialog::Label>(String<100>(" ", text));
+		s.sub_scope<Label>(String<100>(" ", text));
 		s.sub_scope<Button_vgap>();
 	}
 
@@ -404,7 +404,7 @@ struct Dialog::Operation_button : Widget<Button>
 		if (s.hovered() && !s.dragged() && !selected)
 			s.attribute("hovered",  "yes");
 
-		s.sub_scope<Dialog::Label>(String<50>("  ", text, "  "));
+		s.sub_scope<Label>(String<50>("  ", text, "  "));
 	}
 
 	void view(Scope<Button> &s, bool selected) const
@@ -432,7 +432,7 @@ struct Dialog::Right_floating_off_on : Widget<Right_floating_hbox>
 			if (attr.transient)
 				s.attribute("style", "unimportant");
 
-			s.sub_scope<Dialog::Label>(s.id.value);
+			s.sub_scope<Label>(s.id.value);
 		};
 
 		s.widget(_off, attr.on, transient_attr_fn);
@@ -471,12 +471,12 @@ struct Dialog::Doublechecked_action_button
 	void view(Scope<Vbox> &s, auto const &text) const
 	{
 		s.widget(_operation, selected, [&] (Scope<Button> &s) {
-			s.sub_scope<Dialog::Label>(text); });
+			s.sub_scope<Label>(text); });
 
 		if (selected)
 			s.widget(_confirm_or_cancel, [&] (auto &s) {
-				s.template sub_scope<Dialog::Label>(confirmed ? " Cancel "
-				                                              : " Confirm "); });
+				s.template sub_scope<Label>(confirmed ? " Cancel "
+				                                      : " Confirm "); });
 	}
 
 	void click(Clicked_at const &at)
@@ -537,7 +537,7 @@ struct Dialog::Choice : Widget<Hbox>
 				s.sub_scope<Frame>([&] (Scope<Hbox, Vbox, Float, Frame> &s) {
 					s.attribute("style", "invisible");
 					s.sub_scope<Hbox>([&] (Scope<Hbox, Vbox, Float, Frame, Hbox> &s) {
-						s.sub_scope<Dialog::Label>(text);
+						s.sub_scope<Label>(text);
 						s.sub_scope<Button_vgap>(); }); }); }); });
 
 		s.sub_scope<Frame>([&] (Scope<Hbox, Frame> &s) {

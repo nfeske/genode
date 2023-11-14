@@ -87,7 +87,7 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 				if (s.hovered() && !s.dragged() && !selected && ready)
 					s.attribute("hovered",  "yes");
 
-				s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
+				s.sub_scope<Label>(text, [&] (auto &s) {
 					if (!ready)
 						s.attribute("style", "unimportant"); });
 			}
@@ -113,7 +113,7 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 				s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
 					s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
 					                                        .selected = selected });
-					s.sub_scope<Dialog::Label>(text);
+					s.sub_scope<Label>(text);
 				});
 			}
 		};
@@ -157,7 +157,7 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 					                                        .selected = selected });
 
 					auto const text = Depot_url::Url(" ", _url_edit_field);
-					s.sub_scope<Dialog::Label>(text, [&] (auto &s) {
+					s.sub_scope<Label>(text, [&] (auto &s) {
 						s.attribute("min_ex", 30);
 						s.template sub_node("cursor", [&] {
 							s.attribute("at", _url_edit_field.cursor_pos + 1); });

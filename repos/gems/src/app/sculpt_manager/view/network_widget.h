@@ -119,7 +119,7 @@ struct Sculpt::Network_widget : Widget<Frame>
 							s.widget(_ap_selector);
 
 						if (_nic_state.ready())
-							s.sub_scope<Dialog::Label>(_nic_state.ipv4);
+							s.sub_scope<Label>(_nic_state.ipv4);
 					});
 				});
 			}

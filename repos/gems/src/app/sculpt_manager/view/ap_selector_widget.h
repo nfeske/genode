@@ -56,14 +56,14 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 			s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
 				s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
 				                                        .selected = attr.selected });
-				s.sub_scope<Dialog::Label>(String<20>(" ", ap.ssid));
+				s.sub_scope<Label>(String<20>(" ", ap.ssid));
 				s.sub_scope<Annotation>((ap.protection == Access_point::WPA_PSK)
 				                        ? " (WPA) " : " ");
 			});
 
 			s.sub_scope<Float>([&] (Scope<Hbox, Float> &s) {
 				s.attribute("east", "yes");
-				s.sub_scope<Dialog::Label>(String<8>(ap.quality, "%"));
+				s.sub_scope<Label>(String<8>(ap.quality, "%"));
 			});
 		}
 	};
@@ -125,8 +125,8 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 			_with_selected_ap([&] (Access_point const &ap) {
 				s.widget(item, ap, Item::Attr { .selected = true }); });
 
-			s.sub_scope<Dialog::Label>(_wifi_connection.connecting()
-			                           ? "connecting" : "associated" );
+			s.sub_scope<Label>(_wifi_connection.connecting()
+			                   ? "connecting" : "associated" );
 			return;
 		}
 
@@ -160,15 +160,15 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 				return;
 
 			if (ap.protection == Access_point::WPA_PSK) {
-				s.sub_scope<Dialog::Label>(_wifi_connection.auth_failure()
-				                           ? "Enter passphrase (auth failure):"
-				                           : "Enter passphrase:");
+				s.sub_scope<Label>(_wifi_connection.auth_failure()
+				                   ? "Enter passphrase (auth failure):"
+				                   : "Enter passphrase:");
 
 				s.sub_scope<Frame>([&] (Scope<Vbox, Frame> &s) {
 					s.sub_scope<Float>([&] (Scope<Vbox, Frame, Float> &s) {
 						s.attribute("west", "yes");
 						String<3*64> const passphrase(" ", _wpa_passphrase);
-						s.sub_scope<Dialog::Label>(passphrase, [&] (auto &s) {
+						s.sub_scope<Label>(passphrase, [&] (auto &s) {
 							s.attribute("font", "title/regular");
 							s.sub_node("cursor", [&] {
 								s.attribute("at", passphrase.length() - 1); });
@@ -186,7 +186,7 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 		 * report.
 		 */
 		if (count == 0)
-			s.sub_scope<Dialog::Label>("Scanning...");
+			s.sub_scope<Label>("Scanning...");
 	}
 
 	bool need_keyboard_focus_for_passphrase() const

@@ -185,7 +185,7 @@ struct Sculpt::File_browser_state : Noncopyable
 
 				gen_service_node<Gui::Session>(xml, [&] () {
 					xml.node("parent", [&] () {
-						xml.attribute("label", Label("leitzentrale -> editor")); }); });
+						xml.attribute("label", "leitzentrale -> editor"); }); });
 
 				gen_service_node<::File_system::Session>(xml, [&] () {
 					xml.attribute("label", "fonts");
