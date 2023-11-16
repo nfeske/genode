@@ -2123,7 +2123,7 @@ void Sculpt::Main::_generate_event_filter_config(Xml_generator &xml)
 						xml.attribute("to",   to); }); };
 
 				gen_key("KEY_CAPSLOCK", "KEY_CAPSLOCK");
-				gen_key("KEY_F12",      "KEY_DASHBOARD");
+				gen_key("KEY_F1",      "KEY_DASHBOARD");
 				gen_key("KEY_LEFTMETA", "KEY_SCREEN");
 				gen_include("numlock.remap");
 
