@@ -112,7 +112,7 @@ class Menu_view::Widget : List_model<Widget>::Element
 			return node.attribute_value("version", Version());
 		}
 
-		static Animated_rect::Steps motion_steps() { return { 60 }; };
+		static Animated_rect::Steps motion_steps() { return { 1 }; };
 
 	protected:
 

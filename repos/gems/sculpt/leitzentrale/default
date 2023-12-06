@@ -47,7 +47,7 @@
 						<resource name="RAM" quantum="50M"/>
 						<resource name="CPU" quantum="20"/>
 						<provides> <service name="Gui"/> </provides>
-						<config initial_fade_in_steps="100" fade_in_steps="20" alpha="210"/>
+						<config initial_fade_in_steps="1" fade_in_steps="1" alpha="210"/>
 						<route>
 							<service name="Gui"> <child name="manager"/> </service>
 							<any-service> <parent/> </any-service>
@@ -62,7 +62,7 @@
 						<resource name="RAM" quantum="50M"/>
 						<resource name="CPU" quantum="20"/>
 						<provides> <service name="Gui"/> </provides>
-						<config fade_out_steps="30" alpha="0"/>
+						<config fade_out_steps="1" alpha="0"/>
 						<route>
 							<service name="Gui"> <child name="manager"/> </service>
 							<any-service> <parent/> </any-service>
@@ -190,15 +190,15 @@
 						</dir>
 						<dir name="dev"> <log/> </dir>
 					</vfs>
-					<policy label="log" decoration="yes" motion="20"/>
-					<policy label="runtime -> leitzentrale -> settings_view"     decoration="no" motion="20"/>
-					<policy label="runtime -> leitzentrale -> system_view"       decoration="no" motion="20"/>
-					<policy label="runtime -> leitzentrale -> file_browser_view" decoration="no" motion="30"/>
-					<policy label="runtime -> leitzentrale -> network_view"      decoration="no" motion="20"/>
-					<policy label="runtime -> leitzentrale -> runtime_view"      decoration="no" motion="30"/>
-					<policy label="runtime -> leitzentrale -> diag_view"         decoration="no" motion="30"/>
-					<policy label="runtime -> leitzentrale -> popup_view"        decoration="no" motion="20"/>
-					<policy label="runtime -> leitzentrale -> panel_view"        decoration="no" motion="20"/>
+					<policy label="log" decoration="yes" motion="0"/>
+					<policy label="runtime -> leitzentrale -> settings_view"     decoration="no" motion="0"/>
+					<policy label="runtime -> leitzentrale -> system_view"       decoration="no" motion="0"/>
+					<policy label="runtime -> leitzentrale -> file_browser_view" decoration="no" motion="0"/>
+					<policy label="runtime -> leitzentrale -> network_view"      decoration="no" motion="0"/>
+					<policy label="runtime -> leitzentrale -> runtime_view"      decoration="no" motion="0"/>
+					<policy label="runtime -> leitzentrale -> diag_view"         decoration="no" motion="0"/>
+					<policy label="runtime -> leitzentrale -> popup_view"        decoration="no" motion="0"/>
+					<policy label="runtime -> leitzentrale -> panel_view"        decoration="no" motion="0"/>
 					<policy label_prefix="logo" decoration="no"/>
 					<default-policy/>
 				</config>
