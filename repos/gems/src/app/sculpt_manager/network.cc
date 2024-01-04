@@ -29,6 +29,17 @@ void Sculpt::Network::_generate_nic_router_uplink(Xml_generator &xml,
 			xml.attribute("udp-ports", "1000");
 			xml.attribute("icmp-ids",  "1000");
 		});
+
+		auto tcp_forward = [&] (uint16_t port, auto const &domain, auto const &to)
+		{
+			xml.node("tcp-forward", [&] {
+				xml.attribute("port",   port);
+				xml.attribute("domain", domain);
+				xml.attribute("to",     to); });
+		};
+
+		tcp_forward(80 /* HTTP */   , "http", "10.0.2.3");
+		tcp_forward(23 /* telnet */ , "http", "10.0.2.2");
 	});
 }
 
@@ -80,6 +91,11 @@ void Sculpt::Network::_generate_nic_router_config()
 		xml.node("default-policy", [&] () {
 			xml.attribute("domain", "default"); });
 
+		xml.node("policy", [&] {
+			xml.attribute("label",  "http");
+			xml.attribute("domain", "http");
+		});
+
 		bool uplink_exists = true;
 		switch (_nic_target.type()) {
 		case Nic_target::WIRED: _generate_nic_router_uplink(xml, "nic_drv -> ");  break;
@@ -112,6 +128,16 @@ void Sculpt::Network::_generate_nic_router_config()
 					xml.attribute("dst", "0.0.0.0/0");
 					xml.attribute("domain", "uplink"); });
 			}
+		});
+
+		gen_named_node(xml, "domain", "http", [&] () {
+			xml.attribute("interface", "10.0.2.1/24");
+			xml.node("dhcp-server", [&] () {
+				xml.attribute("ip_first", "10.0.2.2");
+				xml.attribute("ip_last",  "10.0.2.3");
+				if (_nic_target.type() != Nic_target::DISCONNECTED) {
+					xml.attribute("dns_config_from", "uplink"); }
+			});
 		});
 	});
 }
