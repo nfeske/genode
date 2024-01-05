@@ -38,8 +38,8 @@ void Sculpt::Network::_generate_nic_router_uplink(Xml_generator &xml,
 				xml.attribute("to",     to); });
 		};
 
-		tcp_forward(80 /* HTTP */   , "http", "10.0.2.3");
-		tcp_forward(23 /* telnet */ , "http", "10.0.2.2");
+		tcp_forward(80 /* HTTP */   , "http",   "10.0.80.2");
+		tcp_forward(23 /* telnet */ , "telnet", "10.0.23.2");
 	});
 }
 
@@ -91,11 +91,6 @@ void Sculpt::Network::_generate_nic_router_config()
 		xml.node("default-policy", [&] () {
 			xml.attribute("domain", "default"); });
 
-		xml.node("policy", [&] {
-			xml.attribute("label",  "http");
-			xml.attribute("domain", "http");
-		});
-
 		bool uplink_exists = true;
 		switch (_nic_target.type()) {
 		case Nic_target::WIRED: _generate_nic_router_uplink(xml, "nic_drv -> ");  break;
@@ -130,15 +125,29 @@ void Sculpt::Network::_generate_nic_router_config()
 			}
 		});
 
-		gen_named_node(xml, "domain", "http", [&] () {
-			xml.attribute("interface", "10.0.2.1/24");
-			xml.node("dhcp-server", [&] () {
-				xml.attribute("ip_first", "10.0.2.2");
-				xml.attribute("ip_last",  "10.0.2.3");
-				if (_nic_target.type() != Nic_target::DISCONNECTED) {
-					xml.attribute("dns_config_from", "uplink"); }
+		auto tcp_service_domain = [&] (auto const &name, auto const &ip_prefix)
+		{
+			using Ip = String<16>;
+
+			Ip const interface { ip_prefix, ".1/24" },
+			         dhcp_addr { ip_prefix, ".2" };
+
+			xml.node("policy", [&] {
+				xml.attribute("label",  name);
+				xml.attribute("domain", name); });
+
+			gen_named_node(xml, "domain", name, [&] () {
+				xml.attribute("interface", interface);
+				xml.node("dhcp-server", [&] {
+					xml.attribute("ip_first", dhcp_addr);
+					xml.attribute("ip_last",  dhcp_addr);
+					if (_nic_target.type() != Nic_target::DISCONNECTED) {
+						xml.attribute("dns_config_from", "uplink"); }
+				});
 			});
-		});
+		};
+		tcp_service_domain("http",   "10.0.80");
+		tcp_service_domain("telnet", "10.0.23");
 	});
 }
 
