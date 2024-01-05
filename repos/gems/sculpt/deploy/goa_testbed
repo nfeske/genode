@@ -77,7 +77,7 @@
 		</route>
 	</start>
 
-	<start name="system_info" pkg="jschlatow/pkg/system_info/2024-01-03" priority="-2">
+	<start name="system_info" pkg="jschlatow/pkg/system_info/2024-01-04-a" priority="-2">
 		<route>
 			<service name="Gui"> <parent label="backdrop"/> </service>
 			<service name="Rtc"> <child name="sntp_dummy_rtc"/> </service>
@@ -87,6 +87,7 @@
 		<config default_timezone="CET-1CEST,M3.5.0,M10.5.0" background_color="#333955">
 			<vfs> <dir name="dev"> <log/> <rtc/> </dir> </vfs>
 			<libc stdout="/dev/log" rtc="/dev/rtc"/>
+			<label>Goa Testbed</label>
 			<clock/>
 			<tabular rom="runtime/nic_router/state" alt="no IP found">
 				<node type="domain" name="uplink">
@@ -112,7 +113,9 @@
 			<service name="Event">       <child name="black_hole"/>      </service>
 			<service name="Capture">     <child name="black_hole"/>      </service>
 			<service name="File_system"> <child name="recall_fs"/>       </service>
-			<service name="Nic">         <child name="nic_router" label="http"/> </service>
+			<service name="Nic" label_prefix="tcp_terminal"> <child name="nic_router" label="telnet"/> </service>
+			<service name="Nic" label_prefix="lighttpd">     <child name="nic_router" label="http"/>   </service>
+			<service name="Nic"> <!-- for test scenario -->  <child name="nic_router"/>                </service>
 			<service name="Report" label="clipboard">     <child name="wm"/> </service>
 			<service name="Report" label="shape">         <child name="wm"/> </service>
 			<service name="ROM"    label="clipboard">     <child name="wm"/> </service>
