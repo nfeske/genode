@@ -30,6 +30,8 @@ struct Menu_view::Label_widget : Widget, Cursor::Glyph_position
 	typedef String<200> Text;
 	Text _text { };
 
+	Color _color_attr { };
+
 	Animated_color _color;
 
 	bool _hover = false;  /* report hover details */
@@ -89,7 +91,9 @@ struct Menu_view::Label_widget : Widget, Cursor::Glyph_position
 		_hover      = node.attribute_value("hover", false);
 
 		_factory.styles.with_label_style(node, [&] (Label_style style) {
-			_color.fade_to(style.color, Animated_color::Steps{80}); });
+			_color_attr = node.attribute_value("color", style.color); });
+
+		_color.fade_to(_color_attr, Animated_color::Steps{80});
 
 		if (node.has_attribute("text")) {
 			_text       = node.attribute_value("text", _text);
