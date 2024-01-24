@@ -2,7 +2,7 @@ create_boot_directory
 
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_interactive_pkg] \
-                  [depot_user]/pkg/fonts_fs \
+                  [depot_user]/pkg/atari_fonts_fs \
                   [depot_user]/src/init \
                   [depot_user]/src/report_rom \
                   [depot_user]/src/nitpicker \
@@ -108,7 +108,7 @@ set fd [open [run_dir]/genode/focus w]
 puts $fd "<focus label=\"test-dialog -> \"/>"
 close $fd
 
-build { test/dialog app/menu_view }
+build { test/dialog app/menu_view lib/vfs_bdf }
 
 build_boot_image [build_artifacts]
 
