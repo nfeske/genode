@@ -41,17 +41,14 @@ struct Sculpt::Network_widget : Widget<Frame>
 		using Type = Nic_target::Type;
 
 		Hosted<Hbox, Select_button<Type>>
-			_off   { Id { "Off"          }, Type::OFF          },
-			_local { Id { "Disconnected" }, Type::DISCONNECTED },
-			_wired { Id { "Wired"        }, Type::WIRED        },
-			_wifi  { Id { "Wifi"         }, Type::WIFI         },
-			_modem { Id { "Mobile data"  }, Type::MODEM        };
+			_local { Id { "Off"    }, Type::DISCONNECTED },
+			_wired { Id { "Wired"  }, Type::WIRED        },
+			_wifi  { Id { "Wifi"   }, Type::WIFI         },
+			_modem { Id { "Mobile" }, Type::MODEM        };
 
 		void view(Scope<Hbox> &s, Nic_target const &target, Pci_info const &pci_info) const
 		{
 			Type const selected = target.type();
-
-			s.widget(_off, selected);
 
 			/*
 			 * Allow interactive selection only if NIC-router configuration
@@ -75,7 +72,6 @@ struct Sculpt::Network_widget : Widget<Frame>
 
 		void click(Clicked_at const &at, Action &action)
 		{
-			_off  .propagate(at, [&] (Type t) { action.nic_target(t); });
 			_local.propagate(at, [&] (Type t) { action.nic_target(t); });
 			_wired.propagate(at, [&] (Type t) { action.nic_target(t); });
 			_wifi .propagate(at, [&] (Type t) { action.nic_target(t); });
@@ -105,6 +101,7 @@ struct Sculpt::Network_widget : Widget<Frame>
 
 	void view(Scope<Frame> &s) const
 	{
+		s.attribute("style", "invisible");
 		s.sub_scope<Vbox>([&] (Scope<Frame, Vbox> &s) {
 			s.sub_scope<Min_ex>(35);
 
@@ -113,13 +110,17 @@ struct Sculpt::Network_widget : Widget<Frame>
 			if (_nic_target.wifi() || _nic_target.wired() || _nic_target.modem()) {
 
 				s.sub_scope<Frame>([&] (Scope<Frame, Vbox, Frame> &s) {
+					s.attribute("style", "invisible");
 					s.sub_scope<Vbox>([&] (Scope<Frame, Vbox, Frame, Vbox> &s) {
 
 						if (_nic_target.wifi())
 							s.widget(_ap_selector);
 
 						if (_nic_state.ready())
-							s.sub_scope<Label>(_nic_state.ipv4);
+							s.sub_scope<Label>(_nic_state.ipv4, [&] (auto &s) {
+								s.attribute("color", String<30>(AGRAY())); });
+						else
+							s.sub_scope<Label>(" "); /* preserve space */
 					});
 				});
 			}

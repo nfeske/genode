@@ -56,27 +56,39 @@ void Partition_operations::view(Scope<Vbox> &s,
 			s.widget(_relabel, [&] (Scope<Button> &s) {
 				s.attribute("version", version);
 
-				if (partition.genode_default() || partition.relabel_in_progress())
-					s.attribute("selected", "yes");
+				String<30> action_label_color { Color { 150, 150, 150 } };
 
-				s.sub_scope<Label>("Default");
+				if (partition.genode_default() || partition.relabel_in_progress())
+					action_label_color = { Color { 150, 150, 250 } };
+
+				s.sub_scope<Label>("Default", [&] (auto &s) {
+					s.attribute("font", "button/metal");
+					s.attribute("color", action_label_color);
+				});
 			});
 			if (partition.relabel_in_progress())
-				s.sub_scope<Label>("Relabeling in progress...");
+				s.sub_scope<Label>("Relabeling in progress...", [&] (auto &s) {
+					s.attribute("color", String<30>(AGRAY())); });
 		}
 
 		if (!target_in_use && !partition.format_in_progress && partition.checkable()
 		  && !relabel_in_progress) {
 
+			String<30> action_label_color { Color { 150, 150, 150 } };
+
+			if (partition.check_in_progress)
+				action_label_color = { Color { 150, 150, 250 } };
+
 			s.widget(_check, [&] (Scope<Button> &s) {
 				s.attribute("version", version);
-				s.sub_scope<Label>("Check");
-
-				if (partition.check_in_progress)
-					s.xml.attribute("selected", "yes");
+				s.sub_scope<Label>("Check", [&] (auto &s) {
+					s.attribute("font", "button/metal");
+					s.attribute("color", action_label_color);
+				});
 			});
 			if (partition.check_in_progress)
-				s.sub_scope<Label>("Check in progress...");
+				s.sub_scope<Label>("Check in progress...", [&] (auto &s) {
+					s.attribute("color", String<30>(AGRAY())); });
 		}
 	}
 
@@ -105,13 +117,16 @@ void Partition_operations::view(Scope<Vbox> &s,
 		_expand.view(s, "Expand ...");
 
 	if (partition.format_in_progress)
-		s.sub_scope<Label>("Formatting in progress...");
+		s.sub_scope<Label>("Formatting in progress...", [&] (auto &s) {
+			s.attribute("color", String<30>(AGRAY())); });
 
 	if (partition.gpt_expand_in_progress)
-		s.sub_scope<Label>("Expanding partition...");
+		s.sub_scope<Label>("Expanding partition...", [&] (auto &s) {
+			s.attribute("color", String<30>(AGRAY())); });
 
 	if (partition.fs_resize_in_progress)
-		s.sub_scope<Label>("Resizing file system...");
+		s.sub_scope<Label>("Resizing file system...", [&] (auto &s) {
+			s.attribute("color", String<30>(AGRAY())); });
 }
 
 

@@ -112,7 +112,7 @@ struct Sculpt::Software_update_widget : Widget<Vbox>
 			s.attribute("east", "yes");
 			s.attribute("west", "yes");
 
-			s.sub_scope<Left_floating_text>(attr.version);
+			s.sub_scope<Left_floating_text>(attr.version, AGRAY());
 
 			auto status_message = [] (Attr const &attr) -> String<50>
 			{
@@ -132,7 +132,8 @@ struct Sculpt::Software_update_widget : Widget<Vbox>
 			};
 
 			s.sub_scope<Float>([&] (Scope<Float, Float> &s) {
-				s.sub_scope<Annotation>(status_message(attr)); });
+				s.sub_scope<Label>(status_message(attr), [&] (auto &s) {
+					s.attribute("color", String<30>(AGRAY())); }); });
 
 			s.sub_scope<Right_floating_hbox>([&] (Scope<Float, Right_floating_hbox> &s) {
 
@@ -190,7 +191,7 @@ struct Sculpt::Software_update_widget : Widget<Vbox>
 		};
 
 		s.sub_scope<Frame>(Id { version }, [&] (Scope<Vbox, Frame> &s) {
-			s.attribute("style", "important");
+			s.attribute("style", "invisible");
 			s.sub_scope<Vbox>([&] (Scope<Vbox, Frame, Vbox> &s) {
 
 				s.widget(_hosted_image_main, attr);
@@ -224,6 +225,7 @@ struct Sculpt::Software_update_widget : Widget<Vbox>
 	{
 		/* use empty ID to not interfere with matching the version in 'click'*/
 		s.sub_scope<Frame>(Id { }, [&] (Scope<Vbox, Frame> &s) {
+			s.attribute("style", "invisible");
 			s.sub_scope<Vbox>([&] (Scope<Vbox, Frame, Vbox> &s) {
 
 				s.widget(_users);

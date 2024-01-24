@@ -36,7 +36,7 @@ struct Sculpt::Software_presets_widget : Widget<Float>
 		          Name const &selected) const
 		{
 			s.widget(Radio { Id { preset.name }, preset.name },
-			         selected, Name { " ", Pretty(preset.name) });
+			         selected, Name { Pretty(preset.name) });
 
 			if (selected != preset.name)
 				return;
@@ -44,7 +44,9 @@ struct Sculpt::Software_presets_widget : Widget<Float>
 			s.sub_scope<Vgap>();
 
 			s.sub_scope<Float>([&] (Scope<Vbox, Float> &s) {
-				s.sub_scope<Label>(preset.text); });
+				s.sub_scope<Label>(preset.text, [&] (auto &s) {
+					s.attribute("color", String<30>(WHITE()));
+					s.attribute("font", "annotation/regular"); }); });
 
 			s.sub_scope<Vgap>();
 
@@ -70,6 +72,7 @@ struct Sculpt::Software_presets_widget : Widget<Float>
 	void view(Scope<Float> &s, Presets const &presets) const
 	{
 		s.sub_scope<Frame>([&] (Scope<Float, Frame> &s) {
+			s.attribute("style", "invisible");
 			s.sub_scope<Vbox>([&] (Scope<Float, Frame, Vbox> &s) {
 				s.sub_scope<Min_ex>(35);
 				presets.for_each([&] (Presets::Info const &info) {

@@ -20,10 +20,16 @@ void Touch_keyboard_widget::Key::view(Scope<Vbox> &s, Attr const &attr) const
 {
 	s.widget(_button, [&] (Scope<Button> &s) {
 
-		if (map.length() > 1)
-			s.attribute("style", "unimportant");
+		bool const selected = _button._seq_number == s.hover.seq_number,
+		           hovered  = s.hovered() && !selected;
 
-		if (text.length() == 1)
+		if (map.length() > 1)
+			s.attribute("style", "invisible");
+		else if (text.length() == 1)
+			s.attribute("style", "invisible");
+		else if (selected)
+			s.attribute("style", "subdued");
+		else
 			s.attribute("style", "invisible");
 
 		s.sub_scope<Vbox>([&] (Scope<Button, Vbox> &s) {
@@ -33,8 +39,17 @@ void Touch_keyboard_widget::Key::view(Scope<Vbox> &s, Attr const &attr) const
 				s.sub_scope<Min_ex>(ex);
 
 			s.sub_scope<Label>(text, [&] (auto &s) {
-				if (small)
-					s.attribute("font", "annotation/regular"); });
+				s.attribute("font", small ? "text/metal" : "button/metal");
+
+				auto color = [&]
+				{
+					if (selected) return Color { 255, 255, 255 };
+					if (hovered)  return Color { 255, 255, 200 };
+					if (map.length() > 1)  return Color { 150, 150, 200 };
+					else          return Color { 150, 150, 150 };
+				};
+				s.attribute("color", String<30>(color()));
+			});
 		});
 	});
 }

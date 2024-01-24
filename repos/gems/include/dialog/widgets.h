@@ -14,6 +14,7 @@
 #ifndef _INCLUDE__DIALOG__WIDGETS_H_
 #define _INCLUDE__DIALOG__WIDGETS_H_
 
+#include <util/color.h>
 #include <dialog/sub_scopes.h>
 
 namespace Dialog {
@@ -28,20 +29,28 @@ namespace Dialog {
 struct Dialog::Toggle_button : Widget<Button>
 {
 	template <typename FN>
-	void view(Scope<Button> &s, bool selected, FN const &fn) const
+	void view(Scope<Button> &s, bool, FN const &fn) const
 	{
-		bool const hovered = (s.hovered() && (!s.dragged() || selected));
-
-		if (selected) s.attribute("selected", "yes");
-		if (hovered)  s.attribute("hovered",  "yes");
-
+		s.attribute("style", "invisible");
 		fn(s);
 	}
 
 	void view(Scope<Button> &s, bool selected) const
 	{
+		bool const hovered = s.hovered() && !s.dragged();
+
 		view(s, selected, [&] (Scope<Button> &s) {
-			s.sub_scope<Dialog::Label>(s.id.value); });
+			s.sub_scope<Dialog::Label>(s.id.value, [&] (auto &s) {
+				auto color = [&]
+				{
+					if (hovered)  return Color { 255, 255, 200 };
+					if (selected) return Color { 200, 200, 255 };
+					else          return Color { 150, 150, 150 };
+				};
+				s.attribute("font", "button/metal");
+				s.attribute("color", String<30>(color()));
+			});
+		});
 	}
 
 	template <typename FN>
@@ -56,21 +65,29 @@ struct Dialog::Select_button : Widget<Button>
 
 	Select_button(ENUM value) : _value(value) { }
 
-	void view(Scope<Button> &s, ENUM selected_value, auto const &fn) const
+	void view(Scope<Button> &s, ENUM, auto const &fn) const
 	{
-		bool const selected = (selected_value == _value),
-		           hovered  = (s.hovered() && !s.dragged() && !selected);
-
-		if (selected) s.attribute("selected", "yes");
-		if (hovered)  s.attribute("hovered",  "yes");
-
+		s.attribute("style", "invisible");
 		fn(s);
 	}
 
 	void view(Scope<Button> &s, ENUM selected_value) const
 	{
+		bool const selected = (selected_value == _value),
+		           hovered  = (s.hovered() && !s.dragged() && !selected);
+
 		view(s, selected_value, [&] (auto &s) {
-			s.template sub_scope<Dialog::Label>(s.id.value); });
+			s.template sub_scope<Dialog::Label>(s.id.value, [&] (auto &s) {
+				auto color = [&]
+				{
+					if (selected) return Color { 255, 255, 255 };
+					if (hovered)  return Color { 255, 255, 200 };
+					else          return Color { 150, 150, 150 };
+				};
+				s.attribute("font", "button/metal");
+				s.attribute("color", String<30>(color()));
+			});
+		});
 	}
 
 	template <typename FN>
@@ -85,18 +102,29 @@ struct Dialog::Action_button : Widget<Button>
 	template <typename FN>
 	void view(Scope<Button> &s, FN const &fn) const
 	{
-		bool const selected = _seq_number == s.hover.seq_number,
-		           hovered  = (s.hovered() && (!s.dragged() || selected));
-
-		if (selected) s.attribute("selected", "yes");
-		if (hovered)  s.attribute("hovered",  "yes");
-
 		fn(s);
 	}
 
 	void view(Scope<Button> &s) const
 	{
-		view(s, [&] (Scope<Button> &s) { s.sub_scope<Label>(s.id.value); });
+		s.attribute("style", "invisible");
+
+		bool const selected = _seq_number == s.hover.seq_number,
+		           hovered  = (s.hovered() && (!s.dragged() || selected));
+
+		view(s, [&] (Scope<Button> &s) {
+			s.sub_scope<Label>(s.id.value, [&] (auto &s) {
+
+				auto color = [&]
+				{
+					if (selected) return Color { 255, 255, 255 };
+					if (hovered)  return Color { 255, 255, 200 };
+					else          return Color { 150, 150, 150 };
+				};
+				s.attribute("font", "button/metal");
+				s.attribute("color", String<30>(color()));
+			});
+		});
 	}
 
 	template <typename FN>
@@ -115,18 +143,25 @@ struct Dialog::Deferred_action_button : Widget<Button>
 	template <typename FN>
 	void view(Scope<Button> &s, FN const &fn) const
 	{
-		bool const selected = s.hovered() && s.dragged() && s.hover.matches(_seq_number),
-		           hovered  = s.hovered() && (!s.dragged() || selected);
-
-		if (selected) s.attribute("selected", "yes");
-		if (hovered)  s.attribute("hovered",  "yes");
-
+		s.attribute("style", "invisible");
 		fn(s);
 	}
 
 	void view(Scope<Button> &s) const
 	{
-		view(s, [&] (Scope<Button> &s) { s.sub_scope<Label>(s.id.value); });
+		bool const selected = s.hovered() && s.dragged() && s.hover.matches(_seq_number),
+		           hovered  = s.hovered() && (!s.dragged() || selected);
+
+		view(s, [&] (Scope<Button> &s) { s.sub_scope<Label>(s.id.value, [&] (auto &s) {
+			auto color = [&]
+			{
+				if (selected) return Color { 255, 255, 255 };
+				if (hovered)  return Color { 255, 255, 200 };
+				else          return Color { 150, 150, 150 };
+			};
+			s.attribute("font", "button/metal");
+			s.attribute("color", String<30>(color()));
+		}); });
 	}
 
 	void click(Clicked_at const &at)

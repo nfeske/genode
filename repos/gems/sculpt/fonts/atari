@@ -1,0 +1,32 @@
+<config copy="yes" paste="yes">
+	<vfs>
+		<rom name="atari800.bdf"/>
+		<rom name="atari800_condensed.bdf"/>
+		<dir name="fonts">
+			<dir name="title">
+				<bdf name="regular" path="/atari800.bdf" scale="4" interlaced="yes" cache="256K"/>
+				<bdf name="metal"   path="/atari800.bdf" scale="4" interlaced="yes" shade="light" raised="yes" cache="256K"/>
+			</dir>
+			<dir name="text">
+				<bdf name="regular" path="/atari800.bdf" scale="2" interlaced="yes" cache="256K"/>
+				<bdf name="metal"   path="/atari800.bdf" scale="2" interlaced="yes" shade="light" raised="yes" cache="256K"/>
+			</dir>
+			<dir name="button">
+				<bdf name="regular" path="/atari800.bdf" scale="3" highlighted="yes" cache="256K"/>
+				<bdf name="metal"   path="/atari800.bdf" scale="3" interlaced="yes" shade="light" raised="yes" cache="256K"/>
+			</dir>
+			<dir name="annotation">
+				<bdf name="regular" path="/atari800_condensed.bdf" scale="2" shade="light" interlaced="yes" cache="256K"/>
+			</dir>
+			<dir name="monospace">
+				<bdf name="regular" path="/atari800_condensed.bdf" scale="2" interlaced="yes" cache="256K"/>
+			</dir>
+		</dir>
+	</vfs>
+
+	<!-- policy when using this file as fonts-fs config -->
+	<default-policy root="/fonts" />
+
+	<!-- color definition when this file is used as terminal config -->
+	<palette> <color index="0" value="#1c2232"/> </palette>
+</config>

@@ -97,21 +97,36 @@ struct Sculpt::Block_device_button : Widget<Button>
 	void view(Scope<Button> &s, Block_device const &dev, bool const selected,
 	          Storage_target const &used_target) const
 	{
-		if (s.hovered()) s.attribute("hovered",  "yes");
-		if (selected)    s.attribute("selected", "yes");
+		s.attribute("style", "invisible");
+		bool const hovered = s.hovered();
+
+		auto color = [&] (bool selected, bool hovered)
+		{
+			if (selected) return Color { 255, 255, 255 };
+			if (hovered)  return Color { 255, 255, 200 };
+			else          return Color { 150, 150, 150 };
+		};
 
 		s.sub_scope<Hbox>([&] (Scope<Button, Hbox> &s) {
 			s.sub_scope<Left_floating_hbox>(
 				[&] (Scope<Button, Hbox, Left_floating_hbox> &s) {
-					s.sub_scope<Label>(dev.label);
-					s.sub_scope<Label>(String<80>(" (", dev.model, ") "));
+					s.sub_scope<Label>(dev.label, [&] (auto &s) {
+						s.attribute("font", "button/metal");
+						s.attribute("color", String<30>(color(selected, hovered))); });
+					s.sub_scope<Label>(String<80>(" (", dev.model, ") "), [&] (auto &s) {
+						s.attribute("font", "text/metal");
+						s.attribute("color", String<30>(color(selected, hovered))); });
 					if (used_target.device == dev.label)
-						s.sub_scope<Label>("* ");
+						s.sub_scope<Label>("* ", [&] (auto &s) {
+							s.attribute("font", "text/metal");
+							s.attribute("color", String<30>(color(selected, hovered))); });
 			});
 
 			s.sub_scope<Right_floating_hbox>(
 				[&] (Scope<Button, Hbox, Right_floating_hbox> &s) {
-					s.sub_scope<Label>(String<64>(dev.capacity)); });
+					s.sub_scope<Label>(String<64>(dev.capacity), [&] (auto &s) {
+						s.attribute("font", "button/metal");
+						s.attribute("color", String<30>(color(selected, hovered))); }); });
 		});
 	}
 };

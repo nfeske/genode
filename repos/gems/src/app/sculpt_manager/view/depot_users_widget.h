@@ -76,20 +76,21 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 
 			void view(Scope<Button> &s, bool ready, auto const &text) const
 			{
-				bool const selected = _seq_number == s.hover.seq_number;
+				bool const selected = _seq_number == s.hover.seq_number,
+				           hovered  = s.hovered();
 
-				if (!ready)
-					s.attribute("style", "unimportant");
-
-				if (selected)
-					s.attribute("selected", "yes");
-
-				if (s.hovered() && !s.dragged() && !selected && ready)
-					s.attribute("hovered",  "yes");
-
+				s.attribute("style", "invisible");
 				s.sub_scope<Label>(text, [&] (auto &s) {
-					if (!ready)
-						s.attribute("style", "unimportant"); });
+					auto color = [&]
+					{
+						if (selected) return Color { 255, 255, 255 };
+						if (hovered)  return Color { 255, 255, 200 };
+						if (!ready)   return ADGRAY();
+						else          return Color { 150, 150, 150 };
+					};
+					s.attribute("font", ready ? "button/metal" : "button/regular");
+					s.attribute("color", String<30>(color()));
+				});
 			}
 
 			void view(Scope<Button> &s, bool ready) const
@@ -110,10 +111,21 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 			{
 				bool const hovered = s.hovered();
 
+				auto color = [&]
+				{
+					if (hovered)  return Color { 255, 255, 200 };
+					if (selected) return Color { 255, 255, 255 };
+					else          return Color { 150, 150, 150 };
+				};
+
 				s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
-					s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
-					                                        .selected = selected });
-					s.sub_scope<Label>(text);
+					s.sub_scope<Label>(text, [&] (auto &s) {
+						s.attribute("font", "text/metal");
+						s.attribute("color", String<30>(color()));
+					});
+					s.sub_scope<Label>(" ", [&] (auto &s) {
+						s.attribute("font", "button/regular");
+					});
 				});
 			}
 		};
@@ -153,14 +165,20 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 
 				s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
 
-					s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
-					                                        .selected = selected });
-
-					auto const text = Depot_url::Url(" ", _url_edit_field);
+					auto color = [&]
+					{
+						if (hovered)  return Color { 255, 255, 200 };
+						if (selected) return Color { 255, 255, 255 };
+						else          return Color { 150, 150, 150 };
+					};
+					auto const text = Depot_url::Url(selected ? "-> " : "   ", _url_edit_field);
 					s.sub_scope<Label>(text, [&] (auto &s) {
+						s.attribute("font", "text/metal");
+						s.attribute("color", String<30>(color()));
 						s.attribute("min_ex", 30);
-						s.template sub_node("cursor", [&] {
-							s.attribute("at", _url_edit_field.cursor_pos + 1); });
+						if (selected)
+							s.template sub_node("cursor", [&] {
+								s.attribute("at", _url_edit_field.cursor_pos + 1 + 3); });
 					});
 				});
 
@@ -239,7 +257,7 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 
 						Hosted<Vbox, Frame, Vbox, Item> item { Id { name } };
 
-						s.widget(item, selected, Path(" ", label));
+						s.widget(item, selected, Path(selected ? "-> " : "   ", label));
 					});
 
 					if (_unfolded || !_selected_user_exists)
@@ -250,7 +268,7 @@ struct Sculpt::Depot_users_widget : Widget<Vbox>
 			if (!_unfolded && !known_pubkey && _selected_user_exists) {
 				s.sub_scope<Button>([&] (Scope<Vbox, Button> &s) {
 					s.attribute("style", "invisible");
-					s.sub_scope<Annotation>("missing public key for verification");
+					s.sub_scope<Annotation>("missing public key for verification", AGRAY());
 				});
 			}
 		}

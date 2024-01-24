@@ -111,9 +111,8 @@ struct Sculpt::Wpa_passphrase : Blind_wpa_passphrase
 		 */
 		void print_bullets(Output &out) const override
 		{
-			char const bullet_utf8[4] = { (char)0xe2, (char)0x80, (char)0xa2, 0 };
 			for (unsigned i = 0; i < _length; i++)
-				Genode::print(out, bullet_utf8);
+				Genode::print(out, "*");
 		}
 
 		bool suitable_for_connect() const override { return _length >= 8; }

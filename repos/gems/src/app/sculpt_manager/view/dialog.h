@@ -43,6 +43,12 @@ namespace Dialog {
 	struct Doublechecked_action_button;
 	template <typename> struct Radio_select_button;
 	template <typename> struct Choice;
+
+	static inline Color WHITE()  { return { 255, 255, 255 }; }
+	static inline Color AGRAY()  { return { 89, 155, 169 }; }
+	static inline Color ADGRAY() { return { 0x00, 0x2d, 0x3b }; }
+
+	static inline String<8> const bullet() { return { Codepoint(2022) }; }
 }
 
 
@@ -55,9 +61,22 @@ struct Dialog::Annotation : Sub_scope
 			scope.attribute("font", "annotation/regular"); });
 	}
 
+	static void sub_node(auto &scope, auto const &text, Color color)
+	{
+		scope.sub_node("label", [&] {
+			scope.attribute("text",  text);
+			scope.attribute("color", String<30>(color));
+			scope.attribute("font", "annotation/regular"); });
+	}
+
 	static void view_sub_scope(auto &scope, auto const &text)
 	{
 		sub_node(scope, text);
+	}
+
+	static void view_sub_scope(auto &scope, auto const &text, Color color)
+	{
+		sub_node(scope, text, color);
 	}
 
 	static void with_narrowed_at(auto const &, auto const &) { }
@@ -71,7 +90,7 @@ struct Dialog::Left_annotation : Sub_scope
 		s.node("hbox", [&] {
 			s.sub_node("float", [&] () {
 				s.attribute("west", "yes");
-				Annotation::sub_node(s, text); }); });
+				Annotation::sub_node(s, text, AGRAY()); }); });
 	}
 
 	static void with_narrowed_at(auto const &, auto const &) { }
@@ -85,11 +104,11 @@ struct Dialog::Left_right_annotation : Sub_scope
 		s.node("hbox", [&] {
 			s.named_sub_node("float", "left", [&] () {
 				s.attribute("west", "yes");
-				Annotation::sub_node(s, left); });
+				Annotation::sub_node(s, left, AGRAY()); });
 
 			s.named_sub_node("float", "right", [&] () {
 				s.attribute("east", "yes");
-				Annotation::sub_node(s, right); });
+				Annotation::sub_node(s, right, AGRAY()); });
 		});
 	}
 
@@ -104,6 +123,16 @@ struct Dialog::Left_floating_text : Sub_scope
 		s.node("float", [&] {
 			s.attribute("west", "yes");
 			s.named_sub_node("label", "label", [&] {
+				s.attribute("text", String<30>("  ", text));
+				s.attribute("min_ex", "15"); }); });
+	}
+
+	static void view_sub_scope(auto &s, auto const &text, Color color)
+	{
+		s.node("float", [&] {
+			s.attribute("west", "yes");
+			s.named_sub_node("label", "label", [&] {
+				s.attribute("color", String<30>(color));
 				s.attribute("text", String<30>("  ", text));
 				s.attribute("min_ex", "15"); }); });
 	}
@@ -211,7 +240,7 @@ struct Dialog::Centered_info_vbox : Sub_scope
 	{
 		s.node("float", [&] {
 			s.sub_node("frame", [&] {
-				s.attribute("style", "unimportant");
+				s.attribute("style", "invisible");
 				s.named_sub_node("vbox", s.id.value, [&] {
 					fn(s); }); }); });
 	}
@@ -226,7 +255,7 @@ struct Dialog::Centered_dialog_vbox : Sub_scope
 	{
 		s.node("float", [&] {
 			s.sub_node("frame", [&] {
-				s.attribute("style", "important");
+				s.attribute("style", "invisible");
 				s.named_sub_node("vbox", s.id.value, [&] {
 					fn(s); }); }); });
 	}
@@ -276,11 +305,15 @@ struct Dialog::Titled_frame : Widget<Frame>
 
 	static void view(Scope<Frame> &s, Attr const attr, auto const &fn)
 	{
+		s.attribute("style", "invisible");
 		s.sub_node("vbox", [&] {
 			if (attr.min_ex)
 				s.named_sub_node("label", "min_ex", [&] {
 					s.attribute("min_ex", attr.min_ex); });
-			s.sub_node("label", [&] { s.attribute("text", s.id.value); });
+			s.sub_node("label", [&] {
+				s.attribute("text", s.id.value);
+				s.attribute("color", String<30>(AGRAY()));
+			});
 			s.sub_node("float", [&] {
 				s.sub_node("vbox", [&] () {
 					fn(); }); }); });
@@ -305,9 +338,19 @@ struct Dialog::Radio_select_button : Widget<Left_floating_hbox>
 		bool const selected = (selected_value == value),
 		           hovered  = (s.hovered() && !s.dragged() && !selected);
 
-		s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
-		                                        .selected = selected });
-		s.sub_scope<Label>(String<100>(" ", text));
+		auto color = [&]
+		{
+			if (selected) return Color { 255, 255, 255 };
+			if (hovered)  return Color { 255, 255, 200 };
+			else          return Color { 150, 150, 150 };
+		};
+
+		String<100> const label(selected ? " -> " : "    ", text);
+
+		s.sub_scope<Label>(label, [&] (auto &s) {
+			s.attribute("font", "button/metal");
+			s.attribute("color", String<30>(color()));
+		});
 		s.sub_scope<Button_vgap>();
 	}
 
@@ -326,23 +369,28 @@ struct Dialog::Pin_button : Action_button
 
 	void view(Scope<Button> &s, Attr attr = { .visible = true }) const
 	{
-		if (attr.visible) {
-			bool const selected = _seq_number == s.hover.seq_number,
-			           hovered  = (s.hovered() && (!s.dragged() || selected));
+		bool const selected = _seq_number == s.hover.seq_number,
+		           hovered  = (s.hovered() && (!s.dragged() || selected));
 
-			if (selected) s.attribute("selected", "yes");
-			if (hovered)  s.attribute("hovered",  "yes");
-		} else {
-			s.attribute("style", "invisible");
-		}
+		auto color = [&]
+		{
+			if (selected) return Color { 255, 255, 255 };
+			if (hovered)  return Color { 255, 255, 200 };
+			else          return Color { 150, 150, 150 };
+		};
+
+		s.attribute("style", "invisible");
 		auto const &text = s.id.value;
 		s.sub_scope<Vbox>([&] (Scope<Button, Vbox> &s) {
 			s.sub_scope<Min_ex>(10);
 			s.sub_scope<Vgap>();
 			s.sub_scope<Label>(text, [&] (auto &s) {
-				if (!attr.visible)
+				if (attr.visible)
+					s.attribute("color", String<30>(color()));
+				else
 					s.attribute("style", "invisible");
-				s.attribute("font", "title/regular"); });
+				s.attribute("font", "title/metal");
+			});
 			s.sub_scope<Vgap>();
 		});
 	}
@@ -380,11 +428,24 @@ struct Dialog::Menu_entry : Widget<Left_floating_hbox>
 	void view(Scope<Left_floating_hbox> &s, bool selected, auto const &text,
 	          char const * const style = "radio") const
 	{
+		(void)style;
+
 		bool const hovered = (s.hovered() && !s.dragged());
 
-		s.sub_scope<Icon>(style, Icon::Attr { .hovered  = hovered,
-		                                      .selected = selected });
-		s.sub_scope<Label>(String<100>(" ", text));
+		String<100> const label { selected ? "-> " : "   ", text };
+
+		auto color = [&] (bool selected, bool hovered)
+		{
+			if (selected) return Color { 255, 255, 255 };
+			if (hovered)  return Color { 255, 255, 200 };
+			else          return Color { 150, 150, 150 };
+		};
+
+		s.sub_scope<Label>(label, [&] (auto &s) {
+			s.attribute("font", "text/metal");
+			s.attribute("color", String<30>(color(selected, hovered)));
+		});
+
 		s.sub_scope<Button_vgap>();
 	}
 
@@ -396,15 +457,21 @@ struct Dialog::Operation_button : Widget<Button>
 {
 	void view(Scope<Button> &s, bool selected, auto const &text) const
 	{
-		if (selected) {
-			s.attribute("selected", "yes");
-			s.attribute("style", "unimportant");
-		}
+		s.attribute("style", "invisible");
 
-		if (s.hovered() && !s.dragged() && !selected)
-			s.attribute("hovered",  "yes");
+		bool const hovered = (s.hovered() && !s.dragged() && !selected);
 
-		s.sub_scope<Label>(String<50>("  ", text, "  "));
+		auto color = [&] (bool selected, bool hovered)
+		{
+			if (selected) return Color { 255, 255, 255 };
+			if (hovered)  return Color { 255, 255, 200 };
+			else          return Color { 150, 150, 150 };
+		};
+
+		s.sub_scope<Label>(String<50>(text), [&] (auto &s) {
+			s.attribute("font", "button/metal");
+			s.attribute("color", String<30>(color(selected, hovered)));
+		});
 	}
 
 	void view(Scope<Button> &s, bool selected) const
@@ -422,21 +489,33 @@ struct Dialog::Right_floating_off_on : Widget<Right_floating_hbox>
 	struct Attr { bool on, transient; };
 
 	Hosted<Right_floating_hbox, Select_button<bool>> const
-		_off { Id { "  Off  " }, false },
-		_on  { Id { "  On  "  }, true  };
+		_off { Id { " OFF " }, false },
+		_on  { Id { " ON "  }, true  };
 
 	void view(Scope<Right_floating_hbox> &s, Attr attr) const
 	{
-		auto transient_attr_fn = [&] (Scope<Button> &s)
+		auto button_attr_fn = [&] (auto &s, bool selected)
 		{
-			if (attr.transient)
-				s.attribute("style", "unimportant");
+			s.attribute("style", "invisible");
 
-			s.sub_scope<Label>(s.id.value);
+			bool const hovered  = (s.hovered() && !s.dragged() && !selected);
+
+			auto color = [&] (bool selected, bool hovered)
+			{
+				if (selected && attr.transient) return Color { 200, 200, 200 };
+				if (selected)                   return Color { 255, 255, 255 };
+				if (hovered)                    return Color { 255, 255, 200 };
+				else                            return Color { 150, 150, 150 };
+			};
+
+			s.template sub_scope<Label>(s.id.value, [&] (auto &s) {
+				s.attribute("font", "button/metal");
+				s.attribute("color", String<30>(color(selected, hovered)));
+			});
 		};
 
-		s.widget(_off, attr.on, transient_attr_fn);
-		s.widget(_on,  attr.on, transient_attr_fn);
+		s.widget(_off, attr.on, [&] (auto &s) { button_attr_fn(s, !attr.on); });
+		s.widget(_on,  attr.on, [&] (auto &s) { button_attr_fn(s,  attr.on); });
 	}
 
 	void view(Scope<Right_floating_hbox> &s, bool on) const
@@ -471,12 +550,32 @@ struct Dialog::Doublechecked_action_button
 	void view(Scope<Vbox> &s, auto const &text) const
 	{
 		s.widget(_operation, selected, [&] (Scope<Button> &s) {
-			s.sub_scope<Label>(text); });
+			s.attribute("style", "invisible");
+			bool const hovered = (s.hovered() && !s.dragged() && !selected);
+			s.sub_scope<Label>(text, [&] (auto &s) {
+				auto color = [&]
+				{
+					if (selected) return Color { 255, 255, 255 };
+					if (hovered)  return Color { 255, 255, 200 };
+					else          return Color { 150, 150, 150 };
+				};
+				s.attribute("font", "button/metal");
+				s.attribute("color", String<30>(color()));
+			});
+		});
 
 		if (selected)
-			s.widget(_confirm_or_cancel, [&] (auto &s) {
-				s.template sub_scope<Label>(confirmed ? " Cancel "
-				                                      : " Confirm "); });
+			s.widget(_confirm_or_cancel, [&] (Scope<Button> &s) {
+				s.attribute("style", "invisible");
+				bool const hovered = (s.hovered() && !s.dragged());
+				String<100> const label = confirmed ? " Cancel " : " CONFIRM ";
+				s.sub_scope<Label>(label, [&] (auto &s) {
+					s.attribute("font", "button/regular");
+					s.attribute("color", "#000000"); });
+				s.sub_scope<Label>(label, [&] (auto &s) {
+					s.attribute("font", "button/metal");
+					s.attribute("color", hovered ? "#ff5555" : "#ff0000"); });
+			});
 	}
 
 	void click(Clicked_at const &at)

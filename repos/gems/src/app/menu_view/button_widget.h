@@ -35,7 +35,7 @@ struct Menu_view::Button_widget : Widget, Animator::Item
 
 	Lazy_value<int> _blend { };
 
-	Padding _padding { 8, 8, 4, 3 };
+	Padding _padding { 4, 4, 4, 12 };
 
 	Area _space() const
 	{

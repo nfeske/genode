@@ -26,24 +26,42 @@ struct Dialog::Partition_button : Widget<Hbox>
 	{
 		bool const hovered = s.hovered();
 
+		auto color = [&] (bool selected, bool hovered)
+		{
+			if (selected) return Color { 255, 255, 255 };
+			if (hovered)  return Color { 255, 255, 200 };
+			else          return Color { 150, 150, 150 };
+		};
+
 		s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
 
 			s.sub_scope<Button>([&] (Scope<Hbox, Left_floating_hbox, Button> &s) {
-				if (hovered)  s.attribute("hovered",  "yes");
-				if (selected) s.attribute("selected", "yes");
-				s.sub_scope<Label>(partition.number);
+				s.attribute("style", "invisible");
+				s.sub_scope<Label>(partition.number, [&] (auto &s) {
+					s.attribute("font", "text/metal");
+					s.attribute("color", String<30>(color(selected, hovered)));
+				});
 			});
 
 			if (partition.label.length() > 1)
-				s.sub_scope<Label>(String<80>(" (", partition.label, ") "));
+				s.sub_scope<Label>(String<80>(" (", partition.label, ") "), [&] (auto &s) {
+					s.attribute("font", "text/metal");
+					s.attribute("color", String<30>(color(selected, hovered)));
+				});
 
 			Storage_target const target { device.label, partition.number };
 			if (used_target == target)
-				s.sub_scope<Label>("* ");
+				s.sub_scope<Label>("* ", [&] (auto &s) {
+					s.attribute("font", "text/metal");
+					s.attribute("color", String<30>(color(selected, hovered)));
+				});
 		});
 
 		s.sub_scope<Right_floating_hbox>([&] (Scope<Hbox, Right_floating_hbox> &s) {
-			s.sub_scope<Label>(String<64>(partition.capacity, " ")); });
+			s.sub_scope<Label>(String<64>(partition.capacity, " "), [&] (auto &s) {
+				s.attribute("font", "text/metal");
+				s.attribute("color", String<30>(color(selected, hovered)));
+			}); });
 	}
 };
 
@@ -62,6 +80,8 @@ void Storage_device_widget::view(Scope<Vbox> &s, Storage_device const &dev,
 			_partition_operations.view(s, dev, partition, used_target);
 	});
 
-	if (!_selected_partition.valid())
+	if (!_selected_partition.valid()) {
+		s.sub_scope<Button_vgap>();
 		_partition_operations.view(s, dev, *dev.whole_device_partition, used_target);
+	}
 }

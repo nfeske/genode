@@ -27,6 +27,7 @@ struct Dialog::Parent_node : Sub_scope
 	{
 		s.node("frame", [&] {
 			s.sub_node("label", [&] {
+				s.attribute("color", String<30>(AGRAY()));
 				s.attribute("text", Sculpt::Start_name(" ", text, " ")); }); });
 	}
 
@@ -66,11 +67,19 @@ struct Dialog::Selectable_node
 
 				s.sub_scope<Button>(id, [&] (Scope<Depgraph, Frame, Vbox, Button> &s) {
 
-					if (!attr.important) s.attribute("style",    "unimportant");
-					if (s.hovered())     s.attribute("hovered",  "yes");
-					if (attr.selected)   s.attribute("selected", "yes");
+					s.attribute("style", "invisible");
 
-					s.sub_scope<Label>(attr.pretty_name);
+					auto color = [&]
+					{
+						if (attr.selected) return Color { 255, 255, 255 };
+						if (s.hovered())   return Color { 255, 255, 200 };
+						else               return Color { 200, 200, 200 };
+					};
+
+					s.sub_scope<Label>(attr.pretty_name, [&] (auto &s) {
+						s.attribute("font", "text/metal");
+						s.attribute("color", String<30>(color()));
+					});
 				});
 
 				if (attr.selected)
@@ -109,9 +118,13 @@ void Graph::_view_selected_node_content(Scope<Depgraph, Frame, Vbox> &s,
 		caps(info.assigned_caps - info.avail_caps, " / ",
 		     info.assigned_caps, " caps");
 
-	s.sub_scope<Min_ex>(25);
-	s.sub_scope<Label>(ram);
-	s.sub_scope<Label>(caps);
+	s.sub_scope<Min_ex>(15);
+	s.sub_scope<Label>(ram, [&] (auto &s) {
+		s.attribute("font", "annotation/regular");
+		s.attribute("color", String<30>(AGRAY())); });
+	s.sub_scope<Label>(caps, [&] (auto &s) {
+		s.attribute("font", "annotation/regular");
+		s.attribute("color", String<30>(AGRAY())); });
 }
 
 

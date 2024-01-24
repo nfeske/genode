@@ -24,13 +24,15 @@ struct Sculpt::Software_version_widget : Widget<Frame>
 {
 	void view(Scope<Frame> &s, Build_info const &info) const
 	{
+		s.attribute("style", "invisible");
 		using Version = Build_info::Version;
 
 		auto padded = [] (Version const &v) { return Version("  ", v, "  "); };
 
 		s.sub_scope<Vbox>([&] (Scope<Frame, Vbox> &s) {
-			s.sub_scope<Label>     (padded(info.image_version()));
-			s.sub_scope<Annotation>(padded(info.genode_version()));
+			s.sub_scope<Label> (padded(info.image_version()), [&] (auto &s) {
+				s.attribute("color", String<30>(AGRAY())); });
+			s.sub_scope<Annotation>(padded(info.genode_version()), AGRAY());
 		});
 	}
 };

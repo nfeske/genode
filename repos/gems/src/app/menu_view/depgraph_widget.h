@@ -671,11 +671,11 @@ struct Menu_view::Depgraph_widget : Widget
 				Color color;
 
 				if (shadow) {
-					color = dep.primary() ? Color(0, 0, 0, (150*alpha)>>8)
-					                      : Color(0, 0, 0,  (50*alpha)>>8);
+					color = dep.primary() ? Color(255, 255, 255, (15*alpha)>>8)
+					                      : Color(255, 255, 255, (10*alpha)>>8);
 				} else {
-					color = dep.primary() ? Color(255, 255, 255, (190*alpha)>>8)
-					                      : Color(255, 255, 255, (120*alpha)>>8);
+					color = dep.primary() ? Color(255, 255, 255, (15*alpha)>>8)
+					                      : Color(255, 255, 255, (10*alpha)>>8);
 				}
 
 				dep.apply_to_server([&] (Node const &server) {

@@ -53,17 +53,32 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 		{
 			bool const hovered = s.hovered();
 
+			auto color = [&]
+			{
+				if (attr.selected) return Color { 255, 255, 255 };
+				if (hovered)       return Color { 255, 255, 200 };
+				else               return Color { 150, 150, 150 };
+			};
+
 			s.sub_scope<Left_floating_hbox>([&] (Scope<Hbox, Left_floating_hbox> &s) {
-				s.sub_scope<Icon>("radio", Icon::Attr { .hovered  = hovered,
-				                                        .selected = attr.selected });
-				s.sub_scope<Label>(String<20>(" ", ap.ssid));
+
+				String<28> const label(ap.ssid);
+
+				s.sub_scope<Label>(label, [&] (auto &s) {
+					s.attribute("font", "text/metal");
+					s.attribute("color", String<30>(color()));
+				});
+
 				s.sub_scope<Annotation>((ap.protection == Access_point::WPA_PSK)
-				                        ? " (WPA) " : " ");
+				                        ? " (WPA) " : " ", AGRAY());
 			});
 
 			s.sub_scope<Float>([&] (Scope<Hbox, Float> &s) {
 				s.attribute("east", "yes");
-				s.sub_scope<Label>(String<8>(ap.quality, "%"));
+				s.sub_scope<Label>(String<8>(ap.quality, "%"), [&] (auto &s) {
+					s.attribute("font", "text/metal");
+					s.attribute("color", String<30>(color()));
+				});
 			});
 		}
 	};
@@ -120,13 +135,20 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 
 		if (_wifi_connection.connecting() || _wifi_connection.connected()) {
 
+			s.sub_scope<Button_vgap>();
+
 			Hosted<Vbox, Item> item { Id { _selected } };
 
 			_with_selected_ap([&] (Access_point const &ap) {
 				s.widget(item, ap, Item::Attr { .selected = true }); });
 
+			s.sub_scope<Button_vgap>();
+
 			s.sub_scope<Label>(_wifi_connection.connecting()
-			                   ? "connecting" : "associated" );
+			                   ? "connecting" : "associated",
+			                   [&] (auto &s) {
+				s.attribute("color", String<30>(AGRAY()));
+			});
 			return;
 		}
 
@@ -137,6 +159,8 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 
 			if (count++ >= _max_visible_aps)
 				return;
+
+			s.sub_scope<Vgap>();
 
 			/*
 			 * Whenever the user has selected an access point, hide all others.
@@ -160,24 +184,39 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 				return;
 
 			if (ap.protection == Access_point::WPA_PSK) {
+				s.sub_scope<Button_vgap>();
 				s.sub_scope<Label>(_wifi_connection.auth_failure()
 				                   ? "Enter passphrase (auth failure):"
-				                   : "Enter passphrase:");
+				                   : "Enter passphrase:", [&] (auto &s) {
+					s.attribute("color", String<30>(AGRAY()));
+				});
+				s.sub_scope<Button_vgap>();
+
+				String<3*64> const passphrase(" ", _wpa_passphrase);
+
+				bool const small = passphrase.length() > 13;
 
 				s.sub_scope<Frame>([&] (Scope<Vbox, Frame> &s) {
 					s.sub_scope<Float>([&] (Scope<Vbox, Frame, Float> &s) {
 						s.attribute("west", "yes");
-						String<3*64> const passphrase(" ", _wpa_passphrase);
+						s.sub_scope<Label>(" ", [&] (auto &s) {
+							s.attribute("font", "title/regular"); });
 						s.sub_scope<Label>(passphrase, [&] (auto &s) {
-							s.attribute("font", "title/regular");
+							s.attribute("font", small ? "button/regular" : "title/regular");
+							s.attribute("color", String<30>(AGRAY()));
 							s.sub_node("cursor", [&] {
+								s.attribute("style", small ? "default" : "fat");
 								s.attribute("at", passphrase.length() - 1); });
 						});
 					});
 				});
 
-				if (_wpa_passphrase.suitable_for_connect())
+				s.sub_scope<Button_vgap>();
+				if (_wpa_passphrase.suitable_for_connect()) {
 					s.widget(_connect);
+				} else {
+					s.sub_scope<Button_vgap>();
+				}
 			}
 		});
 
@@ -186,7 +225,8 @@ struct Sculpt::Ap_selector_widget : Widget<Vbox>
 		 * report.
 		 */
 		if (count == 0)
-			s.sub_scope<Label>("Scanning...");
+			s.sub_scope<Label>("Scanning...", [&] (auto &s) {
+				s.attribute("color", String<30>(AGRAY())); });
 	}
 
 	bool need_keyboard_focus_for_passphrase() const

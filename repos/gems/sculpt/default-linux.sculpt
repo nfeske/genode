@@ -2,6 +2,9 @@
 drivers: linux
 deploy:  example
 ram_fs:  depot
+fonts:   atari
+
+import: pkg/atari_fonts_fs
 
 # selection of launcher-menu entries
 launcher: sticks_blue_backdrop nano3d system_shell
