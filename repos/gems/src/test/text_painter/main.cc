@@ -27,6 +27,7 @@
 
 /* gems includes */
 #include <gems/ttf_font.h>
+#include <gems/bdf_font.h>
 #include <gems/vfs_font.h>
 #include <gems/cached_font.h>
 
@@ -65,141 +66,48 @@ struct Test::Main
 
 	Tff_font::Glyph_buffer _glyph_buffer { _glyph_buffer_array, sizeof(_glyph_buffer_array) };
 
-	Tff_font _font_1 { _binary_droidsansb10_tff_start, _glyph_buffer };
-	Tff_font _font_2 { _binary_default_tff_start,      _glyph_buffer };
-
-	Attached_rom_dataspace _vera_ttf_ds { _env, "Vera.ttf" };
-
 	Heap _heap { _env.ram(), _env.rm() };
-
-	Ttf_font _font_3 { _heap, _vera_ttf_ds.local_addr<void>(), 13 };
 
 	Attached_rom_dataspace _config { _env, "config" };
 
 	Root_directory _root { _env, _heap, _config.xml().sub_node("vfs") };
 
-	Vfs_font _font_4 { _heap, _root, "fonts/regular" };
+	File_content _bdf { _heap, _root, "font.bdf", File_content::Limit(1024*1024) };
+
+	int _y = 10;
+
+	void test(Bdf_font::Attr attr)
+	{
+		_bdf.bytes([&] (char const * const start, size_t size) {
+			Bdf_font font { _heap, Const_byte_range_ptr(start, size), attr };
+			Text_painter::paint(_surface, { 10, _y }, font, Color(255, 255, 255),
+			                    "Text aligned at the top-left corner");
+
+			_y += font.height();
+		});
+	}
 
 	void _refresh() { _fb.refresh(0, 0, _size.w(), _size.h()); }
 
 	Main(Env &env) : _env(env)
 	{
-		/* test positioning of text */
 		_surface.clip(Rect(Point(0, 0), _size));
-		Box_painter::paint(_surface, Rect(Point(200, 10), Area(250, 50)), Color(0, 100, 0));
-		Text_painter::paint(_surface,
-		                    Text_painter::Position(200, 10), _font_1,
-		                    Color(255, 255, 255),
-		                    "Text aligned at the top-left corner");
 
-		Box_painter::paint(_surface, Rect(Point(200, 100), Area(250, 50)), Color(0, 100, 0));
-		Text_painter::paint(_surface,
-		                    Text_painter::Position(210, (int)(100 - _font_1.baseline())), _font_1,
-		                    Color(255, 255, 255),
-		                    "Baseline of text aligned at the top");
+		test({ .scale = 1, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 0, .raised = 0, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 1, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 0, .raised = 0, .highlighted = 1, .interlaced = 0 });
+		test({ .scale = 1, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 1, .raised = 0, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 1, .shade = Bdf_font::Shade::METALLIC, .slanted = 0, .raised = 0, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 2, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 0, .raised = 0, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 2, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 0, .raised = 0, .highlighted = 1, .interlaced = 0 });
+		test({ .scale = 2, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 0, .raised = 0, .highlighted = 0, .interlaced = 1 });
+		test({ .scale = 2, .shade = Bdf_font::Shade::METALLIC, .slanted = 0, .raised = 0, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 2, .shade = Bdf_font::Shade::LIGHT,    .slanted = 0, .raised = 1, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 3, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 0, .raised = 0, .highlighted = 0, .interlaced = 1 });
+		test({ .scale = 3, .shade = Bdf_font::Shade::LIGHT,    .slanted = 0, .raised = 1, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 3, .shade = Bdf_font::Shade::OPAQUE,   .slanted = 1, .raised = 0, .highlighted = 0, .interlaced = 0 });
+		test({ .scale = 4, .shade = Bdf_font::Shade::METALLIC, .slanted = 0, .raised = 1, .highlighted = 0, .interlaced = 1 });
 
-		/* test horizontal clipping boundaries */
-		_surface.clip(Rect(Point(20, 15), Area(40, 300)));
-		Box_painter::paint(_surface, Rect(Point(0, 0), _size), Color(150, 20, 10));
-
-		for (int x = 0, y = -30; y < (int)_size.h() + 30; x++, y += _font_2.bounding_box().h())
-			Text_painter::paint(_surface,
-			                    Text_painter::Position(x, y), _font_2,
-			                    Color(255, 255, 255),
-			                    "Text painter at work");
-
-		/* test horizontal subpixel positioning */
-		_surface.clip(Rect(Point(90, 15), Area(100, 300)));
-		Box_painter::paint(_surface, Rect(Point(0, 0), _size), Color(150, 20, 10));
-		float const font_3_h = (float)_font_3.bounding_box().h();
-
-		for (float x = 90, y = -30; y < (float)_size.h() + 30; x += 0.2f, y += font_3_h)
-			Text_painter::paint(_surface,
-			                    Text_painter::Position(x, y), _font_3,
-			                    Color(255, 255, 255),
-			                    "This is a real textSub-=_HT-+=%@pixel positioning");
-
-		_surface.clip(Rect(Point(90, 320), Area(100, 300)));
-		Box_painter::paint(_surface, Rect(Point(0, 0), _size), Color(255, 255, 255));
-
-		for (float x = 90, y = 300; y < (float)_size.h() + 30; x += 0.2f, y += font_3_h)
-			Text_painter::paint(_surface,
-			                    Text_painter::Position(x, y), _font_3,
-			                    Color(0, 0, 0),
-			                    "This is a real textSub-=_HT-+=%@pixel positioning");
 		_refresh();
-
-		struct Lut
-		{
-			unsigned char value[256];
-
-			Lut()
-			{
-				auto fill_segment = [&] (long x1, long y1, long x2, long)
-				{
-					for (long i = x1>>8; i < x2>>8; i++)
-						value[i] = (unsigned char)min(255L, y1>>8);
-				};
-
-				bezier(0, 0, 0, 130<<8, 256<<8, 260<<8, fill_segment, 7);
-			}
-		};
-
-		static Lut const lut;
-		_surface.clip(Rect(Point(0, 0), _size));
-
-		for (unsigned x = 0; x < 256; x++)
-			Box_painter::paint(_surface,
-			                   Rect(Point(x + 512, 280 - lut.value[x]), Area(1, 1)),
-			                   Color(255, 255, 255));
-		_refresh();
-
-		_surface.clip(Rect(Point(0, 0), _size));
-		char const *vfs_text_string = "Glyphs obtained from VFS";
-		{
-			Timer::Connection timer(_env);
-
-			Genode::uint64_t const start_us = timer.elapsed_us();
-
-			enum { ITERATIONS = 40 };
-			for (int i = 0; i < ITERATIONS; i++)
-				Text_painter::paint(_surface,
-				                    Text_painter::Position(260 + (i*133 % 500),
-				                                           320 + (i*87  % 400)),
-				                    _font_4, Color(150 + i*73, 0, 200),
-				                    "Glyphs obtained from VFS");
-
-			Genode::uint64_t const end_us = timer.elapsed_us();
-			unsigned long num_glyphs = strlen(vfs_text_string)*ITERATIONS;
-
-			log("uncached painting: ", (float)(end_us - start_us)/(float)num_glyphs, " us/glyph");
-			_refresh();
-		}
-
-		for (size_t limit_kib = 32; limit_kib < 192; limit_kib += 16)
-		{
-			Cached_font cached_font(_heap, _font_4, Cached_font::Limit{limit_kib*1024});
-
-			Timer::Connection timer(_env);
-
-			Genode::uint64_t const start_us = timer.elapsed_us();
-
-			/* use less iterations for small cache sizes */
-			int const iterations = (limit_kib < 100) ? 200 : 2000;
-			for (int i = 0; i < iterations; i++)
-				Text_painter::paint(_surface,
-				                    Text_painter::Position(260 + (i*83  % 500),
-				                                           320 + (i*153 % 400)),
-				                    cached_font, Color(30, (int)limit_kib, 150 + i*73),
-				                    "Glyphs obtained from VFS");
-
-			Genode::uint64_t const end_us = timer.elapsed_us();
-			unsigned long num_glyphs = strlen(vfs_text_string)*iterations;
-
-			log("cached painting:   ", (float)(end_us - start_us)/(float)num_glyphs, " us/glyph"
-			    " (", cached_font.stats(), ")");
-			_refresh();
-		}
 	}
 };
 

@@ -85,9 +85,12 @@ install_config {
 	</start>
 
 	<start name="test-text_painter">
-		<resource name="RAM" quantum="2M"/>
+		<resource name="RAM" quantum="4M"/>
 		<config>
-			<vfs> <dir name="fonts"> <fs/> </dir> </vfs>
+			<vfs>
+				<rom name="font.bdf" label="atari800.bdf"/>
+				<dir name="fonts"> <fs/> </dir>
+			</vfs>
 		</config>
 	</start>
 
@@ -99,6 +102,6 @@ set fd [open [run_dir]/genode/focus w]
 puts $fd "<focus label=\"gui_fb -> \" domain=\"default\"/>"
 close $fd
 
-build_boot_image { vfs test-text_painter vfs_ttf.lib.so }
+build_boot_image { vfs test-text_painter vfs_ttf.lib.so atari800.bdf }
 
 run_genode_until forever
