@@ -294,7 +294,7 @@ class Terminal::Text_screen_surface
 							                   bg_color);
 
 							/* horizontally align glyph within cell */
-							x.value += (_geometry.char_width.value - (int)((glyph.width - 1)<<8)) >> 1;
+//							x.value += (_geometry.char_width.value - (int)((glyph.width - 1)<<8)) >> 1;
 
 							Glyph_painter::paint(Glyph_painter::Position(x, (int)y),
 							                     glyph, surface.addr(), _geometry.fb_size.w(),
