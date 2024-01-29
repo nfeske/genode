@@ -188,8 +188,8 @@ void User_state::_handle_input_event(Input::Event ev)
 				_focused->submit_input_event(Focus_leave());
 
 			if (_hovered) {
-				_hovered->submit_input_event(Absolute_motion{_pointer_pos.x(),
-				                                             _pointer_pos.y()});
+//				_hovered->submit_input_event(Absolute_motion{_pointer_pos.x(),
+//				                                             _pointer_pos.y()});
 				_hovered->submit_input_event(Focus_enter());
 			}
 
@@ -498,9 +498,9 @@ User_state::Update_hover_result User_state::update_hover()
 		if (old_hovered)
 			old_hovered->submit_input_event(Hover_leave());
 
-		if (_hovered)
-			_hovered->submit_input_event(Absolute_motion{_pointer_pos.x(),
-			                                             _pointer_pos.y()});
+//		if (_hovered)
+//			_hovered->submit_input_event(Absolute_motion{_pointer_pos.x(),
+//			                                             _pointer_pos.y()});
 	}
 
 	return { .hover_changed = (_hovered != old_hovered) };
