@@ -93,7 +93,11 @@ struct Menu_view::Label_widget : Widget, Cursor::Glyph_position
 		_factory.styles.with_label_style(node, [&] (Label_style style) {
 			_color_attr = node.attribute_value("color", style.color); });
 
-		_color.fade_to(_color_attr, Animated_color::Steps{80});
+		auto brightness = [] (Color c) { return c.r + c.g + c.b; };
+
+		bool const fade_up = brightness(_color_attr) > brightness(_color.color());
+
+		_color.fade_to(_color_attr, Animated_color::Steps{fade_up ? 1u : 80u});
 
 		if (node.has_attribute("text")) {
 			_text       = node.attribute_value("text", _text);
