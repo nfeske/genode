@@ -338,13 +338,19 @@ class Platform::Resources : Noncopyable
 
 		Number_of_bytes _sanitized_aperture_size(Number_of_bytes memory) const
 		{
-			auto constexpr shift_1mb = 20ull;
-			auto constexpr MIN_MEMORY_FOR_MULTIPLEXER = 8ull << shift_1mb;
+			/*
+			 * Ranges of global GTT (ggtt) are handed in page granularity (4k)
+			 * to the platform client (intel display driver).
+			 * 512 page table entries a 4k fit into one page, which adds up to
+			 * 2M virtual address space.
+			 */
+			auto constexpr shift_2mb = 21ull;
+			auto constexpr MIN_MEMORY_FOR_MULTIPLEXER = 4ull << shift_2mb;
 
-			/* align requests to 1M and enforce 1M as minimum */
-			memory = memory & _align_mask(shift_1mb);
-			if (memory < (1ull << shift_1mb))
-				memory = 1ull << shift_1mb;
+			/* align requests to 2M and enforce 2M as minimum */
+			memory = memory & _align_mask(shift_2mb);
+			if (memory < (1ull << shift_2mb))
+				memory = 1ull << shift_2mb;
 
 			if (_gmadr->size() >= MIN_MEMORY_FOR_MULTIPLEXER) {
 				if (memory > _gmadr->size() - MIN_MEMORY_FOR_MULTIPLEXER)
