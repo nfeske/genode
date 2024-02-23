@@ -1,0 +1,30 @@
+<runtime ram="32M" caps="1000" binary="test-pdu_encoding">
+
+	<fail after_seconds="30"/>
+	<succeed>
+		[init] message:
+		[init]   from: 499876543210
+		[init]   date: "2024-02-22 14:24:34"
+		[init]   content: "[unsupported encoding 0x10]"
+		[init] message:
+		[init]   from: 499876543210
+		[init]   date: "2024-02-23 14:12:58"
+		[init]   content: "Emoji 😺"
+		[init] message:
+		[init]   from: 4912345678901
+		[init]   date: "2024-02-22 12:15:51"
+		[init]   content: "Test"
+		[init] message:
+		[init]   from: 4912345678901
+		[init]   date: "2024-02-22 14:26:59"
+		[init]   content: "Reply"
+	</succeed>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="test-pdu_encoding"/>
+	</content>
+
+	<config/>
+
+</runtime>
