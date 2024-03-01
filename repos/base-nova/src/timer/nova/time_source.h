@@ -108,10 +108,10 @@ class Timer::Time_source : public Threaded_time_source
 			Microseconds const diff(_tsc_to_us(curr_tsc - _tsc_last));
 
 			/* update in irq context or if update rate is below 4000 irq/s */
-			if (_irq || diff.value > 250) {
+//			if (_irq || diff.value > 250) {
 				_curr_time.add(diff);
 				_tsc_last = curr_tsc;
-			}
+//			}
 
 			return _curr_time;
 		}
