@@ -19,6 +19,7 @@
 #include <os/reporter.h>
 #include <os/session_policy.h>
 #include <timer_session/connection.h>
+#include <trace/timestamp.h>
 
 /* local includes */
 #include <play_session.h>
@@ -62,7 +63,8 @@ struct Mixer::Main : Record_session::Operations, Play_session::Operations
 		if (_clock_from_config.constructed())
 			return *_clock_from_config;
 
-		return Clock { unsigned(_timer.elapsed_us()) };
+		// XXX missing TSC calibration
+		return Clock { unsigned(Trace::timestamp()/2000) };
 	}
 
 	List_model<Audio_signal> _audio_signals { };
