@@ -43,12 +43,22 @@ install_config {
 	</parent-provides>
 
 	<default-route>
-		<any-service> <parent/> <any-child/> </any-service>
+		<any-service>
+			<parent/>
+			<child name="timer"/>
+			<any-child/>
+		</any-service>
 	</default-route>
 
 	<default caps="100"/>
 
 	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+
+	<start name="drivers_timer" priority="-1">
+		<binary name="timer"/>
 		<resource name="RAM" quantum="1M"/>
 		<provides> <service name="Timer"/> </provides>
 	</start>
@@ -65,7 +75,7 @@ install_config {
 		<binary name="init"/>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
-			<service name="Timer">   <child name="timer"/> </service>
+			<service name="Timer">   <child name="drivers_timer"/> </service>
 			<service name="Capture"> <child name="nitpicker"/> </service>
 			<service name="Event">   <child name="nitpicker"/> </service>
 			<any-service> <parent/> </any-service>
@@ -136,7 +146,8 @@ install_config {
 						<play label="right" wave="square" hz="1000" sample_rate_hz="33333"/>
 					</config>
 				</inline>
-				<sleep milliseconds="2000" />
+				<sleep milliseconds="20000" />
+				<!--
 				<inline>
 					<config period_ms="} [play_period_ms] {">
 						<play label="left"  wave="sine"   hz="10000" sample_rate_hz="44100"/>
@@ -151,6 +162,7 @@ install_config {
 					</config>
 				</inline>
 				<sleep milliseconds="2000" />
+				-->
 			</rom>
 		</config>
 	</start>
@@ -159,7 +171,7 @@ install_config {
 		<resource name="RAM" quantum="1M"/>
 		<route>
 			<service name="ROM" label="config"> <child name="waveform_config"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
+			<any-service> <parent/> <child name="timer"/> <any-child/> </any-service>
 		</route>
 	</start>
 
@@ -184,11 +196,15 @@ install_config {
 		</config>
 		<route>
 			<service name="ROM" label="recording"> <child name="record_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
+			<any-service> <parent/> <child name="timer"/> <any-child/> </any-service>
 		</route>
 	</start>
 
 </config>}
+
+if {[have_board pc]} {
+	copy_file [genode_dir]/repos/os/recipes/raw/drivers_interactive-pc/drivers.config [run_dir]/genode/
+}
 
 build_boot_image [build_artifacts]
 
