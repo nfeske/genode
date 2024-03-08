@@ -253,6 +253,20 @@ install_config {
 		<resource name="RAM" quantum="1M"/>
 		<resource name="CPU" quantum="5"/>
 		<provides><service name="Timer"/></provides>
+		<route>
+			<service name="LOG"> <child name="log"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="top">
+		<resource name="RAM" quantum="2M"/>
+		<config period_ms="10000"/>
+		<route>
+			<service name="TRACE"> <parent label=""/> </service>
+			<service name="LOG"> <child name="log"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
 	</start>
 
 	<start name="report_rom" priority="0">
