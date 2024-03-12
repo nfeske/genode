@@ -218,7 +218,7 @@ class Hw::Lapic
 	{
 		Genode::warning("TSC calibration not yet implemented, using fixed value");
 		/* TODO: implement TSC calibration on AMD */
-		return 1000000U;
+		return 2300000U;
 	}
 
 	public:
