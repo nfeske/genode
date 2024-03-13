@@ -65,8 +65,7 @@ class Mixer::Time_window_scheduler
 		unsigned _curr_index  = 0;
 		unsigned _num_entries = 0;
 
-		unsigned _learned_jitter_us = 5000;
-
+		unsigned _learned_jitter_us = 0;
 		unsigned _learned_period_us = 0;
 
 		void _with_nth_entry(unsigned n, auto const &fn) const
@@ -120,8 +119,11 @@ class Mixer::Time_window_scheduler
 			};
 		}
 
-		void _learn_jitter(Stats const &stats)
+		void _learn_jitter(Stats const &stats, Config const &config)
 		{
+			if (_learned_jitter_us == 0)
+				_learned_jitter_us = config.jitter_us;
+
 			_learned_jitter_us = (99*_learned_jitter_us)/100;
 
 			if (stats.jitter_us > _learned_jitter_us)
@@ -130,13 +132,8 @@ class Mixer::Time_window_scheduler
 
 		void _learn_period(Stats const &stats, Config const &config)
 		{
-			auto diff = [] (unsigned a, unsigned b)
-			{
-				return (a > b) ? a - b : b - a;
-			};
-
-			if (diff(_learned_period_us, stats.median_period_us) > config.jitter_us)
-				_learned_period_us = stats.median_period_us;
+			if (_learned_period_us == 0)
+				_learned_period_us = config.period_us;
 
 			_learned_period_us = (99*_learned_period_us + stats.median_period_us)/100;
 		}
@@ -217,7 +214,7 @@ class Mixer::Time_window_scheduler
 
 			Stats const stats = _calc_stats();
 
-			_learn_jitter(stats);
+			_learn_jitter(stats, config);
 			_learn_period(stats, config);
 
 			Entry const now = _entries[_curr_index];
@@ -257,7 +254,7 @@ class Mixer::Time_window_scheduler
 
 			Stats const stats = _calc_stats();
 
-			_learn_jitter(stats);
+			_learn_jitter(stats, config);
 			_learn_period(stats, config);
 
 			Entry const now = _entries[_curr_index];
