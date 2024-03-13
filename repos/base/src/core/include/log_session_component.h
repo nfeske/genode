@@ -45,6 +45,7 @@ class Core::Log_session_component : public Rpc_object<Log_session>
 
 		void write(String const &string_buf) override
 		{
+			return;
 			if (!(string_buf.valid_string())) {
 				error("corrupted string");
 				return;
