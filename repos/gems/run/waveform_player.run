@@ -138,7 +138,7 @@ install_config {
 						<play label="right" wave="square" hz="1000" sample_rate_hz="33333"/>
 					</config>
 				</inline>
-				<sleep milliseconds="20000" />
+				<sleep milliseconds="2000" />
 				<inline>
 					<config period_ms="} [play_period_ms] {">
 						<play label="left"  wave="sine"   hz="10000" sample_rate_hz="44100"/>
