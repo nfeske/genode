@@ -1,4 +1,4 @@
-set use_nvme 0
+set use_nvme 1
 
 source ${genode_dir}/repos/gems/run/sculpt.run
 
