@@ -93,9 +93,9 @@ void Sculpt::Network::_generate_nic_router_config()
 
 		bool uplink_exists = true;
 		switch (_nic_target.type()) {
-		case Nic_target::WIRED: _generate_nic_router_uplink(xml, "nic_drv -> ");  break;
-		case Nic_target::WIFI:  _generate_nic_router_uplink(xml, "wifi_drv -> "); break;
-		case Nic_target::MODEM: _generate_nic_router_uplink(xml, "usb_net -> ");  break;
+		case Nic_target::WIRED: _generate_nic_router_uplink(xml, "nic -> ");     break;
+		case Nic_target::WIFI:  _generate_nic_router_uplink(xml, "wifi -> ");    break;
+		case Nic_target::MODEM: _generate_nic_router_uplink(xml, "usb_net -> "); break;
 		default: uplink_exists = false;
 		}
 		gen_named_node(xml, "domain", "default", [&] () {
@@ -265,16 +265,6 @@ void Sculpt::Network::_handle_nic_router_config(Xml_node config)
 
 void Sculpt::Network::gen_runtime_start_nodes(Xml_generator &xml) const
 {
-	if (_nic_target.type() == Nic_target::WIRED)
-		xml.node("start", [&] () {
-			xml.attribute("version", _nic_drv_version);
-			gen_nic_drv_start_content(xml); });
-
-	if (_nic_target.type() == Nic_target::WIFI)
-		xml.node("start", [&] () {
-			xml.attribute("version", _wifi_drv_version);
-			gen_wifi_drv_start_content(xml); });
-
 	bool const nic_router_needed = _nic_target.type() != Nic_target::OFF
 	                            && _nic_target.type() != Nic_target::UNDEFINED;
 
