@@ -143,38 +143,6 @@ install_config {
 		<config verbose="yes">
 			<rom name="dialog">
 
-
-				<inline description="bug">
-
-<dialog>
-	<depgraph name="0">
-		<frame name="hardware">
-			<label text=" Hardware "/>
-		</frame>
-		<frame name="0" dep="hardware">
-			<vbox name="0">
-				<button name="0">
-					<label name="0" text="intel gpu"/>
-				</button>
-			</vbox>
-		</frame>
-		<frame name="1" dep="0">
-			<vbox name="0">
-				<button name="1">
-					<label name="0" text="intel fb"/>
-				</button>
-			</vbox>
-		</frame>
-	</depgraph>
-</dialog>
-
-
-				</inline>
-
-
-				<sleep milliseconds="30000" />
-
-
 				<inline description="dependency graph">
 					<dialog>
 						<depgraph>
