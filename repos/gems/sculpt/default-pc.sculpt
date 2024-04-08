@@ -16,4 +16,4 @@ depot: ssumpf skalk nfeske_test
 # preconfigured example scenarios
 presets: empty nano3d window_manager falkon_web_browser goa_testbed
 
-build: app/sculpt_manager app/menu_view
+build: app/sculpt_manager app/menu_view core lib/ld
