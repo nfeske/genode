@@ -474,7 +474,6 @@ build {
 	app/acpica
 	app/pci_decode
 	app/block_tester
-	test/suspend
 }
 
 create_boot_directory
@@ -532,7 +531,7 @@ append config {
 				<policy label="platform_drv -> acpi" report="acpi_drv -> acpi"/>
 				<policy label="platform_drv -> devices" report="pci_decode -> devices"/>
 				<policy label="pci_decode -> system" report="acpi_drv -> acpi"/>
-				<policy label="test-suspend -> sleep_states" report="acpica -> sleep_states"/>
+				<policy label="platform_drv -> sleep_states" report="acpica -> sleep_states"/>
 				<policy label="intel_fb_drv -> intel_opregion" report="acpi_drv -> intel_opregion"/>
 			</config>
 		</start>
@@ -556,7 +555,7 @@ append config {
 		</start>
 
 		<start name="platform_drv" caps="300" managing_system="yes" } [priority_base] {>
-			<binary name="platform_drv"/>
+			<binary name="pc_platform_drv"/>
 			<resource name="RAM" quantum="8M"/>
 			<provides>
 				<service name="Platform"/>
@@ -581,6 +580,7 @@ append config {
 				<service name="ROM" label="system"> <child name="dynamic_rom"/> </service>
 				<service name="ROM" label="acpi"> <child name="drivers_reports"/> </service>
 				<service name="ROM" label="devices"> <child name="drivers_reports"/> </service>
+				<service name="ROM" label="sleep_states"> <child name="drivers_reports"/> </service>
 				<service name="Report"> <child name="drivers_reports"/> </service>
 				<any-service> <parent/> <any-child/> </any-service>
 			</route>
@@ -635,7 +635,7 @@ append config {
 				</input>
 
 				<output node="config">
-					<if> <has_value input="check_system" value="online"/>
+					<if> <has_value input="check_system" value=""/>
 						<then>
 							<inline>
 
@@ -698,16 +698,9 @@ append config {
 				<rom name="system">
 
 					<inline description="system normal">
-						<system state="online"/>
+						<system state=""/>
 					</inline>
 					<sleep milliseconds="30000"/>
-
-<!--
-					<inline description="remove all restartable drivers">
-						<system state="driver_remove_restartable"/>
-					</inline>
-					<sleep milliseconds="4000"/>
--->
 
 					<inline description="notify non-restartable drivers">
 						<system state="driver_stop"/>
@@ -741,31 +734,11 @@ append config {
 					<inline description="resume system">
 						<system state="s3_resume"/>
 					</inline>
-					<sleep milliseconds="4000"/>
-
-					<inline description="resume system">
-						<system state="driver_reinit"/>
-					</inline>
-					<sleep milliseconds="4000"/>
+					<sleep milliseconds="10000"/>
 
 				</rom>
 			</config>
 		</start>
-
-		<start name="test-suspend" managing_system="yes" caps="120" } [priority_scenario] {>
-			<resource name="RAM" quantum="4M"/>
-			<config/>
-			<route>
-				<service name="ROM" label="system">
-					<child name="dynamic_rom"/>
-				</service>
-				<service name="ROM" label="sleep_states">
-					<child name="drivers_reports"/>
-				</service>
-				<any-service> <parent/> <any-child/> </any-service>
-			</route>
-		</start>
-
 	</config>
 }
 
