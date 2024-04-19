@@ -82,10 +82,54 @@ proc display_config { } {
 		<start name="intel_fb_drv" caps="1000">
 			<binary name="pc_intel_fb_drv"/>
 			<resource name="RAM" quantum="60M"/>
-			<config ld_verbose="yes" width="1024" height="768">
+			<config ld_verbose="yes" width="1024" height="768" system="yes">
 				<report connectors="yes"/>
 			</config>
+			<route>
+				<service name="ROM" label="system">
+					<parent label="system"/> </service>
+				<any-service> <any-child/> <parent/> </any-service>
+			</route>
 		</start>}
+}
+
+
+proc restartable_drivers { } {
+	set return_drivers ""
+
+	append return_drivers {
+							<inline>
+
+								<parent-provides>
+									<service name="ROM"/>
+									<service name="IO_MEM"/>
+									<service name="IO_PORT"/>
+									<service name="PD"/>
+									<service name="RM"/>
+									<service name="CPU"/>
+									<service name="LOG"/>
+									<service name="Platform"/>
+									<service name="Report"/>
+									<service name="Timer"/>
+									<service name="Capture"/>
+									<service name="Event"/>
+									<service name="Gui"/>
+								</parent-provides>
+								<default-route>
+									<any-service> <any-child/> <parent/> </any-service>
+								</default-route>
+
+	} [display_config] {
+	} [input_config] {
+
+								<start name="nano3d" caps="100">
+									<resource name="RAM" quantum="8M"/>
+								</start>
+
+							</inline>
+	}
+
+	return $return_drivers
 }
 
 
@@ -636,39 +680,14 @@ append config {
 
 				<output node="config">
 					<if> <has_value input="check_system" value=""/>
-						<then>
-							<inline>
-
-								<parent-provides>
-									<service name="ROM"/>
-									<service name="IO_MEM"/>
-									<service name="IO_PORT"/>
-									<service name="PD"/>
-									<service name="RM"/>
-									<service name="CPU"/>
-									<service name="LOG"/>
-									<service name="Platform"/>
-									<service name="Report"/>
-									<service name="Timer"/>
-									<service name="Capture"/>
-									<service name="Event"/>
-									<service name="Gui"/>
-								</parent-provides>
-								<default-route>
-									<any-service> <any-child/> <parent/> </any-service>
-								</default-route>
-
-	} [display_config] {
-	} [input_config] {
-
-								<start name="nano3d" caps="100">
-									<resource name="RAM" quantum="8M"/>
-								</start>
-
-							</inline>
-						</then>
+						<then> } [restartable_drivers] { </then>
 						<else>
-							<inline/>
+							<if> <has_value input="check_system" value="blanking"/>
+								<then> } [restartable_drivers] { </then>
+								<else>
+									<inline/>
+								</else>
+							</if>
 						</else>
 					</if>
 				</output>
@@ -700,7 +719,12 @@ append config {
 					<inline description="system normal">
 						<system state=""/>
 					</inline>
-					<sleep milliseconds="30000"/>
+					<sleep milliseconds="10000"/>
+
+					<inline description="disable display connectors">
+						<system state="blanking"/>
+					</inline>
+					<sleep milliseconds="10000"/>
 
 					<inline description="notify non-restartable drivers">
 						<system state="driver_stop"/>
