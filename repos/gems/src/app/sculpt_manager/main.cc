@@ -175,13 +175,8 @@ struct Sculpt::Main : Input_event_handler,
 	 */
 	void trigger_suspend() override
 	{
-		_system_state.state = System_state::DRIVERS_STOPPING;
+		_system_state.state = System_state::BLANKING;
 		_broadcast_system_state();
-
-		_driver_options.suspending = true;
-		_drivers.update_options(_driver_options);
-
-		generate_runtime_config();
 	}
 
 	/**
@@ -2195,6 +2190,21 @@ void Sculpt::Main::_handle_runtime_state(Xml_node const &state)
 				if (_system_visible || (_popup.state == Popup::VISIBLE))
 					trigger_depot_query();
 			}
+		}
+	}
+
+	{
+		Child_exit_state exit_state(state, "intel_fb");
+
+		if (exit_state.exited && _system_state.state == System_state::BLANKING) {
+
+			_system_state.state = System_state::DRIVERS_STOPPING;
+			_broadcast_system_state();
+
+			_driver_options.suspending = true;
+			_drivers.update_options(_driver_options);
+
+			reconfigure_runtime = true;
 		}
 	}
 
