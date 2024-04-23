@@ -1558,9 +1558,13 @@ struct Sculpt::Main : Input_event_handler,
 	Managed_config<Main> _fb_drv_config {
 		_env, "config", "fb_drv", *this, &Main::_handle_fb_drv_config };
 
-	void _handle_fb_drv_config(Xml_node const &)
+	void _handle_fb_drv_config(Xml_node const &node)
 	{
-		_fb_drv_config.try_generate_manually_managed();
+		_fb_drv_config.generate([&] (Xml_generator &xml) {
+			xml.attribute("system", "yes");
+			copy_attributes(xml, node);
+			node.for_each_sub_node([&] (Xml_node const &sub_node) {
+				copy_node(xml, sub_node, { 5 }); }); });
 	}
 
 	void _update_window_layout(Xml_node const &, Xml_node const &);
@@ -1645,6 +1649,7 @@ struct Sculpt::Main : Input_event_handler,
 		_gui.input()->sigh(_input_handler);
 		_gui.mode_sigh(_gui_mode_handler);
 		_handle_gui_mode();
+		_fb_drv_config.trigger_update();
 
 		/*
 		 * Generate initial configurations
