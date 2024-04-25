@@ -15,7 +15,7 @@ Sculpt OS release 24.04 | 2024-04-26
 
 The release of version 24.04 adheres to
 our [https://genode.org/about/road-map - declared] focus on Sculpt OS usability
-this year. Seasoned users will immediately recognize the new power of the
+during this year. Seasoned users will immediately recognize the new power of the
 component-management UI, offering easy control over optional features,
 software providers, and software installation. Among many little
 user-interface improvements, the component graph and configuration interface
@@ -25,7 +25,8 @@ When looking closely at the components, users will recognize a whole new set
 of drivers neatly grouped under hardware. In contrast to earlier versions,
 which operated these drivers hidden from the user, the new version manages the
 drivers dynamically and fully transparent for the user. The change makes the
-user interface more logical and simpler. However, the driving force behind it
+user interface more logical and simpler. However, the driving force behind this
+approach
 was our aspired support for suspend/resume, which requires the dynamic
 life-cycle management of drivers. This brings us to the technical highlight of
 the release: After on-and-off development for more than a year, we are more
@@ -50,7 +51,7 @@ have become operational.
 Speaking of developers, the release offers two bold new features targeted at
 this specific demography, namely the support for on-target debugging via GDB,
 and the ability to use Sculpt OS as a remote test target of Genode's Goa SDK.
-Look out for more information about these feature in the upcoming weeks
+Look out for more information about these features in the upcoming weeks
 at [https://genodians.org].
 
 Sculpt OS 24.04 is available as ready-to-use system image at the
