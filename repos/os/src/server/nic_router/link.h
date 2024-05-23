@@ -195,6 +195,7 @@ class Net::Link : public Link_list::Element
 		bool                           _opening { true };
 		Interface_link_stats          &_stats;
 		Reference<Genode::size_t>      _stats_curr;
+		bool                           _disposable { true };
 
 		void _handle_dissolve_timeout(Genode::Duration);
 
@@ -292,6 +293,8 @@ class Net::Tcp_link : public Link
 		void client_packet(Tcp_packet &tcp) { _tcp_packet(tcp, _client, _server); }
 
 		void server_packet(Tcp_packet &tcp);
+
+		bool can_early_drop() { return _state != State::OPEN; }
 };
 
 
@@ -311,6 +314,8 @@ struct Net::Udp_link : Link
 	void client_packet() { _packet(); }
 
 	void server_packet();
+
+	bool can_early_drop() { return true; }
 };
 
 
@@ -330,6 +335,8 @@ struct Net::Icmp_link : Link
 	void client_packet() { _packet(); }
 
 	void server_packet();
+
+	bool can_early_drop() { return true; }
 };
 
 #endif /* _LINK_H_ */
