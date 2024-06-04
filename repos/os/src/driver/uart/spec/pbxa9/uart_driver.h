@@ -18,7 +18,7 @@
 /* Genode includes */
 #include <base/attached_io_mem_dataspace.h>
 #include <base/env.h>
-#include <driver/defs/pbxa9.h>
+#include <drivers/defs/pbxa9.h>
 
 enum { UARTS_NUM = 4 }; /* needed by base class definitions */
 
