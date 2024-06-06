@@ -30,7 +30,7 @@ struct Genode::Color
 {
 	using channel_t = uint8_t;
 
-	channel_t r, g, b, a;
+	channel_t r {}, g {}, b {}, a {};
 
 	/**
 	 * Construct opaque color
