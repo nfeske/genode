@@ -1733,11 +1733,11 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 		return;
 
 	/* area reserved for the panel */
-	Rect const panel = Rect::rect(Area(mode.area.w, panel_height));
+	Rect const panel = Rect(Point(0, 0), Area(mode.area.w, panel_height));
 
 	/* available space on the right of the menu */
-	Rect avail(Point(0, panel.h()),
-	           Point(mode.area.w - 1, mode.area.h - 1));
+	Rect avail = Rect::compound(Point(0, panel.h()),
+	                            Point(mode.area.w - 1, mode.area.h - 1));
 
 	Point const log_offset = _log_visible
 	                       ? Point(0, 0)
@@ -1782,7 +1782,7 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 			gen_window(win, panel); });
 
 		_with_window(window_list, Label("log"), [&] (Xml_node const &win) {
-			gen_window(win, Rect(log_p1, log_p2)); });
+			gen_window(win, Rect::compound(log_p1, log_p2)); });
 
 		int system_right_xpos = 0;
 		if (system_available()) {
@@ -1791,7 +1791,7 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 				Point const pos  = _system_visible
 				                 ? Point(0, avail.y1())
 				                 : Point(-size.w, avail.y1());
-				gen_window(win, Rect::rect(pos, size));
+				gen_window(win, Rect(pos, size));
 
 				if (_system_visible)
 					system_right_xpos = size.w;
@@ -1805,7 +1805,7 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 			                 : Point(-size.w, avail.y1());
 
 			if (_settings.interactive_settings_available())
-				gen_window(win, Rect::rect(pos, size));
+				gen_window(win, Rect(pos, size));
 		});
 
 		_with_window(window_list, network_view_label, [&] (Xml_node const &win) {
@@ -1813,33 +1813,33 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 			Point const pos  = _network_visible
 			                 ? Point(log_p1.x - size.w, avail.y1())
 			                 : Point(mode.area.w, avail.y1());
-			gen_window(win, Rect::rect(pos, size));
+			gen_window(win, Rect(pos, size));
 		});
 
 		_with_window(window_list, file_browser_view_label, [&] (Xml_node const &win) {
 			if (_selected_tab == Panel_dialog::Tab::FILES) {
 
 				Area  const size = constrained_win_size(win);
-				Point const pos  = Rect(inspect_p1, inspect_p2).center(size);
+				Point const pos  = Rect::compound(inspect_p1, inspect_p2).center(size);
 
 				Point const offset = _file_browser_state.text_area.constructed()
 				                   ? Point((2*avail.w())/3 - pos.x, 0)
 				                   : Point(0, 0);
 
-				gen_window(win, Rect::rect(pos - offset, size));
+				gen_window(win, Rect(pos - offset, size));
 			}
 		});
 
 		_with_window(window_list, editor_view_label, [&] (Xml_node const &win) {
 			if (_selected_tab == Panel_dialog::Tab::FILES) {
 				Area  const size = constrained_win_size(win);
-				Point const pos  = Rect(inspect_p1 + Point(400, 0), inspect_p2).center(size);
+				Point const pos  = Rect::compound(inspect_p1 + Point(400, 0), inspect_p2).center(size);
 
 				Point const offset = _file_browser_state.text_area.constructed()
 				                   ? Point(avail.w()/3 - pos.x, 0)
 				                   : Point(0, 0);
 
-				gen_window(win, Rect::rect(pos + offset, size));
+				gen_window(win, Rect(pos + offset, size));
 			}
 		});
 
@@ -1847,15 +1847,15 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 			if (_selected_tab == Panel_dialog::Tab::COMPONENTS) {
 				Area  const size = win_size(win);
 				Point const pos(0, avail.y2() - size.h);
-				gen_window(win, Rect::rect(pos, size));
+				gen_window(win, Rect(pos, size));
 			}
 		});
 
 		auto sanitize_scroll_position = [&] (Area const &win_size, int &scroll_ypos)
 		{
-			unsigned const inspect_h = unsigned(inspect_p2.y() - inspect_p1.y() + 1);
+			unsigned const inspect_h = unsigned(inspect_p2.y - inspect_p1.y + 1);
 			if (win_size.h > inspect_h) {
-				int const out_of_view_h = win_size.h() - inspect_h;
+				int const out_of_view_h = win_size.h - inspect_h;
 				scroll_ypos = max(scroll_ypos, -out_of_view_h);
 				scroll_ypos = min(scroll_ypos, 0);
 			} else
@@ -1869,44 +1869,44 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 		Point runtime_view_pos { };
 		_with_window(window_list, runtime_view_label, [&] (Xml_node const &win) {
 			Area const size = win_size(win);
-			Rect const inspect(inspect_p1, inspect_p2);
+			Rect const inspect = Rect::compound(inspect_p1, inspect_p2);
 
 			/* center graph if there is enough space, scroll otherwise */
-			if (size.h() < inspect.h) {
+			if (size.h < inspect.h()) {
 				runtime_view_pos = inspect.center(size);
 			} else {
 				sanitize_scroll_position(size, _graph_scroll_ypos);
 				runtime_view_pos = { inspect.center(size).x,
-				                     int(panel.h) + _graph_scroll_ypos };
+				                     int(panel.h()) + _graph_scroll_ypos };
 			}
 		});
 
 		if (_popup.state == Popup::VISIBLE) {
 			_with_window(window_list, popup_view_label, [&] (Xml_node const &win) {
 				Area const size = win_size(win);
-				Rect const inspect(inspect_p1, inspect_p2);
+				Rect const inspect = Rect::compound(inspect_p1, inspect_p2);
 
 				int const x = runtime_view_pos.x + _popup.anchor.x2();
 
 				auto y = [&]
 				{
 					/* try to vertically align the popup at the '+' button */
-					if (size.h < inspect.h) {
+					if (size.h < inspect.h()) {
 						int const anchor_y = (_popup.anchor.y1() + _popup.anchor.y2())/2;
 						int const abs_anchor_y = runtime_view_pos.y + anchor_y;
 						return max((int)panel_height, abs_anchor_y - (int)size.h/2);
 					} else {
 						sanitize_scroll_position(size, _popup_scroll_ypos);
-						return int(panel.h) + _popup_scroll_ypos;
+						return int(panel.h()) + _popup_scroll_ypos;
 					}
 				};
-				gen_window(win, Rect::rect(Point(x, y), size));
+				gen_window(win, Rect(Point(x, y()), size));
 			});
 		}
 
 		_with_window(window_list, inspect_label, [&] (Xml_node const &win) {
 			if (_selected_tab == Panel_dialog::Tab::INSPECT)
-				gen_window(win, Rect(inspect_p1, inspect_p2)); });
+				gen_window(win, Rect::compound(inspect_p1, inspect_p2)); });
 
 		/*
 		 * Position runtime view centered within the inspect area, but allow
@@ -1914,12 +1914,12 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 		 */
 		_with_window(window_list, runtime_view_label, [&] (Xml_node const &win) {
 			if (_selected_tab == Panel_dialog::Tab::COMPONENTS)
-				gen_window(win, Rect::rect(runtime_view_pos, win_size(win))); });
+				gen_window(win, Rect(runtime_view_pos, win_size(win))); });
 
 		_with_window(window_list, logo_label, [&] (Xml_node const &win) {
 			Area  const size = win_size(win);
 			Point const pos(mode.area.w - size.w, mode.area.h - size.h);
-			gen_window(win, Rect::rect(pos, size));
+			gen_window(win, Rect(pos, size));
 		});
 	});
 

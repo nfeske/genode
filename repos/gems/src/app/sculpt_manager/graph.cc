@@ -246,9 +246,9 @@ void Graph::click(Clicked_at const &at, Action &action)
 			Rect result { };
 			dialog.with_optional_sub_node("depgraph", [&] (Xml_node const &depgraph) {
 				depgraph.with_optional_sub_node("button", [&] (Xml_node const &button) {
-					result = Rect::rect(Point::from_xml(dialog) + Point::from_xml(depgraph) +
-					                    Point::from_xml(button),
-					                    Area::from_xml(button)); });
+					result = Rect(Point::from_xml(dialog) + Point::from_xml(depgraph) +
+					              Point::from_xml(button),
+					              Area::from_xml(button)); });
 			});
 			return result;
 		};

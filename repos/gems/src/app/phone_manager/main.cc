@@ -2108,13 +2108,13 @@ void Sculpt::Main::_update_window_layout(Xml_node const &decorator_margins,
 			                 ? Point(0, int(mode.area.h) - int(size.h))
 			                 : Point(0, int(mode.area.h));
 
-			gen_window(win, Rect::rect(pos, size));
+			gen_window(win, Rect(pos, size));
 		});
 
 		_with_window(window_list, main_view_label, [&] (Xml_node win) {
 			Area  const size = win_size(win);
 			Point const pos(_leitzentrale_visible ? 0 : int(size.w), 0);
-			gen_window(win, Rect::rect(pos, size));
+			gen_window(win, Rect(pos, size));
 		});
 	});
 }
