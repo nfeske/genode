@@ -5,7 +5,7 @@ system:     pc
 usb:        Slot_A
 manager:    modular_sculpt
 nic_router: nic
-gpu:    empty
+gpu:        empty
 
 import: pkg/sculpt_drivers-pc
 import: raw/vbox_files
