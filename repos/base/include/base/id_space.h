@@ -218,7 +218,8 @@ class Genode::Id_space : public Noncopyable
 		auto apply(Id id, FN const &fn)
 		-> typename Trait::Functor<decltype(&FN::operator())>::Return_type
 		{
-			return apply<ARG>(id, fn, [&] { throw Unknown_id(); });
+			using Result = typename Trait::Functor<decltype(&FN::operator())>::Return_type;
+			return apply<ARG>(id, fn, [&] () -> Result { throw Unknown_id(); });
 		}
 
 		/**
