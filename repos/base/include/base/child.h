@@ -164,8 +164,6 @@ struct Genode::Child_policy
 
 	/**
 	 * ID space for sessions provided by the child
-	 *
-	 * \throw Nonexistent_id_space
 	 */
 	virtual Id_space<Parent::Server> &server_id_space() = 0;
 
