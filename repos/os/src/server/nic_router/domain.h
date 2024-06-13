@@ -222,11 +222,15 @@ class Net::Domain : public List<Domain>::Element,
 
 		void with_dhcp_server(auto const &dhcp_server_fn, auto const &no_dhcp_server_fn)
 		{
-			if (_dhcp_server_ptr) {
-				if (!_dhcp_server_ptr->has_invalid_remote_dns_cfg())
-					dhcp_server_fn(*_dhcp_server_ptr);
-			} else
+			if (!_dhcp_server_ptr) {
 				no_dhcp_server_fn();
+				return;
+			}
+			if (_dhcp_server_ptr->has_invalid_remote_dns_cfg()) {
+				no_dhcp_server_fn();
+				return;
+			}
+			dhcp_server_fn(*_dhcp_server_ptr);
 		}
 
 		void with_dhcp_server(auto const &fn) { with_dhcp_server(fn, []{}); }
