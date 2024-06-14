@@ -41,15 +41,18 @@ struct Test_failed : Genode::Exception { };
 	}
 
 
-static void test_write_read(Genode::Xml_node node)
+static void test_write_read(Genode::Xml_node const &config)
 {
-	using Num_bytes = Genode::Number_of_bytes;
+	size_t rounds      = 4u;
+	size_t size        = 4*1024*1024;
+	size_t buffer_size = 32*1024;
 
-	Genode::Xml_node const config = node.sub_node("write-read");
-
-	size_t const rounds      = config.attribute_value("rounds", 4u);
-	size_t const size        = config.attribute_value("size", Num_bytes{4*1024*1024});
-	size_t const buffer_size = config.attribute_value("buffer_size", Num_bytes{32*1024});
+	config.with_optional_sub_node("write-read", [&] (Genode::Xml_node const &node) {
+		using Num_bytes = Genode::Number_of_bytes;
+		rounds      = node.attribute_value("rounds",      rounds);
+		size        = node.attribute_value("size",        Num_bytes{size});
+		buffer_size = node.attribute_value("buffer_size", Num_bytes{buffer_size});
+	});
 
 	void * const buf = malloc(buffer_size);
 	char const * const file_name = "write_read.tst";
