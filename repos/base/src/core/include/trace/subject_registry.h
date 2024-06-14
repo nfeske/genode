@@ -324,9 +324,7 @@ class Core::Trace::Subject_registry
 		void _unsynchronized_destroy(Subject &s)
 		{
 			_entries.remove(&s);
-
 			s.release();
-
 			destroy(&_md_alloc, &s);
 		};
 
@@ -335,9 +333,10 @@ class Core::Trace::Subject_registry
 		 */
 		void _with_subject_unsynchronized(Subject_id id, auto const &fn)
 		{
-			for (Subject *s = _entries.first(); s; s = s->next())
-				if (s->id() == id)
-					fn(*s);
+			Subject *ptr = _entries.first();
+			for (; ptr && (ptr->id().id != id.id); ptr = ptr->next());
+			if (ptr)
+				fn(*ptr);
 		}
 
 	public:
