@@ -42,9 +42,9 @@ static void liquidate_compound_page(struct page *page)
 	if (!PageHead(page))
 		return;
 
-	ClearPageHead(page);
 	for (i = 1; i < compound_nr(page); i++)
 		clear_compound_head(&page[i]);
+	ClearPageHead(page);
 }
 
 
