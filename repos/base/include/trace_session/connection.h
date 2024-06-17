@@ -175,8 +175,6 @@ struct Genode::Trace::Connection : Genode::Connection<Genode::Trace::Session>,
 	 *
 	 * If the source still exists, the buffers are freed but the subject
 	 * stays intact.
-	 *
-	 * \throw Nonexistent_subject
 	 */
 	void free(Subject_id id) { call<Rpc_free>(id); }
 
