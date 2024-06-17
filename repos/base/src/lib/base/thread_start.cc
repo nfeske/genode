@@ -81,13 +81,15 @@ void Thread::start()
 
 	/* create thread at core */
 	addr_t const utcb = (addr_t)&_stack->utcb();
-	_thread_cap = _cpu_session->create_thread(pd_session_cap(), name(),
-	                                          _affinity, Weight(), utcb);
-	if (!_thread_cap.valid())
-		throw Cpu_session::Thread_creation_failed();
+	_cpu_session->create_thread(pd_session_cap(), name(), _affinity,
+	                            Weight(), utcb).with_result(
+		[&] (Thread_capability cap) { _thread_cap = cap; },
+		[&] (Cpu_session::Create_thread_error) {
+			error("failed to create PD-local thread"); });
 
 	/* start execution at initial instruction pointer and stack pointer */
-	Cpu_thread_client(_thread_cap).start((addr_t)_thread_start, _stack->top());
+	if (_thread_cap.valid())
+		Cpu_thread_client(_thread_cap).start((addr_t)_thread_start, _stack->top());
 }
 
 

@@ -110,10 +110,12 @@ void Thread::_init_platform_thread(size_t /* weight */, Type type)
 
 	/* for normal threads create an object at the CPU session */
 	if (type == NORMAL) {
-		_thread_cap = _cpu_session->create_thread(pd_session_cap(),
-		                                          _stack->name().string(),
-		                                          Affinity::Location(),
-		                                          Weight());
+		_cpu_session->create_thread(pd_session_cap(), _stack->name().string(),
+		                            Affinity::Location(), Weight()).with_result(
+			[&] (Thread_capability cap) { _thread_cap = cap; },
+			[&] (Cpu_session::Create_thread_error) {
+				error("Thread::_init_platform_thread: create_thread failed");
+			});
 		return;
 	}
 	/* adjust initial object state for main threads */

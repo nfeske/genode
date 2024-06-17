@@ -214,14 +214,16 @@ Rpc_entrypoint::Rpc_entrypoint(Pd_session *pd_session, size_t stack_size,
 	_cap = _alloc_rpc_cap(_pd_session,
 	                      Capability_space::import(native_thread().ec_sel),
 	                      (addr_t)_activation_entry);
-	if (!_cap.valid())
-		throw Cpu_session::Thread_creation_failed();
+	if (!_cap.valid()) {
+		error("failed to allocate RPC cap for new entrypoint");
+		return;
+	}
 
 	Receive_window &rcv_window = Thread::native_thread().server_rcv_window;
 
 	/* prepare portal receive window of new thread */
 	if (!rcv_window.prepare_rcv_window(*(Nova::Utcb *)&_stack->utcb()))
-		throw Cpu_session::Thread_creation_failed();
+		error("failed to prepare receive window for RPC entrypoint");
 }
 
 

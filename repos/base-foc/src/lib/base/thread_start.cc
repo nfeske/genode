@@ -65,14 +65,12 @@ void Thread::_init_platform_thread(size_t weight, Type type)
 	if (type == NORMAL) {
 
 		/* create thread at core */
-		_thread_cap = _cpu_session->create_thread(pd_session_cap(),
-		                                          name(), _affinity,
-		                                          Weight(weight));
-
-		/* assign thread to protection domain */
-		if (!_thread_cap.valid())
-			throw Cpu_session::Thread_creation_failed();
-
+		_cpu_session->create_thread(pd_session_cap(), name(), _affinity,
+		                            Weight(weight)).with_result(
+			[&] (Thread_capability cap) { _thread_cap = cap; },
+			[&] (Cpu_session::Create_thread_error) {
+				error("failed to create PD-local thread"); }
+		);
 		return;
 	}
 
@@ -80,8 +78,10 @@ void Thread::_init_platform_thread(size_t weight, Type type)
 	native_thread().kcap = Foc::MAIN_THREAD_CAP;
 	_thread_cap = main_thread_cap();
 
-	if (!_thread_cap.valid())
-		throw Cpu_session::Thread_creation_failed();
+	if (!_thread_cap.valid()) {
+		error("failed to re-initialize main thread");
+		return;
+	}
 
 	/* make thread object known to the Fiasco.OC environment */
 	addr_t const t = (addr_t)this;

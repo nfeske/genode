@@ -58,9 +58,12 @@ void Thread::_init_platform_thread(size_t weight, Type type)
 
 		/* create server object */
 		addr_t const utcb = (addr_t)&_stack->utcb();
-		_thread_cap = _cpu_session->create_thread(pd_session_cap(),
-		                                          name(), _affinity,
-		                                          Weight(weight), utcb);
+		_cpu_session->create_thread(pd_session_cap(), name(), _affinity,
+		                            Weight(weight), utcb).with_result(
+			[&] (Thread_capability cap) { _thread_cap = cap; },
+			[&] (Cpu_session::Create_thread_error) {
+				error("failed to create PD-local thread"); }
+		);
 		return;
 	}
 	/* if we got reinitialized we have to get rid of the old UTCB */

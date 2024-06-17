@@ -55,9 +55,7 @@ class Core::Cpu_thread_component : public  Rpc_object<Cpu_thread>,
 
 		bool _bind_to_pd(Pd_session_component &pd)
 		{
-			if (!pd.bind_thread(_platform_thread))
-				throw Cpu_session::Thread_creation_failed();
-			return true;
+			return pd.bind_thread(_platform_thread);
 		}
 
 		/**

@@ -318,8 +318,6 @@ static void test_create_as_many_threads(Env &env)
 				threads[i] = new (heap) Cpu_helper(env, Thread::Name(i + 1), env.cpu());
 				threads[i]->start();
 				threads[i]->join();
-			} catch (Cpu_session::Thread_creation_failed) {
-				throw "Thread_creation_failed";
 			} catch (Thread::Out_of_stack_space) {
 				throw "Out_of_stack_space";
 			} catch (Genode::Native_capability::Reference_count_overflow) {

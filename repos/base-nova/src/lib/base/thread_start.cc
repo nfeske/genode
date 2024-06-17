@@ -118,17 +118,19 @@ void Thread::_init_platform_thread(size_t weight, Type type)
 	revoke(Mem_crd(utcb >> 12, 0, rwx));
 
 	native_thread().exc_pt_sel = cap_map().insert(NUM_INITIAL_PT_LOG2);
-	if (native_thread().exc_pt_sel == Native_thread::INVALID_INDEX)
-		throw Cpu_session::Thread_creation_failed();
-
+	if (native_thread().exc_pt_sel == Native_thread::INVALID_INDEX) {
+		error("failed allocate exception-portal selector for new thread");
+		return;
+	}
 
 	_init_cpu_session_and_trace_control();
 
 	/* create thread at core */
-	_thread_cap = _cpu_session->create_thread(pd_session_cap(), name(),
-	                                          _affinity, Weight(weight));
-	if (!_thread_cap.valid())
-		throw Cpu_session::Thread_creation_failed();
+	_cpu_session->create_thread(pd_session_cap(), name(),
+	                            _affinity, Weight(weight)).with_result(
+		[&] (Thread_capability cap) { _thread_cap = cap; },
+		[&] (Cpu_session::Create_thread_error) {
+			error("failed to create new thread for local PD"); });
 }
 
 
@@ -150,13 +152,15 @@ void Thread::_deinit_platform_thread()
 
 void Thread::start()
 {
-	if (native_thread().ec_sel < Native_thread::INVALID_INDEX - 1)
-		throw Cpu_session::Thread_creation_failed();
+	if (native_thread().ec_sel < Native_thread::INVALID_INDEX - 1) {
+		error("Thread::start failed due to invalid exception portal selector");
+		return;
+	}
 
 	/*
 	 * Default: create global thread - ec.sel == INVALID_INDEX
 	 *          create  local thread - ec.sel == INVALID_INDEX - 1
-	 */ 
+	 */
 	bool global = native_thread().ec_sel == Native_thread::INVALID_INDEX;
 
 	using namespace Genode;
@@ -175,7 +179,10 @@ void Thread::start()
 
 		Nova_native_cpu_client native_cpu(_cpu_session->native_cpu());
 		native_cpu.thread_type(_thread_cap, thread_type, exception_base);
-	} catch (...) { throw Cpu_session::Thread_creation_failed(); }
+	} catch (...) {
+		error("Thread::start failed to set thread type");
+		return;
+	}
 
 	/* local thread have no start instruction pointer - set via portal entry */
 	addr_t thread_ip = global ? reinterpret_cast<addr_t>(_thread_start) : native_thread().initial_ip;

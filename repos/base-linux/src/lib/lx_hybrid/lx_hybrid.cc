@@ -529,11 +529,16 @@ Thread::Thread(size_t weight, const char *name, size_t /* stack size */,
 
 	native_thread().meta_data->wait_for_construction();
 
-	_thread_cap = _cpu_session->create_thread(_env_ptr->pd_session_cap(), name,
-	                                          Location(), Weight(weight));
+	_cpu_session->create_thread(_env_ptr->pd_session_cap(), name, Location(),
+	                            Weight(weight)).with_result(
+		[&] (Thread_capability cap) { _thread_cap = cap; },
+		[&] (Cpu_session::Create_thread_error) {
+			error("failed to create hybrid thread"); });
 
-	Linux_native_cpu_client native_cpu(_cpu_session->native_cpu());
-	native_cpu.thread_id(_thread_cap, native_thread().pid, native_thread().tid);
+	if (_thread_cap.valid()) {
+		Linux_native_cpu_client native_cpu(_cpu_session->native_cpu());
+		native_cpu.thread_id(_thread_cap, native_thread().pid, native_thread().tid);
+	}
 }
 
 
