@@ -497,16 +497,11 @@ class Core::Region_map_component : private Weak_object<Region_map_component>,
 
 		struct Attach_attr
 		{
-			size_t size;
-			off_t  offset;
-			bool   use_local_addr;
-			addr_t local_addr;
-			bool   executable;
-			bool   writeable;
-			bool   dma;
+			Attr attr;
+			bool dma;
 		};
 
-		Local_addr _attach(Dataspace_capability, Attach_attr);
+		Attach_result _attach(Dataspace_capability, Attach_attr);
 
 		void _with_region(Local_addr local_addr, auto const &fn)
 		{
@@ -665,11 +660,10 @@ class Core::Region_map_component : private Weak_object<Region_map_component>,
 		 ** Region map interface **
 		 **************************/
 
-		Local_addr       attach        (Dataspace_capability, size_t, off_t,
-		                                bool, Local_addr, bool, bool) override;
-		void             detach        (Local_addr) override;
-		void             fault_handler (Signal_context_capability handler) override;
-		State            state         () override;
+		Attach_result attach        (Dataspace_capability, Attr const &) override;
+		void          detach        (Local_addr) override;
+		void          fault_handler (Signal_context_capability handler) override;
+		State         state         () override;
 
 		Dataspace_capability dataspace () override { return _ds_cap; }
 };

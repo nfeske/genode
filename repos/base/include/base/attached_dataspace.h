@@ -24,7 +24,8 @@ class Genode::Attached_dataspace : Noncopyable
 {
 	public:
 
-		typedef Region_map::Invalid_dataspace Invalid_dataspace;
+		struct Invalid_dataspace : Exception { };
+		struct Region_conflict   : Exception { };
 
 	private:
 
@@ -34,15 +35,26 @@ class Genode::Attached_dataspace : Noncopyable
 
 		size_t const _size = { Dataspace_client(_ds).size() };
 
-		void * _local_addr = nullptr;
-
 		Dataspace_capability _check(Dataspace_capability ds)
 		{
 			if (ds.valid())
 				return ds;
 
-			throw Region_map::Invalid_dataspace();
+			throw Invalid_dataspace();
 		}
+
+		addr_t _attach()
+		{
+			Region_map::Range result { };
+			Region_map::Attr attr { };
+			attr.writeable = true;
+			_rm.attach(_ds, attr).with_result(
+				[&] (Region_map::Range range) { result = range; },
+				[&] (auto) { throw Region_conflict(); });
+			return result.at;
+		}
+
+		addr_t _local_addr = _attach();
 
 		/*
 		 * Noncopyable
@@ -55,13 +67,13 @@ class Genode::Attached_dataspace : Noncopyable
 		/**
 		 * Constructor
 		 *
-		 * \throw Region_map::Region_conflict
-		 * \throw Region_map::Invalid_dataspace
+		 * \throw Region_conflict
+		 * \throw Invalid_dataspace
 		 * \throw Out_of_caps
 		 * \throw Out_of_ram
 		 */
 		Attached_dataspace(Region_map &rm, Dataspace_capability ds)
-		: _ds(_check(ds)), _rm(rm), _local_addr(_rm.attach(_ds)) { }
+		: _ds(_check(ds)), _rm(rm) { }
 
 		/**
 		 * Destructor
@@ -84,10 +96,10 @@ class Genode::Attached_dataspace : Noncopyable
 		 * A newly attached dataspace is untyped memory anyway.
 		 */
 		template <typename T>
-		T *local_addr() { return static_cast<T *>(_local_addr); }
+		T *local_addr() { return reinterpret_cast<T *>(_local_addr); }
 
 		template <typename T>
-		T const *local_addr() const { return static_cast<T const *>(_local_addr); }
+		T const *local_addr() const { return reinterpret_cast<T const *>(_local_addr); }
 
 		/**
 		 * Return size
@@ -103,7 +115,7 @@ class Genode::Attached_dataspace : Noncopyable
 		 * removed the memory mappings of the dataspace. So we have to omit the
 		 * detach operation in '~Attached_dataspace'.
 		 */
-		void invalidate() { _local_addr = nullptr; }
+		void invalidate() { _local_addr = 0; }
 };
 
 #endif /* _INCLUDE__BASE__ATTACHED_DATASPACE_H_ */

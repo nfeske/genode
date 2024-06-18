@@ -351,23 +351,10 @@ void Region_map_component::unmap_region(addr_t base, size_t size)
 }
 
 
-Region_map::Local_addr
-Region_map_component::attach(Dataspace_capability ds_cap, size_t size,
-                             off_t offset, bool use_local_addr,
-                             Region_map::Local_addr local_addr,
-                             bool executable, bool writeable)
+Region_map::Attach_result
+Region_map_component::attach(Dataspace_capability ds_cap, Attr const &attr)
 {
-	Attach_attr const attr {
-		.size           = size,
-		.offset         = offset,
-		.use_local_addr = use_local_addr,
-		.local_addr     = local_addr,
-		.executable     = executable,
-		.writeable      = writeable,
-		.dma            = false,
-	};
-
-	return  _attach(ds_cap, attr);
+	return  _attach(ds_cap, { .attr = attr, .dma = false });
 }
 
 
@@ -375,12 +362,14 @@ Region_map_component::Attach_dma_result
 Region_map_component::attach_dma(Dataspace_capability ds_cap, addr_t at)
 {
 	Attach_attr const attr {
-		.size           = 0,
-		.offset         = 0,
-		.use_local_addr = true,
-		.local_addr     = at,
-		.executable     = false,
-		.writeable      = true,
+		.attr = {
+			.size       = { },
+			.offset     = { },
+			.use_at     = true,
+			.local_addr = at,
+			.executable = false,
+			.writeable  = true,
+		},
 		.dma            = true,
 	};
 
