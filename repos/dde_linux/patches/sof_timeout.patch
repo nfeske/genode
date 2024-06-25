@@ -1,0 +1,29 @@
+This patch contains timeout changes that triggered under *HEAVY* load during
+driver startup.
+
+diff --git a/sound/soc/sof/core.c b/sound/soc/sof/core.c
+index 625977a..990ec09 100644
+--- src/linux/sound/soc/sof/core.c
++++ src/linux/sound/soc/sof/core.c
+@@ -24,7 +24,7 @@ module_param_named(sof_debug, sof_core_debug, int, 0444);
+ MODULE_PARM_DESC(sof_debug, "SOF core debug options (0x0 all off)");
+ 
+ /* SOF defaults if not provided by the platform in ms */
+-#define TIMEOUT_DEFAULT_IPC_MS  500
++#define TIMEOUT_DEFAULT_IPC_MS  2000
+ #define TIMEOUT_DEFAULT_BOOT_MS 2000
+ 
+ /**
+diff --git a/sound/soc/sof/intel/hda.h b/sound/soc/sof/intel/hda.h
+index 9acd219..5f78574 100644
+--- src/linux/sound/soc/sof/intel/hda.h
++++ src/linux/sound/soc/sof/intel/hda.h
+@@ -278,7 +278,7 @@
+ #define HDA_DSP_RESET_TIMEOUT_US	50000
+ #define HDA_DSP_BASEFW_TIMEOUT_US       3000000
+ #define HDA_DSP_INIT_TIMEOUT_US	500000
+-#define HDA_DSP_CTRL_RESET_TIMEOUT		100
++#define HDA_DSP_CTRL_RESET_TIMEOUT		500
+ #define HDA_DSP_WAIT_TIMEOUT		500	/* 500 msec */
+ #define HDA_DSP_REG_POLL_INTERVAL_US		500	/* 0.5 msec */
+ #define HDA_DSP_REG_POLL_RETRY_COUNT		50
