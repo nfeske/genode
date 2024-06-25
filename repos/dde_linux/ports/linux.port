@@ -20,6 +20,7 @@ PATCH_FILES := audio_jack.patch \
                lxip_ip_config.patch \
                sof_bus_get_response.patch \
                sof_ipc_timeout.patch \
+               sof_irq_direction.patch \
                usb_net_cdc_ncm.patch \
                usb_net_pinephone.patch \
                usb_net_smsc95xx.patch \

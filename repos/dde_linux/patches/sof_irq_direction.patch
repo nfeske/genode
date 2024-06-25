@@ -1,0 +1,15 @@
+Encode stream direction in signal number of 'snd_kill_fasync' in order to
+distinguish play from capture interrupts.
+diff --git a/sound/core/pcm_lib.c b/sound/core/pcm_lib.c
+index 8b6aeb8..b3f8382 100644
+--- src/linux/sound/core/pcm_lib.c
++++ src/linux/sound/core/pcm_lib.c
+@@ -1822,7 +1822,7 @@ void snd_pcm_period_elapsed_under_stream_lock(struct snd_pcm_substream *substrea
+ 		snd_timer_interrupt(substream->timer, 1);
+ #endif
+  _end:
+-	snd_kill_fasync(runtime->fasync, SIGIO, POLL_IN);
++	snd_kill_fasync(runtime->fasync, substream->stream, POLL_IN);
+ }
+ EXPORT_SYMBOL(snd_pcm_period_elapsed_under_stream_lock);
+ 
