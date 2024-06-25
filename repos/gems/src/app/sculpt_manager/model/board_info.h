@@ -115,11 +115,12 @@ struct Sculpt::Board_info
 
 		struct Suppress {
 
-			bool ps2, intel_gpu;
+			bool ps2, intel_gpu, nvme, ahci;
 
 			bool operator != (Suppress const &other) const
 			{
-				return ps2 != other.ps2 || intel_gpu != other.intel_gpu;
+				return ps2 != other.ps2 || intel_gpu != other.intel_gpu
+				    || nvme != other.nvme || ahci != other.ahci;
 			}
 
 		} suppress;

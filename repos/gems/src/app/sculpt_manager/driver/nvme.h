@@ -64,7 +64,10 @@ struct Sculpt::Nvme_driver : private Noncopyable
 
 	void update(Registry<Child_state> &registry, Board_info const &board_info)
 	{
-		_nvme.conditional(board_info.detected.nvme,
+		bool const use_nvme = board_info.detected.nvme
+		                 && !board_info.options.suppress.nvme;
+
+		_nvme.conditional(use_nvme,
 		                  registry, "nvme", Priority::DEFAULT,
 		                  Ram_quota { 8*1024*1024 }, Cap_quota { 100 });
 	}

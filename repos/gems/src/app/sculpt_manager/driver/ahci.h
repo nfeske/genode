@@ -65,9 +65,12 @@ struct Sculpt::Ahci_driver : private Noncopyable
 
 	void update(Registry<Child_state> &registry, Board_info const &board_info)
 	{
-		_ahci.conditional(board_info.detected.ahci,
-		                 registry, "ahci", Priority::DEFAULT,
-		                 Ram_quota { 10*1024*1024 }, Cap_quota { 100 });
+		bool const use_ahci = board_info.detected.ahci
+		                  && !board_info.options.suppress.ahci;
+
+		_ahci.conditional(use_ahci,
+		                  registry, "ahci", Priority::DEFAULT,
+		                  Ram_quota { 10*1024*1024 }, Cap_quota { 100 });
 	}
 
 	void with_ports(auto const &fn) const

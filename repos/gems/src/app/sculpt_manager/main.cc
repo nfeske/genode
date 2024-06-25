@@ -170,6 +170,8 @@ struct Sculpt::Main : Input_event_handler,
 		Board_info::Options const orig_options = _driver_options;
 		_driver_options.suppress.ps2       = !config.attribute_value("ps2",       true);
 		_driver_options.suppress.intel_gpu = !config.attribute_value("intel_gpu", true);
+		_driver_options.suppress.nvme      = !config.attribute_value("nvme",      true);
+		_driver_options.suppress.ahci      = !config.attribute_value("ahci",      true);
 		if (orig_options != _driver_options) {
 			_drivers.update_options(_driver_options);
 			generate_runtime_config();
