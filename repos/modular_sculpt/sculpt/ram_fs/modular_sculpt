@@ -1,0 +1,12 @@
+<config ahci="false" nvme="false">
+	<vfs>
+		<ram/>
+		<import>
+			<dir name="depot"> <tar name="depot.tar"/> </dir>
+		</import>
+		<import>
+			<dir name="vm"> <tar name="vbox_files.tar"/> </dir>
+		</import>
+	</vfs>
+	<default-policy root="/" writeable="yes"/>
+</config>

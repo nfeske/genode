@@ -1,0 +1,6 @@
+<launcher pkg="usb_webcam" priority="-1">
+	<route>
+		<service name="Usb"> <child name="usb"/> </service>
+		<service name="RM"> <parent/> </service>
+	</route>
+</launcher>

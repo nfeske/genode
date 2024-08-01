@@ -1,0 +1,5 @@
+set ::env(LOG) core
+
+source ${genode_dir}/repos/gems/run/sculpt.run
+
+run_genode_until forever

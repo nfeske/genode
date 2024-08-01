@@ -1,0 +1,5 @@
+<launcher pkg="recall_fs" priority="-2">
+	<route>
+		<service name="File_system"> <child name="default_fs_rw"/> </service>
+	</route>
+</launcher>

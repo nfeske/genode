@@ -1,0 +1,33 @@
+deploy:     modular_sculpt_Slot_A_B-S938
+drivers:    pc
+ram_fs:     modular_sculpt
+system:     pc
+usb:        Slot_A_B
+manager:    modular_sculpt
+nic_router: nic
+gpu:    empty
+
+import: pkg/sculpt_drivers-pc
+import: raw/vbox_files
+
+launcher: acpi_support
+launcher: black_hole system_clock
+launcher: fonts_fs
+
+launcher: default_recall_fs
+launcher: wm window_layouter themed_decorator
+
+launcher: touchpad
+launcher: sof_audio bsd_audio audio_mixer
+
+launcher: default_fs_shell
+launcher: ahci storage_ahci
+
+launcher: usb_webcam
+launcher: shared_fs
+
+launcher: record_rom
+launcher: rom_osci
+
+launcher: vm_ubuntu_fs vm_ubuntu_ahci_Slot_B
+launcher: vm_windows_fs vm_windows_ahci_Slot_A

@@ -1,0 +1,5 @@
+<launcher pkg="fonts_fs" priority="-2">
+	<route>
+		<service name="ROM" label="config"> <parent label="config -> managed/fonts"/> </service>
+	</route>
+</launcher>

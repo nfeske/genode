@@ -1,0 +1,6 @@
+<launcher pkg="part_block" priority="-1">
+	<route>
+		<service name="Block"> <child name="ahci" label="2"/> </service>
+		<service name="Report" label="partitions"> <parent/> </service>
+	</route>
+</launcher>

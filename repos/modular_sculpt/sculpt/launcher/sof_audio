@@ -1,0 +1,30 @@
+<launcher pkg="pc_audio" priority="0">
+	<affinity xpos="0" width="1"/>
+	<resource name="RAM" quantum="8M"/>
+	<config record_play="true" report_mixer="true">
+
+		<!-- playback controls -->
+		<control type="bool" id="19" channel="0" name="Master Playback Switch" value="true"/>
+		<control type="int"  id="18" channel="0" name="Master Playback Volume" value="75" min="0" max="87"/>
+		<control type="int"  id="0"  channel="0" name="Headphone Playback Volume" value="87" min="0" max="87"/>
+		<control type="int"  id="0"  channel="1" name="Headphone Playback Volume" value="87" min="0" max="87"/>
+		<control type="int"  id="2"  channel="0" name="Speaker Playback Volume" value="87" min="0" max="87"/>
+		<control type="int"  id="2"  channel="1" name="Speaker Playback Volume" value="87" min="0" max="87"/>
+
+		<!-- capture controls -->
+		<control type="bool" id="13" channel="0" name="Capture Switch" value="true"/>
+		<control type="int"  id="12" channel="0" name="Capture Volume" value="63" min="0" max="63"/>
+		<control type="int"  id="12" channel="1" name="Capture Volume" value="63" min="0" max="63"/>
+		<control type="int"  id="5"  channel="0" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
+		<control type="int"  id="5"  channel="1" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
+		<control type="int"  id="32" channel="0" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
+		<control type="int"  id="32" channel="1" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
+	</config>
+	<route>
+		<service name="Platform"> <parent label="audio"/> </service>
+		<service name="Record"> <child name="audio_mixer"/> </service>
+		<service name="Play"> <child name="audio_mixer"/> </service>
+		<service name="Report"> <parent/> </service>
+		<service name="RM"> <parent/> </service>
+	</route>
+</launcher>

@@ -1,0 +1,15 @@
+<runtime ram="20M" caps="100" binary="nvme">
+
+	<requires> <platform/> <report/> </requires>
+	<provides> <block/> </provides>
+
+	<config> max_hmb_size="16M">
+		<report namespaces="yes"/>
+		<policy label="1" namespace="1" writeable="yes"/>
+	</config>
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="nvme"/>
+	</content>
+
+</runtime>

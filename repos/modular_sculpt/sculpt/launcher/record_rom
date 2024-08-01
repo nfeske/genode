@@ -1,0 +1,14 @@
+<launcher pkg="record_rom" priority="0">
+	<affinity xpos="2" width="2"/>
+	<config period_ms="12" sample_rate_hz="44100">
+		<record label="left"/>
+		<record label="right"/>
+
+		<record label="mic_left"/>
+		<record label="mic_right"/>
+	</config>
+	<route>
+		<service name="Record"> <child name="audio_mixer"/> </service>
+		<service name="RM"> <parent/> </service>
+	</route>
+</launcher>

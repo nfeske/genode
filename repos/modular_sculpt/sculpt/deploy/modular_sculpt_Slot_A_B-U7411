@@ -1,0 +1,53 @@
+<config arch="x86_64">
+
+	<common_routes>
+		<service name="ROM" label_last="ld.lib.so"> <parent/> </service>
+		<service name="CPU">   <parent/> </service>
+		<service name="PD">    <parent/> </service>
+		<service name="LOG">   <parent/> </service>
+		<service name="Timer"> <parent/> </service>
+	</common_routes>
+
+	<default-route>
+		<service name="Timer"> <parent/> </service>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="acpi_support"/>
+	<start name="black_hole"/>
+	<start name="system_clock"/>
+	<start name="fonts_fs"/>
+	<start name="default_recall_fs"/>
+
+	<start name="window_layouter"/>
+	<start name="themed_decorator"/>
+	<start name="wm"/>
+
+	<start name="mesa_gpu-cpu" pkg="mesa_gpu-cpu" priority="-2">
+		<route>
+			<service name="RM"> <parent/> </service>
+		</route>
+	</start>
+
+	<start name="touchpad"/>
+
+	<start name="default_fs_shell"/>
+
+	<start name="audio_mixer"/>
+	<start name="sof_audio"/>
+
+	<start name="shared_fs"/>
+	<start name="usb_webcam"/>
+
+	<start name="nvme"/>
+	<start name="storage_nvme"/>
+
+	<start name="vm_ubuntu_fs"/>
+	<start name="vm_ubuntu_nvme_Slot_B"/>
+
+	<start name="vm_windows_fs"/>
+	<start name="vm_windows_nvme_Slot_A"/>
+
+	<start name="record_rom"/>
+	<start name="rom_osci"/>
+</config>

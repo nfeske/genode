@@ -1,0 +1,24 @@
+<launcher pkg="vm_block_capture" priority="-2">
+	<affinity xpos="3" ypos="0" width="1" height="2"/>
+	<route>
+		<service name="File_system" label="vm">          <child name="vm_ubuntu_fs"/> </service>
+		<service name="File_system" label="shared">      <child name="shared_fs"/> </service>
+		<service name="Block" label="block0">            <child name="storage_nvme" label="6"/> </service>
+		<service name="Report" label_last="shape">       <child name="wm"/> </service>
+		<service name="Report" label="clipboard">        <child name="wm"/> </service>
+		<service name="ROM" label="clipboard">           <child name="wm"/> </service>
+		<service name="ROM" label="mesa_gpu.lib.so"> <child name="mesa_gpu-cpu"/> </service>
+		<service name="ROM" label="capslock">            <parent label="capslock"/> </service>
+		<service name="ROM" label="platform_info">       <parent label="platform_info"/> </service>
+		<service name="Gui">                             <child name="wm"/> </service>
+		<service name="Nic">                             <child name="nic_router"/> </service>
+		<service name="Rtc">                             <child name="system_clock"/> </service>
+		<service name="Play">                            <child name="audio_mixer"/> </service>
+		<service name="Record">                          <child name="audio_mixer"/> </service>
+		<service name="Usb">                             <child name="usb"/> </service>
+		<service name="Capture">                         <child name="usb_webcam"/> </service>
+		<service name="VM">                              <parent/> </service>
+		<service name="RM">                              <parent/> </service>
+		<service name="Gpu">                             <parent/> </service>
+	</route>
+</launcher>

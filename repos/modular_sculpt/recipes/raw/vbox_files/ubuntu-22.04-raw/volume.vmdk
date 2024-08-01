@@ -1,0 +1,21 @@
+# Disk DescriptorFile
+version=1
+CID=79544515
+parentCID=ffffffff
+createType="fullDevice"
+
+# Extent description
+RW 134217728 FLAT "/dev/block0" 0
+
+# The disk Data Base
+#DDB
+
+ddb.virtualHWVersion = "4"
+ddb.adapterType="sata"
+ddb.geometry.cylinders="16383"
+ddb.geometry.heads="16"
+ddb.geometry.sectors="63"
+ddb.uuid.image="f52c2bdb-0fc0-4ab3-a0e0-3ed30f5fdf69"
+ddb.uuid.parent="00000000-0000-0000-0000-000000000000"
+ddb.uuid.modification="00000000-0000-0000-0000-000000000000"
+ddb.uuid.parentmodification="00000000-0000-0000-0000-000000000000"

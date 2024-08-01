@@ -1,0 +1,40 @@
+<config verbose_domain_state="yes">
+	<report interval_sec="5" bytes="yes" config="yes" config_triggers="yes" links="yes" stats="yes"/>
+	<default-policy domain="default"/>
+
+	<policy label_prefix="nic -> "    domain="uplink"/>
+
+	<policy label_prefix="vm_ubuntu"  domain="vm_ubuntu"/>
+	<policy label_prefix="vm_windows" domain="vm_windows"/>
+
+	<domain name="uplink">
+		<nat domain="default" tcp-ports="1000" udp-ports="1000" icmp-ids="1000"/>
+
+		<nat domain="vm_ubuntu"  tcp-ports="1000" udp-ports="1000" icmp-ids="1000"/>
+		<nat domain="vm_windows" tcp-ports="1000" udp-ports="1000" icmp-ids="1000"/>
+
+		<tcp-forward port="2251" domain="vm_ubuntu"  to="10.0.51.2" to_port="22"/>
+		<tcp-forward port="2261" domain="vm_windows" to="10.0.61.2" to_port="22"/>
+	</domain>
+
+	<domain name="default" interface="10.0.1.1/24">
+		<dhcp-server ip_first="10.0.1.2" ip_last="10.0.1.200" dns_config_from="uplink"/>
+		<tcp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </tcp>
+		<udp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </udp>
+		<icmp dst="0.0.0.0/0" domain="uplink"/>
+	</domain>
+
+	<domain name="vm_ubuntu" interface="10.0.51.1/24">
+		<dhcp-server ip_first="10.0.51.2" ip_last="10.0.51.2" dns_config_from="uplink"/>
+		<tcp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </tcp>
+		<udp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </udp>
+		<icmp dst="0.0.0.0/0" domain="uplink"/>
+	</domain>
+
+	<domain name="vm_windows" interface="10.0.61.1/24">
+		<dhcp-server ip_first="10.0.61.2" ip_last="10.0.61.2" dns_config_from="uplink"/>
+		<tcp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </tcp>
+		<udp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </udp>
+		<icmp dst="0.0.0.0/0" domain="uplink"/>
+	</domain>
+</config>

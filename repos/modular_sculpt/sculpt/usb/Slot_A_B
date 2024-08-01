@@ -1,0 +1,33 @@
+<!--
+  USB configuration for Slot A/B test - headset has to be assigned manually.
+  -->
+
+<config bios_handoff="no">
+
+	<!-- available devices are listed at /report/runtime/usb/devices -->
+
+	<device vendor_id="0x47f" product_id="0xc053"/> <!-- headset plantronics -->
+	<device vendor_id="0x951" product_id="0x1666"/> <!-- Kingston USB -->
+	<device vendor_id="0xb0e" product_id="0x420"/>  <!-- headset jabra -->
+	<device vendor_id="0xb0e" product_id="0x422"/>  <!-- headset jabra -->
+	<device vendor_id="0xd8c" product_id="0x14"/>   <!-- headset newbee -->
+
+	<policy label_prefix="usb_webcam -> ">
+		<device vendor_id="0x4f2"  product_id="0xb564"/> <!-- webcam S938 -->
+		<device vendor_id="0x4f2"  product_id="0xb704"/> <!-- webcam U7411/U7413 -->
+		<device vendor_id="0x4f2"  product_id="0xb703"/> <!-- webcam U7411b/U7412 -->
+		<device vendor_id="0x46d"  product_id="0x09c1"/> <!-- webcam quick -->
+		<device vendor_id="0x4f2"  product_id="0xb681"/> <!-- webcam t490 -->
+		<device vendor_id="0x5986" product_id="0x366"/>  <!-- webcam x250 -->
+		<device vendor_id="0x5986" product_id="0x706"/>  <!-- webcam x260 -->
+		<device/>
+	</policy>
+
+	<policy label_prefix="vm_ubuntu">
+		<device/>
+	</policy>
+
+	<policy label_prefix="vm_windows">
+		<device/>
+	</policy>
+</config>

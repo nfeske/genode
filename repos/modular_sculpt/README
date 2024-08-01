@@ -1,0 +1,25 @@
+    Modular Sculpt for testing on various hardware
+
+The configuration contained in this repository relies on the fact that
+all test machines follow the same partition-table scheme and provides
+the necessary recipes and required presets and launchers.
+
+# USB
+
+Some usb devices are already passed through to both compartments (see the
+in-preset-defined usb file in modular_sculpt/sculpt/usb/Slot_A).
+If you want to use them in a specific compartment, remove the entry
+corresponding to the device from the policy for the other compartment. For
+Slot_A_B tests modular_sculpt/sculpt/usb/Slot_A_B does not pass any USB
+device to the compartments, which can be changed online and offline.
+
+To change usb policies, open /config/usb in the provided system shell and
+edit it. Missing devices can be added as well; to view available/plugged
+in devices, see the file /report/runtime/usb_devices.
+
+
+# test machines
+
+S938:   AHCI disk
+S938b:  NVMe disk
+U7411:  NVMe disk
