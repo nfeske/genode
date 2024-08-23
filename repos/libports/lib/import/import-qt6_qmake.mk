@@ -172,6 +172,30 @@ qmake_root/mkspecs: qmake_root
 	$(VERBOSE)ln -sf $(QMAKE_PLATFORM)/qconfig.pri $@/
 	$(VERBOSE)ln -sf $(QMAKE_PLATFORM)/qmodule.pri $@/
 
+lib_name = $(notdir $(1:.lib.so=))
+abi_name = $(notdir $(1:.abi.so=))
+abi_path = qmake_root/abi/$(call abi_name,$1)/$(call abi_name,$1).abi.so
+so_path  = qmake_root/lib/$(call lib_name,$1).lib.so
+
+abi_symbol_path = $(wildcard $(addprefix $(QT_API_DIR)/lib/symbols/,$1))
+
+QMAKE_ROOT_QT6_SO_FILES  := $(foreach L,$(QT6_PORT_LIBS),$(call so_path,$L))
+QMAKE_ROOT_QT6_ABI_FILES := $(foreach L,$(QT6_PORT_LIBS),$(call abi_path,$L))
+
+$(QMAKE_ROOT_QT6_ABI_FILES):
+	$(VERBOSE)mkdir -p $(dir $@)
+	$(VERBOSE)$(MAKE) -C $(dir $@) -f $(BASE_DIR)/mk/abi.mk \
+	        SYMBOLS=$(call abi_symbol_path,$(call abi_name,$@)) \
+	        LIB=$(call abi_name,$@) \
+	        BUILD_BASE_DIR=$(BUILD_BASE_DIR) \
+	        SHELL=$(SHELL)
+
+$(QMAKE_ROOT_QT6_SO_FILES): $(QMAKE_ROOT_QT6_ABI_FILES)
+
+qt6_so_files: $(QMAKE_ROOT_QT6_SO_FILES)
+	$(VERBOSE)for l in $(QT6_PORT_LIBS); do \
+	   ln -sf ../abi/$$l/$$l.abi.so qmake_root/lib/$$l.lib.so; done
+
 qmake_prepared.tag: env.sh \
                     qmake_root/bin \
                     qmake_root/include \
@@ -184,22 +208,11 @@ qmake_prepared.tag: env.sh \
                     qmake_root/lib/ldso_so_support.lib.a \
                     qmake_root/libexec \
                     qmake_root/mkspecs
-
-# add symlinks for Qt6 libraries listed in the 'QT6_PORT_LIBS' variable
-ifeq ($(CONTRIB_DIR),)
-	$(VERBOSE)for qt6_lib in $(QT6_PORT_LIBS); do \
-		ln -sf $(BUILD_BASE_DIR)/var/libcache/$${qt6_lib}/$${qt6_lib}.abi.so qmake_root/lib/$${qt6_lib}.lib.so; \
-	done
-else
-	$(VERBOSE)for qt6_lib in $(QT6_PORT_LIBS); do \
-		ln -sf $(BUILD_BASE_DIR)/bin/$${qt6_lib}.lib.so qmake_root/lib/; \
-	done
-endif
 	$(VERBOSE)touch $@
 
-.PHONY: build_with_qmake
+.PHONY: build_with_qmake qt6_so_files
 
-build_with_qmake: qmake_prepared.tag
+build_with_qmake: qmake_prepared.tag qt6_so_files
 
 	$(VERBOSE)source env.sh && $(QMAKE) \
 		-spec qmake_root/mkspecs/$(QMAKE_PLATFORM) \

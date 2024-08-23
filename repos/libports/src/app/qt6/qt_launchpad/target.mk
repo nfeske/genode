@@ -4,7 +4,7 @@ QMAKE_TARGET_BINARIES = qt_launchpad
 
 QT6_PORT_LIBS += libQt6Core libQt6Gui libQt6Widgets
 
-LIBS = base libc libm mesa stdcxx launchpad $(QT6_PORT_LIBS)
+LIBS = base libc libm mesa stdcxx launchpad
 
 include $(call select_from_repositories,lib/import/import-qt6_qmake.mk)
 
