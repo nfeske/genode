@@ -95,7 +95,7 @@ update the codebase according to this version of the standard.
   C-style type aliases are no longer used within the framework.
 
 :util/geometry.h:
-  The header has been moved from the os repository to base repository.
+  The header has been moved from the os repository to the base repository.
   'Point', 'Area', and 'Rect' have been turned into plain compound types,
   making 'x', 'y', 'w', 'h', 'at', and 'area' accessible without a method call.
   'Rect' is now represented as a tuple of 'Point' and 'Area', which is the most
@@ -193,7 +193,7 @@ future (especially PC) platforms. With this release, we limited our efforts
 to the emulation library itself as well as virt_linux and pc_linux driver
 ports.
 
-Thus from now on, PC platforms use Linux driver sources of kernel version
+Thus, from now on, PC platforms use Linux driver sources of kernel version
 6.6.47 for USB host controllers and devices, Wifi and Ethernet adapters,
 Intel display, lxip TCP/IP protocols, and wireguard. Non-x86 platforms were
 updated for USB devices and network protocols only, but will be adapted in future
@@ -415,10 +415,10 @@ For detailed instructions, please refer to the corresponding
 Meson build system
 ~~~~~~~~~~~~~~~~~~
 
-Projects like Qemu, glib, and Mesa have switched to the Python based
+Projects like Qemu, glib, and Mesa have switched to the Python-based
 [https://mesonbuild.com - Meson] build system. Mesa, for example, produces a
 large number of generated C/C++ files using Meson features. In order to ease
-future porting effort of Meson based projects to Genode, we have added basic support for
+future porting effort of Meson-based projects to Genode, we have added basic support for
 this build system to Goa.
 
 A Meson project can be built and executed like any other Goa-supported build
@@ -427,7 +427,7 @@ _cmake_args_ for CMake) where additional arguments can be passed to the meson
 command. Otherwise, Goa will look for a _meson.build_ file in the _src_
 directory, which identifies the project's build system as Meson.
 
-As a simple test, you can checkout the _hello_meson_ example in the _examples_
+As a simple test, you can check out the _hello_meson_ example in the _examples_
 directory of Goa.
 
 At the current stage, only binary targets for the x86_64 architecture are supported by
