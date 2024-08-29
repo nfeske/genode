@@ -132,7 +132,7 @@ The changes are as follows.
 * The interfaces and components received a thorough coding-style update,
   embracing C++20, avoiding plain pointers, using 'Attr' structs for passing
   attributes, removing the notion of invalid handles/IDs, replacing
-  basic types by dedicated types, and removing the use C++ exceptions.
+  basic types by dedicated types, and removing the use of C++ exceptions.
 
 * The out-of-RAM and out-of-caps conditions are now consistently handled by
   the 'Gui::Connection', which does no longer inherit the 'Gui::Session'
@@ -229,8 +229,8 @@ Platform driver
 ===============
 
 During ACPI suspend, the PCI bridges in the system may forget their
-PCI configuration. On resume, this configuration needs to be restored so that
-all PCI devices behind the bridge become usable again. With this release, we
+PCI configuration. Hence on resume, this configuration needs to be restored
+to render all PCI devices behind the bridge usable again. With this release, we
 added support to the pci_decode component to report all relevant information, which is
 then picked up by the platform driver after an ACPI resume to re-configure the used PCI
 bridges. This change enables the successful restart of the Wifi driver
@@ -244,10 +244,10 @@ The current release comprises a lot of updates and additional support for the
 i.MX family of devices.
 
 First of all, we have updated all existent Linux driver ports to Linux kernel
-version 6.1.20. In detail, these are the drivers for the Freescale Ethernet
+version 6.1.20. In detail, drivers for the Freescale Ethernet
 Device (FEC) for ARMv7 and ARMv8, the display management for the i.MX 8M Quad
 EVK and the MNT Reform 2, as well as the SD-card Host Controller for the same
-two boards.
+two boards got refreshed.
 
 Alice Domage of Gapfruit AG contributed outstanding work to enable
 platform support for the i.MX 8M Plus SoC and Compulab's IOT Gateway, which
@@ -340,14 +340,14 @@ additional FPU state during thread switching.
 Besides the general availability to Genode applications, the Seoul VMM got
 enabled as a first user of the feature. The VMM now announces the AVX feature
 to the guest VMs, so that the guest kernel can enable it and guest user
-applications can utilize it, e.g., for web browser and video de-/coding
+applications can utilize it, e.g., for web browser and video encoding/decoding
 use-cases. The feature got tested with Seoul for Intel and AMD systems.
 
-Additionally, the Genode core roottask now supports Intel SoCs with e-Core
-only CPUs, formerly named Intel ATOM CPUs and nowadays branded as Intel
-n-Series CPUs.
+Additionally, we adapted the core component to support Intel SoCs with E-Core
+only CPUs, which were formerly named Intel Atom and are nowadays branded as Intel
+N-Series CPUs.
 
-Finally, the kernel now supports the freeing of vCPU related data structures
+Finally, the NOVA kernel now supports the freeing of vCPU related data structures
 during VM destruction, got optimized to reduce resource overhead during cross
 CPU IPC and improved VM MSR exit handling.
 
@@ -365,7 +365,7 @@ limitation, since the date of the archived data was set to the time of
 archiving. To avoid this issue, we introduced a customizable global TAR_OPT in
 Genode's build system that sets the date of the archived files to the date of
 the epoch and the user/group to one. As a starting point, we added the TAR_OPT to
-the Qt5-build process while other targets will incrementally follow.
+the Qt-build process while other targets will incrementally follow.
 
 Additionally, we enabled our Rump-kernel port to be reproducible.
 
@@ -397,7 +397,7 @@ Goa testbed. Sculpt's default NIC router configuration now
 comprises an additional _gdb_ domain that is intended to accommodate a single
 client to which the router forwards port 9999 of the _uplink_ domain. This is
 intended for making the testbed's debug monitor available as a remote GDB target.
-Note that these changes will become effective with the next Sculpt release.
+Note that these changes will become effective with the next Sculpt release in October.
 In the meantime, you may cherry-pick the
 [https://github.com/genodelabs/genode/commit/aeb42b0983143e6fe0a01f7f5316612709da1a9d - corresponding commit].
 
