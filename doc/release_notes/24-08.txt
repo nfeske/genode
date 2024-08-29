@@ -202,7 +202,7 @@ versions with respect to integration and configuration.
 
 Our Wifi driver port got amended by an online quality update concerning the
 currently established connection, which can be enabled by the
-'update_quality_interval' configuration attribute. By this feature, user
+'update_quality_interval' configuration attribute. With this feature, user
 interfaces are enabled to reflect connection-quality changes almost
 instantly. Additionally, we added support for Intel AX200/9560 wireless
 adapters and restored support for Wifi devices found in Thinkpad T430
@@ -257,7 +257,7 @@ ST Microelectronics' STMMAC), SD-card host controller, I2C, and GPIO.
 
 Genode's custom kernel supports two more boards now, namely the F&S Embedded
 armStone Starterkit and MNT Pocket Reform. Both are using the i.MX 8M Plus SoC
-mentioned above. The support is limited to the very basics, and no peripherals
+mentioned above. The support is currently limited to the very basics, and no peripherals
 apart from CPU and timer are integrated yet.
 
 For the fine-grained control of GPIO pins, release
@@ -337,11 +337,11 @@ implementations of mathematical algorithms, e.g., it is used in multimedia
 applications. In principle, the kernel has to detect the available AVX versions,
 e.g., AVX, AVX-2, AVX-512. Depending on the version, it has to save and restore
 additional FPU state during thread switching.
-Besides the general availability to Genode applications, the Seoul VMM got
-enabled as a first user of the feature. The VMM now announces the AVX feature
+Besides the general availability to Genode applications, the Seoul VMM has
+become the first user of the feature. The VMM now announces the AVX feature
 to the guest VMs, so that the guest kernel can enable it and guest user
 applications can utilize it, e.g., for web browser and video encoding/decoding
-use-cases. The feature got tested with Seoul for Intel and AMD systems.
+use-cases. The feature got tested with the Seoul VMM on Intel and AMD systems.
 
 Additionally, we adapted the core component to support Intel SoCs with E-Core
 only CPUs, which were formerly named Intel Atom and are nowadays branded as Intel
