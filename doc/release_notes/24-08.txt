@@ -37,7 +37,7 @@ In [https://genode.org/documentation/release-notes/21.11#New_pattern_for_C___err
 we introduced the
 [https://genode.org/documentation/genode-foundations/24.05/api/Fundamental_types.html#Exception-less_error_handling - Attempt]
 utility as an alternative to exception-based error
-handling. While gradually applying this pattern, in particular for new
+handling. While gradually applying this pattern, in particular for newly
 introduced interfaces, we observed our code becoming more rigid and concrete,
 leaving no condition unconsidered. Given this added assurance, we ultimately
 decided to remove the reliance on C++ exceptions from the base framework over
@@ -251,11 +251,11 @@ two boards.
 
 Alice Domage of Gapfruit AG contributed outstanding work to enable
 platform support for the i.MX 8M Plus SoC and Compulab's IOT Gateway, which
-is based on it. Beside clock, powering, and reset support by a platform driver
+is based on it. Besides clock, powering, and reset support by a platform driver
 specific to this SoC, support is now available for both Ethernet cards (FEC and
-ST Microelectronic' STMMAC), SD-card host controller, I2C, and GPIO.
+ST Microelectronics' STMMAC), SD-card host controller, I2C, and GPIO.
 
-Genode's custom kernel supports two further boards now, namely the F&S Embedded
+Genode's custom kernel supports two more boards now, namely the F&S Embedded
 armStone Starterkit and MNT Pocket Reform. Both are using the i.MX 8M Plus SoC
 mentioned above. The support is limited to the very basics, and no peripherals
 apart from CPU and timer are integrated yet.
@@ -271,7 +271,7 @@ packages and run-scripts under Genode's umbrella use the new driver now, which
 can be found under _src/driver/pin/imx_ within the genode-imx repository.
 The old driver and the 'Gpio' session interface are still existent. But now, as
 there is no hard dependency or necessity for it anymore, we mark the old
-driver as well as the 'Gpio' session interface as being deprecated.
+driver as well as the 'Gpio' session interface as deprecated.
 
 Finally, we moved all remaining i.MX specific parts out of Genode's main
 repository into the [https://github.com/genodelabs/genode-imx - genode-imx]
@@ -337,7 +337,7 @@ implementations of mathematical algorithms, e.g., it is used in multimedia
 applications. In principle, the kernel has to detect the available AVX versions,
 e.g., AVX, AVX-2, AVX-512. Depending on the version, it has to save and restore
 additional FPU state during thread switching.
-Beside the general availability to Genode applications, the Seoul VMM got
+Besides the general availability to Genode applications, the Seoul VMM got
 enabled as a first user of the feature. The VMM now announces the AVX feature
 to the guest VMs, so that the guest kernel can enable it and guest user
 applications can utilize it, e.g., for web browser and video de-/coding
