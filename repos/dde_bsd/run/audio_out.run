@@ -14,15 +14,18 @@ if {[have_spec linux]} {
 proc use_record_play_sessions { } { return 1 }
 
 create_boot_directory
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/acpi \
+                  [depot_user]/src/bsd_audio \
+                  [depot_user]/src/init \
+                  [depot_user]/src/pci_decode \
+                  [depot_user]/src/platform \
+                  [depot_user]/src/report_rom
+
 
 proc build_targets { } {
 
-	set targets {
-		core init timer
-		driver/acpi driver/platform app/pci_decode server/report_rom
-		driver/audio
-		lib/ld
-	}
+	set targets { driver/audio/pci }
 
 	if {[use_record_play_sessions]} {
 		lappend targets server/record_play_mixer app/waveform_player \
