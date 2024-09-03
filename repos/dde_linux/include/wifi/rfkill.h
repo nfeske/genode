@@ -42,6 +42,14 @@ namespace Wifi {
 	 */
 	void set_rfkill(bool);
 
+	/**
+	 * Trigger RFKILL notification signal
+	 *
+	 * Used by the supplicants RFKILL driver to notify
+	 * the management-layer.
+	 */
+	void rfkill_notify();
+
 } /* namespace Wifi */
 
 #endif /* _WIFI__RFKILL_H_ */
