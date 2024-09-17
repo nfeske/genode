@@ -160,7 +160,7 @@ copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/wm.config             [ru
 copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/layouter.config       [run_dir]/genode/
 copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/decorator_init.config [run_dir]/genode/
 
-build { app/window_layouter app/decorator server/nitpicker server/wm test/nitpicker }
+build { driver/framebuffer/sdl app/backdrop app/window_layouter app/decorator server/nitpicker server/wm test/nitpicker }
 
 build_boot_image [build_artifacts]
 
