@@ -50,13 +50,29 @@ install_config {
 		</route>
 	</start>
 
+	<start name="drivers.2" caps="1500" managing_system="yes">
+		<resource name="RAM" quantum="64M"/>
+		<binary name="init"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="Timer">   <child name="timer"/> </service>
+			<service name="Capture"> <child name="nitpicker"/> </service>
+			<service name="Event">   <child name="nitpicker"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
 	<start name="nitpicker">
 		<resource name="RAM" quantum="4M"/>
 		<provides>
 			<service name="Gui"/> <service name="Capture"/> <service name="Event"/>
 		</provides>
 		<config focus="rom">
-			<capture/> <event/>
+			<capture>
+				<policy label="drivers -> fb_sdl -> "/>
+				<policy label="drivers.2 -> fb_sdl -> " xpos="1024"/>
+			</capture>
+			<event/>
 
 			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
 			<domain name="default" layer="2" content="client" label="no" hover="always"/>
