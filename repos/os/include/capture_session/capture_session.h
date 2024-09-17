@@ -68,6 +68,13 @@ struct Capture::Session : Genode::Session
 	 */
 	virtual void screen_size_sigh(Signal_context_capability) = 0;
 
+	/**
+	 * Register signal handler informed of new data to capture
+	 *
+	 * A wakeup signal is delivered only after a call of 'capture_stopped'.
+	 */
+	virtual void wakeup_sigh(Signal_context_capability) = 0;
+
 	enum class Buffer_result { OK, OUT_OF_RAM, OUT_OF_CAPS };
 
 	struct Buffer_attr
@@ -117,6 +124,11 @@ struct Capture::Session : Genode::Session
 	 */
 	virtual Affected_rects capture_at(Point) = 0;
 
+	/**
+	 * Schedule wakeup signal
+	 */
+	virtual void capture_stopped() = 0;
+
 
 	/*********************
 	 ** RPC declaration **
@@ -124,12 +136,14 @@ struct Capture::Session : Genode::Session
 
 	GENODE_RPC(Rpc_screen_size, Area, screen_size);
 	GENODE_RPC(Rpc_screen_size_sigh, void, screen_size_sigh, Signal_context_capability);
+	GENODE_RPC(Rpc_wakeup_sigh, void, wakeup_sigh, Signal_context_capability);
 	GENODE_RPC(Rpc_buffer, Buffer_result, buffer, Buffer_attr);
 	GENODE_RPC(Rpc_dataspace, Dataspace_capability, dataspace);
 	GENODE_RPC(Rpc_capture_at, Affected_rects, capture_at, Point);
+	GENODE_RPC(Rpc_capture_stopped, void, capture_stopped);
 
-	GENODE_RPC_INTERFACE(Rpc_screen_size, Rpc_screen_size_sigh, Rpc_buffer,
-	                     Rpc_dataspace, Rpc_capture_at);
+	GENODE_RPC_INTERFACE(Rpc_screen_size, Rpc_screen_size_sigh, Rpc_wakeup_sigh,
+	                     Rpc_buffer, Rpc_dataspace, Rpc_capture_at, Rpc_capture_stopped);
 };
 
 #endif /* _INCLUDE__CAPTURE_SESSION__CAPTURE_SESSION_H_ */
