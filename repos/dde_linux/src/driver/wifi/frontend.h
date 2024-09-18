@@ -2,9 +2,9 @@
  * \author Josef Soentgen
  * \date   2018-07-31
  *
- * This wifi driver front end uses the CTRL interface of the wpa_supplicant
- * via a Genode specific backend that uses two distinct memory buffers for
- * communication, one for the command results and one for events.
+ * Wifi manager uses the CTRL interface of the wpa_supplicant via a Genode
+ * specific ctrl_iface implementation that comprises two distinct memory
+ * buffers for communication - one for the command results and one for events.
  */
 
 /*
@@ -41,7 +41,7 @@ using Ctrl_msg_buffer = Wifi::Msg_buffer;
 
 using namespace Genode;
 
-/* declare manually as it is a internal hack^Winterface */
+/* internal interface of lib/wifi/socket_call.cc */
 extern void wifi_kick_socketcall();
 
 
@@ -152,7 +152,7 @@ struct Accesspoint : Interface
 		return bssid.length() == 17 + 1; }
 
 	/*
-	 * Accesspoint information fields used by the front end
+	 * Accesspoint information fields used by manager
 	 */
 	Bssid    bssid   { };
 	Freq     freq    { };

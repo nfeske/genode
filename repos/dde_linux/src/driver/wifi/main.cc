@@ -45,7 +45,7 @@ struct Main
 {
 	Env  &env;
 
-	Constructible<Wpa_thread>     _wpa;
+	Constructible<Wpa_thread>    _wpa;
 	Constructible<Wifi::Manager> _manager;
 
 	struct Request_handler : Wifi::Firmware_request_handler

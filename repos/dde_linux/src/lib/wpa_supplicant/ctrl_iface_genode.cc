@@ -1,5 +1,5 @@
 /*
- * \brief  WPA Supplicant frontend
+ * \brief  Genode-specific WPA supplicant ctrl_iface
  * \author Josef Soentgen
  * \date   2018-07-18
  */
