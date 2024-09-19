@@ -200,7 +200,7 @@ wpa_supplicant_ctrl_iface_init(struct wpa_supplicant *wpa_s)
 
 	priv->buffer = _msg_buffer;
 	priv->level  = MSG_INFO;
-	priv->fd     = WPA_CTRL_FD;
+	priv->fd     = Wifi::CTRL_FD;
 
 	eloop_register_read_sock(priv->fd,
 	                         wpa_supplicant_ctrl_iface_receive,

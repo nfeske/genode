@@ -16,9 +16,13 @@
 
 #include <util/string.h>
 
-#define WPA_CTRL_FD 51
-
 namespace Wifi {
+
+	/*
+	 * FD used to poll CTRL state from the supplicant.
+	 */
+	enum { CTRL_FD = 51, };
+
 	struct Msg_buffer;
 
 	struct Notify_interface : Genode::Interface
