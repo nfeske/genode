@@ -72,6 +72,8 @@ struct Test::Capture_session : Rpc_object<Capture::Session>
 
 	void screen_size_sigh(Signal_context_capability) override { }
 
+	void wakeup_sigh(Signal_context_capability) override { }
+
 	Buffer_result buffer(Buffer_attr attr) override
 	{
 		try {
@@ -101,6 +103,8 @@ struct Test::Capture_session : Rpc_object<Capture::Session>
 
 		return affected;
 	}
+
+	void capture_stopped() override { }
 };
 
 
