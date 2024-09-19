@@ -226,7 +226,7 @@ append config {
 		<binary name="report_rom"/>
 		<resource name="RAM" quantum="2M"/>
 		<provides> <service name="Report"/> <service name="ROM"/> </provides>
-		<config verbose="no"/>
+		<config verbose="yes"/>
 	</start>
 
 	<start name="config_rom">
