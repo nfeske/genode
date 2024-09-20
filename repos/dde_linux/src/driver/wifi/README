@@ -172,10 +172,10 @@ uses 'WPA'.
 !</wifi_config>
 
 
-The wifi driver creates two distinct reports to communicate its state and
-information about the wireless infrastructure to other components. The
-first one is a list of all available access points. The following exemplary
-report shows its general structure.
+The wifi driver uses two distinct reports, 'state' and 'accesspoints',
+to communicate its state of connectivity and information about the wireless
+access points in the vicinity to other components.
+This exemplary 'accesspoints' report shows its general structure.
 
 !<accesspoints>
 !  <accesspoint ssid="skynet" bssid="00:01:02:03:04:05" quality="40"/>
@@ -183,8 +183,8 @@ report shows its general structure.
 !  <accesspoint ssid="foobar" bssid="01:02:03:04:05:07" quality="10" protection="WPA2"/>
 !</accesspoints>
 
-The '<accesspoints>' node contains one or more '<accesspoint>' nodes
-that describe an access point with the following attributes.
+The '<accesspoints>' node can contain a fluctuating number of '<accesspoint>'
+nodes that describe an access point with the following attributes.
 
 * :ssid: specifies the name of the network the access point advertises.
   Empty SSIDs are not reported.
@@ -203,7 +203,7 @@ that describe an access point with the following attributes.
         WPA3-PSK mixed-mode, only the strongest protection (WPA3-PSK) is
         advertised.
 
-The second report provides information about the state of the connectivity
+The 'state' report provides information about the state of the connectivity
 and looks as follows.
 
 !<state>
