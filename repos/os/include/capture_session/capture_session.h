@@ -121,6 +121,16 @@ struct Capture::Session : Genode::Session
 	 *
 	 * \return  geometry information about the content that changed since the
 	 *          previous call of 'capture_at'
+	 *
+	 * A client should call 'capture_at' at intervals between 10 to 40 ms
+	 * (25-100 FPS). Should no change happen for more than 50 ms, the client
+	 * may stop the periodic capturing and call 'capture_stopped' once. As soon
+	 * as new changes becomes available for capturing, a wakeup signal tells
+	 * the client to resume the periodic capturing.
+	 *
+	 * The nitpicker GUI server reflects 'capture_at' calls as 'sync' signals
+	 * to its GUI clients, which thereby enables applications to synchronize
+	 * their output to the display's refresh rate.
 	 */
 	virtual Affected_rects capture_at(Point) = 0;
 
