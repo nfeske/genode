@@ -91,11 +91,6 @@ node features the following attributes.
   operations are requested and is used when not already connected
   to a network. The default is 5 seconds.
 
-* :connected_scan_interval: on the other hand sets the time interval
-  in seconds for scan operations while already connected to a network
-  and is mainly used to keep the list of access points available in the
-  near vicinity up to date. The default is 30 seconds.
-
 * :update_quality_interval: sets the time interval in which the current
   signal quality of the connected access point is updated (RSSI polling).
   The default value is 30 seconds.
@@ -108,7 +103,8 @@ node features the following attributes.
   roaming decisions within the same network (SSID). The syntax of the
   option string correspongs to the original WPA-supplicant 'bgscan' option.
   The default value is set to 'simple:30:-70:600'. This functionality can
-  be disabled by specifying an empty value, e.g. 'bgscan=""'.
+  be disabled by specifying an empty value, e.g. 'bgscan=""'. In doing
+  so the 'accesspoints' report will not be updated anymore.
 
 * :log_level: allows for steering the verbosity of the supplicant
   and may assist while diagnosing problems with the driver.
@@ -163,8 +159,7 @@ the first one should be automatically considered for joining and uses 'WPA2'
 while the second one is hidden but should show up in the scan results and
 uses 'WPA'.
 
-!<wifi_config connected_scan_interval="30" scan_interval="10"
-!             update_quality_interval="30">
+!<wifi_config scan_interval="10" update_quality_interval="30">
 !  <network ssid="Zero" protection="WPA2" passphrase="allyourbase"
 !           auto_connect="true"/>
 !  <network ssid="Skynet" protection="WPA" passphrase="12345678"

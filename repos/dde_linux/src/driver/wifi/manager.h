@@ -1367,14 +1367,12 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 			DEFAULT_RFKILL        = false,
 		};
 
-		unsigned connected_scan_interval { DEFAULT_CONNECTED_SCAN_INTERVAL };
 		unsigned scan_interval           { DEFAULT_SCAN_INTERVAL };
 		unsigned update_quality_interval { DEFAULT_UPDATE_QUAILITY_INTERVAL };
 
 		bool intervals_changed(Config const &cfg) const
 		{
-			return connected_scan_interval != cfg.connected_scan_interval
-			    || scan_interval           != cfg.scan_interval
+			return scan_interval           != cfg.scan_interval
 			    || update_quality_interval != cfg.update_quality_interval;
 		}
 
@@ -1418,11 +1416,6 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 			Bgscan const bgscan =
 				node.attribute_value("bgscan", Bgscan("simple:30:-70:600"));
 
-			unsigned const connected_scan_interval =
-				Util::check_time(node.attribute_value("connected_scan_interval",
-				                 (unsigned)DEFAULT_CONNECTED_SCAN_INTERVAL),
-				                 0, 15*60);
-
 			unsigned const scan_interval =
 				Util::check_time(node.attribute_value("scan_interval",
 				                 (unsigned)DEFAULT_SCAN_INTERVAL),
@@ -1434,7 +1427,6 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 				                 10, 15*60);
 
 			Config new_config {
-				.connected_scan_interval = connected_scan_interval,
 				.scan_interval           = scan_interval,
 				.update_quality_interval = update_quality_interval,
 				.verbose                 = verbose,
@@ -1560,13 +1552,12 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 	Timer::One_shot_timeout<Wifi::Manager> _quality_timeout {
 		_timer, *this, &Wifi::Manager::_handle_quality_timeout };
 
-	enum class Timer_type : uint8_t { CONNECTED_SCAN, SCAN, SIGNAL_POLL };
+	enum class Timer_type : uint8_t { SCAN, SIGNAL_POLL };
 
 	bool _arm_timer(Timer_type const type)
 	{
 		auto seconds_from_type = [&] (Timer_type const type) {
 			switch (type) {
-			case Timer_type::CONNECTED_SCAN: return _config.connected_scan_interval;
 			case Timer_type::SCAN:           return _config.scan_interval;
 			case Timer_type::SIGNAL_POLL:    return _config.update_quality_interval;
 			}
@@ -1580,7 +1571,6 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 		if (_config.verbose) {
 			auto name_from_type = [&] (Timer_type const type) {
 				switch (type) {
-				case Timer_type::CONNECTED_SCAN: return "connected-scan";
 				case Timer_type::SCAN:           return "scan";
 				case Timer_type::SIGNAL_POLL:    return "signal-poll";
 				}
@@ -1591,7 +1581,6 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 		}
 
 		switch (type) {
-		case Timer_type::CONNECTED_SCAN: _scan_timeout.schedule(us);    break;
 		case Timer_type::SCAN:           _scan_timeout.schedule(us);    break;
 		case Timer_type::SIGNAL_POLL:    _quality_timeout.schedule(us); break;
 		}
@@ -1600,9 +1589,10 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 
 	bool _arm_scan_timer()
 	{
-		return _arm_timer(_join.state == Join_state::State::CONNECTED
-		                               ? Timer_type::CONNECTED_SCAN
-		                               : Timer_type::SCAN);
+		if (_join.state == Join_state::State::CONNECTED)
+			return false;
+
+		return _arm_timer(Timer_type::SCAN);
 	}
 
 	bool _arm_poll_timer()
