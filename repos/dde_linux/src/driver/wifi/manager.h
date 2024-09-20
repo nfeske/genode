@@ -14,8 +14,8 @@
  * version 2.
  */
 
-#ifndef _WIFI_FRONTEND_H_
-#define _WIFI_FRONTEND_H_
+#ifndef _WIFI_MANAGER_H_
+#define _WIFI_MANAGER_H_
 
 /* Genode includes */
 #include <libc/component.h>
@@ -2138,4 +2138,4 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 	Msg_buffer &msg_buffer() { return _msg; }
 };
 
-#endif /* _WIFI_FRONTEND_H_ */
+#endif /* _WIFI_MANAGER_H_ */

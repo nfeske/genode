@@ -28,7 +28,7 @@
 /* local includes */
 #include "util.h"
 #include "wpa.h"
-#include "frontend.h"
+#include "manager.h"
 #include "access_firmware.h"
 
 using namespace Genode;
