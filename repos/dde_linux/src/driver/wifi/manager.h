@@ -1240,7 +1240,7 @@ struct Status_query : Action
 
 
 /*
- * Wifi driver front end
+ * Wifi driver manager
  */
 struct Wifi::Manager : Wifi::Rfkill_notification_handler
 {
@@ -2125,7 +2125,7 @@ struct Wifi::Manager : Wifi::Rfkill_notification_handler
 	/**
 	 * Trigger RFKILL notification
 	 *
-	 * Used by the wifi driver to notify front end.
+	 * Used by the wifi driver to notify the manager.
 	 */
 	void rfkill_notify() override {
 		_rfkill_handler.local_submit(); }

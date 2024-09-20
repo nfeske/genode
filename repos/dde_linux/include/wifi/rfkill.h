@@ -36,7 +36,7 @@ namespace Wifi {
 	bool rfkill_blocked();
 
 	/**
-	 * Set RFKILL state from the frontend
+	 * Set RFKILL state from the manager
 	 *
 	 * May be only called from an EP context.
 	 */

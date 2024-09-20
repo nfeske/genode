@@ -151,7 +151,7 @@ static void send_event(Wifi::Msg_buffer &buffer, char const *txt, size_t len)
 /*
  * This function is called by wpa_supplicant whenever it wants to
  * forward some message. We filter these messages and forward only
- * those, which are of interest to the front end.
+ * those, which are of interest to the Wifi manager.
  */
 static void wpa_supplicant_ctrl_iface_msg_cb(void *ctx, int level,
                                              enum wpa_msg_type type,
@@ -170,7 +170,7 @@ static void wpa_supplicant_ctrl_iface_msg_cb(void *ctx, int level,
 		return;
 
 	/*
-	 * Filter messages and only forward events the front end cares
+	 * Filter messages and only forward events the manager cares
 	 * about or rather knows how to handle.
 	 */
 	bool const forward =

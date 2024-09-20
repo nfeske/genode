@@ -1,5 +1,5 @@
 /*
- * \brief  WPA Supplicant frontend
+ * \brief  Custom WPA Supplicant main routine
  * \author Josef Soentgen
  * \date   2014-12-08
  */
