@@ -101,10 +101,11 @@ node features the following attributes.
 * :bgscan: is an expert option that configures the way the
   supplicant performs background scanning to steer or rather optimize
   roaming decisions within the same network (SSID). The syntax of the
-  option string correspongs to the original WPA-supplicant 'bgscan' option.
+  option string corresponds to the original WPA-supplicant 'bgscan' option.
   The default value is set to 'simple:30:-70:600'. This functionality can
-  be disabled by specifying an empty value, e.g. 'bgscan=""'. In doing
-  so the 'accesspoints' report will not be updated anymore.
+  be disabled by specifying an empty value, e.g. 'bgscan=""'. If bgscan is
+  disabled the 'accesspoints' report will not be updated while the
+  supplicant is connected to a network.
 
 * :log_level: allows for steering the verbosity of the supplicant
   and may assist while diagnosing problems with the driver.
