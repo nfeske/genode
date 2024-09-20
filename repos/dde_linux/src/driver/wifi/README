@@ -15,7 +15,7 @@ Configuration
 ~~~~~~~~~~~~~
 
 This configuration snippet shows how to start the component on the PC
-platform:
+platform.
 
 !<start name="wifi" caps="250">
 !  <resource name="RAM" quantum="32M"/>
@@ -42,8 +42,8 @@ platform:
 !  </route>
 !</start>
 
-On other platforms the wifi library will be different. So the
-following snippet illustrates the use of the driver on the PinePhone:
+On other platforms the wifi library will be different. So, the
+following snippet illustrates the use of the driver on the PinePhone.
 
 !<start name="wifi" caps="250">
 !  <resource name="RAM" quantum="32M"/>
@@ -85,7 +85,7 @@ contained in an '.tar' archive that is request as a ROM module.
 
 The driver will request access to the 'wifi_config' ROM module that
 contains its actual configuration in the '<wifi_config>' node. This
-node features the the following attributes:
+node features the following attributes.
 
 * :scan_interval: sets the time interval in seconds in which scan
   operations are requested and is used when not already connected
@@ -97,17 +97,18 @@ node features the the following attributes:
   near vicinity up to date. The default is 30 seconds.
 
 * :update_quality_interval: sets the time interval in which the current
-  signal quality of the connected access point is updated. The default
-  value is 30 seconds.
+  signal quality of the connected access point is updated (RSSI polling).
+  The default value is 30 seconds.
 
 * :rfkill: allows to temporarily prevent any radio activity. The
   default is 'false'.
 
-* :bgscan: may be used to configure the way the
-  supplicant performs background-scanning to steer or rather optimize
-  roaming decision within the same network. The default value is set
-  to 'simple:30:-70:600'. This functionality can be disabled by specifying
-  an empty value, e.g. 'bgscan=""'.
+* :bgscan: is an expert option that configures the way the
+  supplicant performs background scanning to steer or rather optimize
+  roaming decisions within the same network (SSID). The syntax of the
+  option string correspongs to the original WPA-supplicant 'bgscan' option.
+  The default value is set to 'simple:30:-70:600'. This functionality can
+  be disabled by specifying an empty value, e.g. 'bgscan=""'.
 
 * :log_level: allows for steering the verbosity of the supplicant
   and may assist while diagnosing problems with the driver.
@@ -121,7 +122,7 @@ node features the the following attributes:
 
 Besides those attributes the '<wifi_config>' node can host one or
 more '<network>' nodes. Such a node describes the parameters of
-a network and has the following attributes:
+a network and has the following attributes.
 
 * :ssid: sets the name of the network.
 
@@ -142,13 +143,15 @@ a network and has the following attributes:
 * :passphrase: sets the PSK that is required should the
   network be protected.
 
-* :auto_connect: allows for join a network automatically. The
+* :auto_connect: allows for joining a network automatically. The
   default value is 'false'. When more than one network is configured
   with enabled 'auto_connect' the driver will try to select the best
-  one it gets a response from. When those overlap in locality the
-  driver might switch dynamically between the networks.
+  one it gets a response from.
 
-* :explicit_scan: must be set to explicit scan for hidden networks.
+  Note:  If configured auto-connect networks overlap in locality, the
+         driver might switch dynamically between the networks.
+
+* :explicit_scan: must be set to explicitly scan for hidden networks.
   The default is 'false' and it should only be set for networks
   that are hidden indeed.
 
@@ -157,8 +160,8 @@ others are optional. They should be used when needed only.
 
 The following exemplary snippet showcases a config for two networks where
 the first one should be automatically considered for joining and uses 'WPA2'
-while the second one is hidden but should show up the the scan results and
-uses 'WPA':
+while the second one is hidden but should show up in the scan results and
+uses 'WPA'.
 
 !<wifi_config connected_scan_interval="30" scan_interval="10"
 !             update_quality_interval="30">
@@ -172,7 +175,7 @@ uses 'WPA':
 The wifi driver creates two distinct reports to communicate its state and
 information about the wireless infrastructure to other components. The
 first one is a list of all available access points. The following exemplary
-report shows its general structure:
+report shows its general structure.
 
 !<accesspoints>
 !  <accesspoint ssid="skynet" bssid="00:01:02:03:04:05" quality="40"/>
@@ -181,33 +184,34 @@ report shows its general structure:
 !</accesspoints>
 
 The '<accesspoints>' node contains one or more '<accesspoint>' nodes
-that describe an access point with the following attributes:
+that describe an access point with the following attributes.
 
 * :ssid: specifies the name of the network the access point advertises.
-  Empty SSID are not reported.
+  Empty SSIDs are not reported.
 
 * :bssid: specifies the physical address of the access point.
 
 * :freq: specifies the frequency used by the access point.
 
 * :quality: specifies the approximated link quality (calculated from the
-  RSSI value)
+  RSSI value).
 
 * :protection: specifies which kind of protection is employed by the access
   point.
 
   Note: when a mixed protection is used by the network, like WPA2-PSK and
-        WPA3-PSK mixed-mode, only the strongest protection is advertised.
+        WPA3-PSK mixed-mode, only the strongest protection (WPA3-PSK) is
+        advertised.
 
 The second report provides information about the state of the connectivity
-and looks as follows:
+and looks as follows.
 
 !<state>
 !  <accesspoint ssid="foobar" bssid="01:02:03:04:05:06" quality="70" freq="2418" state="connected"/>
 !</state>
 
 The '<state>' node encompasses one '<accesspoint>' node that has the
-following additional attributes beside the ones already discussed:
+following additional attributes beside the ones already discussed.
 
 * :state: specifies the actual state of connectivity. Valid values
   are 'connected', 'connecting' and 'disconnected'.
@@ -260,7 +264,7 @@ rather then stub ABI library. This is achieved by adapting the driver's
 ![…]
 
 'LIBS' must be changed as follows in case the PC wifi driver library is
-used:
+used.
 
 !LIBS    := base pc_wifi
 
