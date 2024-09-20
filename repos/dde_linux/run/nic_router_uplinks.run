@@ -133,7 +133,7 @@ install_config {
 		<config>
 			<rom name="wifi_config">
 				<inline description="CONNECT">
-<wifi_config connected_scan_interval="0">
+<wifi_config>
    <network ssid="} [wifi_ssid] {" protection="WPA2" passphrase="} [wifi_psk] {" auto_connect="true"/>
 </wifi_config>
 				</inline>
