@@ -18,7 +18,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/demo \
                   [depot_user]/src/init
 
-build { app/status_bar test/nitpicker }
+build { app/scout server/nitpicker app/launchpad app/status_bar test/nitpicker }
 
 install_config {
 <config>
