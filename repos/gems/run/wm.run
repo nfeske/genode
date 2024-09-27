@@ -63,17 +63,24 @@ install_config {
 	</start>
 
 	<start name="nitpicker">
-		<resource name="RAM" quantum="4M"/>
+		<resource name="RAM" quantum="12M"/>
 		<provides>
 			<service name="Gui"/> <service name="Capture"/> <service name="Event"/>
 		</provides>
 		<config focus="rom">
-			<capture/> <event/>
+			<capture>
+				<policy label_prefix="drivers ->" />
+				<policy label_prefix="drivers.2 ->"  xpos="1024" ypos="200" width="200" height="200"/>
+				<policy label_prefix="drivers.3 ->"  xpos="1000" ypos="400"/>
+			</capture>
+			<event/>
 
 			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
 			<domain name="default" layer="2" content="client" label="no" hover="always"/>
+			<domain name="direct"  layer="2" content="client" label="no" focus="transient" hover="always"/>
 
 			<policy label_prefix="pointer" domain="pointer"/>
+			<policy label_prefix="launchpad.2" domain="direct"/>
 			<default-policy domain="default"/>
 
 			<global-key name="KEY_SCREEN" label="wm -> wm -> decorator" />
@@ -89,7 +96,7 @@ install_config {
 	</start>
 
 	<start name="wm" caps="1000">
-		<resource name="RAM" quantum="32M"/>
+		<resource name="RAM" quantum="70M"/>
 		<binary name="init"/>
 		<provides>
 			<service name="Gui"/> <service name="Report"/> <service name="ROM"/>
@@ -122,6 +129,18 @@ install_config {
 		</route>
 	</start>
 
+	<start name="launchpad.2" priority="-1" caps="1000">
+		<resource name="RAM" quantum="20M"/>
+		<binary name="launchpad"/>
+		<config xpos="0" ypos="0">
+			<launcher name="testnit" ram_quota="1M" caps="100"/>
+		</config>
+		<route>
+			<any-service> <child name="nitpicker"/> <parent/> <any-child/>
+			</any-service>
+		</route>
+	</start>
+
 	<start name="backdrop" priority="-1" caps="120">
 		<resource name="RAM" quantum="24M"/>
 		<config>
@@ -141,9 +160,9 @@ install_config {
 		</route>
 	</start>
 
-	<start name="wm_backdrop" priority="-1" caps="120">
+	<start name="wm_backdrop" priority="-1" caps="130">
 		<binary name="backdrop" />
-		<resource name="RAM" quantum="32M"/>
+		<resource name="RAM" quantum="80M"/>
 		<config>
 			<libc/>
 			<vfs>
@@ -159,6 +178,7 @@ install_config {
 			</any-service>
 		</route>
 	</start>
+
 </config>}
 
 #
