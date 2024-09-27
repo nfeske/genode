@@ -201,27 +201,38 @@ class Nitpicker::Gui_root : public Root_component<Gui_session>
 
 class Nitpicker::Capture_root : public Root_component<Capture_session>
 {
+	public:
+
+		struct Action : Interface
+		{
+			virtual void capture_client_appeared_or_disappeared() = 0;
+		};
+
 	private:
 
 		using Sessions = Registry<Registered<Capture_session>>;
 
 		Env                      &_env;
+		Action                   &_action;
 		Sessions                  _sessions { };
 		View_stack         const &_view_stack;
 		Capture_session::Handler &_handler;
 
-		Area _fallback_bounding_box { 0, 0 };
+		Rect _fallback_bounding_box { };
 
 	protected:
 
 		Capture_session *_create_session(const char *args) override
 		{
-			return new (md_alloc())
+			Capture_session &session = *new (md_alloc())
 				Registered<Capture_session>(_sessions, _env,
 				                            session_resources_from_args(args),
 				                            session_label_from_args(args),
 				                            session_diag_from_args(args),
 				                            _handler, _view_stack);
+
+			_action.capture_client_appeared_or_disappeared();
+			return &session;
 		}
 
 		void _upgrade_session(Capture_session *s, const char *args) override
@@ -237,12 +248,11 @@ class Nitpicker::Capture_root : public Root_component<Capture_session>
 			 * mode switches when the only capture client temporarily
 			 * disappears (driver restart).
 			 */
-			_fallback_bounding_box = session->buffer_size();
+			_fallback_bounding_box = session->bounding_box();
 
 			Genode::destroy(md_alloc(), session);
 
-			/* shrink screen according to the remaining output back ends */
-			_handler.capture_buffer_size_changed();
+			_action.capture_client_appeared_or_disappeared();
 		}
 
 	public:
@@ -251,26 +261,74 @@ class Nitpicker::Capture_root : public Root_component<Capture_session>
 		 * Constructor
 		 */
 		Capture_root(Env                      &env,
+		             Action                   &action,
 		             Allocator                &md_alloc,
 		             View_stack         const &view_stack,
 		             Capture_session::Handler &handler)
 		:
 			Root_component<Capture_session>(&env.ep().rpc_ep(), &md_alloc),
-			_env(env), _view_stack(view_stack), _handler(handler)
+			_env(env), _action(action), _view_stack(view_stack), _handler(handler)
 		{ }
 
-		/**
-		 * Determine the size of the bounding box of all capture pixel buffers
-		 */
-		Area bounding_box() const
+		void apply_config(Xml_node const &config)
 		{
-			Area result = { 0, 0 };
-			bool any_session_present = false;
-			_sessions.for_each([&] (Capture_session const &session) {
-				any_session_present = true;
-				result = max_area(result, session.buffer_size()); });
+			using Policy = Capture_session::Policy;
 
-			return any_session_present ? result : _fallback_bounding_box;
+			if (config.num_sub_nodes() == 0) {
+
+				/* if no policies are defined, mirror with no constraints */
+				_sessions.for_each([&] (Capture_session &session) {
+					session.apply_policy(Policy::unconstrained()); });
+
+			} else {
+
+				/* apply constraits per session */
+				_sessions.for_each([&] (Capture_session &session) {
+					with_matching_policy(session.label(), config,
+						[&] (Xml_node const &policy) {
+							session.apply_policy(Policy::from_xml(policy));
+						},
+						[&] { session.apply_policy(Policy::blocked()); }); });
+			}
+		}
+
+		/**
+		 * Determine the bounding box of all capture clients
+		 */
+		Rect bounding_box() const
+		{
+			Rect bb { };
+			_sessions.for_each([&] (Capture_session const &session) {
+				bb = Rect::compound(bb, session.bounding_box()); });
+
+			return bb.valid() ? bb : _fallback_bounding_box;
+		}
+
+		/**
+		 * Return true if specified position is suited as pointer position
+		 */
+		bool visible(Pointer const pointer) const
+		{
+			bool result = false;
+			pointer.with_result(
+				[&] (Point const p) {
+					_sessions.for_each([&] (Capture_session const &session) {
+						if (!result && session.bounding_box().contains(p))
+							result = true; }); },
+				[&] (Nowhere) { });
+			return result;
+		}
+
+		/**
+		 * Return position suitable for the initial pointer position
+		 */
+		Pointer any_visible_pointer_position() const
+		{
+			Pointer result = Nowhere { };
+			_sessions.for_each([&] (Capture_session const &session) {
+				if (session.bounding_box().valid())
+					result = session.bounding_box().center({ 1, 1 }); });
+			return result;
 		}
 
 		/**
@@ -290,22 +348,12 @@ class Nitpicker::Capture_root : public Root_component<Capture_session>
 
 		void report_displays(Xml_generator &xml) const
 		{
-			bool any_session_present = false;
-			_sessions.for_each([&] (Capture_session const &) {
-				any_session_present = true; });
+			Capture_session::gen_attr(xml, _view_stack.bounding_box());
 
-			if (!any_session_present)
-				return;
-
-			Area const size = bounding_box();
-
-			if (size.count() == 0)
-				return;
-
-			xml.node("display", [&] () {
-				xml.attribute("width",  size.w);
-				xml.attribute("height", size.h);
-			});
+			_sessions.for_each([&] (Capture_session const &capture) {
+				xml.node("capture", [&] {
+					xml.attribute("name", capture.label());
+					Capture_session::gen_attr(xml, capture.bounding_box()); }); });
 		}
 };
 
@@ -361,7 +409,10 @@ class Nitpicker::Event_root : public Root_component<Event_session>
 struct Nitpicker::Main : Focus_updater, Hover_updater,
                          View_stack::Damage,
                          Capture_session::Handler,
-                         Event_session::Handler
+                         Event_session::Handler,
+                         Capture_root::Action,
+                         User_state::Action
+
 {
 	Env &_env;
 
@@ -507,7 +558,7 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 
 	Focus      _focus { };
 	View_stack _view_stack { _focus, _font, *this };
-	User_state _user_state { _focus, _global_keys, _view_stack };
+	User_state _user_state { *this, _focus, _global_keys, _view_stack };
 
 	View_owner _global_view_owner { };
 
@@ -539,7 +590,7 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 	                     _builtin_background, _sliced_heap,
 	                     _focus_reporter, *this, *this };
 
-	Capture_root _capture_root { _env, _sliced_heap, _view_stack, *this };
+	Capture_root _capture_root { _env, *this, _sliced_heap, _view_stack, *this };
 
 	Event_root _event_root { _env, _sliced_heap, *this };
 
@@ -564,7 +615,7 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 
 	void _update_input_connection()
 	{
-		bool const output_present = (_view_stack.size().count() > 0);
+		bool const output_present = (_view_stack.bounding_box().valid());
 		_input.conditional(_request_input && output_present, _env, *this);
 	}
 
@@ -578,18 +629,21 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 		 * present output back ends.
 		 */
 
-		Area new_size { 0, 0 };
+		Rect new_bb { };
 
 		if (_fb_screen.constructed())
-			new_size = max_area(new_size, _fb_screen->_size);
+			new_bb = Rect::compound(new_bb, Rect { { }, _fb_screen->_size });
 
-		new_size = max_area(new_size, _capture_root.bounding_box());
+		new_bb = Rect::compound(new_bb, _capture_root.bounding_box());
 
-		bool const size_changed = (new_size != _view_stack.size());
+		bool const size_changed = (new_bb != _view_stack.bounding_box());
 
 		if (size_changed) {
-			_view_stack.size(new_size);
-			_user_state.sanitize_pointer_position();
+			_view_stack.bounding_box(new_bb);
+
+			if (!_user_state.pointer().ok())
+				_user_state.pointer(_capture_root.any_visible_pointer_position());
+
 			_update_pointer_position();
 			_capture_root.screen_size_changed();
 
@@ -613,6 +667,20 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 		/* deliver video-sync events */
 		for (Gui_session *s = _session_list.first(); s; s = s->next())
 			s->submit_sync();
+	}
+
+	/**
+	 * User_state::Action interface
+	 */
+	Pointer sanitized_pointer_position(Pointer const orig_pos, Point pos) override
+	{
+		if (_capture_root.visible(pos))
+			return pos;
+
+		if (_capture_root.visible(orig_pos))
+			return orig_pos;
+
+		return _capture_root.any_visible_pointer_position();
 	}
 
 	/**
@@ -641,15 +709,25 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 	 * manually to turn the initial configuration into effect.
 	 */
 	void _handle_config();
+	void _apply_capture_config();
 
-	Signal_handler<Main> _config_handler = { _env.ep(), *this, &Main::_handle_config };
+	Signal_handler<Main> _config_handler { _env.ep(), *this, &Main::_handle_config };
+
+	/**
+	 * Capture_root::Action interface
+	 */
+	void capture_client_appeared_or_disappeared() override
+	{
+		_apply_capture_config();
+		capture_buffer_size_changed();
+	}
 
 	/**
 	 * Signal handler for externally triggered focus changes
 	 */
 	void _handle_focus();
 
-	Signal_handler<Main> _focus_handler = { _env.ep(), *this, &Main::_handle_focus };
+	Signal_handler<Main> _focus_handler { _env.ep(), *this, &Main::_handle_focus };
 
 	/**
 	 * Event_session::Handler interface
@@ -681,7 +759,10 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 
 	void _update_pointer_position()
 	{
-		_view_stack.geometry(_pointer_origin, Rect(_user_state.pointer_pos(), Area{}));
+		_user_state.pointer().with_result(
+			[&] (Point p) {
+				_view_stack.geometry(_pointer_origin, Rect(p, Area{})); },
+			[&] (Nowhere) { });
 	}
 
 	Main(Env &env) : _env(env)
@@ -825,6 +906,15 @@ void Nitpicker::Main::_handle_focus()
 }
 
 
+void Nitpicker::Main::_apply_capture_config()
+{
+	/* propagate capture policies */
+	_config_rom.xml().with_optional_sub_node("capture",
+		[&] (Xml_node const &capture) {
+			_capture_root.apply_config(capture); });
+}
+
+
 void Nitpicker::Main::_handle_config()
 {
 	_config_rom.update();
@@ -847,6 +937,8 @@ void Nitpicker::Main::_handle_config()
 	configure_reporter(config, _keystate_reporter);
 	configure_reporter(config, _clicked_reporter);
 	configure_reporter(config, _displays_reporter);
+
+	_apply_capture_config();
 
 	/* update domain registry and session policies */
 	for (Gui_session *s = _session_list.first(); s; s = s->next())
