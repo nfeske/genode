@@ -471,7 +471,7 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 
 		Canvas<PT> _screen { _fb_ds.local_addr<PT>(), Point(0, 0), _mode.area };
 
-		Area const _size = _screen.size();
+		Rect const _rect { { 0, 0 }, _screen.size() };
 
 		using Dirty_rect = Genode::Dirty_rect<Rect, 3>;
 
@@ -504,7 +504,7 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 		{
 			_fb.mode_sigh(_main._fb_screen_mode_handler);
 			_fb.sync_sigh(_sync_handler);
-			mark_as_dirty(Rect { Point { 0, 0 }, _size });
+			mark_as_dirty(_rect);
 		}
 
 		void mark_as_dirty(Rect rect)
@@ -514,12 +514,29 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 			if (_main._now().ms - _previous_sync.ms > 40)
 				_handle_sync();
 		}
+
+		bool visible(Point p) const { return _rect.contains(p); }
+
+		Point anywhere() const { return _rect.center({ 1, 1 }); };
 	};
 
 	bool _request_framebuffer = false;
 	bool _request_input       = false;
 
 	Constructible<Framebuffer_screen> _fb_screen { };
+
+	bool _visible_at_fb_screen(Pointer pointer) const
+	{
+		return pointer.convert<bool>(
+			[&] (Point p) { return _fb_screen.constructed() && _fb_screen->visible(p); },
+			[&] (Nowhere) { return false; });
+	}
+
+	Pointer _anywhere_at_fb_screen() const
+	{
+		return _fb_screen.constructed() ? Pointer { _fb_screen->anywhere() }
+		                                : Pointer { Nowhere { } };
+	}
 
 	Signal_handler<Main> _fb_screen_mode_handler {
 		_env.ep(), *this, &Main::_reconstruct_fb_screen };
@@ -632,7 +649,7 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 		Rect new_bb { };
 
 		if (_fb_screen.constructed())
-			new_bb = Rect::compound(new_bb, Rect { { }, _fb_screen->_size });
+			new_bb = Rect::compound(new_bb, Rect { _fb_screen->_rect });
 
 		new_bb = Rect::compound(new_bb, _capture_root.bounding_box());
 
@@ -674,13 +691,15 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 	 */
 	Pointer sanitized_pointer_position(Pointer const orig_pos, Point pos) override
 	{
-		if (_capture_root.visible(pos))
+		if (_capture_root.visible(pos) || _visible_at_fb_screen(pos))
 			return pos;
 
-		if (_capture_root.visible(orig_pos))
+		if (_capture_root.visible(orig_pos) || _visible_at_fb_screen(orig_pos))
 			return orig_pos;
 
-		return _capture_root.any_visible_pointer_position();
+		Pointer const captured_pos = _capture_root.any_visible_pointer_position();
+
+		return captured_pos.ok() ? captured_pos : _anywhere_at_fb_screen();
 	}
 
 	/**
@@ -1008,12 +1027,8 @@ void Nitpicker::Main::_report_displays()
 		return;
 
 	Reporter::Xml_generator xml(_displays_reporter, [&] () {
-		if (_fb_screen.constructed()) {
-			xml.node("display", [&] () {
-				xml.attribute("width",  _fb_screen->_size.w);
-				xml.attribute("height", _fb_screen->_size.h);
-			});
-		}
+		if (_fb_screen.constructed())
+			xml.node("display", [&] { gen_attr(xml, _fb_screen->_rect); });
 
 		_capture_root.report_displays(xml);
 	});

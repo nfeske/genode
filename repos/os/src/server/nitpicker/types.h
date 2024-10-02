@@ -45,10 +45,17 @@ namespace Nitpicker {
 
 	using Pointer = Attempt<Point, Nowhere>;
 
-	static inline void gen_attr(Xml_generator &xml, Point const p)
+	static inline void gen_attr(Xml_generator &xml, Point const point)
 	{
-		xml.attribute("xpos", p.x);
-		xml.attribute("ypos", p.y);
+		if (point.x) xml.attribute("xpos", point.x);
+		if (point.y) xml.attribute("ypos", point.y);
+	}
+
+	static inline void gen_attr(Xml_generator &xml, Rect const rect)
+	{
+		gen_attr(xml, rect.at);
+		if (rect.w()) xml.attribute("width",  rect.w());
+		if (rect.h()) xml.attribute("height", rect.h());
 	}
 }
 
