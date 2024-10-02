@@ -87,6 +87,11 @@ struct Gui_buffer : Genode::Noncopyable
 
 	void with_alpha_surface(auto const &fn)
 	{
+		if (!_gui_mode.alpha) {
+			Alpha_surface dummy { nullptr, Gui::Area { } };
+			fn(dummy);
+			return;
+		}
 		_gui_mode.with_alpha_surface(_fb_ds, [&] (Alpha_surface &surface) {
 			surface.with_window(_backbuffer, [&] (Alpha_surface &surface) {
 				fn(surface); }); });
