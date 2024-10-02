@@ -262,7 +262,7 @@ top-left corner of each capture client corresponds to the coordinate origin
 This default policy can be overridden by explicit rules as follows:
 
 ! <capture>
-!   <policy label="intel_fb -> eDP-1" width_mm="160" height="90" />
+!   <policy label="intel_fb -> eDP-1" width_mm="160" height_mm="90" />
 !   <policy label="intel_fb -> HDMI-A-1" xpos="1024" ypos="0"
 !                                        width="1280" height="800"/>
 !   <default-policy/>
