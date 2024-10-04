@@ -293,7 +293,9 @@ void GenodeConsole::_handle_mode_change()
 
 	Gui::Rect const gui_win = _gui.window().convert<Gui::Rect>(
 		[&] (Gui::Rect rect) { return rect; },
-		[&] (Gui::Undefined) { return Gui::Rect { { }, { 1024, 768 } }; });
+		[&] (Gui::Undefined) { return _gui.panorama().convert<Gui::Rect>(
+			[&] (Gui::Rect rect) { return rect; },
+			[&] (Gui::Undefined) { return Gui::Rect { { }, { 800, 600 } }; }); });
 
 	fb->update_mode(gui_win);
 	update_video_mode();
