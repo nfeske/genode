@@ -838,7 +838,7 @@ static void mark_framebuffer_dirty(struct drm_framebuffer * const fb)
 
 
 /* track per connector (16 max) the empty capture attempts before stopping */
-enum { CAPTURE_RATE_MS = 10, ATTEMPTS_BEFORE_STOP = 5 };
+enum { CAPTURE_RATE_MS = 10, ATTEMPTS_BEFORE_STOP = 7 };
 static unsigned unchanged[16] = { };
 
 void lx_emul_i915_wakeup(unsigned const connector_id)
