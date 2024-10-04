@@ -17,4 +17,4 @@ depot: ssumpf skalk
 # preconfigured example scenarios
 presets: empty nano3d window_manager
 
-build: app/sculpt_manager
+build: app/sculpt_manager driver/framebuffer/intel
