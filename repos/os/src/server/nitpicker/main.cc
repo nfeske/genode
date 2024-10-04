@@ -449,6 +449,11 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 		{
 			_connection.sigh(_handler);
 		}
+
+		~Input_connection()
+		{
+			_connection.sigh(Signal_context_capability());
+		}
 	};
 
 	Constructible<Input_connection> _input { };
@@ -505,6 +510,12 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 			_fb.mode_sigh(_main._fb_screen_mode_handler);
 			_fb.sync_sigh(_sync_handler);
 			mark_as_dirty(_rect);
+		}
+
+		~Framebuffer_screen()
+		{
+			_fb.mode_sigh(Signal_context_capability());
+			_fb.sync_sigh(Signal_context_capability());
 		}
 
 		void mark_as_dirty(Rect rect)
