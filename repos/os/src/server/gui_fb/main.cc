@@ -263,11 +263,13 @@ struct Gui_fb::Main : View_updater, Input::Session_component::Action
 
 	Attached_dataspace _input_ds { _env.rm(), _gui.input.dataspace() };
 
-	Gui::Area _gui_area()
+	Gui::Rect _gui_window()
 	{
-		return _gui.panorama().convert<Gui::Area>(
-			[&] (Gui::Rect rect) { return rect.area; },
-			[&] (Gui::Undefined) { return Gui::Area { 1, 1 }; });
+		return _gui.window().convert<Gui::Rect>(
+			[&] (Gui::Rect rect) { return rect; },
+			[&] (Gui::Undefined) { return _gui.panorama().convert<Gui::Rect>(
+				[&] (Gui::Rect rect) { return rect; },
+				[&] (Gui::Undefined) { return Gui::Rect { { }, { 1, 1 } }; }); });
 	}
 
 	struct Initial_size
@@ -303,7 +305,7 @@ struct Gui_fb::Main : View_updater, Input::Session_component::Action
 
 	Framebuffer::Mode _initial_mode()
 	{
-		Gui::Area const gui_area = _gui_area();
+		Gui::Area const gui_area = _gui_window().area;
 		return {
 			.area = { _initial_size.width (gui_area),
 			          _initial_size.height(gui_area) },
@@ -388,7 +390,7 @@ struct Gui_fb::Main : View_updater, Input::Session_component::Action
 	{
 		Xml_node const config = _config_rom.xml();
 
-		Gui::Area const gui_area = _gui_area();
+		Gui::Area const gui_area = _gui_window().area;
 
 		_position = _coordinate_origin(gui_area, config) + Point::from_xml(config);
 
