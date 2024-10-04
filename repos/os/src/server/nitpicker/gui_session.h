@@ -50,7 +50,10 @@ class Nitpicker::Gui_session : public  Session_object<Gui::Session>,
 
 		struct Action : Interface
 		{
-			virtual void gen_capture_info(Xml_generator &xml) const = 0;
+			/*
+			 * \param rect  domain-specific panorama rectangle
+			 */
+			virtual void gen_capture_info(Xml_generator &xml, Rect rect) const = 0;
 		};
 
 	private:
@@ -196,10 +199,7 @@ class Nitpicker::Gui_session : public  Session_object<Gui::Session>,
 		/**
 		 * Dynamic_rom_session::Xml_producer interface
 		 */
-		void produce_xml(Xml_generator &xml) override
-		{
-			_action.gen_capture_info(xml);
-		}
+		void produce_xml(Xml_generator &) override;
 
 	public:
 
@@ -338,14 +338,6 @@ class Nitpicker::Gui_session : public  Session_object<Gui::Session>,
 		 * Set the visibility of the views owned by the session
 		 */
 		void visible(bool visible) { _visible = visible; }
-
-		/**
-		 * Return session-local screen geometry
-		 */
-		Rect screen_rect(Area screen_area) const
-		{
-			return _domain ? _domain->screen_rect(screen_area) : Rect { };
-		}
 
 		void reset_domain() { _domain = nullptr; }
 

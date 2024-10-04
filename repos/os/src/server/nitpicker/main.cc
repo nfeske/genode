@@ -348,9 +348,9 @@ class Nitpicker::Capture_root : public Root_component<Capture_session>
 				session.mark_as_damaged(rect); });
 		}
 
-		void report_displays(Xml_generator &xml) const
+		void report_displays(Xml_generator &xml, Rect const domain_panorama) const
 		{
-			gen_attr(xml, _view_stack.bounding_box());
+			gen_attr(xml, domain_panorama);
 			_sessions.for_each([&] (Capture_session const &capture) {
 				xml.node("capture", [&] { capture.gen_capture_attr(xml); }); });
 		}
@@ -610,9 +610,9 @@ struct Nitpicker::Main : Focus_updater, Hover_updater,
 	/**
 	 * Gui_session::Action interface
 	 */
-	void gen_capture_info(Xml_generator &xml) const override
+	void gen_capture_info(Xml_generator &xml, Rect const domain_panorama) const override
 	{
-		_capture_root.report_displays(xml);
+		_capture_root.report_displays(xml, domain_panorama);
 	}
 
 	Capture_root _capture_root { _env, *this, _sliced_heap, _view_stack, *this };
@@ -1038,7 +1038,7 @@ void Nitpicker::Main::_report_displays()
 		if (_fb_screen.constructed())
 			xml.node("display", [&] { gen_attr(xml, _fb_screen->_rect); });
 
-		_capture_root.report_displays(xml);
+		_capture_root.report_displays(xml, _view_stack.bounding_box());
 	});
 }
 
