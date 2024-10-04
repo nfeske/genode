@@ -10,4 +10,4 @@ launcher: sticks_blue_backdrop nano3d system_shell
 # supplemental depot content added to the system image
 import: pkg/drivers_interactive-linux
 
-build: app/themed_decorator app/menu_view server/nitpicker server/gui_fader app/sculpt_manager
+build: core lib/ld server/wm server/gui_fb app/themed_decorator app/menu_view server/nitpicker server/gui_fader app/sculpt_manager
