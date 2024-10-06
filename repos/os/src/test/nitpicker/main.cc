@@ -233,6 +233,7 @@ struct Test::Main
 Test::Main::Main(Genode::Env &env) : _env(env)
 {
 	_gui.input.sigh(_input_handler);
+//	_gui.input.exclusive(true);
 
 	Gui::Area const size { 256, 256 };
 
@@ -282,8 +283,18 @@ void Test::Main::_handle_input()
 
 		_gui.input.for_each_event([&] (Input::Event const &ev) {
 
+			log("ev: ", ev);
+
+			unsigned const orig_key_cnt = _key_cnt;
+
 			if (ev.press())   _key_cnt++;
 			if (ev.release()) _key_cnt--;
+
+			if (!orig_key_cnt && _key_cnt)
+				_gui.input.exclusive(true);
+
+			if (orig_key_cnt && !_key_cnt)
+				_gui.input.exclusive(false);
 
 			ev.handle_absolute_motion([&] (int x, int y) {
 

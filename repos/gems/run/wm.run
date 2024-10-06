@@ -50,6 +50,7 @@ install_config {
 		</route>
 	</start>
 
+<!--
 	<start name="drivers.2" caps="1500" managing_system="yes">
 		<resource name="RAM" quantum="64M"/>
 		<binary name="init"/>
@@ -61,6 +62,7 @@ install_config {
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
+	-->
 
 	<start name="nitpicker">
 		<resource name="RAM" quantum="12M"/>
@@ -121,7 +123,7 @@ install_config {
 					<default-policy domain="default"/>
 				</config>
 			</launcher>
-			<launcher name="testnit" ram_quota="1M" caps="100"/>
+			<launcher name="testnit" ram_quota="1M" caps="130"/>
 		</config>
 		<route>
 			<any-service> <child name="wm"/> <parent/> <any-child/>
@@ -129,6 +131,7 @@ install_config {
 		</route>
 	</start>
 
+<!--
 	<start name="launchpad.2" priority="-1" caps="1000">
 		<resource name="RAM" quantum="20M"/>
 		<binary name="launchpad"/>
@@ -172,6 +175,17 @@ install_config {
 			<image png="genode_logo.png" scale="zoom" alpha="150" />
 			<image png="genode_logo.png" scale="fit" alpha="150" tiled="yes" />
 			<image png="genode_logo.png" />
+		</config>
+		<route>
+			<any-service> <child name="wm"/> <parent/> <any-child/>
+			</any-service>
+		</route>
+	</start>
+	-->
+
+	<start name="testnit" priority="-1" caps="130">
+		<resource name="RAM" quantum="4M"/>
+		<config>
 		</config>
 		<route>
 			<any-service> <child name="wm"/> <parent/> <any-child/>
