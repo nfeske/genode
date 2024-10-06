@@ -563,6 +563,9 @@ class Wm::Gui::Session_component : public Session_object<Gui::Session>,
 		bool _exclusive_input_requested = false,
 		     _exclusive_input_granted   = false;
 
+		/* used for hiding the click-to-grab event from the client */
+		bool _consume_one_btn_left_release = false;
+
 		/**
 		 * Input::Session_component::Action interface
 		 */
@@ -728,20 +731,6 @@ class Wm::Gui::Session_component : public Session_object<Gui::Session>,
 					if (_click_into_unfocused_view(ev) && _key_cnt == 1)
 						_click_handler.handle_click(_pointer_pos);
 
-					/* grant exclusive input when clicking into window */
-					if (ev.key_press(Input::BTN_LEFT)) {
-						if (_exclusive_input_requested && !_exclusive_input_granted) {
-							_gui_input.exclusive(true);
-							_exclusive_input_granted = true;
-						}
-					}
-
-					/* revoke transient exclusive input (while clicked) */
-					if (ev.release() && _key_cnt == 0) {
-						if (_exclusive_input_requested && !_exclusive_input_granted)
-							_gui_input.exclusive(false);
-					}
-
 					/*
 					 * Hide application-local motion events from the pointer
 					 * position shared with the decorator. The position is
@@ -769,6 +758,31 @@ class Wm::Gui::Session_component : public Session_object<Gui::Session>,
 
 					if (propagate_to_pointer_state)
 						_pointer_state.apply_event(ev);
+
+					/*
+					 * Handle pointer grabbing/ungrabbing
+					 */
+
+					/* revoke transient exclusive input (while clicked) */
+					if (ev.release() && _key_cnt == 0)
+						if (_exclusive_input_requested && !_exclusive_input_granted)
+							_gui_input.exclusive(false);
+
+					/* grant exclusive input when clicking into window */
+					if (ev.key_press(Input::BTN_LEFT) && _key_cnt == 1) {
+						if (_exclusive_input_requested && !_exclusive_input_granted) {
+							_gui_input.exclusive(true);
+							_exclusive_input_granted = true;
+							_consume_one_btn_left_release = true;
+							continue;
+						}
+					}
+					if (ev.key_release(Input::BTN_LEFT)) {
+						if (_consume_one_btn_left_release) {
+							_consume_one_btn_left_release = false;
+							continue;
+						}
+					}
 
 					/* submit event to the client */
 					_input_session.submit(_translate_event(ev, input_origin));
