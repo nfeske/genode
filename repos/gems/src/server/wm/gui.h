@@ -1190,8 +1190,10 @@ class Wm::Gui::Session_component : public Session_object<Gui::Session>,
 				[&] (View &view) -> View_capability_result
 				{
 					if (!view.cap().valid()) {
-						if (!try_withdraw(Cap_quota { 1 }))
+						if (!try_withdraw(Cap_quota { 1 })) {
+							_starved_for_caps = true;
 							return View_capability_error::OUT_OF_CAPS;
+						}
 						_env.ep().manage(view);
 					}
 					return view.cap();
