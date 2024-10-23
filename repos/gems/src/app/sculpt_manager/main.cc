@@ -40,6 +40,7 @@
 #include <model/presets.h>
 #include <model/screensaver.h>
 #include <model/system_state.h>
+#include <model/fb_connectors.h>
 #include <view/download_status_widget.h>
 #include <view/popup_dialog.h>
 #include <view/panel_dialog.h>
@@ -1560,18 +1561,6 @@ struct Sculpt::Main : Input_event_handler,
 	                                                        _cached_runtime_config,
 	                                                        _file_browser_state, *this };
 
-	Managed_config<Main> _fb_config {
-		_env, "config", "fb", *this, &Main::_handle_fb_config };
-
-	void _handle_fb_config(Xml_node const &node)
-	{
-		_fb_config.generate([&] (Xml_generator &xml) {
-			xml.attribute("system", "yes");
-			copy_attributes(xml, node);
-			node.for_each_sub_node([&] (Xml_node const &sub_node) {
-				copy_node(xml, sub_node, { 5 }); }); });
-	}
-
 	void _update_window_layout(Xml_node const &, Xml_node const &);
 
 	void _update_window_layout()
@@ -1615,6 +1604,34 @@ struct Sculpt::Main : Input_event_handler,
 	Signal_handler<Main> _wheel_handler { _env.ep(), *this, &Main::_update_window_layout };
 
 
+	/**********************************
+	 ** Display driver configuration **
+	 **********************************/
+
+	Fb_connectors _fb_connectors { _env, _heap, "report -> runtime/intel_fb/connectors" };
+
+	Managed_config<Main> _fb_config {
+		_env, "config", "fb", *this, &Main::_handle_fb_config };
+
+	void _handle_fb_config(Xml_node const &node)
+	{
+		_fb_config.generate([&] (Xml_generator &xml) {
+			xml.attribute("system", "yes");
+			copy_attributes(xml, node);
+			node.for_each_sub_node([&] (Xml_node const &sub_node) {
+				copy_node(xml, sub_node, { 5 }); }); });
+	}
+
+	/**
+	 * Fb_widget::Action interface
+	 */
+	void select_fb_mode(Fb_connectors::Name                const &conn,
+	                    Fb_connectors::Connector::Mode::Id const &mode) override
+	{
+		log("select_fb_mode conn=", conn, " mode=", mode);
+	}
+
+
 	/*******************
 	 ** Runtime graph **
 	 *******************/
@@ -1622,7 +1639,7 @@ struct Sculpt::Main : Input_event_handler,
 	Popup _popup { };
 
 	Graph _graph { _runtime_state, _cached_runtime_config, _storage._storage_devices,
-	               _storage._selected_target, _storage._ram_fs_state,
+	               _storage._selected_target, _storage._ram_fs_state, _fb_connectors,
 	               _popup.state, _deploy._children };
 
 	struct Graph_dialog : Dialog::Top_level_dialog
