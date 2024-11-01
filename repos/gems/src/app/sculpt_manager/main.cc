@@ -1707,6 +1707,7 @@ struct Sculpt::Main : Input_event_handler,
 	void fb_connectors_changed() override
 	{
 		_drivers.with_fb_connectors([&] (Xml_node const &node) {
+			log("fb_connectors_changed: ", node);
 			if (_fb_connectors.update(_heap, node).progress) {
 				_fb_config.apply_connectors(_fb_connectors);
 				_generate_fb_config();

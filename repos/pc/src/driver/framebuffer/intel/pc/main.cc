@@ -279,6 +279,8 @@ void Framebuffer::Driver::config_update()
 	if (!config.valid() || !lx_user_task)
 		return;
 
+	log("config: ", config.xml());
+
 	config.xml().with_optional_sub_node("merge", [&](auto const &node) {
 		auto const merge_label_before = merge_label;
 
