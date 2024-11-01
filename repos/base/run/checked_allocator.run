@@ -1,0 +1,49 @@
+build { core init lib/ld test/checked_allocator }
+
+create_boot_directory
+
+install_config {
+	<config>
+		<parent-provides>
+			<service name="LOG"/>
+			<service name="PD"/>
+			<service name="CPU"/>
+			<service name="ROM"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <parent/> </any-service>
+		</default-route>
+		<default caps="50"/>
+		<start name="test-checked_allocator">
+			<resource name="RAM" quantum="10M"/>
+		</start>
+	</config>
+}
+
+build_boot_image [build_artifacts]
+
+append qemu_args "-nographic "
+
+run_genode_until "Test done.*\n" 20
+
+unify_output {0x[a-f0-9]+} "0xADDR"
+unify_output {0[a-f0-9]+,} "ADDR,"
+unify_output {0[a-f0-9]+\)} "ADDR)"
+
+grep_output {\[init -\> test-checked_allocator}
+
+compare_output_to {
+[init -> test-checked_allocator] [ADDR,ADDR) caller=0xADDR id=1 size=16
+[init -> test-checked_allocator] [ADDR,ADDR) caller=0xADDR id=2 size=40000
+[init -> test-checked_allocator] [ADDR,ADDR) caller=0xADDR id=3 size=1067008
+[init -> test-checked_allocator] [ADDR,ADDR) caller=0xADDR id=4 size=64
+[init -> test-checked_allocator] [ADDR,ADDR) caller=0xADDR id=5 size=64
+[init -> test-checked_allocator]
+[init -> test-checked_allocator] Warning: corrupt at free time: [ADDR,ADDR) caller=0xADDR id=4 size=64, begin corrupt
+[init -> test-checked_allocator] Warning: possible double free ptr=0xADDR size=64
+[init -> test-checked_allocator] Warning: corruption [ADDR,ADDR) caller=0xADDR id=5 size=64, end corrupt
+[init -> test-checked_allocator] Warning: corrupt at free time: [ADDR,ADDR) caller=0xADDR id=5 size=64, end corrupt
+[init -> test-checked_allocator] Warning: free called with wrong size, expected=64 got=62
+[init -> test-checked_allocator]
+[init -> test-checked_allocator] Test done.
+}
