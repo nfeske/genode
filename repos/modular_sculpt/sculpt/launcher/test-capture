@@ -1,0 +1,6 @@
+<launcher pkg="test-capture" priority="-1">
+	<route>
+		<service name="Capture"> <child name="usb_webcam"/> </service>
+		<service name="Gui">     <child name="wm"/>         </service>
+	</route>
+</launcher>

@@ -29,3 +29,4 @@ launcher: vm_ubuntu_fs vm_ubuntu_nvme_Slot_B
 launcher: vm_windows_fs vm_windows_nvme_Slot_A-S938b
 
 launcher: shell.1 shell.2 shell.3
+launcher: test-capture
