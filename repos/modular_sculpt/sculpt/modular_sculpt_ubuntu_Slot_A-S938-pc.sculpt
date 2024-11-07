@@ -17,16 +17,12 @@ launcher: fonts_fs
 launcher: default_recall_fs
 launcher: wm window_layouter themed_decorator
 
-launcher: touchpad
-launcher: sof_audio bsd_audio audio_mixer
+launcher: bsd_audio audio_mixer
 
 launcher: default_fs_shell
 launcher: ahci storage_ahci
 
 launcher: usb_webcam
 launcher: shared_fs
-
-launcher: record_rom
-launcher: rom_osci
 
 launcher: vm_ubuntu_fs vm_ubuntu_ahci_Slot_A

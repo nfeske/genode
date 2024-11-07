@@ -1,38 +1,7 @@
-<!-- name differently than regular Sculpt mixer launcher -->
-<launcher pkg="record_play_mixer" priority="0">
+<launcher pkg="mixer" priority="0">
 	<affinity xpos="0" width="1"/>
-	<config jitter_ms="10">
-		<mix name="left">  <play label_suffix=" -> left" volume="0.7"/> </mix>
-		<mix name="right"> <play label_suffix=" -> right" volume="0.7"/> </mix>
-
-		<mix name="mic_left">
-			<play label="bsd_audio -> mic_left"/>
-			<play label="sof_audio -> mic_left"/>
-		</mix>
-		<mix name="mic_right">
-			<play label="bsd_audio -> mic_right"/>
-			<play label="sof_audio -> mic_right"/>
-		</mix>
-
-		<policy label_suffix="vbox -> left"   record="mic_left"  period_ms="46" jitter_ms="23" volume="1.0"/>
-		<policy label_suffix="vbox -> right"  record="mic_right" period_ms="46" jitter_ms="23" volume="1.0"/>
-
-		<policy label_suffix="record_rom -> left"   record="left"  period_ms="12" jitter_ms="5" volume="1.0"/>
-		<policy label_suffix="record_rom -> right"  record="right" period_ms="12" jitter_ms="5" volume="1.0"/>
-
-		<policy label_suffix="record_rom -> mic_left"   record="mic_left"  period_ms="12" jitter_ms="5" volume="1.0"/>
-		<policy label_suffix="record_rom -> mic_right"  record="mic_right" period_ms="12" jitter_ms="5" volume="1.0"/>
-
-		<policy label_suffix="oss -> left"   record="mic_left"  period_ms="12" jitter_ms="5" volume="1.0"/>
-		<policy label_suffix="oss -> right"  record="mic_right" period_ms="12" jitter_ms="5" volume="1.0"/>
-
-		<policy label="bsd_audio -> left"   record="left"  period_ms="12" jitter_ms="5" volume="1.0"/>
-		<policy label="bsd_audio -> right"  record="right" period_ms="12" jitter_ms="5" volume="1.0"/>
-
-		<policy label="sof_audio -> left"   record="left"  period_ms="12" jitter_ms="5" volume="1.0"/>
-		<policy label="sof_audio -> right"  record="right" period_ms="12" jitter_ms="5" volume="1.0"/>
+	<config>
+		<default out_volume="100" volume="100"/>
 	</config>
-	<route>
-		<service name="Report"> <parent/> </service>
-	</route>
+	<!-- intentionally no <route> node, use preset -->
 </launcher>

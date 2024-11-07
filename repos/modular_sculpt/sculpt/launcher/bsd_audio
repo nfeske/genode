@@ -1,6 +1,6 @@
 <launcher pkg="bsd_audio" priority="0">
 	<affinity xpos="0" width="1"/>
-	<config report_mixer="yes" record_play="yes">
+	<config report_mixer="yes" record_play="no">
 		<mixer field="outputs.master" value="200"/>
 		<mixer field="record.adc-0:1_source" value="sel2"/>
 		<mixer field="record.adc-0:1" value="200"/>
@@ -8,9 +8,6 @@
 	</config>
 	<route>
 		<service name="Platform"> <parent label="audio"/> </service>
-		<service name="Record"> <child name="audio_mixer"/> </service>
-		<service name="Play"> <child name="audio_mixer"/> </service>
 		<service name="Report"> <parent/> </service>
-		<service name="RM"> <parent/> </service>
 	</route>
 </launcher>

@@ -26,7 +26,4 @@ launcher: nvme storage_nvme
 launcher: usb_webcam
 launcher: shared_fs
 
-launcher: record_rom
-launcher: rom_osci
-
-launcher: vm_ubuntu_fs vm_ubuntu_nvme_Slot_A
+launcher: vm_ubuntu_fs vm_ubuntu_nvme_Slot_A-U7411

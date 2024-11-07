@@ -19,8 +19,8 @@
 		<rm/>
 		<rtc/>
 		<usb/>
-		<play/>
-		<record/>
+		<audio_out/>
+		<audio_in/>
 	</requires>
 
 	<config verbose="yes">
@@ -40,8 +40,8 @@
 			<service name="File_system"/>
 			<service name="Usb"/>
 			<service name="Nic"/>
-			<service name="Play"/>
-			<service name="Record"/>
+			<service name="Audio_out"/>
+			<service name="Audio_in"/>
 			<service name="Block"/>
 			<service name="Capture"/>
 		</parent-provides>
@@ -58,7 +58,7 @@
 				<vfs>
 					<dir name="dev">
 						<log/> <rtc/> <null/> <gpu/> <zero/>
-						<oss name="dsp" min_ofrag_size="8192" min_ifrag_size="8192"/>
+						<legacy_oss name="dsp"/>
 						<block name="block0" label="block0" block_buffer_count="128"/>
 					</dir>
 					<dir name="pipe"> <pipe/> </dir>
@@ -119,7 +119,7 @@
 		<rom label="stdcxx.lib.so"/>
 		<rom label="vfs.lib.so"/>
 		<rom label="vfs_gpu.lib.so"/>
-		<rom label="vfs_oss.lib.so"/>
+		<rom label="vfs_legacy_oss.lib.so"/>
 		<rom label="vfs_pipe.lib.so"/>
 		<rom label="virtualbox6"/>
 		<rom label="virtualbox6-shaderlib.lib.so"/>

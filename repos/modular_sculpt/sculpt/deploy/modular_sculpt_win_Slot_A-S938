@@ -28,11 +28,14 @@
 		</route>
 	</start>
 
-	<start name="touchpad"/>
-
 	<start name="default_fs_shell"/>
 
-	<start name="audio_mixer"/>
+	<start name="audio_mixer">
+		<route>
+			<service name="Audio_out"> <child name="bsd_audio"/> </service>
+			<service name="Report"> <parent/> </service>
+		</route>
+	</start>
 	<start name="bsd_audio"/>
 
 	<start name="shared_fs"/>
@@ -43,8 +46,5 @@
 
 	<start name="vm_windows_fs"/>
 	<start name="vm_windows_ahci_Slot_A"/>
-
-	<start name="record_rom"/>
-	<start name="rom_osci"/>
 
 </config>

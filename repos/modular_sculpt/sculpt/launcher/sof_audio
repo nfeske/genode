@@ -1,7 +1,7 @@
 <launcher pkg="pc_audio" priority="0">
 	<affinity xpos="0" width="1"/>
 	<resource name="RAM" quantum="8M"/>
-	<config record_play="true" report_mixer="true">
+	<config record_play="no" report_mixer="true">
 
 		<!-- playback controls -->
 		<control type="bool" id="19" channel="0" name="Master Playback Switch" value="true"/>
@@ -22,8 +22,6 @@
 	</config>
 	<route>
 		<service name="Platform"> <parent label="audio"/> </service>
-		<service name="Record"> <child name="audio_mixer"/> </service>
-		<service name="Play"> <child name="audio_mixer"/> </service>
 		<service name="Report"> <parent/> </service>
 		<service name="RM"> <parent/> </service>
 	</route>
