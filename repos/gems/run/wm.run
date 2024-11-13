@@ -126,6 +126,29 @@ install_config {
 		</route>
 	</start>
 
+	<start name="launchpad.2" priority="-1" caps="1000">
+		<binary name="launchpad"/>
+
+		<resource name="RAM" quantum="20M"/>
+		<config>
+			<launcher name="gui_fb" ram_quota="7M" caps="100">
+				<config initial_width="500" initial_height="400" />
+			</launcher>
+			<launcher name="nitpicker" ram_quota="1M" caps="100">
+				<config request_framebuffer="yes" request_input="yes">
+					<domain name="default" layer="2" content="client"
+					        label="no" hover="always" focus="click"/>
+					<default-policy domain="default"/>
+				</config>
+			</launcher>
+			<launcher name="testnit" ram_quota="1M" caps="100"/>
+		</config>
+		<route>
+			<any-service> <child name="wm"/> <parent/> <any-child/>
+			</any-service>
+		</route>
+	</start>
+
 	<start name="backdrop" priority="-1" caps="120">
 		<resource name="RAM" quantum="24M"/>
 		<config>
