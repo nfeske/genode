@@ -50,6 +50,7 @@ install_config {
 		</route>
 	</start>
 
+<!--
 	<start name="drivers.2" caps="1500" managing_system="yes">
 		<resource name="RAM" quantum="64M"/>
 		<binary name="init"/>
@@ -61,6 +62,7 @@ install_config {
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
+	-->
 
 	<start name="nitpicker">
 		<resource name="RAM" quantum="4M"/>
@@ -69,8 +71,8 @@ install_config {
 		</provides>
 		<config focus="rom">
 			<capture>
-				<policy label="drivers -> fb_sdl -> "/>
-				<policy label="drivers.2 -> fb_sdl -> " xpos="1024"/>
+<!--				<policy label="drivers -> fb_sdl -> "/>
+				<policy label="drivers.2 -> fb_sdl -> " xpos="1024"/> -->
 			</capture>
 			<event/>
 
