@@ -56,7 +56,7 @@ static inline Input::Keycode convert_keycode(int sdl_keycode)
 	case SDLK_LEFTBRACKET:  return KEY_LEFTBRACE;
 	case SDLK_BACKSLASH:    return KEY_BACKSLASH;
 	case SDLK_RIGHTBRACKET: return KEY_RIGHTBRACE;
-	case SDLK_BACKQUOTE:    return KEY_GRAVE;
+	case SDLK_BACKQUOTE:    return KEY_SCREEN; /* KEY_GRAVE */
 	case SDLK_a:            return KEY_A;
 	case SDLK_b:            return KEY_B;
 	case SDLK_c:            return KEY_C;
