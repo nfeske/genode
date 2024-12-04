@@ -7,7 +7,7 @@ create_boot_directory
 
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_interactive_pkg] \
-                  [depot_user]/pkg/motif_wm \
+                  [depot_user]/pkg/themed_wm \
                   [depot_user]/raw/genode_bg \
                   [depot_user]/pkg/backdrop \
                   [depot_user]/src/demo \
@@ -200,8 +200,9 @@ close $fd
 copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/wm.config             [run_dir]/genode/
 copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/layouter.config       [run_dir]/genode/
 copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/decorator_init.config [run_dir]/genode/
+copy_file [genode_dir]/repos/gems/recipes/raw/themed_wm/decorator_init.config [run_dir]/genode/
 
-build { driver/framebuffer/sdl app/backdrop app/window_layouter app/decorator server/nitpicker server/wm test/nitpicker }
+build { lib/ld driver/framebuffer/sdl app/backdrop app/window_layouter app/themed_decorator server/nitpicker server/wm test/nitpicker }
 
 build_boot_image [build_artifacts]
 

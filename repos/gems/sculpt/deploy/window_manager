@@ -19,6 +19,37 @@
 			<service name="File_system" label="target"> <child name="default_fs_rw"/> </service>
 			<service name="File_system" label="fonts">  <child name="fonts_fs"/> </service>
 			<service name="ROM" label="vimrc"> <parent label="config -> vimrc"/> </service>
+			<service name="ROM" label_last="terminal"> <parent/> </service>
+			<service name="ROM" label="clipboard"> <child name="wm"/> </service>
+			<service name="Report" label="clipboard"> <child name="wm"/> </service>
+			<service name="RM"> <parent/> </service>
+		</route>
+	</start>
+
+	<start name="system_shell.2" priority="-2" pkg="system_shell">
+		<route>
+			<service name="Gui"> <child name="wm"/> </service>
+			<service name="File_system" label="config"> <parent label="config"/> </service>
+			<service name="File_system" label="report"> <parent label="report"/> </service>
+			<service name="File_system" label="target"> <child name="default_fs_rw"/> </service>
+			<service name="File_system" label="fonts">  <child name="fonts_fs"/> </service>
+			<service name="ROM" label="vimrc"> <parent label="config -> vimrc"/> </service>
+			<service name="ROM" label_last="terminal"> <parent/> </service>
+			<service name="ROM" label="clipboard"> <child name="wm"/> </service>
+			<service name="Report" label="clipboard"> <child name="wm"/> </service>
+			<service name="RM"> <parent/> </service>
+		</route>
+	</start>
+
+	<start name="system_shell.3" priority="-2" pkg="system_shell">
+		<route>
+			<service name="Gui"> <child name="wm"/> </service>
+			<service name="File_system" label="config"> <parent label="config"/> </service>
+			<service name="File_system" label="report"> <parent label="report"/> </service>
+			<service name="File_system" label="target"> <child name="default_fs_rw"/> </service>
+			<service name="File_system" label="fonts">  <child name="fonts_fs"/> </service>
+			<service name="ROM" label="vimrc"> <parent label="config -> vimrc"/> </service>
+			<service name="ROM" label_last="terminal"> <parent/> </service>
 			<service name="ROM" label="clipboard"> <child name="wm"/> </service>
 			<service name="Report" label="clipboard"> <child name="wm"/> </service>
 			<service name="RM"> <parent/> </service>
@@ -32,6 +63,7 @@
 			<service name="ROM" label="focus_request">     <child name="wm"/> </service>
 			<service name="ROM" label="hover">             <child name="wm"/> </service>
 			<service name="ROM" label="decorator_margins"> <child name="wm"/> </service>
+			<service name="ROM" label_last="window_layouter"> <parent/> </service>
 			<service name="Report">                        <child name="wm"/> </service>
 			<service name="File_system" label="recall">
 				<child name="recall_fs"/>
@@ -45,6 +77,7 @@
 			<service name="ROM" label="pointer">       <child name="wm"/> </service>
 			<service name="Report">                    <child name="wm"/> </service>
 			<service name="Gui">                       <child name="wm"/> </service>
+			<service name="ROM" label_last="themed_decorator"> <parent/> </service>
 		</route>
 	</start>
 
@@ -55,6 +88,7 @@
 			<service name="Report" label_last="shape">     <parent/> </service>
 			<service name="Report" label_last="clipboard"> <parent/> </service>
 			<service name="ROM"    label_last="clipboard"> <parent/> </service>
+			<service name="ROM" label_last="wm"> <parent/> </service>
 		</route>
 	</start>
 
@@ -69,6 +103,7 @@
 	<start name="wm_backdrop" priority="-2" pkg="sticks_blue_backdrop">
 		<route>
 			<service name="Gui"> <parent label="backdrop"/> </service>
+			<service name="ROM" label_last="backdrop"> <parent/> </service>
 		</route>
 		<config>
 			<libc/>
