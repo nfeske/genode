@@ -34,7 +34,7 @@ proc audio_driver_config_attr { } {
 	if {[use_record_play_sessions]} {
 		return {report_mixer="yes" record_play="yes"}
 	} else {
-		return {report_mixer="yes"}
+		return {report_mixer="yes" speaker_priority="external" mic_priority="external"}
 	}
 }
 
@@ -210,23 +210,27 @@ append config {
 			<service name="Audio_in"/>
 		</provides>
 		<config } [audio_driver_config_attr] {>
-
-			<!-- playback controls -->
-			<control type="bool" id="19" channel="0" name="Master Playback Switch" value="true"/>
-			<control type="int"  id="18" channel="0" name="Master Playback Volume" value="75" min="0" max="87"/>
 			<control type="int"  id="0"  channel="0" name="Headphone Playback Volume" value="87" min="0" max="87"/>
 			<control type="int"  id="0"  channel="1" name="Headphone Playback Volume" value="87" min="0" max="87"/>
 			<control type="int"  id="2"  channel="0" name="Speaker Playback Volume" value="87" min="0" max="87"/>
 			<control type="int"  id="2"  channel="1" name="Speaker Playback Volume" value="87" min="0" max="87"/>
-
-			<!-- capture controls -->
-			<control type="bool" id="13" channel="0" name="Capture Switch" value="true"/>
+			<control type="enum" id="4"              name="Loopback Mixing" selected="0"/>
+			<control type="bool" id="6"  channel="0" name="Headset Mic Playback Switch" value="false"/>
+			<control type="bool" id="6"  channel="1" name="Headset Mic Playback Switch" value="false"/>
+			<control type="bool" id="8"  channel="0" name="Headphone Mic Playback Switch" value="false"/>
+			<control type="bool" id="8"  channel="1" name="Headphone Mic Playback Switch" value="false"/>
+			<control type="enum" id="9"              name="Auto-Mute Mode" selected="0"/>
 			<control type="int"  id="12" channel="0" name="Capture Volume" value="63" min="0" max="63"/>
 			<control type="int"  id="12" channel="1" name="Capture Volume" value="63" min="0" max="63"/>
-			<control type="int"  id="5"  channel="0" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
-			<control type="int"  id="5"  channel="1" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
-			<control type="int"  id="29" channel="0" name="Dmic0 Capture Volume" value="60" min="0" max="70"/>
-			<control type="int"  id="29" channel="1" name="Dmic0 Capture Volume" value="60" min="0" max="70"/>
+			<control type="bool" id="15" channel="0" name="Capture Switch" value="false"/>
+			<control type="bool" id="15" channel="1" name="Capture Switch" value="false"/>
+			<control type="int"  id="18" channel="0" name="Master Playback Volume" value="87" min="0" max="87"/>
+			<control type="bool" id="19" channel="0" name="Master Playback Switch" value="true"/>
+			<control type="bool" id="20" channel="0" name="Headset Mic Phantom Jack" value="false"/>
+			<control type="bool" id="21" channel="0" name="Headphone Mic Jack" value="false"/>
+			<control type="bool" id="22" channel="0" name="Speaker Phantom Jack" value="false"/>
+			<control type="int"  id="29" channel="0" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
+			<control type="int"  id="29" channel="1" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
 		</config>
 		<route>
 			<service name="Report"> <child name="mixer_report_rom"/> </service>
