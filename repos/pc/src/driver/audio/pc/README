@@ -103,11 +103,19 @@ Jack handling
 
 When plugging, for example, a headset into the audio jack the driver will
 automatically mute the speaker and the internal microphone (DMIC0) and unmute
-the headphones and the headset microphone. Therefore, please do not configure
-the playback and captures switches of the headphones, headsets, and speakers
-because this will interfere with the driver.
+the headphones and the headset microphone (default). If this behavior is not
+desired, the following configuration options can be used:
 
-For the microphone jack state changes additionally require that PCM devices
+! <config speaker_priority="external" mic_priority="internal">
+
+
+The example above configures the case when a headset is inserted: In this
+example the headset's speaker will be enabled, the headset's microphone will be
+disabled, and the internal microphone will be enabled. The priority implies
+wnich device will be used in case internal and external are present (default is
+external).
+
+The microphone jack state changes additionally require that PCM devices
 have to be switched because the headset microphone and the internal microphone
 are two different PCM devices (pcmC0D0c, pcmC0D6c) - while the headphone and the
 internal speaker share the same device (pcmC0D0p).

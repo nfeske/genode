@@ -23,20 +23,11 @@ struct genode_audio_packet
 	unsigned long samples;
 };
 
-enum Jack_mode {
-	HEADPHONE,
-	HEADSET,
-	MICROPHONE,
-	DEFAULT = HEADSET
+enum Device_mode {
+	INTERNAL,
+	EXTERNAL,
+	DEFAULT = EXTERNAL,
 };
-
-
-static const char *const jack_mode_labels[] = {
-	[HEADPHONE]  = "headphone",
-	[HEADSET]    = "headset",
-	[MICROPHONE] = "microphone",
-};
-
 
 enum Ctrl_type
 {
@@ -91,7 +82,8 @@ unsigned long genode_audio_samples_per_period(void);
 void genode_mixer_report_controls(struct genode_mixer_controls *controls);
 void genode_mixer_update_controls(struct genode_mixer_controls *controls);
 bool genode_mixer_update(void);
-enum Jack_mode genode_jack_mode(void);
+enum Device_mode genode_speaker_mode(void);
+enum Device_mode genode_microphone_mode(void);
 
 void genode_devices_report(struct genode_devices *devices);
 

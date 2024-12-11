@@ -22,8 +22,11 @@
 
 #include <audio.h>
 
+
+static bool const debug = false;
+
+
 struct mixer;
-typedef void (*mixer_default_func_t)(struct mixer *);
 
 /* routes, needs to be configured per platform */
 struct sound_routing
@@ -33,16 +36,12 @@ struct sound_routing
 	char const mic_headset[64];
 	char const mic_internal[64];
 
-	/* mixer ids */
-	unsigned const mute_headset;
-	unsigned const mute_speaker;
-	unsigned const mute_mic_internal;
-	unsigned const mute_mic_headset;
-	mixer_default_func_t defaults;
+	unsigned const speaker_external_index;
+	unsigned const speaker_internal_index;
+	unsigned const mic_external_index;
+	unsigned const mic_internal_index;
 };
 
-
-static void mixer_tigerlake_default(struct mixer *mixer);
 
 /* routes for tigerlake */
 struct sound_routing tigerlake = {
@@ -50,11 +49,11 @@ struct sound_routing tigerlake = {
 	.playback     = "pcmC0D0p",
 	.mic_headset  = "pcmC0D0c",
 	.mic_internal = "pcmC0D6c",
-	.mute_headset = 1,
-	.mute_speaker = 3,
-	.mute_mic_internal = 30,
-	.mute_mic_headset  = 13,
-	.defaults = mixer_tigerlake_default,
+
+	.speaker_external_index = 1,  // headphone playback switch
+	.speaker_internal_index = 3,  // speaker_mode playback switch
+	.mic_external_index     = 13, // capture switch for external microphone
+	.mic_internal_index     = 30, // dmic0 capture switch for internal microphone
 };
 
 
@@ -106,7 +105,8 @@ struct sound_handle
 struct sound_card
 {
 	unsigned              sound_events;
-	enum Jack_mode        jack_mode;
+	enum Device_mode      speaker_mode;
+	enum Device_mode      microphone_mode;
 	bool                  jack_plugged;
 	struct sound_routing *routing;
 	struct mixer         *mixer;
@@ -779,7 +779,8 @@ static void mixer_report_controls(struct mixer *mixer)
 }
 
 
-static bool mixer_update_controls(struct mixer *mixer)
+/* force = write mixer control if valid and value has not changed */
+static bool mixer_update_controls(struct mixer *mixer, bool force)
 {
 	struct genode_mixer_controls *controls;
 	unsigned i, j;
@@ -804,7 +805,7 @@ static bool mixer_update_controls(struct mixer *mixer)
 			for (j = 0; j < mixer_control->info.count; j++) {
 
 				if (control->values[j] == ~0u ||
-				    control->values[j] == mixer_control->value[j]) continue;
+				    (control->values[j] == mixer_control->value[j] && !force)) continue;
 
 				mixer_control_set(mixer_control, j, control->values[j]);
 				changed = true;
@@ -816,7 +817,7 @@ static bool mixer_update_controls(struct mixer *mixer)
 			for (j = 0; j < mixer_control->info.count; j++) {
 
 				if (control->values[j] == ~0u ||
-				    control->values[j] == mixer_control->value[j]) continue;
+				    (control->values[j] == mixer_control->value[j] && !force)) continue;
 
 				if (control->values[j] < mixer_control->info.value.integer.min ||
 				    control->values[j] > mixer_control->info.value.integer.max) {
@@ -836,7 +837,7 @@ static bool mixer_update_controls(struct mixer *mixer)
 				break;
 			}
 
-			if (control->values[0] == mixer_control->value[0])
+			if (control->values[0] == mixer_control->value[0] && !force)
 				break;
 
 			mixer_control_set(mixer_control, 0, control->values[0]);
@@ -874,6 +875,8 @@ static void dump_pcm_state(struct sound_handle *handle, char const *msg)
 {
 	int err;
 	struct snd_pcm_status64 status = { 0 };
+
+	if (!debug) return;
 
 	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_STATUS64, &status);
 	if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
@@ -1084,11 +1087,12 @@ struct input_handler jack_handler = {
 	.id_table = jack_ids,
 };
 
-static void update_jack(struct sound_card *card)
+static void update_mixer(struct sound_card *card)
 {
 	int err;
 	struct mixer *mixer = card->mixer;
-	unsigned index = card->routing->mute_headset;
+	int value;
+	unsigned index;
 
 	if (card->playback) {
 		err = sound_ioctl(card->playback, SNDRV_PCM_IOCTL_DRAIN, NULL);
@@ -1104,22 +1108,36 @@ static void update_jack(struct sound_card *card)
 		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
 	}
 
-	mixer_control_set(&mixer->controls[index], 0, card->jack_mode != MICROPHONE && card->jack_plugged);
-	mixer_control_set(&mixer->controls[index], 1, card->jack_mode != MICROPHONE && card->jack_plugged);
 
-	index = card->routing->mute_mic_headset;
-	mixer_control_set(&mixer->controls[index], 0, card->jack_mode != HEADPHONE && card->jack_plugged);
-	mixer_control_set(&mixer->controls[index], 1, card->jack_mode != HEADPHONE && card->jack_plugged);
+	/* update speaker & mics */
+	index = card->routing->speaker_external_index;
+	value = card->jack_plugged && (card->speaker_mode == EXTERNAL);
+	mixer_control_set(&mixer->controls[index], 0, value);
+	mixer_control_set(&mixer->controls[index], 1, value);
 
-	index = card->routing->mute_speaker;
-	mixer_control_set(&mixer->controls[index], 0, !(card->jack_mode != MICROPHONE && card->jack_plugged));
-	mixer_control_set(&mixer->controls[index], 1, !(card->jack_mode != MICROPHONE && card->jack_plugged));
+	index = card->routing->speaker_internal_index;
+	value = (!card->jack_plugged && (card->speaker_mode == EXTERNAL))
+	         || (card->speaker_mode == INTERNAL);
+	mixer_control_set(&mixer->controls[index], 0, value);
+	mixer_control_set(&mixer->controls[index], 1, value);
 
-	index = card->routing->mute_mic_internal;
-	mixer_control_set(&mixer->controls[index], 0, !(card->jack_mode != HEADPHONE && card->jack_plugged));
-	mixer_control_set(&mixer->controls[index], 1, !(card->jack_mode != HEADPHONE && card->jack_plugged));
+	index = card->routing->mic_external_index;
+	value = card->jack_plugged && (card->microphone_mode == EXTERNAL);
+	mixer_control_set(&mixer->controls[index], 0, value);
+	mixer_control_set(&mixer->controls[index], 1, value);
 
-	card->capture = (card->jack_mode != HEADPHONE && card->jack_plugged) ? card->mic_headset : card->mic_internal;
+	index = card->routing->mic_internal_index;
+	value = (!card->jack_plugged && (card->microphone_mode == EXTERNAL))
+	         || (card->microphone_mode == INTERNAL);
+	mixer_control_set(&mixer->controls[index], 0, value);
+	mixer_control_set(&mixer->controls[index], 1, value);
+
+	/* rewrite all externally configured and valid mixer controls */
+	mixer_update_controls(mixer, true);
+
+	/* configure capture device */
+	card->capture = (card->jack_plugged && (card->microphone_mode == EXTERNAL)) ?
+	                card->mic_headset : card->mic_internal;
 	err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_PREPARE, NULL);
 	if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
 }
@@ -1149,23 +1167,22 @@ static void sound_dispatch(struct sound_card *card, struct snd_card *c)
 		    _event(events, EVENT_JACK_PLUGGED)) {
 			card->jack_plugged = _event(events, EVENT_JACK_PLUGGED);
 
-			update_jack(card);
+			update_mixer(card);
 
 			mixer_report_controls(card->mixer);
 		}
 
 		if (_event(events, EVENT_MIXER)) {
-			if (mixer_update_controls(card->mixer))
+			if (mixer_update_controls(card->mixer, false))
 				mixer_report_controls(card->mixer);
 
-			if(genode_jack_mode() != card->jack_mode)
+			if( (genode_speaker_mode() != card->speaker_mode) ||
+					(genode_microphone_mode() != card->microphone_mode) )
 			{
-				card->jack_mode = genode_jack_mode();
+				card->speaker_mode = genode_speaker_mode();
+				card->microphone_mode = genode_microphone_mode();
 
-				if(card->jack_plugged)
-				{
-					update_jack(card);
-				}
+				update_mixer(card);
 
 				mixer_report_controls(card->mixer);
 			}
@@ -1200,10 +1217,10 @@ static int sound_card_task(void *data)
 	int err;
 
 	struct sound_card sound_card = {
-		.sound_events = 0,
-		.jack_mode    = DEFAULT,
-		.routing      = data,
-		.mixer        = &mixer,
+		.sound_events 	 = 0,
+		.microphone_mode = DEFAULT,
+		.routing         = data,
+		.mixer           = &mixer,
 	};
 
 	if (!card) {
@@ -1256,11 +1273,8 @@ static int sound_card_task(void *data)
 	                                            &sound_card);
 	if (!sound_card.mic_headset) sleep_forever();
 
-	/* mixer defaults */
-	sound_card.routing->defaults(&mixer);
-	/* possibly override mixer defaults */
-	if (genode_mixer_update())
-		sound_events_add(&sound_card, EVENT_MIXER);
+	/* configure mixer */
+	sound_events_add(&sound_card, EVENT_MIXER);
 
 	/* start event loop */
 	sound_events_add(&sound_card, EVENT_PCM_CAPTURE);
@@ -1280,38 +1294,4 @@ void lx_user_init(void)
 	_lx_user_task = find_task_by_pid_ns(pid, NULL);
 	/* highest prio because this is time critical */
 	lx_emul_task_priority(_lx_user_task, 0);
-}
-
-
-/*
- * Mixer default functions
- */
-
-static void mixer_tigerlake_default(struct mixer *mixer)
-{
-	/* headphone volume */
-	mixer_control_set(&mixer->controls[0], 0, 87);
-	mixer_control_set(&mixer->controls[0], 1, 87);
-	/* speaker volume */
-	mixer_control_set(&mixer->controls[2], 0, 87);
-	mixer_control_set(&mixer->controls[2], 1, 87);
-	/* auto mute */
-	mixer_control_set(&mixer->controls[9], 0, 0);
-	/* master volume */
-	mixer_control_set(&mixer->controls[18], 0, 87);
-	/* master switch */
-	mixer_control_set(&mixer->controls[19], 0, 1);
-
-	/* internal dmic capture volume */
-	mixer_control_set(&mixer->controls[29], 0, 50);
-	mixer_control_set(&mixer->controls[29], 1, 50);
-	/* internal dmic capture switch */
-	mixer_control_set(&mixer->controls[30], 0, 1);
-	mixer_control_set(&mixer->controls[30], 1, 1);
-	/* external capture volume */
-	mixer_control_set(&mixer->controls[12], 0, 63);
-	mixer_control_set(&mixer->controls[12], 1, 63);
-	/* external capture switch */
-	mixer_control_set(&mixer->controls[13], 0, 1);
-	mixer_control_set(&mixer->controls[13], 1, 1);
 }

@@ -426,6 +426,10 @@ class Audio_in::Root : public Audio_in::Root_component
 };
 
 
+/*************************
+ ** Record/Play session **
+ *************************/
+
 struct Stereo_output : Noncopyable
 {
 	static constexpr unsigned SAMPLES_PER_PERIOD = Audio_in::PERIOD;
@@ -553,7 +557,8 @@ struct Audio
 	bool const record_play = config.xml().attribute_value("record_play", false);
 
 	bool mixer_update { false };
-	Jack_mode jack_mode = Jack_mode::DEFAULT;
+	Device_mode speaker_mode = Device_mode::DEFAULT;
+	Device_mode microphone_mode = Device_mode::DEFAULT;
 
 	Constructible<Audio_out::Out>  out      { };
 	Constructible<Audio_out::Root> out_root { };
@@ -599,7 +604,14 @@ struct Audio
 			mixer.destruct();
 
 		mixer_update = config.xml().has_sub_node("control");
-		jack_mode = Jack_mode(config.xml().attribute_value("jack_mode", (unsigned) Jack_mode::DEFAULT));
+
+		typedef String<9> Mode;
+		Mode speaker    = config.xml().attribute_value("speaker_priority", Mode("external"));
+		Mode microphone = config.xml().attribute_value("mic_priority"    , Mode("external"));
+
+		speaker_mode    = (speaker    == "internal") ? INTERNAL : EXTERNAL;
+		microphone_mode = (microphone == "internal") ? INTERNAL : EXTERNAL;
+
 		devices.enabled(config.xml().attribute_value("report_devices", false));
 	}
 
@@ -714,9 +726,14 @@ extern "C" bool genode_mixer_update(void)
 	return _audio().mixer_update;
 }
 
-extern "C" enum Jack_mode genode_jack_mode(void)
+extern "C" enum Device_mode genode_speaker_mode(void)
 {
-	return _audio().jack_mode;
+	return _audio().speaker_mode;
+}
+
+extern "C" enum Device_mode genode_microphone_mode(void)
+{
+	return _audio().microphone_mode;
 }
 
 
