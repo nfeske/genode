@@ -790,7 +790,7 @@ static bool mixer_update_controls(struct mixer *mixer, bool force)
 	if (!controls) return false;
 	controls->count = 64;
 
-	genode_mixer_update_controls(controls);
+	genode_mixer_update_controls(controls, force);
 
 	for (i = 0; i < controls->count; i++) {
 		struct genode_mixer_control *control = &controls->control[i];

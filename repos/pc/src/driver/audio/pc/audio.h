@@ -80,7 +80,7 @@ void   genode_audio_play(struct genode_audio_packet packet);
 unsigned long genode_audio_samples_per_period(void);
 
 void genode_mixer_report_controls(struct genode_mixer_controls *controls);
-void genode_mixer_update_controls(struct genode_mixer_controls *controls);
+void genode_mixer_update_controls(struct genode_mixer_controls *controls, bool force);
 bool genode_mixer_update(void);
 enum Device_mode genode_speaker_mode(void);
 enum Device_mode genode_microphone_mode(void);

@@ -767,12 +767,12 @@ struct genode_mixer_control *mixer_control(struct genode_mixer_controls *control
 }
 
 
-extern "C" void genode_mixer_update_controls(struct genode_mixer_controls *controls)
+extern "C" void genode_mixer_update_controls(struct genode_mixer_controls *controls, bool force)
 {
 	unsigned const max = controls->count;
 	controls->count = 0;
 
-	if (!_audio().mixer_update) return;
+	if (!_audio().mixer_update && !force) return;
 
 	_audio().config.xml().for_each_sub_node("control", [&] (Xml_node &node) {
 
