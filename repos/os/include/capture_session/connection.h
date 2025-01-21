@@ -163,7 +163,11 @@ class Capture::Connection::Screen
 
 			with_texture([&] (Texture<Pixel> const &texture) {
 				affected.for_each_rect([&] (Capture::Rect const rect) {
-					Blit::back2front(surface, texture, rect, attr.rotate, attr.flip);
+					log("rect: ", rect);
+					{
+						GENODE_LOG_TSC(1);
+						Blit::back2front(surface, texture, rect, attr.rotate, attr.flip);
+					}
 				});
 			});
 			surface.flusher(nullptr);
