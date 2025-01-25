@@ -39,8 +39,10 @@ struct Texture_painter
 	};
 
 
-	using Point = Genode::Surface_base::Point;
-	using Rect  = Genode::Surface_base::Rect;
+	using Point    = Genode::Surface_base::Point;
+	using Rect     = Genode::Surface_base::Rect;
+	using uint32_t = Genode::uint32_t;
+	using uint8_t  = Genode::uint8_t;
 
 
 	template <typename PT>
@@ -77,7 +79,6 @@ struct Texture_painter
 		int i, j;
 		PT            const *s;
 		PT                  *d;
-		unsigned char const *a;
 
 		switch (mode) {
 
@@ -98,11 +99,8 @@ struct Texture_painter
 			 * Copy texture with alpha blending
 			 */
 			for (j = clipped.h(); j--; src += src_w, alpha += src_w, dst += dst_w)
-				for (i = clipped.w(), s = src, a = alpha, d = dst; i--; s++, d++, a++) {
-					unsigned char const alpha_value = *a;
-					if (__builtin_expect(alpha_value != 0, true))
-						*d = PT::mix(*d, *s, alpha_value + 1);
-				}
+				Blit::blend_xrgb_a((uint32_t *)dst, clipped.w(),
+				                   (uint32_t const *)src, (uint8_t const *)alpha);
 			break;
 
 		case MIXED:
