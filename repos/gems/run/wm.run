@@ -89,6 +89,7 @@ install_config {
 		</route>
 	</start>
 
+<!--
 	<start name="launchpad" priority="-1" caps="1000">
 		<resource name="RAM" quantum="20M"/>
 		<config>
@@ -109,6 +110,7 @@ install_config {
 			</any-service>
 		</route>
 	</start>
+-->
 
 	<start name="backdrop" priority="-1" caps="120">
 		<resource name="RAM" quantum="24M"/>
@@ -129,6 +131,7 @@ install_config {
 		</route>
 	</start>
 
+<!--
 	<start name="wm_backdrop" priority="-1" caps="120">
 		<binary name="backdrop" />
 		<resource name="RAM" quantum="32M"/>
@@ -147,6 +150,15 @@ install_config {
 			</any-service>
 		</route>
 	</start>
+-->
+
+	<start name="nano3d">
+		<resource name="RAM" quantum="8M"/>
+		<route>
+			<any-service> <child name="wm"/> <parent/> <any-child/> </any-service>
+		</route>
+		<config/>
+	</start>
 </config>}
 
 #
@@ -161,7 +173,7 @@ copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/layouter.config       [ru
 copy_file [genode_dir]/repos/gems/recipes/raw/motif_wm/decorator_init.config [run_dir]/genode/
 copy_file [genode_dir]/repos/os/recipes/raw/drivers_interactive-linux/drivers.config [run_dir]/genode/
 
-build { driver/framebuffer/sdl app/window_layouter app/decorator server/nitpicker server/wm test/nitpicker }
+build { app/nano3d server/nitpicker }
 
 build_boot_image [build_artifacts]
 
