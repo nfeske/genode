@@ -273,8 +273,13 @@ struct Fb_sdl::Sdl : Noncopyable
 
 			progress = (bounding_box.area.count() > 0);
 
-			if (progress)
+			if (progress) {
+				static unsigned last;
+				unsigned now = SDL_GetTicks();
+				log("SDL_GetTicks=", now, " diff=", now-last);
+				last = now;
 				_screen->flush(bounding_box);
+			}
 		});
 		return progress;
 	}
