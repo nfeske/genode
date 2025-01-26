@@ -98,9 +98,16 @@ struct Texture_painter
 			/*
 			 * Copy texture with alpha blending
 			 */
-			for (j = clipped.h(); j--; src += src_w, alpha += src_w, dst += dst_w)
-				Blit::blend_xrgb_a((uint32_t *)dst, clipped.w(),
-				                   (uint32_t const *)src, (uint8_t const *)alpha);
+			{
+				auto iteration = [&] (auto src, auto alpha, auto dst)
+				{
+					for (j = clipped.h(); j--; src += src_w, alpha += src_w, dst += dst_w)
+						Blit::blend_xrgb_a((uint32_t *)dst, clipped.w(),
+						                   (uint32_t const *)src, (uint8_t const *)alpha);
+				};
+				for (unsigned k = 0; k < 10000; k++)
+					iteration(src, alpha, dst);
+			}
 			break;
 
 		case MIXED:
