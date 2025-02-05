@@ -138,7 +138,7 @@ set fd [open [run_dir]/genode/focus w]
 puts $fd "<focus label=\"terminal -> \" domain=\"default\"/>"
 close $fd
 
-build { lib/ld lib/libc lib/vfs lib/posix test/fork test/execve }
+build { lib/ld lib/libc lib/vfs server/vfs server/fs_rom lib/posix test/fork test/execve }
 
 build_boot_image [build_artifacts]
 
