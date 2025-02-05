@@ -9,3 +9,5 @@ launcher: sticks_blue_backdrop nano3d system_shell
 
 # supplemental depot content added to the system image
 import: pkg/drivers_interactive-linux
+
+build: server/vfs app/sculpt_manager lib/libc lib/vfs lib/ld app/menu_view init
