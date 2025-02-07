@@ -28,3 +28,5 @@ launcher: shared_fs
 
 launcher: vm_ubuntu_fs vm_ubuntu_nvme_Slot_B
 launcher: vm_windows_fs vm_windows_nvme_Slot_A-U7411
+
+launcher: shell.1 shell.2 shell.3

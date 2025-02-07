@@ -27,3 +27,5 @@ launcher: shared_fs
 
 launcher: vm_ubuntu_fs vm_ubuntu_ahci_Slot_B
 launcher: vm_windows_fs vm_windows_ahci_Slot_A
+
+launcher: shell.1 shell.2 shell.3
