@@ -29,6 +29,12 @@ enum Usb_speed {
 typedef enum Usb_speed genode_usb_speed_t;
 
 
+enum Usb_isoc_gap
+{
+	GENODE_USB_ISOC_GAP = 8,
+};
+
+
 struct genode_usb_isoc_descriptor
 {
 	genode_uint32_t size;

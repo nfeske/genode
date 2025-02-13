@@ -69,7 +69,8 @@ class Urb : Usb::Endpoint, public Usb::Interface::Urb,
 		    ::Endpoint    &endp,
 		    uint8_t        type,
 		    size_t         size,
-		    uint32_t       isoc_packets);
+		    uint32_t       isoc_packets,
+		    bool           isoc_gap = false);
 
 		bool isoc() const { return Usb::Interface::Urb::_type == Pdesc::ISOC; }
 		void cancel() { _canceled = true; }
@@ -484,13 +485,20 @@ Urb::Urb(Registry<Urb> &registry,
          ::Endpoint    &endp,
          uint8_t        type,
          size_t         size,
-         uint32_t       isoc_packets)
+         uint32_t       isoc_packets,
+         bool           isoc_gap)
 :
 	Registry<Urb>::Element(registry, *this),
 	Usb::Endpoint(endp.address(), endp.attributes()),
 	Usb::Interface::Urb(iface._session(), *this,
-	                    _type(type), size, isoc_packets),
-	_endpoint(endp) {}
+	                    _type(type),
+	                    isoc_gap ? size + (isoc_packets * GENODE_USB_ISOC_GAP)
+	                             : size,
+	                    isoc_packets),
+	_endpoint(endp)
+	{
+		_isoc_gap = isoc_gap;
+	}
 
 
 size_t Urb::read_cache(Byte_range_ptr &dst)
@@ -529,7 +537,8 @@ void Isoc_cache::_new_urb()
 		                   _iface, _ep,
 		                   USB_ENDPOINT_XFER_ISOC,
 		                   _ep.max_packet_size()*PACKETS_PER_URB,
-		                   PACKETS_PER_URB);
+		                   PACKETS_PER_URB,
+		                   _ep.in() == false);
 		--urbs;
 		sent = true;
 	}

@@ -347,8 +347,10 @@ handle_isoc_request(genode_usb_request_handle_t        handle,
 	for (i = 0; i < number_of_packets; i++) {
 		urb->iso_frame_desc[i].offset = offset;
 		urb->iso_frame_desc[i].length = packets[i].size;
-		offset += packets[i].size;
+		offset += packets[i].actual_size;
+		packets[i].actual_size = 0;
 	}
+
 	anchor_and_submit_urb(handle, urb, &data->submitted);
 }
 

@@ -110,6 +110,8 @@ class Usb::Urb_handler
 				size_t    const _size;
 				Payload         _payload { };
 				bool            _completed { false };
+				/* leave gap in between isoc packets */
+				bool            _isoc_gap { false };
 
 				Constructible<typename Id_space<Urb>::Element> _tag {};
 
@@ -158,9 +160,11 @@ class Usb::Urb_handler
 						for (uint32_t i = 0; i < _isoc_packets; i++) {
 							Byte_range_ptr dst { (char*)(payload+off), _size-off };
 							uint32_t psize = isoc_out_fn(urb, i, dst);
-							hdr.packets[i].actual_size = 0;
+							hdr.packets[i].actual_size = _isoc_gap ? psize + GENODE_USB_ISOC_GAP
+							                                       : psize;
 							hdr.packets[i].size = psize;
-							off += psize;
+
+							off += hdr.packets[i].actual_size;
 						}
 					}
 
