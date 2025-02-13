@@ -30,7 +30,7 @@ struct Sculpt::Service
 		RM, IO_MEM, IO_PORT, IRQ, REPORT, ROM, TERMINAL, TRACE, USB, RTC, I2C,
 		PLATFORM, PIN_STATE, PIN_CONTROL, VM, PD, UPLINK, PLAY, RECORD, UNDEFINED };
 
-	enum class Match_label { EXACT, LAST };
+	enum class Match_label { EXACT, LAST, FS };
 
 	Start_name  server { }; /* invalid for parent service */
 	Type        type;
@@ -109,6 +109,9 @@ struct Sculpt::Service
 
 			if (label.valid() && match_label == Match_label::EXACT)
 				xml.attribute("label", label);
+
+			if (label.valid() && match_label == Match_label::FS)
+				xml.attribute("identity", label);
 		});
 	}
 };
