@@ -17,4 +17,4 @@ depot: ssumpf skalk atopia
 # preconfigured example scenarios
 presets: empty nano3d window_manager falkon_web_browser goa_testbed
 
-build: app/depot_download_manager
+build: app/depot_download_manager app/sculpt_manager
