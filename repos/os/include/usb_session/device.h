@@ -308,6 +308,9 @@ class Usb::Urb_handler
 				Packet_descriptor const p { urb._payload.offset,
 				                            urb._payload.bytes };
 				fn(static_cast<URB&>(urb));
+
+				/* clear potentially sensitive packet content */
+				memset(_tx.source()->packet_content(p), 0, p.size());
 				_tx.source()->release_packet(p);
 			};
 
@@ -590,6 +593,8 @@ bool Usb::Urb_handler<SESSION>::_try_process_ack(Tx::Source &tx,
 		warning("spurious usb-session urb acknowledgement");
 	}
 
+	/* clear potentially sensitive packet content */
+	memset(tx.packet_content(p), 0, p.size());
 	tx.release_packet(p);
 	return true;
 }
