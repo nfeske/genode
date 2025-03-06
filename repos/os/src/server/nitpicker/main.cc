@@ -314,13 +314,15 @@ class Nitpicker::Capture_root : public Root_component<Capture_session>
 		 */
 		bool visible(Pointer const pointer) const
 		{
-			bool result = false;
+			bool result = false, any_session_exists = false;
 			pointer.with_result(
 				[&] (Point const p) {
 					_sessions.for_each([&] (Capture_session const &session) {
+						any_session_exists = true;
+
 						if (!result && session.bounding_box().contains(p))
 							result = true; });
-					if (!result)
+					if (!result && !any_session_exists)
 						result = _fallback_bounding_box.contains(p);
 				},
 				[&] (Nowhere) { });
