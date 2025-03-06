@@ -2159,6 +2159,8 @@ void Sculpt::Main::_handle_gui_mode()
 	bool const screen_changed = (orig_screen_rect != Rect { _screen_pos, _screen_size })
 	                         || (orig_hovered_display != _hovered_display);
 
+	bool update_runtime_config = false;
+
 	if (screen_changed) {
 		_gui_fb_config.generate([&] (Xml_generator &xml) {
 			xml.attribute("xpos",   _screen_pos.x);
@@ -2176,6 +2178,7 @@ void Sculpt::Main::_handle_gui_mode()
 		_network_dialog.refresh();
 		_diag_dialog.refresh();
 		_update_window_layout();
+		update_runtime_config = true;
 	}
 
 	_settings.manual_fonts_config = _fonts_config.try_generate_manually_managed();
@@ -2239,9 +2242,12 @@ void Sculpt::Main::_handle_gui_mode()
 				gen_color(8, background);
 			});
 			/* propagate fonts config of runtime view */
-			generate_runtime_config();
+			update_runtime_config = true;
 		}
 	}
+
+	if (update_runtime_config)
+		generate_runtime_config();
 }
 
 
