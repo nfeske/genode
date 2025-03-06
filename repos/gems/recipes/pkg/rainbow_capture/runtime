@@ -1,0 +1,14 @@
+<runtime ram="8M" caps="200" binary="rainbow_capture">
+
+	<requires> <capture/> <gui/> <timer/> </requires>
+
+	<config period_ms="40" width="1080" height="480">
+		<view/>
+	</config>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="rainbow_capture"/>
+	</content>
+
+</runtime>
