@@ -171,10 +171,10 @@ class Libc::Vfs_plugin final : public Plugin
 		template <typename FN>
 		void _with_info(File_descriptor &fd, FN const &fn);
 
-		static bool _init_pipe_configured(Xml_node config)
+		static bool _init_pipe_configured(Xml_node const &config)
 		{
 			bool result = false;
-			config.with_optional_sub_node("libc", [&] (Xml_node libc_node) {
+			config.with_optional_sub_node("libc", [&] (Xml_node const &libc_node) {
 				result = libc_node.has_attribute("pipe"); });
 			return result;
 		}
@@ -188,7 +188,7 @@ class Libc::Vfs_plugin final : public Plugin
 		           Vfs::Read_ready_response_handler &handler,
 		           Update_mtime                     update_mtime,
 		           Current_real_time               &current_real_time,
-		           Xml_node                         config)
+		           Xml_node                  const &config)
 		:
 			_fd_alloc(fd_alloc),
 			_alloc(alloc),

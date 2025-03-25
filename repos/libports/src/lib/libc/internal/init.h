@@ -18,10 +18,12 @@
 #include <base/env.h>
 #include <base/heap.h>
 #include <util/xml_node.h>
+#include <util/callable.h>
 #include <vfs/types.h>  /* for 'MAX_PATH_LEN' */
 
 /* libc includes */
 #include <setjmp.h>     /* for 'jmp_buf' type */
+#include <libc/component.h>
 
 /* libc-internal includes */
 #include <internal/types.h>
@@ -41,7 +43,6 @@ namespace Libc {
 	struct Timer_accessor;
 	struct Cwd;
 	struct Atexit;
-	struct Config_accessor;
 
 	/**
 	 * Support for shared libraries
@@ -124,11 +125,6 @@ namespace Libc {
 	void init_pthread_support(Genode::Cpu_session &, Xml_node const &,
 	                          Genode::Allocator &);
 	void init_semaphore_support(Timer_accessor &);
-
-	struct Config_accessor : Interface
-	{
-		virtual Xml_node config() const = 0;
-	};
 
 	/**
 	 * Fork mechanism
