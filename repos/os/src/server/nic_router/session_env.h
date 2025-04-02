@@ -129,31 +129,27 @@ class Genode::Session_env : public Ram_allocator,
 			enum { MAX_SHARED_RAM           = 4096 };
 			enum { DS_SIZE_GRANULARITY_LOG2 = 12 };
 
-			Alloc_result result = Alloc_error::DENIED;
-
 			size_t const ds_size = align_addr(size, DS_SIZE_GRANULARITY_LOG2);
 
+			bool ok = false;
 			try {
-				_consume(ds_size, MAX_SHARED_RAM, 1, MAX_SHARED_CAP, [&] ()
-				{
-					result = _env.ram().try_alloc(ds_size, cache);
-				});
+				_consume(ds_size, MAX_SHARED_RAM, 1, MAX_SHARED_CAP, [&] { ok = true; });
 			}
-			catch (Out_of_ram)  { result = Alloc_error::OUT_OF_RAM; }
-			catch (Out_of_caps) { result = Alloc_error::OUT_OF_CAPS; }
+			catch (Out_of_ram)  { return Alloc_error::OUT_OF_RAM; }
+			catch (Out_of_caps) { return Alloc_error::OUT_OF_CAPS; }
 
-			return result;
+			if (ok)
+				return _env.ram().try_alloc(ds_size, cache);
+
+			return Alloc_error::DENIED;
 		}
 
-
-		void free(Ram_dataspace_capability ds) override
+		void _free(Ram::Allocation &allocation) override
 		{
-			_replenish(_env.ram().dataspace_size(ds), 1, [&] () {
-				_env.ram().free(ds);
+			_replenish(_env.pd().ram_size(allocation.cap), 1, [&] () {
+				_env.ram()._free(allocation);
 			});
 		}
-
-		size_t dataspace_size(Ram_dataspace_capability ds) override { return _env.ram().dataspace_size(ds); }
 
 
 		/****************
