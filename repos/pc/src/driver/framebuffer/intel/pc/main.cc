@@ -150,6 +150,8 @@ struct Framebuffer::Driver
 		Capture::Area size      { };
 		Capture::Area size_phys { };
 		Capture::Area size_mm   { };
+		Blit::Rotate  rotate    { };
+		Blit::Flip    flip      { };
 
 		Constructible<Capture::Connection>         capture { };
 		Constructible<Capture::Connection::Screen> screen  { };
@@ -202,12 +204,16 @@ struct Framebuffer::Driver
 	            Capture::Area const &size_phys,
 	            Capture::Area const &mm,
 	            auto          const &label,
+	            auto          const  rotate,
+	            auto          const  flip,
 	            bool          const  force_change)
 	{
-		bool same = (base      == conn.base) &&
-		            (size      == conn.size) &&
-		            (size_phys == conn.size_phys) &&
-		            (mm        == conn.size_mm) &&
+		bool same = (base         == conn.base) &&
+		            (size         == conn.size) &&
+		            (size_phys    == conn.size_phys) &&
+		            (mm           == conn.size_mm) &&
+		            (rotate       == conn.rotate) &&
+		            (flip.enabled == conn.flip.enabled) &&
 		            !force_change;
 
 		if (same)
@@ -217,6 +223,8 @@ struct Framebuffer::Driver
 		conn.size      = size;
 		conn.size_phys = size_phys;
 		conn.size_mm   = mm;
+		conn.rotate    = rotate;
+		conn.flip      = flip;
 
 		conn.screen .destruct();
 		conn.capture.destruct();
@@ -224,11 +232,13 @@ struct Framebuffer::Driver
 		if (!conn.size.valid())
 			return same;
 
-		Capture::Connection::Screen::Attr attr = { .px       = conn.size,
-		                                           .mm       = conn.size_mm,
-		                                           .viewport = { { }, conn.size },
-		                                           .rotate   = { },
-		                                           .flip     = { } };
+		using Attr = Capture::Connection::Screen::Attr;
+
+		Attr attr = { .px       = Blit::transformed(conn.size, conn.rotate),
+		              .mm       = conn.size_mm,
+		              .viewport = { { }, conn.size },
+		              .rotate   = conn.rotate,
+		              .flip     = conn.flip };
 
 		conn.capture.construct(env, label);
 		conn.screen .construct(*conn.capture, env.rm(), attr);
@@ -502,6 +512,8 @@ void Framebuffer::Driver::lookup_config(char const * const name,
 		mode.height     = node.attribute_value("height" , 0U);
 		mode.hz         = node.attribute_value("hz"     , 0U);
 		mode.id         = node.attribute_value("mode"   , 0U);
+		mode.rotate     = node.attribute_value("rotate" , 0U);
+		mode.flip       = node.attribute_value("flip"   , false);
 		mode.brightness = node.attribute_value("brightness",
 		                                       unsigned(MAX_BRIGHTNESS + 1));
 	};
@@ -548,7 +560,9 @@ void lx_emul_i915_framebuffer_ready(unsigned const connector_id,
                                     unsigned const phys_width,
                                     unsigned const phys_height,
                                     unsigned const mm_width,
-                                    unsigned const mm_height)
+                                    unsigned const mm_height,
+                                    unsigned const lx_rotate,
+                                    char     const lx_flip)
 {
 	auto &env = Lx_kit::env().env;
 	auto &drv = driver(env);
@@ -573,6 +587,12 @@ void lx_emul_i915_framebuffer_ready(unsigned const connector_id,
 		Capture::Area const area     (phys_width, phys_height);
 		Capture::Area const area_phys(phys_width, phys_height);
 
+		Blit::Rotate  rotate    { (lx_rotate ==  90) ? Blit::Rotate::R90  :
+		                          (lx_rotate == 180) ? Blit::Rotate::R180 :
+		                          (lx_rotate == 270) ? Blit::Rotate::R270 :
+		                                               Blit::Rotate::R0 };
+		Blit::Flip    flip      { .enabled = !!lx_flip };
+
 		bool const merge = Capture::Connection::Label(conn_name) == "mirror_capture";
 
 		auto const label = !conn_name
@@ -582,6 +602,7 @@ void lx_emul_i915_framebuffer_ready(unsigned const connector_id,
 
 		bool const same = drv.update(conn, Genode::addr_t(base), area,
 		                             area_phys, { mm_width, mm_height}, label,
+		                             rotate, flip,
 		                             merge && drv.merge_label_changed);
 
 		if (merge)
@@ -684,7 +705,8 @@ void lx_emul_i915_report_connector(void * lx_data, void * genode_xml,
                                    char const /* fb_available */,
                                    unsigned brightness,
                                    char const *display_name,
-                                   unsigned width_mm, unsigned height_mm)
+                                   unsigned width_mm, unsigned height_mm,
+                                   unsigned rotate, char flip)
 {
 	auto &xml = *reinterpret_cast<Genode::Xml_generator *>(genode_xml);
 
@@ -698,6 +720,10 @@ void lx_emul_i915_report_connector(void * lx_data, void * genode_xml,
 			xml.attribute("width_mm" , width_mm);
 		if (height_mm)
 			xml.attribute("height_mm", height_mm);
+		if (rotate)
+			xml.attribute("rotate", rotate);
+		if (flip)
+			xml.attribute("flip", !!flip);
 
 		/* insane values means no brightness support - we use percentage */
 		if (brightness <= MAX_BRIGHTNESS)
