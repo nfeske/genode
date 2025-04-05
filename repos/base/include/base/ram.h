@@ -54,9 +54,7 @@ struct Genode::Ram::Unmapped_allocator : Interface, Noncopyable
 	/**
 	 * Release allocation
 	 *
-	 * This method is prefixed with '_' to indicate that it is not meant to be
-	 * explicitly called. It is only supposed to be called at the destruction
-	 * time of an 'Allocation' or by wrappers such as 'Accounted_allocator'.
+	 * \noapi
 	 */
 	virtual void _free(Allocation &) = 0;
 };
