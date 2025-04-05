@@ -9,6 +9,7 @@ SRC_CC  += hw/capability.cc
 SRC_CC  += lib/base/allocator_avl.cc
 SRC_CC  += lib/base/avl_tree.cc
 SRC_CC  += lib/base/elf_binary.cc
+SRC_CC  += lib/base/error.cc
 SRC_CC  += lib/base/heap.cc
 SRC_CC  += lib/base/registry.cc
 SRC_CC  += lib/base/log.cc

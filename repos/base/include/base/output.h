@@ -15,6 +15,7 @@
 #define _INCLUDE__BASE__OUTPUT_H_
 
 #include <base/stdint.h>
+#include <base/error.h>
 #include <util/interface.h>
 
 namespace Genode { struct Output; }
