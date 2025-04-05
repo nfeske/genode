@@ -63,7 +63,7 @@ struct Libc::Malloc_ram_allocator : Ram_allocator
 			[&] (Ram::Allocation &a) -> Result {
 				new (_md_alloc) Registered<Dataspace>(_dataspaces, a.cap);
 				a.deallocate = false;
-				return { *this, a.cap, size };
+				return { *this, { a.cap, size } };
 			},
 
 			[&] (Alloc_error error) -> Result {
