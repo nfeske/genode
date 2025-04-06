@@ -144,7 +144,7 @@ struct Igd::Device
 
 		Alloc_result try_alloc(size_t size, Cache) override
 		{
-			return { *this, alloc(size), size };
+			return { *this, { alloc(size), size } };
 		}
 
 	} _pci_backend_alloc;
