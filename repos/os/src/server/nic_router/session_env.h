@@ -156,7 +156,7 @@ class Genode::Session_env : public Ram_allocator,
 		 ** Region_map **
 		 ****************/
 
-		Attach_result attach(Dataspace_capability ds, Attr const &attr) override
+		Attach_result attach(Dataspace_capability ds, Region_map::Attr const &attr) override
 		{
 			enum { MAX_SHARED_CAP = 2 };
 			enum { MAX_SHARED_RAM = 4 * 4096 };
