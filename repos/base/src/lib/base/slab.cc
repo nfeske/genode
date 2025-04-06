@@ -264,6 +264,9 @@ Slab::New_slab_block_result Slab::_new_slab_block()
 
 void Slab::_release_backing_store(Block *block)
 {
+	if (!block)
+		return;
+
 	if (block->avail() != _entries_per_block)
 		error("freeing non-empty slab block");
 
