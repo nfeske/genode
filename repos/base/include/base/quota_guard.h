@@ -175,7 +175,7 @@ class Genode::Quota_guard
 
 	public:
 
-		using Limit_exceeded = UNIT::Exhausted_exception;
+		using Limit_exceeded = typename UNIT::Exhausted_exception;
 
 		Quota_guard() { }
 		Quota_guard(UNIT amount) { upgrade(amount); }
