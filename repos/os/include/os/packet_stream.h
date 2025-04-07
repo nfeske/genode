@@ -724,6 +724,7 @@ class Genode::Packet_stream_source : private Packet_stream_base
 			return _packet_alloc.alloc_aligned(size, align).convert<Alloc_packet_result>(
 
 				[&] (Range_allocator::Allocation &a) {
+					a.deallocate = false;
 					return Packet_descriptor((Genode::off_t)a.ptr, size); },
 
 				[&] (Alloc_error) {
