@@ -131,24 +131,29 @@ class Genode::Session_env : public Ram_allocator,
 
 			size_t const ds_size = align_addr(size, DS_SIZE_GRANULARITY_LOG2);
 
-			bool ok = false;
+			Alloc_result result = Alloc_error::DENIED;
 			try {
-				_consume(ds_size, MAX_SHARED_RAM, 1, MAX_SHARED_CAP, [&] { ok = true; });
+				_consume(ds_size, MAX_SHARED_RAM, 1, MAX_SHARED_CAP, [&]
+				{
+					result = _env.ram().try_alloc(ds_size, cache);
+				});
 			}
-			catch (Out_of_ram)  { return Alloc_error::OUT_OF_RAM; }
+			catch (Out_of_ram)  { return Alloc_error::OUT_OF_RAM;  }
 			catch (Out_of_caps) { return Alloc_error::OUT_OF_CAPS; }
 
-			if (ok)
-				return _env.ram().try_alloc(ds_size, cache);
-
-			return Alloc_error::DENIED;
+			return result.convert<Alloc_result>(
+				[&] (Allocation &a) -> Alloc_result {
+					a.deallocate = false;
+					return { *this, a };
+				},
+				[&] (Alloc_error e) { return e; });
 		}
 
-		void _free(Ram::Allocation &allocation) override
+
+		void _free(Allocation &ds) override
 		{
-			_replenish(_env.pd().ram_size(allocation.cap), 1, [&] () {
-				_env.ram()._free(allocation);
-			});
+			_replenish(_env.pd().ram_size(ds.cap), 1, [&] {
+				_env.ram().free(ds.cap); });
 		}
 
 
