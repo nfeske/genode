@@ -382,6 +382,7 @@ _ZTVN6Genode6ThreadE D 48
 _ZTVN6Genode7ConsoleE D 48
 _ZThn104_N5Timer10Connection11set_timeoutEN6Genode12MicrosecondsERNS1_15Timeout_handlerE T
 _ZThn104_N5Timer10Connection9curr_timeEv T
+_ZThn4_N6Genode11Sliced_heap9try_allocEm T
 _ZThn4_N6Genode4Heap9try_allocEm T
 _ZThn4_N6Genode4HeapD0Ev T
 _ZThn4_N6Genode4HeapD1Ev T
