@@ -51,10 +51,23 @@ struct Genode::Ram_allocator : Ram::Constrained_allocator
 			[&] (Ram::Error e) -> Ram::Capability { throw_exception(e); });
 	}
 
+	size_t _legacy_dataspace_size(Capability<Dataspace>);
+
 	void free(Ram::Capability cap)
 	{
-		/* deallocate via '~Ram::Allocation' */
-		Allocation { *this, { cap, 0 } };
+		/*
+		 * Deallocate via '~Ram::Allocation'.
+		 *
+		 * The real dataspace is merely needed for the quota tracking by
+		 * 'Accounted_ram_allocator::_free'.
+		 */
+		Allocation { *this, { cap, _legacy_dataspace_size(cap) } };
+	}
+
+	void free(Ram::Capability cap, size_t size)
+	{
+		/* avoid call of '_legacy_dataspace_size' when size is known */
+		Allocation { *this, { cap, size } };
 	}
 
 	/* type aliases used for API transition */

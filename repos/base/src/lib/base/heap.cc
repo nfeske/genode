@@ -295,7 +295,7 @@ void Heap::free(void *addr, size_t)
 	_quota_used -= ds->size;
 
 	_ds_pool.remove_and_free(*ds);
-	_alloc->free(ds);
+	_alloc->free(ds, ds->size);
 }
 
 

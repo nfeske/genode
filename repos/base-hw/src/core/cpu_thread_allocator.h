@@ -64,7 +64,7 @@ class Core::Cpu_thread_allocator : public Allocator
 				[&] (Alloc_error e) { return e; });
 		}
 
-		void _free(Allocation &a) override { _alloc._free(a); }
+		void _free(Allocation &a) override { _alloc.free(a.ptr, a.num_bytes); }
 
 
 		/****************************************
