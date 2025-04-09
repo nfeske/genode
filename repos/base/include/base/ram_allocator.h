@@ -61,7 +61,7 @@ struct Genode::Ram_allocator : Ram::Constrained_allocator
 		 * The real dataspace is merely needed for the quota tracking by
 		 * 'Accounted_ram_allocator::_free'.
 		 */
-		Allocation { *this, { cap, _legacy_dataspace_size(cap) } };
+		Allocation { *this, { cap, 0 } };
 	}
 
 	void free(Ram::Capability cap, size_t size)

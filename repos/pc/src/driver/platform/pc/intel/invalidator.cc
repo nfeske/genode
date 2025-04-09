@@ -14,6 +14,7 @@
 /* local includes */
 #include <intel/invalidator.h>
 #include <intel/io_mmu.h>
+#include <os/backtrace.h>
 
 /**
  * Clear IOTLB.
@@ -131,7 +132,15 @@ void Intel::Queued_invalidator::invalidate_irq(unsigned idx, bool global)
 	_next();
 
 	/* wait for completion */
-	while (!_empty());
+	unsigned count = 0;
+	while (!_empty()) {
+		if (count++ > 1000) {
+			log("invalidate_irq count=", count);
+			backtrace();
+			count = 0;
+		}
+	};
+//	while (!_empty());
 }
 
 
@@ -160,6 +169,14 @@ void Intel::Queued_invalidator::invalidate_iotlb(Domain_id domain_id)
 	_next();
 
 	/* wait for completion */
+	unsigned count = 0;
+	while (!_empty()) {
+		if (count++ > 1000) {
+			log("invalidate_iotlb count=", count);
+			backtrace();
+			count = 0;
+		}
+	};
 	while (!_empty());
 
 	/*
@@ -187,6 +204,7 @@ void Intel::Queued_invalidator::invalidate_iotlb(Domain_id domain_id)
  */
 void Intel::Queued_invalidator::invalidate_context(Domain_id domain_id, Pci::rid_t rid)
 {
+	log("invalidate_context called");
 	unsigned requested_scope = Descriptor::Granularity::GLOBAL;
 	if (domain_id.valid())
 		requested_scope = Descriptor::Granularity::DOMAIN;
@@ -204,7 +222,17 @@ void Intel::Queued_invalidator::invalidate_context(Domain_id domain_id, Pci::rid
 	_next();
 
 	/* wait for completion */
-	while (!_empty());
+	log("invalidate_context: while !empty");
+	unsigned count = 0;
+	while (!_empty()) {
+		if (count++ > 1000) {
+			log("invalidate_context count=", count);
+			backtrace();
+			for (;;);
+			count = 0;
+		}
+	};
+	log("return from invalidate_context called");
 }
 
 

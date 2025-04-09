@@ -14,5 +14,4 @@ launcher: audio mixer system_clock acpi_support recall_fs touchpad
 depot: genodelabs cnuke alex-ab mstein nfeske cproc chelmuth jschlatow
 depot: ssumpf skalk atopia
 
-# preconfigured example scenarios
-presets: empty nano3d window_manager falkon_web_browser goa_testbed
+build: core lib/ld driver/platform app/top init driver/ahci

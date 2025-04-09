@@ -74,10 +74,16 @@ void Intel::Io_mmu::Domain<TABLE>::add_range(Range const & range,
 	Page_flags flags { RW, NO_EXEC, USER, NO_GLOBAL,
 	                   RAM, Genode::CACHED };
 
+	log("Io_mmu::add_range: ", Hex_range( vaddr, size ));
+	try {
 	_translation_table.insert_translation(vaddr, paddr, size, flags,
 	                                      _table_allocator,
 	                                      !_intel_iommu.coherent_page_walk(),
 	                                      _intel_iommu.supported_page_sizes());
+	} catch (...) {
+		warning("exception by _translation_table.insert_translation");
+		throw;
+	}
 
 	if (_skip_invalidation)
 		return;
@@ -93,6 +99,8 @@ void Intel::Io_mmu::Domain<TABLE>::add_range(Range const & range,
 template <typename TABLE>
 void Intel::Io_mmu::Domain<TABLE>::remove_range(Range const & range)
 {
+	log("Io_mmu::remove: ", Hex_range( range.start, range.size ));
+
 	_translation_table.remove_translation(range.start, range.size,
 	                                      _table_allocator,
 	                                      !_intel_iommu.coherent_page_walk());
@@ -386,6 +394,7 @@ void Intel::Io_mmu::_init()
 
 	if (read<Extended_capability::Qi>()) {
 		/* enable queued invalidation if supported */
+		log("construct _queued_invalidator at base=", Hex(base()));
 		_queued_invalidator.construct(_env, base() + 0x80);
 		_global_command<Global_command::Qie>(true);
 	} else {

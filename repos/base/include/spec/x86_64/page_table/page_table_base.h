@@ -293,8 +293,13 @@ class Genode::Page_directory
 				/* insert translation */
 				alloc.template with_table<ENTRY>(Td::Pa::masked(desc),
 					[&] (ENTRY & table) {
+						try {
 						table.insert_translation(vo - (vo & PAGE_MASK), pa, size,
 						                         flags, alloc, flush, supported_sizes);
+						} catch (...) {
+							error("exception in Page_table_allocator");
+							throw;
+						}
 					},
 					[&] {
 						error("Unable to get mapped table address for ",

@@ -211,6 +211,7 @@ class Intel::Queued_invalidator : public Invalidator
 		};
 
 		bool _empty() {
+//			log("Head=", _queue_mmio.read<Queue_mmio::Head>(), " Tail=", _queue_mmio.read<Queue_mmio::Tail>());
 			return _queue_mmio.read<Queue_mmio::Head>() == _queue_mmio.read<Queue_mmio::Tail>(); }
 
 		Descriptor::access_t *_tail() {

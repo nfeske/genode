@@ -232,6 +232,7 @@ void Session_component::update_devices_rom()
 
 void Session_component::enable_device(Device const & device)
 {
+	log("enable_device called for ", _label);
 	auto fn = [&] (Driver::Io_mmu::Domain & domain) {
 		device.for_pci_config([&] (Device::Pci_config const & cfg) {
 			Attached_io_mem_dataspace io_mem { _env, cfg.addr, 0x1000 };
@@ -243,6 +244,7 @@ void Session_component::enable_device(Device const & device)
 
 	auto default_domain_fn = [&] () { _domain_registry.with_default_domain(fn); };
 
+	log("enable_device: for_each_io_mmu");
 	device.for_each_io_mmu(
 		/* non-empty list fn */
 		[&] (Device::Io_mmu const & io_mmu) {
@@ -254,6 +256,7 @@ void Session_component::enable_device(Device const & device)
 	);
 
 	pci_enable(_env, device);
+	log("enable_device completed");
 }
 
 
@@ -331,6 +334,7 @@ void Session_component::release_device(Capability<Platform::Device_interface> de
 Genode::Ram_dataspace_capability
 Session_component::alloc_dma_buffer(size_t const size, Cache cache)
 {
+	log("alloc_dma_buffer for ", _label, " size=", size);
 	struct Guard {
 
 		Accounted_ram_allocator &_env_ram;
@@ -355,16 +359,21 @@ Session_component::alloc_dma_buffer(size_t const size, Cache cache)
 
 		~Guard()
 		{
+			log("alloc_dma_buffer::~Guard");
 			if (_cleanup && buf) {
 				/* make sure to remove buffer range from all domains */
 				_domain_registry.for_each_domain([&] (Io_mmu::Domain & domain) {
+					log("domain.remove_range");
 					domain.remove_range({ buf->dma_addr, buf->size });
+					log("returned from domain.remove_range");
 				});
 				destroy(_heap, buf);
 			}
 
 			if (_cleanup && ram_cap.valid())
 				_env_ram.free(ram_cap);
+
+			log("end of guard");
 		}
 	} guard { _env_ram, heap(), _domain_registry };
 
@@ -383,21 +392,31 @@ Session_component::alloc_dma_buffer(size_t const size, Cache cache)
 
 	try {
 		guard.ram_cap = _env_ram.alloc(size, cache);
-	} catch (Ram_allocator::Denied) { }
+	} catch (Ram_allocator::Denied) { warning("_env_ram.alloc denied"); }
+	catch (...) { warning("exception from _env_ram.alloc"); throw; }
+
 
 	if (!guard.ram_cap.valid()) return guard.ram_cap;
 
 
 	try {
+		log("call _dma_allocator.alloc_buffer");
 		Dma_buffer & buf = _dma_allocator.alloc_buffer(guard.ram_cap,
 		                                               _env.pd().dma_addr(guard.ram_cap),
 		                                               _env.pd().ram_size(guard.ram_cap));
+		log("returned from _dma_allocator.alloc_buffer");
 		guard.buf = &buf;
 
 		_domain_registry.for_each_domain([&] (Io_mmu::Domain & domain) {
+			log("call domain.add_range");
+			try {
 			domain.add_range({ buf.dma_addr, buf.size }, buf.phys_addr, buf.cap);
+			} catch (...) { warning("exception from domain.add_range"); throw; };
+			log("return from call domain.add_range");
 		});
 	} catch (Dma_allocator::Out_of_virtual_memory) { }
+
+	log("call guard.disarm");
 
 	guard.disarm();
 	return guard.ram_cap;
