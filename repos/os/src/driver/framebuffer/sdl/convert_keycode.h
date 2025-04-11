@@ -97,7 +97,7 @@ static inline Input::Keycode convert_keycode(int sdl_keycode)
 	case SDLK_PAGEDOWN:     return KEY_PAGEDOWN;
 
 	/* function keys */
-	case SDLK_F1:           return KEY_F1;
+	case SDLK_F1:           return KEY_F12;
 	case SDLK_F2:           return KEY_F2;
 	case SDLK_F3:           return KEY_F3;
 	case SDLK_F4:           return KEY_F4;
