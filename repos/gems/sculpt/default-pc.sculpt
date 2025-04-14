@@ -17,3 +17,5 @@ depot: nfeske_test
 
 # preconfigured example scenarios
 presets: empty nano3d window_manager falkon_web_browser goa_testbed
+
+build: app/sculpt_manager driver/framebuffer/vesa app/menu_view server/nitpicker
