@@ -789,17 +789,31 @@ struct Sculpt::Main : Input_event_handler,
 		return false;
 	}
 
+	/*
+	 * The seq-number check ensures the freshness of the _popup_touched and
+	 * _popup_hovered information.
+	 */
+	static bool _seq_number_attr_matches(Xml_node const &node, Input::Seq_number seq)
+	{
+		return node.has_attribute("seq_number")
+		    && (node.attribute_value("seq_number", 0U) == seq.value);
+	}
+
 	void _handle_touch_report(Xml_node const &touch)
 	{
-		_popup_touched = _matches_popup_dialog(touch);
-		_observed_touch_seq_number = { touch.attribute_value("seq_number", 0U) };
+		_popup_touched = Popup_touched::MAYBE;
+		if (_seq_number_attr_matches(touch, _emitted_touch_seq_number))
+			_popup_touched = _matches_popup_dialog(touch) ? Popup_touched::YES
+			                                              : Popup_touched::NO;
 		_try_handle_popup_close();
 	}
 
 	void _handle_click_report(Xml_node const &click)
 	{
-		_popup_clicked = _matches_popup_dialog(click);
-		_observed_click_seq_number = { click.attribute_value("seq_number", 0U) };
+		_popup_clicked = Popup_clicked::MAYBE;
+		if (_seq_number_attr_matches(click, _emitted_click_seq_number))
+			_popup_clicked = _matches_popup_dialog(click) ? Popup_clicked::YES
+			                                              : Popup_clicked::NO;
 		_try_handle_popup_close();
 	}
 
@@ -981,14 +995,12 @@ struct Sculpt::Main : Input_event_handler,
 
 	/* used to correlate clicks with the matching hover report */
 	Input::Seq_number _emitted_click_seq_number  { };
-	Input::Seq_number _observed_click_seq_number { };
 
 	/* used to correlate touch event with touched-session info from nitpicker */
 	Input::Seq_number _emitted_touch_seq_number  { };
-	Input::Seq_number _observed_touch_seq_number { };
 
-	bool _popup_touched { };
-	bool _popup_clicked { };
+	enum class Popup_touched { MAYBE, NO, YES } _popup_touched { };
+	enum class Popup_clicked { MAYBE, NO, YES } _popup_clicked { };
 
 	/**
 	 * Input_event_handler interface
@@ -1009,11 +1021,11 @@ struct Sculpt::Main : Input_event_handler,
 		 */
 		if (ev.key_press(Input::BTN_LEFT)) {
 			_emitted_click_seq_number = _global_input_seq_number;
-			_try_handle_popup_close();
+			_popup_clicked = Popup_clicked::MAYBE;
 		}
 		if (ev.touch()) {
 			_emitted_touch_seq_number = _global_input_seq_number;
-			_try_handle_popup_close();
+			_popup_touched = Popup_touched::MAYBE;
 		}
 
 		bool need_generate_dialog = false;
@@ -1209,22 +1221,11 @@ struct Sculpt::Main : Input_event_handler,
 		if (!Popup::VISIBLE)
 			return;
 
-		bool popup_close = false;
+		bool close = false;
+		if (_popup_touched == Popup_touched::NO) close = true;
+		if (_popup_clicked == Popup_clicked::NO) close = true;
 
-		/*
-		 * The seq-number check ensures the freshness of the _popup_touched and
-		 * _popup_hovered information, observed reports.
-		 */
-
-		if (_emitted_touch_seq_number.value == _observed_touch_seq_number.value)
-			if (!_popup_touched)
-				popup_close = true;
-
-		if (_emitted_click_seq_number.value == _observed_click_seq_number.value)
-			if (!_popup_clicked)
-				popup_close = true;
-
-		if (popup_close) {
+		if (close) {
 			_popup_closed_seq_number = _popup_opened_seq_number;
 			_close_popup_dialog();
 			discard_construction();
