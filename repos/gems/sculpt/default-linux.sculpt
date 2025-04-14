@@ -13,3 +13,4 @@ import: pkg/drivers_interactive-linux
 build: app/sculpt_manager app/touch_keyboard
 build: driver/framebuffer/sdl
 build: server/nitpicker
+build: app/menu_view
