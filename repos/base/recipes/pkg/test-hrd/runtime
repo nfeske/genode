@@ -1,4 +1,4 @@
-<runtime ram="4M" caps="100" binary="test-hrd_node">
+<runtime ram="4M" caps="100" binary="test-hrd">
 
 	<fail after_seconds="20"/>
 	<succeed>
@@ -8,7 +8,7 @@
 
 	<content>
 		<rom label="ld.lib.so"/>
-		<rom label="test-hrd_node"/>
+		<rom label="test-hrd"/>
 	</content>
 
 	<config/>
