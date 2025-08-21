@@ -194,133 +194,15 @@ class Genode::Hrd_node : Noncopyable
 		/* let '_for_each_sub_node' be a regular function, not a template */
 		using With_indent_span = Callable<void, Indent const &, Span const &>;
 
-		static void _for_each_sub_node(Span const &bytes, With_indent_span::Ft const &fn)
-		{
-			struct Node
-			{
-				char const *start, *last;
+		static void _for_each_sub_node(Span const &, With_indent_span::Ft const &);
 
-				Indent indent;
-				bool   enabled;
+		static inline void _for_each_attr(Span const &, auto const &);
 
-				size_t num_bytes()        const { return last - start + 1; };
-				bool   contains(Indent i) const { return i.value > indent.value; }
+		using With_attribute = Callable<void, Attribute const &>;
 
-			} node { nullptr, nullptr, { ~0U }, false };
+		void _for_each_attribute(With_attribute::Ft const &fn) const;
 
-			auto finish = [&]
-			{
-				if (node.start && node.last && node.enabled)
-					fn(node.indent, Span(node.start, node.num_bytes()));
-			};
-
-			auto start = [&] (Indent indent, bool enabled, Span const &seg)
-			{
-				finish();
-				node = { .start   = seg.start,
-				         .last    = seg.start + seg.num_bytes - 1,
-				         .indent  = indent,
-				         .enabled = enabled };
-			};
-
-			auto extend = [&] (Span const &seg)
-			{
-				node.last = seg.start + seg.num_bytes - 1;
-			};
-
-			_for_each_segment(bytes,
-				[&] (Prefix const  prefix, Indent const indent, Span const &seg) {
-					if (prefix.node_or_xnode() && !node.contains(indent))
-						start(indent, prefix.node(), seg);
-					else
-						extend(seg); });
-			finish();
-		}
-
-		using With_tag_value = Callable<void, Span const &, Span const &>;
-
-		static void _for_each_attr(Span const &bytes, With_tag_value::Ft const &fn)
-		{
-			auto with_tag_value = [] (Span const &s, auto const &fn)
-			{
-				_with_ident(s, [&] (Span const &tag, Span const &remain) {
-					if (tag.num_bytes && remain.num_bytes && remain.start[0] == ':')
-						remain.cut(' ', [&] (Span const &, Span const &value) {
-							_with_trimmed(value, [&] (Span const &trimmed_value) {
-								fn(tag, trimmed_value); }); }); });
-			};
-
-			auto tag_exists = [] (Span const &seg)
-			{
-					bool result = false;
-					_with_ident(seg, [&] (Span const &tag, Span const &remain) {
-						result = tag.num_bytes && remain.start[0] == ':'; });
-					return result;
-			};
-
-			bool done = false;
-			_for_each_segment(bytes,
-				[&] (Prefix const prefix, Indent const, Span const &seg) {
-					if (done)
-						return;
-
-					if (prefix.type == Prefix::TOP)
-						seg.cut(' ', [&] (Span const &, Span const &seg) {
-							_with_trimmed(seg, [&] (Span const &seg) {
-								if (tag_exists(seg))
-									with_tag_value(seg, fn);
-								else if (seg.num_bytes)
-									fn(Span("name", 4), seg);
-							});
-						});
-					else if (prefix.type == Prefix::OTHER)
-						_with_trimmed(seg, [&] (Span const &seg) {
-							with_tag_value(seg, fn); });
-					else
-						done = true;
-			});
-		}
-
-		/**
-		 * Validate presence of node type and end marker for top-level node
-		 */
-		static Const_byte_range_ptr _validated(Const_byte_range_ptr const &bytes)
-		{
-			bool valid = false;
-			_with_type(bytes, [&] (Span const &t) { valid = (t.num_bytes > 0); });
-			if (!valid)
-				return { nullptr, 0 };
-
-			/*
-			 * Scan for end marker, reject node in the presence of control
-			 * characters, except:
-			 *
-			 * - Tabs may appear within raw segments or comments
-			 * - CR is followed by LF as part of a line ending
-			 */
-			char const control_mask = ~0x1f;
-			char next = bytes.start[0];
-			enum { START, ACCEPT, REJECT } tabs { };
-			for (unsigned n = 1; n < bytes.num_bytes; n++) {
-				char const curr = next;
-				next = bytes.start[n];
-
-				if (tabs == START && (curr == ':' || curr == '.')) tabs = ACCEPT;
-				if (tabs == START && (curr != ' '))                tabs = REJECT;
-				if (curr == '|' || curr == '\n')                   tabs = START;
-
-				if (!(curr & control_mask)) {
-					if (curr == '\n' && _minus(next)) /* end marker */
-						return { bytes.start, n + 1 };
-
-					if (curr == '\n')                   continue;
-					if (curr == '\r' && next == '\n')   continue;
-					if (curr == '\t' && tabs == ACCEPT) continue;
-					break;
-				}
-			}
-			return { nullptr, 0 };
-		}
+		static inline Const_byte_range_ptr _validated(Const_byte_range_ptr const &);
 
 		/*
 		 * Member variables and methods
@@ -349,17 +231,9 @@ class Genode::Hrd_node : Noncopyable
 			return fn(Hrd_node { indent, { start, num_bytes } });
 		}
 
-		void _with_attribute(char const *type, auto const &fn) const
-		{
-			size_t const type_len = strlen(type);
+		using With_tag_value = Callable<void, Span const &, Span const &>;
 
-			bool found = false;
-			_for_each_attr(_bytes, With_tag_value::Fn {
-				[&] (Span const &tag, Span const &value) {
-					if (!found && tag.equals({ type, type_len })) {
-						fn(tag, value);
-						found = true; } } });
-		}
+		void _with_tag_value(char const *type, With_tag_value::Ft const &fn) const;
 
 		Const_byte_range_ptr _copied(Byte_range_ptr const &dst) const
 		{
@@ -374,7 +248,7 @@ class Genode::Hrd_node : Noncopyable
 
 	public:
 
-		Hrd_node(Const_byte_range_ptr const &bytes) : _bytes(_validated(bytes)) { }
+		Hrd_node(Const_byte_range_ptr const &);
 
 		Hrd_node(Hrd_node const &other, Byte_range_ptr const &dst)
 		:
@@ -398,10 +272,7 @@ class Genode::Hrd_node : Noncopyable
 
 		void for_each_attribute(auto const &fn) const
 		{
-			_for_each_attr(_bytes, With_tag_value::Fn {
-				[&] (Span const &tag, Span const &value) {
-					fn(Attribute { .tag   = { tag  .start, tag  .num_bytes },
-					               .value = { value.start, value.num_bytes } }); } });
+			_for_each_attribute(With_attribute::Fn { fn });
 		}
 
 		unsigned num_sub_nodes() const
@@ -445,28 +316,15 @@ class Genode::Hrd_node : Noncopyable
 		}
 
 		template <typename T>
-		T attribute_value(char const *type, T const default_value) const
-		{
-			T result = default_value;
-			_with_attribute(type, [&] (Span const &, Span const &value) {
-				if (value.num_bytes)
-					ascii_to(value.start, result); });
-			return result;
-		}
+		T attribute_value(char const *type, T const default_value) const;
 
 		template <size_t N>
-		String<N> attribute_value(char const *type, String<N> const default_value) const
-		{
-			String<N> result = default_value;
-			_with_attribute(type, [&] (Span const &, Span const &value) {
-				result = { Cstring(value.start, value.num_bytes) }; });
-			return result;
-		}
+		String<N> attribute_value(char const *type, String<N> const default_value) const;
 
 		bool has_attribute(char const *type) const
 		{
 			bool result = false;
-			_with_attribute(type, [&] (auto &, auto &) { result = true; });
+			_with_tag_value(type, With_tag_value::Fn {[&] (auto &, auto &) { result = true; } });
 			return result;
 		}
 
@@ -512,6 +370,30 @@ class Genode::Hrd_node : Noncopyable
 
 		void print(Output &out) const { out.out_string(_bytes.start, _bytes.num_bytes); }
 };
+
+
+template <typename T>
+T Genode::Hrd_node::attribute_value(char const *type, T const default_value) const
+{
+	T result = default_value;
+	_with_tag_value(type, With_tag_value::Fn {
+		[&] (Span const &, Span const &value) {
+			if (value.num_bytes)
+				ascii_to(value.start, result); } });
+	return result;
+}
+
+
+template <Genode::size_t N>
+Genode::String<N>
+Genode::Hrd_node::attribute_value(char const *type, String<N> const default_value) const
+{
+	String<N> result = default_value;
+	_with_tag_value(type, With_tag_value::Fn {
+		[&] (Span const &, Span const &value) {
+			result = { Cstring(value.start, value.num_bytes) }; } });
+	return result;
+}
 
 
 class Genode::Hrd_generator : Noncopyable
