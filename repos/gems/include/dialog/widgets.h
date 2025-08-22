@@ -88,8 +88,6 @@ struct Dialog::Action_button : Widget<Button>
 		bool const selected = _seq_number == s.hover.seq_number,
 		           hovered  = (s.hovered() && (!s.dragged() || selected));
 
-		log("Action_button ", s.id, " hovered=", hovered, " at: ", s.hover._location);
-
 		if (selected) s.attribute("selected", "yes");
 		if (hovered)  s.attribute("hovered",  "yes");
 

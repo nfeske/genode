@@ -50,11 +50,8 @@ void Touch_keyboard_widget::Row::view(Scope<Hbox> &s, Attr const &attr) const
 
 void Touch_keyboard_widget::view(Scope<Vbox> &s) const
 {
-	bool first = true;
 	_with_current_map(*this, [&] (Map const &map) {
 		map.rows.for_each([&] (Map::Hosted_row const &row) {
-			if (!first) return;
-			first = false;
 			s.widget(row, Row::Attr {
 				.default_key_min_ex = _default_key_min_ex }); }); });
 }

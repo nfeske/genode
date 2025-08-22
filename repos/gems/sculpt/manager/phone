@@ -1,3 +1,1 @@
-<config verbose_modem="no">
-	<target driver="ram_fs"/>
-</config>
+<config verbose_modem="no"/>

@@ -263,8 +263,6 @@ void Menu_view::Dialog::_handle_dialog()
 	if (dialog.has_type("empty"))
 		return;
 
-//	log("dialog: ", dialog);
-
 	_root_widget.update(dialog);
 	_root_widget.size(_root_widget_size());
 
