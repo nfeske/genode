@@ -25,6 +25,7 @@ proc hrd_enabled    { hrd  } { return [lindex $hrd  2] }
 proc hrd_preface    { hrd  } { return [lindex $hrd  3] }
 proc hrd_attributes { hrd  } { return [lindex $hrd  4] }
 proc hrd_children   { hrd  } { return [lindex $hrd  5] }
+proc hrd_quoted     { hrd  } { return [lindex $hrd  6] }
 proc attr_line      { attr } { return [lindex $attr 0] }
 proc attr_tag       { attr } { return [lindex $attr 1] }
 proc attr_value     { attr } { return [lindex $attr 2] }
@@ -562,8 +563,10 @@ proc print_hrd_node_recursively { indent hrd { last 0 } } {
 		# raw
 		set type [hrd_type $hrd]
 		if {[hrd_type $child_hrd] == ":"} {
-			puts "$indent: [hrd_attributes $child_hrd]"
-			return }
+			foreach quoted_line [hrd_quoted $child_hrd] {
+				puts "$indent: $quoted_line" }
+			return
+		}
 
 		set sub_node_indent "$indent[hrd_anchor $child_hrd] "
 		print_hrd_node_recursively $sub_node_indent $child_hrd $last
@@ -596,6 +599,22 @@ proc _parse_xml { type pattern replace xml_var id_var info_var } {
 }
 
 
+proc _xml_subst { } { return { { {>}  {&gt;}   }
+                               { {<}  {&lt;}   }
+                               { {\&} {&amp;}  }
+                               { {\"} {&quot;} }
+                               { {'}  {&apos;} } } }
+
+
+proc _xml_decoded { text } {
+
+	foreach subst [_xml_subst] {
+		regsub -all [lindex $subst 1] $text [lindex $subst 0] text }
+
+	return $text
+}
+
+
 proc _hrd_from_xml_rec { text info_var } {
 
 	upvar $info_var info
@@ -616,11 +635,17 @@ proc _hrd_from_xml_rec { text info_var } {
 		set hrd_type     ""
 		set hrd_attrs    {}
 		set hrd_children {}
+		set hrd_quoted   {}
 
-		if {$child_type == "content"} {
+		if {$child_type == "quoted"} {
 			set trimmed [string trim $child_text]
 			if {[string length $trimmed] > 0} {
-				error "XML node content is not supported: '$trimmed'" } }
+				foreach line [split $child_text "\n"] {
+					set decoded [string trim [_xml_decoded $line]]
+					lappend result [list ":" 1 1 "" "" "" $decoded]
+				}
+			}
+		}
 
 		if {$child_type == "compound"} {
 
@@ -645,7 +670,7 @@ proc _hrd_from_xml_rec { text info_var } {
 
 		if {$child_type == "leaf"} {
 
-			set leaf_pattern {<([^\s>]+)((\s+([0-9 ]*))?)/>}
+			set leaf_pattern {<([^\s>]+)((\s+([0-9\s]*))?)/>}
 			if {![regexp $leaf_pattern $child_text match hrd_type xml_attrs]} {
 				regsub {><.*$} $child_text ">" err_text
 				error "unable to interpret XML tag: $err_text" }
@@ -664,7 +689,7 @@ proc _hrd_from_xml_rec { text info_var } {
 					lappend hrd_attrs [list 0 $tag $value] }
 			}
 
-			lappend result [list $hrd_type 1 1 "" $hrd_attrs $hrd_children]
+			lappend result [list $hrd_type 1 1 "" $hrd_attrs $hrd_children ""]
 		}
 	}
 
@@ -682,7 +707,7 @@ proc import_hrd_from_xml { xml } {
 
 	_parse_xml attr     {([\w0-9\-_]+ *= *"[^"]*")}   {$id}     xml id info
 	_parse_xml leaf     {(<\w[^>]*/>)}                {<$id>}   xml id info
-	_parse_xml content  {>([^<]+)<}                   {><$id><} xml id info
+	_parse_xml quoted   {>([^<]+)<}                   {><$id><} xml id info
 	_parse_xml compound {(<\w[^>]*>[<>0-9]*</[^>]*>)} {<$id>}   xml id info
 
 	return [lindex [_hrd_from_xml_rec [string trim $xml] info] 0]
@@ -712,9 +737,9 @@ proc print_hrd_as_xml { hrd { indent 0 } } {
 		puts "$indent_tabs<!-- [lindex [lindex $preface 0] 1] -->"
 	}
 
-	# raw content
+	# quoted content
 	if {$type == ":"} {
-		puts "$indent_tabs[hrd_attributes $hrd]"
+		puts "$indent_tabs[hrd_quoted $hrd]"
 		foreach child $children {
 			print_hrd_as_xml $child $indent }
 		return
@@ -941,7 +966,7 @@ proc with_node_query { node_query_hrd_var body } {
 # Split query definition info node path and args
 #
 # The query uses HRD syntax with both parts separated by ' | : '.
-# Technically, the args are represented as raw content of the
+# Technically, the args are represented as quoted content of the
 # leaf node of the query.
 #
 proc with_node_query_and_args { node_query_hrd_var args_var body } {
