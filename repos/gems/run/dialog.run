@@ -102,7 +102,7 @@ set fd [open [run_dir]/genode/focus w]
 puts $fd "<focus label=\"test-dialog -> \"/>"
 close $fd
 
-build { test/dialog app/menu_view lib/dialog }
+build { lib/ld test/dialog app/menu_view lib/dialog }
 
 build_boot_image [build_artifacts]
 

@@ -3,5 +3,8 @@
 		<service name="Gui"> <parent label="touch_keyboard"/> </service>
 		<service name="Event"> <parent label="global"/> </service>
 		<service name="File_system" label_prefix="fonts ->"> <child name="fonts_fs"/> </service>
+		<service name="ROM" label_last="menu_view"> <parent/> </service>
+		<service name="ROM" label_last="touch_keyboard"> <parent/> </service>
+		<service name="ROM" label_last="dialog.lib.so"> <parent/> </service>
 	</route>
 </launcher>

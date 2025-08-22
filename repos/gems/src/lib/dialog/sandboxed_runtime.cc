@@ -417,6 +417,7 @@ void Sandboxed_runtime::_handle_hover()
 	Name const orig_hovered_dialog = _hovered_dialog;
 
 	_hover_report_session->with_node([&] (Node const &hover) {
+		log("hover: ", hover);
 		_hover_seq_number = { hover.attribute_value("seq_number", 0U) };
 
 		hover.with_sub_node("dialog",
