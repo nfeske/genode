@@ -7,11 +7,13 @@ gpu:     intel
 import: pkg/sculpt_drivers-pc
 
 # selection of launcher-menu entries
-launcher: vm_fs shared_fs download_debug_info black_hole trace_logger
-launcher: audio mixer system_clock acpi_support recall_fs touchpad
+launcher: black_hole
+launcher: recall_fs
 
 # selection of accepted depot-package providers
 depot: genodelabs alex-ab chelmuth cnuke cproc jschlatow nfeske skalk ssumpf
 
 # preconfigured example scenarios
-presets: empty nano3d window_manager falkon_web_browser goa_testbed
+deploy: example
+
+build: lib/ld core
