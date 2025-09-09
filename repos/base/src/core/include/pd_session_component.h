@@ -28,6 +28,7 @@
 
 /* core includes */
 #include <accounted_core_ram.h>
+#include <core_ram.h>
 #include <platform_pd.h>
 #include <signal_broker.h>
 #include <system_control.h>

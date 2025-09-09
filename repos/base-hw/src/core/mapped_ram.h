@@ -17,9 +17,6 @@
 /* Genode includes */
 #include <base/allocator.h>
 
-/* base-internal includes */
-#include <base/internal/page_size.h>
-
 /* core includes */
 #include <map_local.h>
 #include <types.h>
