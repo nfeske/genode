@@ -17,6 +17,9 @@
 /* Genode includes */
 #include <base/allocator.h>
 
+/* base-internal includes */
+#include <base/internal/page_size.h>
+
 /* core includes */
 #include <map_local.h>
 #include <types.h>
@@ -56,7 +59,7 @@ class Core::Mapped_ram_allocator
 		Result alloc(size_t num_bytes, Align align)
 		{
 			size_t const page_rounded_size = align_addr(num_bytes, get_page_size_log2());
-			size_t const num_pages = page_rounded_size / get_page_size_log2();
+			size_t const num_pages = page_rounded_size / get_page_size();
 
 			align.log2 = max(align.log2, uint8_t(get_page_size_log2()));
 
@@ -78,6 +81,8 @@ class Core::Mapped_ram_allocator
 
 							phys.deallocate = false;
 							virt.deallocate = false;
+
+							memset(virt.ptr, 0, num_bytes);
 
 							return { *this, { num_pages, addr_t(phys.ptr), addr_t(virt.ptr) } };
 						},
