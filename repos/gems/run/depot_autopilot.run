@@ -642,6 +642,7 @@ set default_test_pkgs {
 	test-blit
 	test-callable
 	test-clipboard
+	test-depot_extract
 	test-depot_query_index
 	test-ds_ownership
 	test-dynamic_config
