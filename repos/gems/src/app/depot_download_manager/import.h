@@ -109,7 +109,7 @@ class Depot_download_manager::Import
 				BLESSED,   /* verification deliberately skipped */
 				STAGED,
 				EXTRACTED,
-				COMMITED, /* renamed from extract/<version> to <version> */
+				COMMITTED, /* renamed from extract/<version> to <version> */
 				MALFORMED  /* archive could not be extracted */
 			};
 
@@ -147,7 +147,7 @@ class Depot_download_manager::Import
 				case BLESSED:                  return "stage";  /* prepare extraction */
 				case STAGED:                   return "extract";
 				case EXTRACTED:                return "finalize";
-				case COMMITED:                 return "done";
+				case COMMITTED:                return "done";
 				case MALFORMED:                return "malformed";
 				};
 				return "";
@@ -309,7 +309,7 @@ class Depot_download_manager::Import
 
 		bool committed_archives_available() const
 		{
-			return _item_state_exists(Item::COMMITED);
+			return _item_state_exists(Item::COMMITTED);
 		}
 
 		template <typename FN>
@@ -456,7 +456,7 @@ class Depot_download_manager::Import
 		{
 			_items.for_each([&] (Item &item) {
 				if (item.state == Item::EXTRACTED)
-					item.state = Item::COMMITED; });
+					item.state = Item::COMMITTED; });
 		}
 
 		void report(Generator &g) const
