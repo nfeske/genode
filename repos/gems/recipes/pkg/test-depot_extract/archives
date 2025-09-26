@@ -1,6 +1,5 @@
 _/pkg/depot_download
 _/src/fs_query
-_/src/fs_tool
 _/src/vfs_lxip
 _/src/dummy
 _/src/sequence
