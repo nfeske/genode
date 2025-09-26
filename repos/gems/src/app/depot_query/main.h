@@ -351,6 +351,17 @@ struct Depot_query::Main
 		catch (File::Truncated_during_read)      { }
 	}
 
+	void _with_bin_path(Archive::Path const &src_path, auto const &fn) const
+	{
+		Archive::user(src_path).with_result([&] (Archive::User const &user) {
+			Archive::name(src_path).with_result([&] (Archive::Name const &name) {
+				Archive::version(src_path).with_result([&] (Archive::Version const &version) {
+					fn(Archive::Path { user, "/bin/", _architecture, "/", name, "/", version });
+				}, [&] (Archive::Unknown) { });
+			}, [&] (Archive::Unknown) { });
+		}, [&] (Archive::Unknown) { });
+	};
+
 	/**
 	 * Produce report that reflects the query version
 	 *
