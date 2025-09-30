@@ -480,6 +480,10 @@ class Genode::Hrd_generator : Noncopyable
 
 		bool _quoted = false;
 
+		struct Tabular;
+
+		struct { Tabular *_tabular_ptr = nullptr; };
+
 		void _attribute(char const *, char const *, size_t);
 
 		Hrd_generator(Byte_range_ptr const &bytes, char const *name, auto const &fn)
@@ -491,6 +495,7 @@ class Genode::Hrd_generator : Noncopyable
 
 		using Node_fn = Callable<void>;
 
+		void _print_node_type(char const *);
 		void _node(char const *, Node_fn::Ft const &);
 		void _copy(Hrd_node const &);
 
@@ -503,6 +508,8 @@ class Genode::Hrd_generator : Noncopyable
 			});
 			return quoted;
 		}
+
+		void _tabular(Node_fn::Ft const &);
 
 	public:
 
@@ -529,6 +536,8 @@ class Genode::Hrd_generator : Noncopyable
 		}
 
 		void node(char const *name) { node(name, [] { }); }
+
+		void tabular(auto const &fn) { _tabular(Node_fn::Fn { fn }); }
 
 		void attribute(char const *name, char const *str, size_t str_len)
 		{

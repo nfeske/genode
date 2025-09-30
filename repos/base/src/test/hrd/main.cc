@@ -223,8 +223,159 @@ void Component::construct(Genode::Env &env)
 				}, [] { });
 			}, [] { });
 		}).with_result(
-			[&] (size_t num_bytes) {
-				log("compound with appended node:\n", Cstring(buf, num_bytes)); },
+			[&] (size_t num_bytes) { log(Cstring(buf, num_bytes)); },
+			[&] (Buffer_error) { }
+		);
+	}
+
+	/*
+	 * tabular data aligned at nested nodes
+	 *
+	 * route
+	 * + service Timer                        | + child timer
+	 * + service Event                        | + child nitpicker
+	 * + service ROM | label: config          | + child config_fs_rom | label: managed/event_filter
+	 * + service ROM | label_prefix: keyboard | + child config_fs_rom
+	 * + service ROM | label: numlock.remap   | + child numlock_remap_rom
+	 * + service ROM | label: capslock        | + child report_rom
+	 * + service ROM                          | + parent
+	 * + service PD                           | + parent
+	 * + service CPU                          | + parent
+	 * + service LOG                          | + parent
+	 */
+	{
+		char buf[4*1024] { };
+		Generator::generate({ buf, sizeof(buf)}, "tabular_nested_nodes", [&] (Generator &g) {
+
+			auto gen_service_node = [&] (auto const &service, auto const &fn)
+			{
+				g.node("service", [&] {
+					g.attribute("name", service);
+					fn(); });
+			};
+
+			auto gen_named_node = [&] (auto const &type, auto const &name, auto const &fn)
+			{
+				g.node(type, [&] {
+					g.attribute("name", name);
+					fn(); });
+			};
+
+			auto gen_parent_route = [&] (auto const &service)
+			{
+				g.node("service", [&] {
+					g.attribute("name", service);
+					g.node("parent", [&] { }); });
+			};
+
+			g.node("start", [&] {
+				g.tabular([&] {
+
+					gen_service_node("Timer", [&] {
+						gen_named_node("child", "timer", [&] { }); });
+
+					gen_service_node("Event", [&] {
+						gen_named_node("child", "nitpicker", [&] { }); });
+
+					gen_service_node("ROM", [&] {
+						g.attribute("label", "config");
+						gen_named_node("child", "config_fs_rom", [&] {
+							g.attribute("label", "managed/event_filter"); }); });
+
+					gen_service_node("ROM", [&] {
+						g.attribute("label_prefix", "keyboard");
+						gen_named_node("child", "config_fs_rom", [&] { }); });
+
+					gen_service_node("ROM", [&] {
+						g.attribute("label", "numlock.remap");
+						gen_named_node("child", "numlock_remap_rom", [&] { }); });
+
+					gen_service_node("ROM", [&] {
+						g.attribute("label", "capslock");
+						gen_named_node("child", "report_rom", [&] { }); });
+
+					gen_parent_route("ROM");
+					gen_parent_route("PD");
+					gen_parent_route("CPU");
+					gen_parent_route("LOG");
+				});
+			});
+
+		}).with_result(
+			[&] (size_t num_bytes) { log(Cstring(buf, num_bytes)); },
+			[&] (Buffer_error) { }
+		);
+	}
+
+	/*
+	 * tabular data with aligned attributes
+	 *
+	 * Attributes are aligned as a table as long as all tags in a column have
+	 * the same length and all node types have the same length. Optional
+	 * trailing attributes are not aligned.
+	 */
+	{
+		char buf[4*1024] { };
+		Generator::generate({ buf, sizeof(buf)}, "tabular_attributes", [&] (Generator &g) {
+
+			auto gen_view = [&] (auto n, auto x, auto y, auto w, auto h)
+			{
+				g.node("view", [&] {
+					if (n >= 0) g.attribute("xpos",   x);
+					if (n >= 1) g.attribute("ypos",   y);
+					if (n >= 2) g.attribute("width",  w);
+					if (n >= 3) g.attribute("height", h);
+				});
+			};
+
+			g.node("views", [&] {
+				g.tabular([&] {
+					for (unsigned i = 0; i < 10; i++)
+						gen_view(min(9-i, 3u), 108 - i*12, i*i*i*i*i, (i*5454) % 99999, i);
+				});
+			});
+
+			auto gen_named_point = [&] (auto name, auto x, auto y)
+			{
+				g.node("point", [&] {
+					g.attribute("name", name);
+					g.attribute("xpos", x);
+					g.attribute("ypos", y);
+				});
+			};
+
+			g.node("points", [&] {
+				g.tabular([&] {
+					for (unsigned i = 0; i < 10; i++)
+						gen_named_point(i&1 ? "odd" : "even", 108 - i*12, i*i*i*i);
+				});
+			});
+
+			g.node("shapes", [&] {
+				g.tabular([&] {
+					g.node("shape", [&] {
+						g.attribute("name", "point");
+						g.attribute("x", 0);
+						g.attribute("y", 100);
+					});
+					g.node("shape", [&] {
+						g.attribute("name", "circle");
+						g.attribute("x", 100);
+						g.attribute("y", 1);
+						g.attribute("outer_radius", 75);
+					});
+					g.node("shape", [&] {
+						g.attribute("name", "rect");
+						g.attribute("x", 50);
+						g.attribute("y", 5);
+						g.attribute("w", 15);
+						g.attribute("h", 35);
+					});
+				});
+			});
+
+		}).with_result(
+			[&] (size_t num_bytes) { log(Cstring(buf, num_bytes)); },
 			[&] (Buffer_error) { }
 		);
 	}
