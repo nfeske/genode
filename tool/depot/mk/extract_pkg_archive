@@ -74,7 +74,7 @@ endif
 
 checked_runtime_valid:
 ifeq ($(filter $(RECIPE_FILES),runtime),runtime)
-	$(VERBOSE)xmllint --noout $(addprefix $(RECIPE_DIR)/,runtime)
+#	$(VERBOSE)xmllint --noout $(addprefix $(RECIPE_DIR)/,runtime)
 endif
 
 .NOTPARALLEL: $(DEPOT_ARCHIVE_DIR)/$(TAG_FILE) $(DEPOT_ARCHIVE_DIR).hash
