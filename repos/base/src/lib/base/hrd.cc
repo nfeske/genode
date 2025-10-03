@@ -333,17 +333,29 @@ struct Hrd_generator::Tabular : Noncopyable
 		curr.nodes[0].type = type;
 	}
 
+	size_t _printed_node_hpos() const
+	{
+		size_t pos = _leading_anchor_spaces;
+		for (unsigned i = 0; i <= print_pos.level; i++) {
+			if (i > 0) pos += 2; /* sparator between nodes (pipe, space) */
+			pos += layout.nodes[i].max_packed_width;
+		}
+		return pos;
+	}
+
 	size_t leading_spaces_before_node(Out_buffer const &out_buffer) const
 	{
-		size_t limit = _leading_anchor_spaces;
-		for (unsigned i = 0; i <= print_pos.level; i++) {
-			if (i > 0) limit += 2; /* sparator between nodes (pipe, space) */
-			limit += layout.nodes[i].max_packed_width;
-		}
-
-		size_t const used = out_buffer.used() - print_pos.anchor_out_offset;
+		size_t const limit = _printed_node_hpos();
+		size_t const used  = out_buffer.used() - print_pos.anchor_out_offset;
 
 		return limit > used ? limit - used : 1ul; /* enforce at least 1 space */
+	}
+
+	size_t leading_spaces_before_sibling_node() const
+	{
+		size_t const limit = _printed_node_hpos();
+
+		return limit > 0 ? limit - 1 : 0;
 	}
 
 	size_t leading_spaces_before_attr(Out_buffer const &out_buffer) const
@@ -444,16 +456,17 @@ void Hrd_generator::_attribute(char const *tag, char const *value, size_t val_le
 }
 
 
-void Hrd_generator::_print_node_type(char const *name)
+void Hrd_generator::_print_node_type(Span const &name)
 {
+	Cstring const name_str { name.start, name.num_bytes };
 	if (_node_state.indent.level == 0) {
-		print(_out_buffer, name);
+		print(_out_buffer, name_str);
 		return;
 	}
 
 	auto print_sub_node_at_new_line = [&]
 	{
-		print(_out_buffer, "\n", _node_state.indent, "+ ", name);
+		print(_out_buffer, "\n", _node_state.indent, "+ ", name_str);
 	};
 
 	if (!_tabular_ptr) {
@@ -467,7 +480,7 @@ void Hrd_generator::_print_node_type(char const *name)
 	Tabular &tabular = *_tabular_ptr;
 
 	if (tabular.phase == Tabular::Phase::GATHER_LAYOUT) {
-		Tabular::Node_type const node_type { strlen(name) };
+		Tabular::Node_type const node_type { name.num_bytes };
 		if (_node_state.indent.level == tabular.anchor_indent.level)
 			tabular.new_row(node_type);
 		else
@@ -486,7 +499,7 @@ void Hrd_generator::_print_node_type(char const *name)
 
 	/* print type of sub node aligned at table column */
 	print(_out_buffer, Spaces(tabular.leading_spaces_before_node(_out_buffer)),
-	                   "| + ", name);
+	                   "| + ", name_str);
 
 	if (tabular.print_pos.level < Tabular::MAX_LEVELS - 1)
 		tabular.print_pos.level++;
@@ -499,9 +512,7 @@ void Hrd_generator::_print_node_type(char const *name)
 
 void Hrd_generator::_node(char const *name, Node_fn::Ft const &fn)
 {
-	_quoted = false;
-
-	_print_node_type(name);
+	_print_node_type({ name, strlen(name) });
 
 	if (_out_buffer.exceeded())
 		return;
@@ -512,7 +523,8 @@ void Hrd_generator::_node(char const *name, Node_fn::Ft const &fn)
 
 		_node_state = { .indent      = { _node_state.indent.level + 1 },
 		                .attr_offset = _out_buffer.used(),
-		                .has_attr    = false };
+		                .has_attr    = false,
+		                .quote       = { } };
 
 		struct Guard
 		{
@@ -521,7 +533,6 @@ void Hrd_generator::_node(char const *name, Node_fn::Ft const &fn)
 			~Guard()
 			{
 				g._node_state = orig.node_state;
-				g._quoted = false;
 				if (!ok)
 					g._out_buffer.rewind(orig.used);
 			}
@@ -584,6 +595,58 @@ void Hrd_generator::_copy(Hrd_node const &node)
 			with_stripped_indentation(line, [&] (Span const &line) {
 				print(_out_buffer, "  ", Cstring(line.start, line.num_bytes)); });
 
+		first = false;
+	});
+}
+
+
+void Hrd_generator::_start_quoted_line()
+{
+	Node_state::Quote &quote = _node_state.quote;
+
+	if (_tabular_ptr) {
+		Tabular const &tabular = *_tabular_ptr;
+		if (quote.started) {
+			Spaces align { tabular.leading_spaces_before_sibling_node() };
+			print(_out_buffer, "\n", align, "| ");
+		} else /* attach first line to preceeding node */ {
+			Spaces align { tabular.leading_spaces_before_node(_out_buffer) };
+			print(_out_buffer, align, "| ");
+		}
+	} else {
+		print(_out_buffer, "\n", _node_state.indent);
+	}
+	print(_out_buffer, ":"); /* omit trailing space for empty line */
+
+	quote.started   = true;
+	quote.line_used = false;
+}
+
+
+void Hrd_generator::_append_quoted(Span const &s)
+{
+	/* suppress printing in table-layout gathering phase */
+	if (_tabular_ptr && _tabular_ptr->phase == Tabular::Phase::GATHER_LAYOUT)
+		return;
+
+	Node_state::Quote &quote = _node_state.quote;
+
+	if (!quote.started) _start_quoted_line();
+
+	bool first = true;
+	s.split('\n', [&] (Span const &fragment) {
+
+		/* subsequent fragments are always preceeded by a newline */
+		if (!first) _start_quoted_line();
+
+		/* append content to current line */
+		if (fragment.num_bytes) {
+			if (!quote.line_used) {
+				print(_out_buffer, " ");
+				quote.line_used = true;
+			}
+			print(_out_buffer, Cstring { fragment.start, fragment.num_bytes });
+		}
 		first = false;
 	});
 }
