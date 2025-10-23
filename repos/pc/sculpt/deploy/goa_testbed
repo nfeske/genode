@@ -105,7 +105,7 @@
 			<service name="Nic" label_prefix="telnet"> <child name="nic_router" label="telnet"/> </service>
 			<service name="Nic" label_prefix="http">   <child name="nic_router" label="http"/>   </service>
 			<service name="Nic" label_prefix="gdb">    <child name="nic_router" label="gdb"/>    </service>
-			<service name="Nic"> <!-- for test scenario -->  <child name="nic_router"/>          </service>
+			<service name="Nic"> <child name="nic_router"/>          </service>
 			<service name="Report" label="clipboard">     <child name="wm"/> </service>
 			<service name="Report" label="shape">         <child name="wm"/> </service>
 			<service name="ROM"    label="clipboard">     <child name="wm"/> </service>
