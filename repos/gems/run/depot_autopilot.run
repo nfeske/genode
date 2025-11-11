@@ -355,7 +355,9 @@ proc prepare_to_run_genode { } {
 
 		<start name="depot_autopilot" priority="-1" ram="8M">
 			<provides> <service name="LOG"/> </provides>
-			<config repeat="} $test_repeat {" arch="} [depot_spec] {" children_label_prefix="dynamic -> ">
+			<config repeat="} $test_repeat {" arch="} [depot_spec] {"
+			        blueprint_buffer="750K"
+			        children_label_prefix="dynamic">
 				<static>
 					<parent-provides>
 						<service name="ROM"/>
@@ -883,7 +885,7 @@ while {1} {
 			if {$previous_results != ""} {
 				append previous_results \012
 			}
-			append previous_results { } [format {%-31s %-6s  %7s} $last_test_pkg "failed " "$timeout.000"] {  reboot}
+			append previous_results { } [format {%-31s %-6s  %7s} $last_test_pkg "failed " "$timeout.00"] {  reboot}
 			incr previous_failed
 
 			# prepare system re-boot
