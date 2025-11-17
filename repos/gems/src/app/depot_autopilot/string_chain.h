@@ -33,9 +33,17 @@ struct Depot_autopilot::String_chain
 
 		static Byte_range_ptr _copied(Allocator &alloc, Span const &span)
 		{
-			char *dst = (char *)alloc.alloc(span.num_bytes);
-			memcpy(dst, span.start, span.num_bytes);
-			return { dst, span.num_bytes };
+			size_t const n = num_unescaped_bytes(Cstring(span.start, span.num_bytes));
+
+			Byte_range_ptr bytes { (char *)alloc.alloc(n), n };
+			bool const ok = bytes.as_output([&] (Output &out) {
+				Unescaped_output unescaped { out };
+				Genode::print(unescaped, Cstring(span.start, span.num_bytes));
+			}).ok();
+
+			if (!ok) warning("failed to strip escape sequence from log output");
+
+			return { bytes.start, bytes.num_bytes };
 		}
 
 		Element(Allocator &alloc, Span const &span)
