@@ -6,12 +6,13 @@ SDL_INC  = /usr/include/SDL2
 SDL_LIB  = sdl2
 
 #
-# SDL_3 support
+# Build with SDL3 if the SPECS defined in build/etc/specs.conf contains 'sdl3'
 #
-# CC_OPT += -DSDL3
-# SDL_INC = /usr/include/SDL3
-# SDL_LIB = sdl3
-#
+ifeq ($(filter-out $(SPECS),sdl3),)
+CC_OPT += -DSDL3
+SDL_INC = /usr/include/SDL3
+SDL_LIB = sdl3
+endif
 
 LX_LIBS  = $(SDL_LIB)
 INC_DIR += $(PRG_DIR) $(SDL_INC)
