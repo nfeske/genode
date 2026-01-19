@@ -49,5 +49,15 @@ schema runtime
     + attr label | type: any
     + attr as    | type: any | default:
 
-+ node config | + anything
++ node config  | + anything
+
++ node succeed
+  + attr after_seconds | type: positive | default:
+  + attr exit          | type: any      | default:
+  + quote
+
++ node fail
+  + attr after_seconds | type: positive | default:
+  + attr exit          | type: any      | default:
+  + quote
 -
