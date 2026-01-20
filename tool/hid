@@ -775,6 +775,7 @@ proc hsd_schema { } {
 		    + node | category: attr
 		    + node | category: node
 		    + node anything
+		    + node quote
 		+ attr name | type: id
 		+ node type
 		  + attr name | type: id
@@ -1022,12 +1023,17 @@ proc check_against_hsd_rec { hid hsd_var hsd_meta_var } {
 			set name [hsd_node_index hsd hsd_meta $child]
 			if {[info exists hsd(node,multiple,$name)]} {
 				if {$hsd(node,multiple,$name) == "no" && $count($name) > 1} {
-					check_failed "ambiguous node '$name' at line '[hid_line $child]'" }
+					check_failed "ambiguous node '$name' at line [hid_line $child]" }
 			} else {
-				set detail [join [list {*}$expected_specific_sub_node_types \
-				                       {*}$expected_category_sub_node_types] "\n"]
-				check_failed "invalid node '[hid_type $child]' at line '[hid_line $child]',\
-				              expected:\n$detail"
+				if {[hid_type $child] == ":"} {
+					if {![info exists hsd(quote)]} {
+						check_failed "unexpected quote at line [hid_line $child]: [hid_quoted $child]" }
+				} else {
+					set detail [join [list {*}$expected_specific_sub_node_types \
+					                       {*}$expected_category_sub_node_types] "\n"]
+					check_failed "invalid node '[hid_type $child]' at line [hid_line $child],\
+					              expected:\n$detail"
+				}
 			}
 		}
 	}
@@ -1040,12 +1046,12 @@ proc check_against_hsd_rec { hid hsd_var hsd_meta_var } {
 
 			if {[info exists hsd(node,hid,$type)]} {
 				puts -nonewline stderr "Warning: node '[hid_type $hid]' at line\
-				                        '[hid_line $hid]' lacks sub node '$type'"
+				                        [hid_line $hid] lacks sub node '$type'"
 				print_hid_as_is stderr "$hsd(node,hid,$type)"
 			} elseif {[info exists hsd(node,category,$type)]} {
 				set category $hsd(node,category,$type)
 				set detail [join $expected_category_sub_node_types "\n"]
-				check_failed "node '[hid_type $hid]' at line '[hid_line $hid]'\
+				check_failed "node '[hid_type $hid]' at line [hid_line $hid]\
 				              lacks sub node of category '$category',\
 				              expected:\n$detail"
 			}
@@ -1131,6 +1137,7 @@ proc collect_hsd_attrs_and_nodes { hsd_hid hsd_var } {
 		}
 
 		if {$type == "anything"} { set hsd(anything) 1 }
+		if {$type == "quote"}    { set hsd(quote)    1 }
 
 		incr i
 	}
