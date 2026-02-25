@@ -114,7 +114,7 @@ can trigger the migration with the following commands:
 Note that the migration to Codeberg implies a few more changes for contributors:
 Contributors must create an account at codeberg.org. It is possible to link
 the new account to your GitHub account. This enables Codeberg to associate
-your former comments (entered on GitHub) to your new account on Codeberg (i.e.
+your former comments (entered on GitHub) to your new account on Codeberg (i.e.,
 you may use different user names on both platforms). In case you forked any
 repository on GitHub, you should consider creating a new fork on Codeberg and
 manually pushing your branches and tags to the new fork to restore the state of
@@ -182,7 +182,7 @@ rate. This was long before the configuration-based
 [https://genode.org/documentation/genode-foundations/25.05/components/Component_configuration.html#Server-side_policy_selection - server-side policy selection]
 became the predominant pattern for out-of-band concerns like this.
 Since the split of session interfaces between terminal and UART is no longer
-justified, the UART session got removed now.
+justified, the UART session has been removed now.
 
 VFS library
 -----------
@@ -193,18 +193,18 @@ namespace, which alleviates the need to prefix Genode types inside the 'Vfs'.
 Each VFS file-system type now lives in a dedicated namespace prefixed
 with 'Vfs_', which includes the 'Genode' and 'Genode::Vfs' namespaces.
 This gives each VFS plugin a natural place for custom types, flattening the
-type hierarchy in cases where a compound file system is constructed.
+type hierarchy in cases where a compound-file system is constructed.
 
 
 Linux device-driver environment
 ===============================
 
-This release features the first step in updating the used Linux version in
+This release features the first step of updating the Linux version of
 our device-driver environment to a recent 6.18 LTS release.
 
-In particular, we started with updating all 'virt_linux'-based components.
-This includes the TCP/IP stack, USB client device drivers like 'usb_hid',
-'usb_net', and 'usb_serial' as well as the wireguard port.
+In particular, we updated all 'virt_linux'-based components.
+This includes the TCP/IP stack, USB-client-device drivers like 'usb_hid',
+'usb_net', and 'usb_serial' as well as our WireGuard port.
 
 Changes to the internal structuring within Linux prompted us to adapt
 our Linux emulation environment and guard those changes with kernel version
@@ -213,8 +213,9 @@ on an older Linux release.
 
 We also decided to drop support for ARMv6, which only concerns support for
 the Raspberry Pi 1, as this platform has not seen much use in recent years
-and the practical relevance is debatable.
-On the other hand, the 'usb_serial' component has now become available for
+and its practical relevance is debatable.
+
+The 'usb_serial' component has now become available for
 ARMv8.
 
 As of now, the update of 'virt_linux' to 6.18.5 is complete, while the
@@ -256,7 +257,7 @@ is also handled by clients (e.g., a virtual machine).
 
 In this release, we enhanced the event-filter component to support the reporting
 of _shortcuts_ if configured key combinations are observed. The key events
-are preserved for further processing (resp. not filtered out).
+are preserved for further processing (they are not filtered out).
 
 ! + report
 !   + shortcut screenshot
@@ -269,7 +270,7 @@ are preserved for further processing (resp. not filtered out).
 The example configuration declares two shortcut reports named screenlock and
 screenshot. The event filter creates two report sessions labeled after the shortcut
 names and reports each occurrence of the combinations. The report provides
-the shortcut 'name' and a unique 'serial' number as attributes like as follows.
+the shortcut 'name' and a unique 'serial' number as attributes as follows.
 
 ! shortcut screenshot | serial: 7
 ! -
@@ -293,7 +294,7 @@ been converted from XML to HID.
 In addition, the run scripts currently used for CI testing also received the
 HID treatment and - to clarify their role - have been moved to Genode's
 _repos/ports/run/_. The legacy portion of the Genode-world repository is
-slated for removal in summer of 2026.
+slated for removal during the summer of 2026.
 
 New port of Git
 ---------------
@@ -307,7 +308,7 @@ to the genode-world repository.
 Seoul VMM
 ---------
 
-The Seoul VMM got adjusted to become usable with Goa. All Genode-specific code
+The Seoul VMM got adjusted to become buildable using the Goa tool. All Genode-specific code
 located in genode-world has been moved to the Seoul source repository and a
 make-based build environment was crafted. The new
 [https://codeberg.org/genodelabs/genode-world/src/branch/main/vmm/seoul - Goa project]
@@ -333,7 +334,7 @@ execution times of all threads got collected. Now when using hardware-assisted
 virtualization, the CPU usage of virtual CPUs is tracked too. Moreover,
 subject properties of the new scheduler introduced in
 [https://genode.org/documentation/release-notes/25.08#Kernel_scheduling_for_fairness_and_low_latency - release 25.08]
-are getting exposed additionally. Namely, the weights and warp
+are also getting exposed. Namely, the weights and warp
 values of the individual threads and virtual CPUs.
 
 The effort to steadily keep and enhance the code quality of our custom
@@ -352,7 +353,7 @@ component as pseudo display and input driver. In
 [https://genode.org/documentation/release-notes/23.11#Linux - version 23.11],
 it received an update to [https://wiki.libsdl.org/SDL2 - SDL2]. The current
 release [https://github.com/genodelabs/genode/pull/5784 - adds] principal
-support for [https://wiki.libsdl.org/SDL3 - SDL3] in addition.
+support for [https://wiki.libsdl.org/SDL3 - SDL3].
 Whereas the time-tested version 2 is still used by default, version 3 can now
 be selected by setting the environment variable GENODE_FB_SDL_VERSION to 3
 at build time.
@@ -398,7 +399,7 @@ variables such as 'LDFLAGS' and 'LIBS' to achieve this. Yet, not all 3rd-party
 projects, especially projects with custom _configure_ scripts, make use of
 these variables. We eventually found
 [https://gcc.gnu.org/onlinedocs/gcc/Spec-Files.html - GCC spec files]
-to be a robust alternative to environment variables that reduces the need
+to be a robust alternative to environment variables that reduce the need
 for patching. We already applied the new approach to Goa's support for
 autoconf, make, cmake, qmake, and cargo.
 
@@ -418,10 +419,10 @@ Run-tool support for AMT TLS
 
 With newer versions of Intel's Active Management Technology (AMT),
 using TLS is mandatory. So we extended our run-tool plugins that
-deal with AMT to capture serial messages as well as to power-cycle
+deal with AMT to capture serial messages as well as power-cycle
 the machine in question.
 
-The RUN_OPT flag '--wsman-tls' switches use of TLS on when set to
+The RUN_OPT flag '--wsman-tls' switches turn on TLS when set to
 'yes', the default is 'no'.
 
 The RUN_OPT flag '--amtterm-tls' enables the use of TLS when set to
