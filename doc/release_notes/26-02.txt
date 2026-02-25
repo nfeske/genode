@@ -208,7 +208,7 @@ This includes the TCP/IP stack, USB client device drivers like 'usb_hid',
 
 Changes to the internal structuring within Linux prompted us to adapt
 our Linux emulation environment and guard those changes with kernel version
-checks to keep them compatible with components that for moment still rely
+checks to keep them compatible with components that for the moment still rely
 on an older Linux release.
 
 We also decided to drop support for ARMv6, which only concerns support for
