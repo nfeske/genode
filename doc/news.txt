@@ -9,8 +9,8 @@ Genode OS Framework release 26.02 | 2026-02-26
 
 | Version 26.02 replaces XML with the custom-designed HID configuration
 | format, completes the first half of the project's migration from
-| GitHub to Codeberg, updates DDE-Linux-based protocol stacks to version
-| kernel 6.18, and further cultivates the genode-world repository as
+| GitHub to Codeberg, updates DDE-Linux-based protocol stacks to Linux kernel
+| version 6.18, and further cultivates the genode-world repository as
 | designated place for ported 3rd-party software.
 
 After almost two decades of relying on XML, the framework has now switched to
