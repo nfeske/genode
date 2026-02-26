@@ -182,7 +182,7 @@ rate. This was long before the configuration-based
 [https://genode.org/documentation/genode-foundations/25.05/components/Component_configuration.html#Server-side_policy_selection - server-side policy selection]
 became the predominant pattern for out-of-band concerns like this.
 Since the split of session interfaces between terminal and UART is no longer
-justified, the UART session has been removed now.
+justified, the UART session got removed now.
 
 VFS library
 -----------
@@ -193,7 +193,7 @@ namespace, which alleviates the need to prefix Genode types inside the 'Vfs'.
 Each VFS file-system type now lives in a dedicated namespace prefixed
 with 'Vfs_', which includes the 'Genode' and 'Genode::Vfs' namespaces.
 This gives each VFS plugin a natural place for custom types, flattening the
-type hierarchy in cases where a compound-file system is constructed.
+type hierarchy in cases where a compound file system is constructed.
 
 
 Linux device-driver environment
@@ -294,7 +294,7 @@ been converted from XML to HID.
 In addition, the run scripts currently used for CI testing also received the
 HID treatment and - to clarify their role - have been moved to Genode's
 _repos/ports/run/_. The legacy portion of the Genode-world repository is
-slated for removal during the summer of 2026.
+slated for removal in summer of 2026.
 
 New port of Git
 ---------------
@@ -308,7 +308,7 @@ to the genode-world repository.
 Seoul VMM
 ---------
 
-The Seoul VMM got adjusted to become buildable using the Goa tool. All Genode-specific code
+The Seoul VMM got adjusted to become interoperable with the Goa SDK. All Genode-specific code
 located in genode-world has been moved to the Seoul source repository and a
 make-based build environment was crafted. The new
 [https://codeberg.org/genodelabs/genode-world/src/branch/main/vmm/seoul - Goa project]
@@ -419,7 +419,7 @@ Run-tool support for AMT TLS
 
 With newer versions of Intel's Active Management Technology (AMT),
 using TLS is mandatory. So we extended our run-tool plugins that
-deal with AMT to capture serial messages as well as power-cycle
+deal with AMT to capture serial messages as well as to power-cycle
 the machine in question.
 
 The RUN_OPT flag '--wsman-tls' switches turn on TLS when set to
