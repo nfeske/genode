@@ -718,7 +718,7 @@ create_depot_archive
 
 exec sh -c "tar cf [run_dir]/genode/model.tar -C [model] ."
 
-file delete -force [model]
+#file delete -force [model]
 
 
 ##
