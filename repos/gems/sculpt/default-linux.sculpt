@@ -10,3 +10,5 @@ option: log_view nano3d sticks_blue_backdrop system_shell
 import: pkg/drivers_interactive-linux
 
 build: server/lx_fs
+
+build: app/depot_deploy app/sculpt_manager app/depot_query
