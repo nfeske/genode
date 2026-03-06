@@ -6,4 +6,6 @@ SRC_CC  += dialog.cc
 LIBS    += base vfs
 INC_DIR += $(PRG_DIR)
 
+CC_OLEVEL = -O0
+
 vpath dialog.cc $(REP_DIR)/src/lib/dialog

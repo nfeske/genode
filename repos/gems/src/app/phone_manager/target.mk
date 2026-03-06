@@ -11,6 +11,8 @@ SRC_CC  += gui.cc graph.cc storage.cc network.cc drivers.cc dialog.cc
 LIBS    += base vfs
 INC_DIR += $(PRG_DIR) $(SCULPT_MANAGER_DIR) $(DEPOT_DEPLOY_DIR)
 
+CC_OLEVEL = -O0
+
 vpath %.cc      $(PRG_DIR)
 vpath %.cc      $(SCULPT_MANAGER_DIR)
 vpath dialog.cc $(REP_DIR)/src/lib/dialog
