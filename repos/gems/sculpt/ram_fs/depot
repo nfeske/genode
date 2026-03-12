@@ -4,6 +4,14 @@ config
   + dir depot
     + ram
     + tar depot.tar
+    + dir local
+      + dir index
+        + inline 26.03
+          + index
+            + supports | arch: x86_64
+            + pkg | path: nfeske_test/pkg/system_shell/2026-04-15 | info: system shell
+            + pkg | path: nfeske_test/pkg/nano3d/2026-04-15 | info: nano3d
+            + pkg nfeske_test/pkg/window_layouter/2026-03-17 | info: window layouter
 
 + default-policy | root: / | writeable: yes
 -
