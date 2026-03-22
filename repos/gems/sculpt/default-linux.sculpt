@@ -12,3 +12,5 @@ import: pkg/drivers_interactive-linux
 build: server/lx_fs
 
 build: app/depot_deploy app/sculpt_manager app/depot_query
+build: monitor lib/sandbox init lib/ld lib/libc
+build: app/menu_view
