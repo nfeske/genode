@@ -85,6 +85,7 @@ option
 
 + child event_filter | binary: event_filter | caps: 120 | ram: 2M | priority: -1
   + provides | + event
+  + managed | max_caps: 250 | max_ram: 4M
   + connect
     + event                         | + child gui
     + rom config                    | + child model  | label: child/event_filter
