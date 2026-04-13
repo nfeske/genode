@@ -6,7 +6,7 @@ deploy
 + option recall_fs
 + option window_manager
 + option sticks_blue_backdrop
-+ option nano3d
+x option nano3d
 + option system_shell
 
 + child foredrop | ram: 2M | caps: 100 | pkg: sticks_blue_backdrop | priority: -3
