@@ -524,6 +524,7 @@ struct Sculpt::Main : Input_event_handler,
 	{
 		_network_dialog.refresh();
 		_system_dialog.refresh();
+		generate_runtime_config(); /* spawn update if network becomes available */
 	}
 
 
