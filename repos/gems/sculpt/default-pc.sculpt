@@ -24,3 +24,4 @@ depot: nfeske_test
 
 build: app/sculpt_manager app/depot_download_manager app/depot_deploy
 build: lib/libc
+build: app/pc_discover
