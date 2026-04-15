@@ -85,6 +85,7 @@ struct Genode::File_handler
 					if (_dir.directory_exists(dir_path)) {
 						_dir_handler.construct(_ep, _dir, dir_path,
 						                        *this, &File_handler::_handle);
+						_dir_handler->local_submit(); /* handle initial content */
 						return;
 					}
 
