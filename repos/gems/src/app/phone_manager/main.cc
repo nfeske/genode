@@ -1495,7 +1495,7 @@ struct Sculpt::Main : Input_event_handler,
 	{
 		_download_queue.remove_inactive_downloads();
 
-		_vfs.copy({ "presets/", name }, "deploy");
+		_vfs.copy({ "/model/presets/", name }, "/model/deploy");
 	}
 
 	/**
