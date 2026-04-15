@@ -4,5 +4,5 @@ VERSION := 6.8.3
 DOWNLOADS := qt6_base.git
 
 URL(qt6_base) := https://codeberg.org/cproc/qt6_base.git
-REV(qt6_base) := issue5854
+REV(qt6_base) := issue5854_2
 DIR(qt6_base) := src/lib/qt6_base
