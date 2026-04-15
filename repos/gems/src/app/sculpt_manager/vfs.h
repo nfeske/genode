@@ -52,11 +52,24 @@ struct Sculpt::Vfs
 		: File_handler<T>(m._env.ep(), m._alloc, m._root, args...) { }
 	};
 
+	size_t _file_size(Path const &path)
+	{
+		/* model content is supposed to be in the order of kilobytes */
+		auto const num_bytes = _root.file_size(path);
+		if (num_bytes > 1024*1024ul) {
+			warning("refusing to access overly large file ", path);
+			return 0;
+		}
+		return size_t(num_bytes);
+	}
+
 	/* may throw */
 	void _edit(Path const &path, auto const &fn)
 	{
-		size_t const file_size = _root.file_size(path);
+		size_t const file_size = _file_size(path);
 		size_t const headroom = 16*1024;
+
+		if (file_size == 0) return;
 
 		/* fill edit buffer with original file content */
 		Hid_edit edit { _alloc, file_size + headroom, [&] (Byte_range_ptr const &ptr) {
@@ -89,7 +102,9 @@ struct Sculpt::Vfs
 	/* may throw */
 	void _copy(Path const &from, Path const &to)
 	{
-		size_t const file_size = _root.file_size(from);
+		size_t const file_size = _file_size(from);
+
+		if (file_size == 0) return;
 
 		if (file_size + 512*1024 > _env.pd().avail_ram().value) {
 			error("refusing to copy file '", from, "' (", file_size, " bytes)");
