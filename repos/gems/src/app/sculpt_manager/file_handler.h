@@ -107,7 +107,7 @@ struct Genode::File_handler
 
 			for (unsigned i = 0; i < MAX_ATTEMPTS; i++) {
 
-				try { _file_size = _dir.file_size(_path); }
+				try { _file_size = size_t(_dir.file_size(_path)); }
 				catch (...) {
 					disappeared = true;
 					_file_size = 0;
