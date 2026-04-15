@@ -89,6 +89,8 @@ schema option
     + node | category: target
   + node vm
     + node | category: target
+  + node i2c
+    + node | category: target
 
 + category provided_service
   + node fs
