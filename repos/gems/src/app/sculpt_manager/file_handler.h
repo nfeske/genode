@@ -71,26 +71,59 @@ struct Genode::File_handler
 			if (!_dir.file_exists(_path) && _file_handler.constructed())
 				_file_handler.destruct();
 
+			_dir_handler.destruct();
+			bool any_dir_watched = false;
+
 			/* file does not exist yet, watch inner-most directory */
 			_path.with_span([&] (Span const &s) {
 				char buf[s.num_bytes] { };
 				memcpy(buf, s.start, s.num_bytes);
 
+				Path missing_dir { };
+
 				for (size_t n = s.num_bytes; n > 0; ) {
 
 					/* remove last path element */
 					while (n && buf[n - 1] != '/') n--;
+					if (n == 0)
+						break;
 
-					Path const dir_path { Cstring(buf, n) };
-					if (_dir.directory_exists(dir_path)) {
-						_dir_handler.construct(_ep, _dir, dir_path,
-						                        *this, &File_handler::_handle);
-						_dir_handler->local_submit(); /* handle initial content */
-						return;
+					Path const dir_path               { Cstring(buf, n) };
+					Path const dir_path_without_slash { Cstring(buf, n - 1) };
+
+					if (_dir.directory_exists(dir_path_without_slash)) {
+						/*
+						 * Unfortunate interim solution for the corner case
+						 * where the root of a file system is mounted at a sub
+						 * directoryias is the case with the report fs mounted
+						 * at /report/. In this case, the root directory must
+						 * be '/'. In the normal case, however, a dir name
+						 * must not end with a '/' when watching.
+						 */
+						if (dir_path == "/report/")
+							_dir_handler.construct(_ep, _dir, dir_path,
+							                        *this, &File_handler::_handle);
+						else
+							_dir_handler.construct(_ep, _dir, dir_path_without_slash,
+							                        *this, &File_handler::_handle);
+						any_dir_watched = true;
+						break;
 					}
+
+					missing_dir = dir_path_without_slash;
 
 					if (n) n--; /* skip slash */
 				}
+
+				/* cover race if dir was created while subscribing */
+				if (missing_dir.length() > 1)
+					if (_dir.directory_exists(missing_dir) && _dir_handler.constructed()) {
+						log("dir ", missing_dir, " created while subscribing");
+						_dir_handler->local_submit();
+					}
+
+				if (!any_dir_watched)
+					warning("no dir to watch for handling file ", _path);
 			});
 		}
 
