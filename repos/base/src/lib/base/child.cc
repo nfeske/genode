@@ -283,7 +283,7 @@ Parent::Session_result Child::session(Parent::Client::Id id,
 				[&] (Child_policy::Route const &route) { result = create(pd, route); },
 				[&] { });
 		},
-		[&] { error(_policy.name(), ": PD uninitialized at sesssion-creation time"); });
+		[&] { error(_policy.name(), ": PD uninitialized at session-creation time"); });
 
 	return result;
 }
