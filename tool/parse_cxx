@@ -537,7 +537,7 @@ extract funcdecl {(§mlcomment\d+° *\n[ \t]*)?(§(modifier|keyunsigned|keyconst)\d
 
 # extract function implementations
 extract funcimpl {(§mlcomment\d+° *\n[ \t]*)?(§(modifier|keyunsigned|keyconst)\d+°\s*)*(§(identifier|keyunsigned|keyconst)\d+°\s*)+(\s|(§amper\d+°)|(§star\d+°))*§(operator)?function\d+°\s*(§(keyconst|keyoverride)\d+°\s*)*(§attribute\d+°\s*)*§block\d+°[;\t ]*} {content block classblock}
-extract funcimpl {(§mlcomment\d+° *\n[ \t]*)?§keyauto\d+°\s*§function\d+°\s*§deref\d+°\s*(§keytypename\d+°)?\s*§identifier\d+°\s*§block\d+°} {content block classblock}
+extract funcimpl {(§mlcomment\d+° *\n[ \t]*)?§keyauto\d+°\s*§function\d+°\s*(§keyconst\d+°)?\s*§deref\d+°\s*(§keytypename\d+°)?\s*§(identifier|function)\d+°\s*§block\d+°} {content block classblock}
 extract funcimpl {(§mlcomment\d+° *\n[ \t]*)?§operatorfunction\d+°\s*(§modifier\d+°\s*)?§block\d+°[;\t ]*} {content block classblock}
 
 # extract template functions
